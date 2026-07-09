@@ -35,11 +35,33 @@ function ensureBox(): Promise<void> {
 export function notationFor(detail: RollDetail): string | null {
   const { groups } = detail.kept;
   if (groups.some((g) => !SUPPORTED_SIDES.has(g.sides))) return null;
-  const diceCount = groups.reduce((n, g) => n + g.count, 0);
+  // A d100 renders as a percentile pair (tens die + units die), so it costs two dice.
+  const diceCount = groups.reduce((n, g) => n + g.count * (g.sides === 100 ? 2 : 1), 0);
   if (diceCount === 0 || diceCount > MAX_ANIMATED_DICE) return null;
-  const sets = groups.map((g) => `${g.count}d${g.sides}`).join("+");
-  const values = groups.flatMap((g) => g.results).join(",");
-  return `${sets}@${values}`;
+
+  // The library applies forced values to dice in spawn order and silently
+  // ignores values that aren't a legal face (a d100 tens die only has faces
+  // 10..90 and 00). It also merges same-type notation sets, which would
+  // scramble value order — so emit exactly one set per die type ourselves.
+  const faces = new Map<number, number[]>();
+  const push = (sides: number, value: number) => {
+    if (!faces.has(sides)) faces.set(sides, []);
+    faces.get(sides)!.push(value);
+  };
+  for (const g of groups) {
+    for (const r of g.results) {
+      if (g.sides === 100) {
+        const units = r % 10;
+        push(100, r - units); // 0 and 100 both map to the "00" face
+        push(10, units); // 0 maps to the "0" face
+      } else {
+        push(g.sides, r);
+      }
+    }
+  }
+  const sets = [...faces.entries()].map(([sides, vals]) => `${vals.length}d${sides}`).join("+");
+  const forced = [...faces.values()].flat().join(",");
+  return `${sets}@${forced}`;
 }
 
 export function animateRoll(detail: RollDetail): void {
