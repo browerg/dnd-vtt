@@ -21,12 +21,15 @@ character sheets, live dice, interactive battle maps, and DM tools.
 
 ## Status
 
-- **Phase:** 1, Milestone 1.1 — walking skeleton **built and verified** (2026-07-09):
-  email/password auth, campaigns, roles, invite links, and live presence over
-  Socket.IO all working end to end.
+- **Phase:** 1, Milestone 1.2 — dice system **built and verified** (2026-07-09):
+  server-authoritative roll formulas (`2d6+4`), advantage/disadvantage, live public
+  roll feed, private/DM/blind visibility, roll history, nat-20/nat-1 highlights, and
+  3D physics dice (dice-box-threejs) that land on the server's results, with sound.
+  Milestone 1.1 (auth, campaigns, roles, invites, live presence) verified earlier
+  the same day.
 - **Stack:** TypeScript everywhere. React + Vite client, Express + Socket.IO server,
   SQLite via Node's built-in `node:sqlite` (swap for Postgres later if needed).
 - **Run it:** `npm run dev:server` and `npm run dev:client` from the repo root, then
   open http://localhost:5173.
-- **Next step:** Google/Discord OAuth buttons (needs API keys), then Milestone 1.2 —
-  the dice system.
+- **Next step:** Milestone 1.3 — character sheets with click-to-roll. Google/Discord
+  OAuth buttons still pending (needs API keys).

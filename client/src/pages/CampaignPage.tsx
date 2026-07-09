@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
-import { api, type Member } from "../api";
+import { api, type Member, type RollPayload } from "../api";
+import { animateRoll } from "../dice3d";
+import DicePanel from "../components/DicePanel";
+import RollFeed from "../components/RollFeed";
 
 interface CampaignDetail {
   campaign: { id: number; name: string; description: string; created_at: string };
@@ -14,6 +17,7 @@ export default function CampaignPage() {
   const campaignId = Number(id);
   const [detail, setDetail] = useState<CampaignDetail | null>(null);
   const [online, setOnline] = useState<Set<number>>(new Set());
+  const [rolls, setRolls] = useState<RollPayload[]>([]);
   const [inviteUrl, setInviteUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
@@ -22,6 +26,9 @@ export default function CampaignPage() {
     api<CampaignDetail>(`/api/campaigns/${campaignId}`)
       .then(setDetail)
       .catch((e) => setError(e.message));
+    api<{ rolls: RollPayload[] }>(`/api/campaigns/${campaignId}/rolls`)
+      .then((r) => setRolls(r.rolls))
+      .catch(() => {});
   }, [campaignId]);
 
   useEffect(() => {
@@ -30,10 +37,26 @@ export default function CampaignPage() {
     socket.on("presence", (p: { campaignId: number; onlineUserIds: number[] }) => {
       if (p.campaignId === campaignId) setOnline(new Set(p.onlineUserIds));
     });
+    socket.on("roll", (roll: RollPayload) => {
+      if (roll.campaignId !== campaignId) return;
+      setRolls((prev) => [...prev.slice(-99), roll]);
+      if (roll.detail) animateRoll(roll.detail);
+    });
     return () => {
       socket.disconnect();
     };
   }, [campaignId]);
+
+  const doRoll = useCallback(
+    async (body: { formula: string; label: string; mode: string; visibility: string }) => {
+      await api(`/api/campaigns/${campaignId}/rolls`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      // The result comes back through the socket like everyone else's rolls.
+    },
+    [campaignId]
+  );
 
   const createInvite = async () => {
     const r = await api<{ code: string }>(`/api/campaigns/${campaignId}/invites`, {
@@ -53,6 +76,7 @@ export default function CampaignPage() {
   if (!detail) return <div className="page-center muted">Loading…</div>;
 
   const isDM = detail.yourRole === "dm" || detail.yourRole === "co-dm";
+  const canRoll = detail.yourRole !== "spectator";
 
   return (
     <div className="shell">
@@ -65,39 +89,53 @@ export default function CampaignPage() {
         <span className={`badge role-${detail.yourRole}`}>{detail.yourRole.toUpperCase()}</span>
       </header>
       <main className="content columns">
-        <section className="card">
-          <h3>About this campaign</h3>
-          <p className="muted">{detail.campaign.description || "No description yet."}</p>
-          {isDM && (
-            <div className="stack invite-box">
-              <button className="primary" onClick={createInvite}>
-                Create invite link
-              </button>
-              {inviteUrl && (
-                <div className="row-between invite-url">
-                  <code>{inviteUrl}</code>
-                  <button className="ghost" onClick={copy}>
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-              )}
-            </div>
+        <div className="column">
+          <section className="card">
+            <h3>About this campaign</h3>
+            <p className="muted">{detail.campaign.description || "No description yet."}</p>
+            {isDM && (
+              <div className="stack invite-box">
+                <button className="primary" onClick={createInvite}>
+                  Create invite link
+                </button>
+                {inviteUrl && (
+                  <div className="row-between invite-url">
+                    <code>{inviteUrl}</code>
+                    <button className="ghost" onClick={copy}>
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+          {canRoll && (
+            <section className="card">
+              <h3>Roll dice</h3>
+              <DicePanel onRoll={doRoll} />
+            </section>
           )}
-        </section>
-        <section className="card">
-          <h3>Party</h3>
-          <ul className="member-list">
-            {detail.members.map((m) => (
-              <li key={m.id} className="row-between">
-                <span>
-                  <span className={online.has(m.id) ? "dot online" : "dot"} />
-                  {m.display_name}
-                </span>
-                <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+        </div>
+        <div className="column">
+          <section className="card">
+            <h3>Party</h3>
+            <ul className="member-list">
+              {detail.members.map((m) => (
+                <li key={m.id} className="row-between">
+                  <span>
+                    <span className={online.has(m.id) ? "dot online" : "dot"} />
+                    {m.display_name}
+                  </span>
+                  <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section className="card feed-card">
+            <h3>Rolls</h3>
+            <RollFeed rolls={rolls} />
+          </section>
+        </div>
       </main>
     </div>
   );

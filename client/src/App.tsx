@@ -36,6 +36,8 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ user, setUser, logout }}>
+      {/* Lives outside the routes so the 3D dice canvas survives navigation. */}
+      <div id="dice-overlay" className="dice-overlay" />
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
         <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" />} />
