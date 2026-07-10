@@ -602,6 +602,26 @@ select {
 .handout-pdf { font-size: 2.5rem; display: block; text-align: center; padding: 0.8rem 0; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; }
 .handout-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .export-link { text-align: center; font-size: 0.85rem; }
+
+.fav-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.fav-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.fav-chip > button {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.25rem 0.3rem 0.25rem 0.7rem;
+}
+.fav-chip > button:hover { color: var(--accent-hover); }
+.fav-chip .fav-x { color: var(--muted); font-size: 0.7rem; padding: 0.25rem 0.5rem 0.25rem 0.2rem; }
+.fav-chip .fav-x:hover { color: var(--danger); }
 .fog-overlay { position: absolute; inset: 0; pointer-events: none; }
 
 .token.current-turn {

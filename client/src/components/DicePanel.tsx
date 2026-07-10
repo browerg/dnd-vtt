@@ -1,6 +1,22 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 const QUICK_DICE = [4, 6, 8, 10, 12, 20, 100];
+
+interface Favorite {
+  formula: string;
+  label: string;
+  mode: string;
+}
+
+const FAV_KEY = "dice-favorites";
+
+function loadFavorites(): Favorite[] {
+  try {
+    return JSON.parse(localStorage.getItem(FAV_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
 
 interface Props {
   onRoll: (body: {
@@ -18,6 +34,31 @@ export default function DicePanel({ onRoll }: Props) {
   const [visibility, setVisibility] = useState("public");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [favorites, setFavorites] = useState<Favorite[]>(loadFavorites);
+
+  useEffect(() => {
+    localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
+  }, [favorites]);
+
+  const saveFavorite = () => {
+    if (!formula.trim()) return;
+    const fav: Favorite = { formula: formula.trim(), label: label.trim(), mode };
+    setFavorites((prev) =>
+      [fav, ...prev.filter((f) => !(f.formula === fav.formula && f.label === fav.label))].slice(0, 12)
+    );
+  };
+
+  const rollFavorite = async (fav: Favorite) => {
+    setError("");
+    setBusy(true);
+    try {
+      await onRoll({ ...fav, visibility });
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Clicking d20 sets 1d20; clicking it again bumps to 2d20, 3d20…
   const quick = (sides: number) => {
@@ -57,10 +98,42 @@ export default function DicePanel({ onRoll }: Props) {
           placeholder="2d6+4"
           aria-label="Dice formula"
         />
+        <button
+          type="button"
+          className="ghost"
+          title="Save as favorite (uses current formula, label, and mode)"
+          onClick={saveFavorite}
+        >
+          ★
+        </button>
         <button className="primary roll-btn" disabled={busy}>
           Roll
         </button>
       </div>
+      {favorites.length > 0 && (
+        <div className="fav-row">
+          {favorites.map((f) => (
+            <span key={`${f.label}|${f.formula}`} className="fav-chip">
+              <button
+                type="button"
+                title={`${f.formula}${f.mode !== "normal" ? ` (${f.mode})` : ""}`}
+                onClick={() => rollFavorite(f)}
+                disabled={busy}
+              >
+                {f.label || f.formula}
+              </button>
+              <button
+                type="button"
+                className="fav-x"
+                title="Remove favorite"
+                onClick={() => setFavorites((prev) => prev.filter((x) => x !== f))}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
