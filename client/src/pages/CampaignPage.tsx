@@ -183,6 +183,9 @@ export default function CampaignPage() {
         <Link to={`/campaigns/${campaignId}/map`} className="ghost link">
           🗺️ Battle map
         </Link>
+        <Link to={`/campaigns/${campaignId}/bestiary`} className="ghost link">
+          📖 Bestiary
+        </Link>
         <span className={`badge role-${detail.yourRole}`}>{detail.yourRole.toUpperCase()}</span>
       </header>
       <main className="content columns">

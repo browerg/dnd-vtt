@@ -622,6 +622,27 @@ select {
 .fav-chip > button:hover { color: var(--accent-hover); }
 .fav-chip .fav-x { color: var(--muted); font-size: 0.7rem; padding: 0.25rem 0.5rem 0.25rem 0.2rem; }
 .fav-chip .fav-x:hover { color: var(--danger); }
+
+/* ---- bestiary ---- */
+
+.bestiary-list { display: flex; flex-direction: column; margin-top: 0.6rem; max-height: 70vh; overflow-y: auto; }
+.bestiary-row {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.45rem 0.3rem;
+  text-align: left;
+}
+.bestiary-row:hover { background: var(--bg); }
+.badge.src-custom { color: var(--accent); border-color: var(--accent); }
+.trait-row { border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem; }
+.inline-num { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--muted); }
+.inline-num input { width: 5rem; }
 .fog-overlay { position: absolute; inset: 0; pointer-events: none; }
 
 .token.current-turn {

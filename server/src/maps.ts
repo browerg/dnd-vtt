@@ -258,7 +258,9 @@ mapsRouter.post("/:id/maps/:mapId/tokens", (req, res) => {
   } else if (!isDMRole(role)) {
     return res.status(403).json({ error: "Only the DM can place custom tokens." });
   } else if (monsterId) {
-    const m = db.prepare("SELECT name, data FROM monsters WHERE id = ?").get(monsterId) as any;
+    const m = db
+      .prepare("SELECT name, data FROM monsters WHERE id = ? AND (campaign_id IS NULL OR campaign_id = ?)")
+      .get(monsterId, campaignId) as any;
     if (!m) return res.status(404).json({ error: "Monster not found." });
     const d = JSON.parse(m.data);
     if (!name) {

@@ -1,35 +1,104 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { db } from "./db.js";
-import { requireAuth } from "./auth.js";
+import { requireAuth, type SessionUser } from "./auth.js";
+import { memberRole } from "./campaigns.js";
 
-// SRD monster lookups. Read-only for now — custom/homebrew monsters come
-// with the Phase 4 homebrew editor.
+// Monster lookups and homebrew. SRD monsters are global (campaign_id NULL);
+// custom monsters belong to a campaign and are managed by its DM.
+
+const user = (req: Request) => (req as any).user as SessionUser;
+const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
+
+const SIZES = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"];
+const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+
+// Normalize a submitted stat block into the same shape the SRD data uses,
+// so the map's stat block panel works identically for both.
+function sanitizeStatblock(b: any): { data: Record<string, unknown>; cr: number; name: string } | string {
+  const name = String(b?.name ?? "").trim();
+  if (!name) return "The monster needs a name.";
+  const num = (v: unknown, fallback: number, min: number, max: number) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+  };
+  const cr = num(b.cr, 0, 0, 40);
+  const data: Record<string, unknown> = {
+    name,
+    size: SIZES.includes(b.size) ? b.size : "Medium",
+    type: String(b.type ?? "").trim() || "monstrosity",
+    challenge_rating: String(cr),
+    armor_class: num(b.armorClass, 10, 1, 40),
+    hit_points: num(b.hitPoints, 10, 1, 2000),
+    hit_dice: String(b.hitDice ?? "").trim(),
+    speed: { walk: num(b.speedWalk, 30, 0, 300), ...(num(b.speedFly, 0, 0, 300) ? { fly: num(b.speedFly, 0, 0, 300) } : {}) },
+    senses: String(b.senses ?? "").trim(),
+    languages: String(b.languages ?? "").trim(),
+  };
+  for (const k of ABILITY_KEYS) data[k] = num(b[k], 10, 1, 40);
+  const list = (v: unknown, mapFn: (x: any) => any) =>
+    Array.isArray(v) ? v.map(mapFn).filter((x) => x.name) : [];
+  data.special_abilities = list(b.specialAbilities, (a) => ({
+    name: String(a?.name ?? "").trim(),
+    desc: String(a?.desc ?? "").trim(),
+  }));
+  data.actions = list(b.actions, (a) => {
+    const attackBonus = Number(a?.attack_bonus);
+    const damageBonus = Number(a?.damage_bonus);
+    return {
+      name: String(a?.name ?? "").trim(),
+      desc: String(a?.desc ?? "").trim(),
+      ...(Number.isFinite(attackBonus) ? { attack_bonus: Math.round(attackBonus) } : {}),
+      ...(String(a?.damage_dice ?? "").trim() ? { damage_dice: String(a.damage_dice).trim() } : {}),
+      ...(Number.isFinite(damageBonus) && damageBonus !== 0 ? { damage_bonus: Math.round(damageBonus) } : {}),
+    };
+  });
+  return { data, cr, name };
+}
+
+function monsterRow(id: number): any | null {
+  return db.prepare("SELECT id, source, campaign_id, name, cr, data FROM monsters WHERE id = ?").get(id) ?? null;
+}
+
+function requireCampaignDM(req: Request, res: any, campaignId: number): boolean {
+  if (!Number.isInteger(campaignId)) {
+    res.status(400).json({ error: "Missing campaign." });
+    return false;
+  }
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) {
+    res.status(404).json({ error: "Campaign not found." });
+    return false;
+  }
+  if (!isDMRole(role)) {
+    res.status(403).json({ error: "Only the DM manages homebrew monsters." });
+    return false;
+  }
+  return true;
+}
 
 export const monstersRouter = Router();
 monstersRouter.use(requireAuth);
 
 monstersRouter.get("/", (req, res) => {
   const q = String(req.query.q ?? "").trim();
-  const cr = req.query.cr !== undefined ? Number(req.query.cr) : null;
-  let sql = "SELECT id, name, cr, data FROM monsters";
-  const where: string[] = [];
-  const params: (string | number)[] = [];
+  const campaignId = req.query.campaignId ? Number(req.query.campaignId) : null;
+  const includeCustom = campaignId !== null && memberRole(campaignId, user(req).id) !== null;
+
+  let sql = `SELECT id, source, campaign_id, name, cr, data FROM monsters
+             WHERE (campaign_id IS NULL${includeCustom ? " OR campaign_id = ?" : ""})`;
+  const params: (string | number)[] = includeCustom ? [campaignId!] : [];
   if (q) {
-    where.push("name LIKE ? COLLATE NOCASE");
+    sql += " AND name LIKE ? COLLATE NOCASE";
     params.push(`%${q}%`);
   }
-  if (cr !== null && Number.isFinite(cr)) {
-    where.push("cr = ?");
-    params.push(cr);
-  }
-  if (where.length) sql += ` WHERE ${where.join(" AND ")}`;
-  sql += " ORDER BY name LIMIT 50";
+  sql += " ORDER BY (campaign_id IS NULL), name LIMIT 60";
   const rows = db.prepare(sql).all(...params) as any[];
   res.json({
     monsters: rows.map((r) => {
       const d = JSON.parse(r.data);
       return {
         id: r.id,
+        source: r.source,
         name: r.name,
         cr: r.cr,
         type: d.type ?? "",
@@ -42,9 +111,65 @@ monstersRouter.get("/", (req, res) => {
 });
 
 monstersRouter.get("/:id", (req, res) => {
-  const row = db.prepare("SELECT id, name, cr, data FROM monsters WHERE id = ?").get(
-    Number(req.params.id)
-  ) as any;
+  const row = monsterRow(Number(req.params.id));
   if (!row) return res.status(404).json({ error: "Monster not found." });
-  res.json({ monster: { id: row.id, name: row.name, cr: row.cr, ...JSON.parse(row.data) } });
+  if (row.campaign_id && !memberRole(row.campaign_id, user(req).id)) {
+    return res.status(404).json({ error: "Monster not found." });
+  }
+  res.json({
+    monster: { id: row.id, source: row.source, campaignId: row.campaign_id, cr: row.cr, ...JSON.parse(row.data) },
+  });
+});
+
+monstersRouter.post("/", (req, res) => {
+  const campaignId = Number(req.body?.campaignId);
+  if (!requireCampaignDM(req, res, campaignId)) return;
+  const parsed = sanitizeStatblock(req.body);
+  if (typeof parsed === "string") return res.status(400).json({ error: parsed });
+  const info = db
+    .prepare("INSERT INTO monsters (source, campaign_id, name, cr, data) VALUES ('custom', ?, ?, ?, ?)")
+    .run(campaignId, parsed.name, parsed.cr, JSON.stringify(parsed.data));
+  res.json({ id: Number(info.lastInsertRowid) });
+});
+
+monstersRouter.put("/:id", (req, res) => {
+  const row = monsterRow(Number(req.params.id));
+  if (!row) return res.status(404).json({ error: "Monster not found." });
+  if (row.source !== "custom") return res.status(400).json({ error: "SRD monsters can't be edited — clone one instead." });
+  if (!requireCampaignDM(req, res, row.campaign_id)) return;
+  const parsed = sanitizeStatblock(req.body);
+  if (typeof parsed === "string") return res.status(400).json({ error: parsed });
+  db.prepare("UPDATE monsters SET name = ?, cr = ?, data = ? WHERE id = ?").run(
+    parsed.name,
+    parsed.cr,
+    JSON.stringify(parsed.data),
+    row.id
+  );
+  res.json({ ok: true });
+});
+
+monstersRouter.delete("/:id", (req, res) => {
+  const row = monsterRow(Number(req.params.id));
+  if (!row) return res.status(404).json({ error: "Monster not found." });
+  if (row.source !== "custom") return res.status(400).json({ error: "SRD monsters can't be deleted." });
+  if (!requireCampaignDM(req, res, row.campaign_id)) return;
+  db.prepare("DELETE FROM monsters WHERE id = ?").run(row.id);
+  res.json({ ok: true });
+});
+
+monstersRouter.post("/:id/clone", (req, res) => {
+  const row = monsterRow(Number(req.params.id));
+  if (!row) return res.status(404).json({ error: "Monster not found." });
+  if (row.campaign_id && !memberRole(row.campaign_id, user(req).id)) {
+    return res.status(404).json({ error: "Monster not found." });
+  }
+  const campaignId = Number(req.body?.campaignId);
+  if (!requireCampaignDM(req, res, campaignId)) return;
+  const data = JSON.parse(row.data);
+  const name = `${row.name} (custom)`;
+  data.name = name;
+  const info = db
+    .prepare("INSERT INTO monsters (source, campaign_id, name, cr, data) VALUES ('custom', ?, ?, ?, ?)")
+    .run(campaignId, name, row.cr, JSON.stringify(data));
+  res.json({ id: Number(info.lastInsertRowid) });
 });

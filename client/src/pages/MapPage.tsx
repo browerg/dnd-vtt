@@ -178,7 +178,9 @@ export default function MapPage() {
       return;
     }
     const t = window.setTimeout(() => {
-      api<{ monsters: MonsterHit[] }>(`/api/monsters?q=${encodeURIComponent(monsterQuery)}`)
+      api<{ monsters: MonsterHit[] }>(
+        `/api/monsters?campaignId=${campaignId}&q=${encodeURIComponent(monsterQuery)}`
+      )
         .then((r) => setMonsterHits(r.monsters))
         .catch(() => {});
     }, 250);
@@ -950,10 +952,13 @@ export default function MapPage() {
                 <section>
                   <h4>Monsters</h4>
                   <input
-                    placeholder="Search 322 SRD monsters…"
+                    placeholder="Search monsters (SRD + custom)…"
                     value={monsterQuery}
                     onChange={(e) => setMonsterQuery(e.target.value)}
                   />
+                  <Link to={`/campaigns/${campaignId}/bestiary`} className="muted small">
+                    Open bestiary — create &amp; edit monsters
+                  </Link>
                   <div className="monster-hits">
                     {monsterHits.map((m) => (
                       <div key={m.id} className="row-between sidebar-row">
