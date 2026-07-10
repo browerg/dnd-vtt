@@ -43,6 +43,50 @@ db.exec(`
     PRIMARY KEY (campaign_id, user_id)
   );
 
+  CREATE TABLE IF NOT EXISTS quests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    title       TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    status      TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','completed','failed')),
+    hidden      INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_quests_campaign ON quests (campaign_id);
+
+  CREATE TABLE IF NOT EXISTS npcs (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id  INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    name         TEXT NOT NULL,
+    description  TEXT NOT NULL DEFAULT '',
+    location     TEXT NOT NULL DEFAULT '',
+    alive        INTEGER NOT NULL DEFAULT 1,
+    hidden       INTEGER NOT NULL DEFAULT 0,
+    secret_notes TEXT NOT NULL DEFAULT '',
+    created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_npcs_campaign ON npcs (campaign_id);
+
+  CREATE TABLE IF NOT EXISTS journal_entries (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id),
+    title       TEXT NOT NULL,
+    body        TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_journal_campaign ON journal_entries (campaign_id);
+
+  CREATE TABLE IF NOT EXISTS handouts (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    file_path   TEXT NOT NULL,
+    revealed    INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_handouts_campaign ON handouts (campaign_id);
+
   CREATE TABLE IF NOT EXISTS monsters (
     id     INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL DEFAULT 'srd',

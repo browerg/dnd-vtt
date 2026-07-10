@@ -8,6 +8,7 @@ import { useAuth } from "../App";
 import DicePanel from "../components/DicePanel";
 import RollFeed from "../components/RollFeed";
 import ChatPanel from "../components/ChatPanel";
+import CodexPanel from "../components/CodexPanel";
 
 interface CampaignDetail {
   campaign: {
@@ -32,6 +33,7 @@ export default function CampaignPage() {
   const [detail, setDetail] = useState<CampaignDetail | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [editingHub, setEditingHub] = useState(false);
+  const [codexRefresh, setCodexRefresh] = useState(0);
   const [online, setOnline] = useState<Set<number>>(new Set());
   const [rolls, setRolls] = useState<RollPayload[]>([]);
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
@@ -89,6 +91,9 @@ export default function CampaignPage() {
     });
     socket.on("campaign:update", (msg: { campaignId: number }) => {
       if (msg.campaignId === campaignId) loadDetail();
+    });
+    socket.on("codex:update", (msg: { campaignId: number }) => {
+      if (msg.campaignId === campaignId) setCodexRefresh((n) => n + 1);
     });
     return () => {
       socket.disconnect();
@@ -282,6 +287,16 @@ export default function CampaignPage() {
               <DicePanel onRoll={doRoll} />
             </section>
           )}
+          <section className="card">
+            <h3>Codex</h3>
+            <CodexPanel
+              campaignId={campaignId}
+              isDM={isDM}
+              canWrite={canRoll}
+              myId={user?.id ?? 0}
+              refreshKey={codexRefresh}
+            />
+          </section>
           <section className="card">
             <h3>Chat</h3>
             <ChatPanel
