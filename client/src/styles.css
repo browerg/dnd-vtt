@@ -532,6 +532,21 @@ select {
   pointer-events: none;
 }
 .yt-form { margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.75rem; }
+
+.map-pick {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 0.15rem 0;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.map-pick:hover { color: var(--text); }
+.map-pick.active { color: var(--accent); font-weight: 700; cursor: default; }
 .fog-overlay { position: absolute; inset: 0; pointer-events: none; }
 
 .token.current-turn {

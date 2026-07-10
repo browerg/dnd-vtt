@@ -719,6 +719,42 @@ export default function MapPage() {
           </section>
           {isDM && (
             <>
+              <section>
+                <h4>Maps</h4>
+                {maps.map((m) => (
+                  <div key={m.id} className="row-between sidebar-row">
+                    <button
+                      className={`map-pick${m.active ? " active" : ""}`}
+                      onClick={() =>
+                        !m.active &&
+                        api(`/api/campaigns/${campaignId}/maps/${m.id}`, {
+                          method: "PUT",
+                          body: JSON.stringify({ active: true }),
+                        })
+                      }
+                    >
+                      {m.active ? "▶ " : ""}
+                      {m.name}
+                      {m.youtubeId ? " ▶️" : m.isVideo ? " 🎞️" : ""}
+                    </button>
+                    <button
+                      className="ghost mini"
+                      title="Delete map"
+                      onClick={async () => {
+                        if (!window.confirm(`Delete "${m.name}"? Its tokens and fog go with it.`)) return;
+                        setError("");
+                        try {
+                          await api(`/api/campaigns/${campaignId}/maps/${m.id}`, { method: "DELETE" });
+                        } catch (e: any) {
+                          setError(e.message);
+                        }
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </section>
               {map && (
                 <section>
                   <h4>Custom token</h4>
