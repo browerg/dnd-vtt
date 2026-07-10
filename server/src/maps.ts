@@ -21,13 +21,16 @@ const MEDIA_TYPES: Record<string, string> = {
   "video/webm": ".webm",
 };
 
+// Animated battle maps commonly run 100-300MB, so be generous.
+export const MAX_UPLOAD_MB = 500;
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: uploadsDir,
     filename: (_req, file, cb) =>
       cb(null, `${randomBytes(12).toString("hex")}${MEDIA_TYPES[file.mimetype] ?? ".png"}`),
   }),
-  limits: { fileSize: 60 * 1024 * 1024 },
+  limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
   fileFilter: (_req, file, cb) => cb(null, file.mimetype in MEDIA_TYPES),
 });
 

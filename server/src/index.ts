@@ -6,7 +6,7 @@ import { campaignsRouter, invitesRouter } from "./campaigns.js";
 import { rollsRouter } from "./rolls.js";
 import { charactersRouter } from "./characters.js";
 import { chatRouter } from "./chat.js";
-import { mapsRouter } from "./maps.js";
+import { mapsRouter, MAX_UPLOAD_MB } from "./maps.js";
 import { combatRouter } from "./combat.js";
 import { uploadsDir } from "./db.js";
 import { setupSockets } from "./sockets.js";
@@ -26,6 +26,11 @@ app.use("/api/campaigns", campaignsRouter);
 app.use("/api/invites", invitesRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if ((err as any)?.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({
+      error: `That file is too big — the limit is ${MAX_UPLOAD_MB}MB.`,
+    });
+  }
   console.error(err);
   res.status(500).json({ error: "Something went wrong on the server." });
 });
