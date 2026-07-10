@@ -87,6 +87,14 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_handouts_campaign ON handouts (campaign_id);
 
+  CREATE TABLE IF NOT EXISTS spells (
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    name  TEXT NOT NULL,
+    level INTEGER NOT NULL DEFAULT 0,
+    data  TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_spells_name ON spells (name COLLATE NOCASE);
+
   CREATE TABLE IF NOT EXISTS monsters (
     id     INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL DEFAULT 'srd',
@@ -197,6 +205,21 @@ for (const ddl of [
     db.exec(ddl);
   } catch (e: any) {
     if (!String(e?.message).includes("duplicate column")) throw e;
+  }
+}
+
+// Seed the SRD spell list on first boot (319 spells, CC-BY-4.0 via Open5e).
+const spellCount = (db.prepare("SELECT COUNT(*) AS n FROM spells").get() as any).n;
+if (spellCount === 0) {
+  const srdPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "srd", "srd-spells.json");
+  try {
+    const raw = readFileSync(srdPath, "utf8").replace(/^﻿/, "");
+    const spells = JSON.parse(raw) as any[];
+    const insert = db.prepare("INSERT INTO spells (name, level, data) VALUES (?, ?, ?)");
+    for (const s of spells) insert.run(s.name, Number(s.level) || 0, JSON.stringify(s));
+    console.log(`seeded ${spells.length} SRD spells`);
+  } catch (e) {
+    console.warn("SRD spell seed skipped:", (e as Error).message);
   }
 }
 

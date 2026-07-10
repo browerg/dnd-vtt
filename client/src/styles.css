@@ -643,6 +643,11 @@ select {
 .trait-row { border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem; }
 .inline-num { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--muted); }
 .inline-num input { width: 5rem; }
+
+.spell-row { display: flex; flex-direction: column; gap: 0.15rem; }
+.spell-desc { margin-left: 3.8rem; }
+.spell-desc summary { cursor: pointer; }
+.spell-search { margin-top: 0.6rem; border-top: 1px solid var(--border); padding-top: 0.6rem; }
 .fog-overlay { position: absolute; inset: 0; pointer-events: none; }
 
 .token.current-turn {

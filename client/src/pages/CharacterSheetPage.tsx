@@ -27,6 +27,10 @@ export default function CharacterSheetPage() {
   const [character, setCharacter] = useState<Character | null>(null);
   const [canEdit, setCanEdit] = useState(false);
   const [rollMode, setRollMode] = useState<RollMode>("normal");
+  const [spellQuery, setSpellQuery] = useState("");
+  const [spellHits, setSpellHits] = useState<
+    { id: number; name: string; level: number; school: string; desc: string; higherLevel: string; castingTime: string; range: string; duration: string; concentration: boolean }[]
+  >([]);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
   const [error, setError] = useState("");
   const saveTimer = useRef<number>();
@@ -97,6 +101,19 @@ export default function CharacterSheetPage() {
     },
     [persist]
   );
+
+  useEffect(() => {
+    if (!spellQuery.trim()) {
+      setSpellHits([]);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      api<{ spells: typeof spellHits }>(`/api/spells?q=${encodeURIComponent(spellQuery)}`)
+        .then((r) => setSpellHits(r.spells))
+        .catch(() => {});
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [spellQuery]);
 
   const roll = async (formula: string, label: string) => {
     await api(`/api/campaigns/${campaignId}/rolls`, {
@@ -532,44 +549,87 @@ export default function CharacterSheetPage() {
               </label>
               <ul className="item-list">
                 {d.spells.map((spell) => (
-                  <li key={spell.id} className="item-row">
-                    <input
-                      type="number"
-                      className="item-qty"
-                      title="Spell level (0 = cantrip)"
-                      value={spell.level}
-                      disabled={ro}
-                      onChange={(e) =>
-                        update({
-                          spells: d.spells.map((s) =>
-                            s.id === spell.id ? { ...s, level: Math.min(9, Math.max(0, num(e.target.value))) } : s
-                          ),
-                        })
-                      }
-                    />
-                    <input
-                      className="item-name"
-                      placeholder="Spell name"
-                      value={spell.name}
-                      disabled={ro}
-                      onChange={(e) =>
-                        update({
-                          spells: d.spells.map((s) => (s.id === spell.id ? { ...s, name: e.target.value } : s)),
-                        })
-                      }
-                    />
-                    {!ro && (
-                      <button
-                        className="ghost mini"
-                        title="Remove"
-                        onClick={() => update({ spells: d.spells.filter((s) => s.id !== spell.id) })}
-                      >
-                        ✕
-                      </button>
+                  <li key={spell.id} className="spell-row">
+                    <div className="item-row">
+                      <input
+                        type="number"
+                        className="item-qty"
+                        title="Spell level (0 = cantrip)"
+                        value={spell.level}
+                        disabled={ro}
+                        onChange={(e) =>
+                          update({
+                            spells: d.spells.map((s) =>
+                              s.id === spell.id ? { ...s, level: Math.min(9, Math.max(0, num(e.target.value))) } : s
+                            ),
+                          })
+                        }
+                      />
+                      <input
+                        className="item-name"
+                        placeholder="Spell name"
+                        value={spell.name}
+                        disabled={ro}
+                        onChange={(e) =>
+                          update({
+                            spells: d.spells.map((s) => (s.id === spell.id ? { ...s, name: e.target.value } : s)),
+                          })
+                        }
+                      />
+                      {!ro && (
+                        <button
+                          className="ghost mini"
+                          title="Remove"
+                          onClick={() => update({ spells: d.spells.filter((s) => s.id !== spell.id) })}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                    {spell.notes && (
+                      <details className="spell-desc">
+                        <summary className="muted small">description</summary>
+                        <p className="muted small pre-wrap">{spell.notes}</p>
+                      </details>
                     )}
                   </li>
                 ))}
               </ul>
+              {!ro && (
+                <div className="stack spell-search">
+                  <input
+                    placeholder="Search SRD spells to add…"
+                    value={spellQuery}
+                    onChange={(e) => setSpellQuery(e.target.value)}
+                  />
+                  {spellHits.map((s) => (
+                    <div key={s.id} className="row-between sidebar-row">
+                      <span className="mon-hit">
+                        {s.name}{" "}
+                        <span className="muted small">
+                          {s.level === 0 ? "cantrip" : `lv ${s.level}`} · {s.school}
+                          {s.concentration ? " · conc." : ""}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        className="ghost mini"
+                        onClick={() => {
+                          const notes = `${s.castingTime} · ${s.range} · ${s.duration}\n\n${s.desc}${
+                            s.higherLevel ? `\n\nAt higher levels: ${s.higherLevel}` : ""
+                          }`;
+                          update({
+                            spells: [...d.spells, { id: crypto.randomUUID(), name: s.name, level: s.level, notes }],
+                          });
+                          setSpellQuery("");
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               {!ro && (
                 <button
                   className="ghost"
