@@ -38,6 +38,10 @@ character sheets, live dice, interactive battle maps, and DM tools.
   rolls and HP tracking. Codex on the campaign hub: quests (hideable), NPCs (with
   DM-only secrets), shared journal, handouts with controlled reveal. One-click
   campaign JSON export. Dice favorites (macro chips).
+- **Milestone 3.2** (2026-07-10): homebrew bestiary — per-campaign Bestiary page
+  with a full custom monster editor (traits, actions with rollable attacks),
+  clone-from-SRD, campaign-scoped visibility. Plus the SRD spellbook: 319 spells
+  searchable from the character sheet with one-click add and full descriptions.
 - **Next step:** 🎲 **game night test #1** — which needs **hosting** (friends can't
-  reach localhost). Then fix what hurt. Deferred: SRD spells, character creator,
-  portrait uploads, OAuth buttons, world map, wiki.
+  reach localhost). Then fix what hurt. Deferred: character creator, portrait
+  uploads, OAuth buttons, world map, wiki, measurement/drawing tools.
