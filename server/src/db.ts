@@ -3,8 +3,9 @@ import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
-const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data");
-mkdirSync(dataDir, { recursive: true });
+export const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data");
+export const uploadsDir = path.join(dataDir, "uploads");
+mkdirSync(uploadsDir, { recursive: true });
 
 export const db = new DatabaseSync(path.join(dataDir, "vtt.db"));
 
@@ -41,6 +42,31 @@ db.exec(`
     joined_at   TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (campaign_id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS maps (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    image_path  TEXT NOT NULL,
+    grid_size   INTEGER NOT NULL DEFAULT 70,
+    grid_on     INTEGER NOT NULL DEFAULT 1,
+    active      INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_maps_campaign ON maps (campaign_id);
+
+  CREATE TABLE IF NOT EXISTS tokens (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    map_id       INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+    character_id INTEGER REFERENCES characters(id) ON DELETE CASCADE,
+    name         TEXT NOT NULL,
+    color        TEXT NOT NULL DEFAULT '#c9a24b',
+    x            REAL NOT NULL DEFAULT 0,
+    y            REAL NOT NULL DEFAULT 0,
+    size         INTEGER NOT NULL DEFAULT 1,
+    created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_tokens_map ON tokens (map_id);
 
   CREATE TABLE IF NOT EXISTS messages (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,

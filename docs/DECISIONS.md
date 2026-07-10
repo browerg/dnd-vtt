@@ -78,4 +78,5 @@ customize skins/sounds; hand-roll physics only if the libraries disappoint.
 | 2026-07-09 | Audience: private tool for the friend group | Relaxed licensing posture; optimize for one table |
 | 2026-07-09 | Stack: TypeScript, React + Vite, Express + Socket.IO, SQLite (`node:sqlite`) | Best ecosystem for real-time canvas apps; zero-setup DB, Postgres later if needed |
 | 2026-07-09 | Email/password auth hand-rolled (scrypt + DB sessions); OAuth deferred | Google/Discord need API keys the user must create |
+| 2026-07-09 | Game night test moved to after Phase 2 core (map + tokens) | The group plays combat-heavy; theater-of-the-mind test wasn't realistic |
 | | *(name, hosting — pending)* | |

@@ -175,6 +175,9 @@ export default function CampaignPage() {
         </Link>
         <span className="brand">{detail.campaign.name}</span>
         <span className="spacer" />
+        <Link to={`/campaigns/${campaignId}/map`} className="ghost link">
+          🗺️ Battle map
+        </Link>
         <span className={`badge role-${detail.yourRole}`}>{detail.yourRole.toUpperCase()}</span>
       </header>
       <main className="content columns">

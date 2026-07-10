@@ -1,6 +1,7 @@
 import type { Server, Socket } from "socket.io";
 import { parseCookies, userForToken, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
+import { moveToken } from "./maps.js";
 
 // The real-time backbone. Every live feature (dice feed, chat, tokens, initiative)
 // rides on campaign rooms; presence is derived from room membership.
@@ -23,6 +24,24 @@ export function setupSockets(io: Server) {
       if (!memberRole(Number(campaignId), user.id)) return;
       socket.join(room(Number(campaignId)));
       broadcastPresence(io, Number(campaignId));
+    });
+
+    socket.on("token:move", (msg: { campaignId: number; tokenId: number; x: number; y: number }) => {
+      const campaignId = Number(msg?.campaignId);
+      const moved = moveToken(user, campaignId, Number(msg?.tokenId), Number(msg?.x), Number(msg?.y));
+      if (moved) io.to(room(campaignId)).emit("token:update", { campaignId, token: moved });
+    });
+
+    socket.on("map:ping", (msg: { campaignId: number; x: number; y: number }) => {
+      const campaignId = Number(msg?.campaignId);
+      const role = memberRole(campaignId, user.id);
+      if (!role || !Number.isFinite(msg?.x) || !Number.isFinite(msg?.y)) return;
+      io.to(room(campaignId)).emit("map:ping", {
+        campaignId,
+        x: msg.x,
+        y: msg.y,
+        userName: user.display_name,
+      });
     });
 
     socket.on("campaign:leave", (campaignId: number) => {

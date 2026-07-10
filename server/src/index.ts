@@ -6,6 +6,8 @@ import { campaignsRouter, invitesRouter } from "./campaigns.js";
 import { rollsRouter } from "./rolls.js";
 import { charactersRouter } from "./characters.js";
 import { chatRouter } from "./chat.js";
+import { mapsRouter } from "./maps.js";
+import { uploadsDir } from "./db.js";
 import { setupSockets } from "./sockets.js";
 import { setIo } from "./realtime.js";
 
@@ -16,6 +18,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/campaigns", rollsRouter);
 app.use("/api/campaigns", charactersRouter);
 app.use("/api/campaigns", chatRouter);
+app.use("/api/campaigns", mapsRouter);
+app.use("/uploads", express.static(uploadsDir, { maxAge: "7d", immutable: true }));
 app.use("/api/campaigns", campaignsRouter);
 app.use("/api/invites", invitesRouter);
 

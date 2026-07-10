@@ -31,7 +31,10 @@ character sheets, live dice, interactive battle maps, and DM tools.
   SQLite via Node's built-in `node:sqlite` (swap for Postgres later if needed).
 - **Run it:** `npm run dev:server` and `npm run dev:client` from the repo root, then
   open http://localhost:5173.
-- **Next step:** 🎲 **Game night test #1** — run a real theater-of-the-mind session
-  with the group. Fix what hurt, then start Phase 2 (battle map). Deferred: SRD
-  spell/monster data import, portrait uploads (needs file storage), Google/Discord
-  OAuth buttons (needs API keys).
+- **Phase 2 in progress** — Milestone 2.1 (battle map core) done 2026-07-09: map
+  image uploads, square grid with DM-configurable size, tokens (from characters with
+  live HP bars, or DM custom tokens), drag with grid snap synced live over sockets,
+  pan/zoom, player pings, owner-or-DM movement permissions.
+- **Next step:** Milestone 2.2 — initiative tracker + fog of war, then 🎲 **game
+  night test #1**. Deferred: SRD data import, portrait uploads, OAuth buttons,
+  hosting (blocks game night — friends can't reach localhost).

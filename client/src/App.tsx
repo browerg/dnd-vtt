@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CampaignPage from "./pages/CampaignPage";
 import CharacterSheetPage from "./pages/CharacterSheetPage";
+import MapPage from "./pages/MapPage";
 import JoinPage from "./pages/JoinPage";
 
 interface AuthState {
@@ -47,6 +48,7 @@ export default function App() {
           path="/campaigns/:id/characters/:charId"
           element={user ? <CharacterSheetPage /> : <Navigate to="/login" />}
         />
+        <Route path="/campaigns/:id/map" element={user ? <MapPage /> : <Navigate to="/login" />} />
         <Route path="/join/:code" element={<JoinPage />} />
       </Routes>
     </AuthContext.Provider>

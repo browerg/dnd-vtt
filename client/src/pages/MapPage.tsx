@@ -1,0 +1,480 @@
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Link, useParams } from "react-router-dom";
+import { io, type Socket } from "socket.io-client";
+import { api } from "../api";
+import { useAuth } from "../App";
+import type { CharacterSummary } from "../sheet";
+
+interface MapInfo {
+  id: number;
+  campaignId: number;
+  name: string;
+  imageUrl: string;
+  gridSize: number;
+  gridOn: boolean;
+  active: boolean;
+}
+
+interface Token {
+  id: number;
+  mapId: number;
+  characterId: number | null;
+  ownerId: number | null;
+  name: string;
+  color: string;
+  x: number;
+  y: number;
+  size: number;
+  hp: number | null;
+  maxHp: number | null;
+}
+
+interface Ping {
+  key: number;
+  x: number;
+  y: number;
+  userName: string;
+}
+
+interface View {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+export default function MapPage() {
+  const { id } = useParams();
+  const campaignId = Number(id);
+  const { user } = useAuth();
+
+  const [map, setMap] = useState<MapInfo | null>(null);
+  const [maps, setMaps] = useState<MapInfo[]>([]);
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [characters, setCharacters] = useState<CharacterSummary[]>([]);
+  const [role, setRole] = useState("");
+  const [pings, setPings] = useState<Ping[]>([]);
+  const [view, setView] = useState<View>({ x: 0, y: 0, scale: 0.8 });
+  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
+  const [customName, setCustomName] = useState("");
+  const [customColor, setCustomColor] = useState("#b04545");
+  const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
+
+  const socketRef = useRef<Socket | null>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const dragRef = useRef<
+    | { kind: "pan"; startX: number; startY: number; viewX: number; viewY: number }
+    | { kind: "token"; tokenId: number; offsetX: number; offsetY: number; moved: boolean }
+    | null
+  >(null);
+  const lastEmit = useRef(0);
+  const pingKey = useRef(0);
+
+  const isDM = role === "dm" || role === "co-dm";
+
+  const loadAll = useCallback(async () => {
+    try {
+      const [active, list, detail, chars] = await Promise.all([
+        api<{ map: MapInfo | null; tokens: Token[] }>(`/api/campaigns/${campaignId}/maps/active`),
+        api<{ maps: MapInfo[] }>(`/api/campaigns/${campaignId}/maps`),
+        api<{ yourRole: string }>(`/api/campaigns/${campaignId}`),
+        api<{ characters: CharacterSummary[] }>(`/api/campaigns/${campaignId}/characters`),
+      ]);
+      setMap(active.map);
+      setTokens(active.tokens);
+      setMaps(list.maps);
+      setRole(detail.yourRole);
+      setCharacters(chars.characters);
+      setLoaded(true);
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }, [campaignId]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  useEffect(() => {
+    const socket = io();
+    socketRef.current = socket;
+    socket.on("connect", () => socket.emit("campaign:join", campaignId));
+    socket.on("map:update", (m: { campaignId: number }) => {
+      if (m.campaignId === campaignId) loadAll();
+    });
+    socket.on("token:create", (m: { campaignId: number; token: Token }) => {
+      if (m.campaignId === campaignId) setTokens((prev) => [...prev.filter((t) => t.id !== m.token.id), m.token]);
+    });
+    socket.on("token:update", (m: { campaignId: number; token: Token }) => {
+      if (m.campaignId !== campaignId) return;
+      // Ignore echoes of a token we're mid-drag on; our pointer is the truth.
+      const d = dragRef.current;
+      if (d?.kind === "token" && d.tokenId === m.token.id) return;
+      setTokens((prev) => prev.map((t) => (t.id === m.token.id ? m.token : t)));
+    });
+    socket.on("token:delete", (m: { campaignId: number; tokenId: number }) => {
+      if (m.campaignId === campaignId) setTokens((prev) => prev.filter((t) => t.id !== m.tokenId));
+    });
+    socket.on("character:update", () => loadAll());
+    socket.on("map:ping", (m: { campaignId: number; x: number; y: number; userName: string }) => {
+      if (m.campaignId !== campaignId) return;
+      const ping: Ping = { key: ++pingKey.current, x: m.x, y: m.y, userName: m.userName };
+      setPings((prev) => [...prev, ping]);
+      setTimeout(() => setPings((prev) => prev.filter((p) => p.key !== ping.key)), 2200);
+    });
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [campaignId, loadAll]);
+
+  // ---- coordinate helpers ----
+  const toMapCoords = (clientX: number, clientY: number) => {
+    const rect = viewportRef.current!.getBoundingClientRect();
+    const v = viewRef.current;
+    return { x: (clientX - rect.left - v.x) / v.scale, y: (clientY - rect.top - v.y) / v.scale };
+  };
+
+  const canMove = (t: Token) => isDM || (t.ownerId !== null && t.ownerId === user?.id);
+
+  // ---- pointer handlers ----
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    const tokenEl = (e.target as Element).closest("[data-token-id]");
+    if (tokenEl) {
+      const tokenId = Number(tokenEl.getAttribute("data-token-id"));
+      const token = tokens.find((t) => t.id === tokenId);
+      if (token && canMove(token)) {
+        const p = toMapCoords(e.clientX, e.clientY);
+        dragRef.current = {
+          kind: "token",
+          tokenId,
+          offsetX: p.x - token.x,
+          offsetY: p.y - token.y,
+          moved: false,
+        };
+        return;
+      }
+    }
+    dragRef.current = {
+      kind: "pan",
+      startX: e.clientX,
+      startY: e.clientY,
+      viewX: view.x,
+      viewY: view.y,
+    };
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = dragRef.current;
+    if (!d) return;
+    if (d.kind === "pan") {
+      setView((v) => ({ ...v, x: d.viewX + e.clientX - d.startX, y: d.viewY + e.clientY - d.startY }));
+      return;
+    }
+    d.moved = true;
+    const p = toMapCoords(e.clientX, e.clientY);
+    const x = p.x - d.offsetX;
+    const y = p.y - d.offsetY;
+    setTokens((prev) => prev.map((t) => (t.id === d.tokenId ? { ...t, x, y } : t)));
+    const now = performance.now();
+    if (now - lastEmit.current > 50) {
+      lastEmit.current = now;
+      socketRef.current?.emit("token:move", { campaignId, tokenId: d.tokenId, x, y });
+    }
+  };
+
+  const onPointerUp = () => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    if (!d || d.kind !== "token" || !map) return;
+    setTokens((prev) =>
+      prev.map((t) => {
+        if (t.id !== d.tokenId) return t;
+        let { x, y } = t;
+        if (map.gridOn && d.moved) {
+          // Snap the token's top-left corner to the nearest cell.
+          const g = map.gridSize;
+          const half = (t.size * g) / 2;
+          x = Math.round((t.x - half) / g) * g + half;
+          y = Math.round((t.y - half) / g) * g + half;
+        }
+        socketRef.current?.emit("token:move", { campaignId, tokenId: t.id, x, y });
+        return { ...t, x, y };
+      })
+    );
+  };
+
+  const onWheel = (e: React.WheelEvent) => {
+    const rect = viewportRef.current!.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    setView((v) => {
+      const scale = Math.min(3, Math.max(0.15, v.scale * (e.deltaY < 0 ? 1.12 : 0.89)));
+      const k = scale / v.scale;
+      return { scale, x: mx - (mx - v.x) * k, y: my - (my - v.y) * k };
+    });
+  };
+
+  const onDoubleClick = (e: React.MouseEvent) => {
+    const p = toMapCoords(e.clientX, e.clientY);
+    socketRef.current?.emit("map:ping", { campaignId, x: p.x, y: p.y });
+  };
+
+  // ---- DM actions ----
+  const uploadMap = async (e: FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const file = (form.elements.namedItem("image") as HTMLInputElement).files?.[0];
+    const name = (form.elements.namedItem("mapname") as HTMLInputElement).value;
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("image", file);
+    fd.append("name", name || file.name.replace(/\.[^.]+$/, ""));
+    setError("");
+    const res = await fetch(`/api/campaigns/${campaignId}/maps`, { method: "POST", body: fd });
+    if (!res.ok) setError((await res.json()).error ?? "Upload failed");
+    form.reset();
+  };
+
+  const patchMap = (body: Record<string, unknown>) =>
+    map && api(`/api/campaigns/${campaignId}/maps/${map.id}`, { method: "PUT", body: JSON.stringify(body) });
+
+  const placeCharacter = async (characterId: number) => {
+    if (!map) return;
+    setError("");
+    try {
+      await api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens`, {
+        method: "POST",
+        body: JSON.stringify({ characterId }),
+      });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const placeCustom = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!map || !customName.trim()) return;
+    await api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens`, {
+      method: "POST",
+      body: JSON.stringify({ name: customName, color: customColor }),
+    });
+    setCustomName("");
+  };
+
+  const removeToken = (tokenId: number) =>
+    map && api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens/${tokenId}`, { method: "DELETE" });
+
+  if (error && !loaded) return <div className="page-center error">{error}</div>;
+  if (!loaded) return <div className="page-center muted">Loading…</div>;
+
+  const g = map?.gridSize ?? 70;
+
+  return (
+    <div className="shell map-shell">
+      <header className="topbar">
+        <Link to={`/campaigns/${campaignId}`} className="ghost link">
+          ← Campaign
+        </Link>
+        <span className="brand">{map ? map.name : "Battle map"}</span>
+        <span className="spacer" />
+        {isDM && map && (
+          <>
+            <label className="grid-toggle">
+              <input type="checkbox" checked={map.gridOn} onChange={(e) => patchMap({ gridOn: e.target.checked })} />
+              Grid
+            </label>
+            <input
+              className="grid-size"
+              type="number"
+              title="Grid cell size (px)"
+              value={map.gridSize}
+              onChange={(e) => {
+                const gridSize = parseInt(e.target.value, 10);
+                if (gridSize >= 10) patchMap({ gridSize });
+              }}
+            />
+            <select
+              value={map.id}
+              onChange={(e) =>
+                api(`/api/campaigns/${campaignId}/maps/${e.target.value}`, {
+                  method: "PUT",
+                  body: JSON.stringify({ active: true }),
+                })
+              }
+            >
+              {maps.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+        <span className="muted zoom-label">{Math.round(view.scale * 100)}%</span>
+      </header>
+
+      <div className="map-layout">
+        <div
+          ref={viewportRef}
+          className="map-viewport"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+          onWheel={onWheel}
+          onDoubleClick={onDoubleClick}
+        >
+          {!map ? (
+            <div className="page-center muted">
+              {isDM ? "Upload a map to get started →" : "The DM hasn't set a map yet."}
+            </div>
+          ) : (
+            <div
+              className="map-world"
+              style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
+            >
+              <img
+                src={map.imageUrl}
+                alt={map.name}
+                draggable={false}
+                onLoad={(e) =>
+                  setImgSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
+                }
+              />
+              {map.gridOn && imgSize.w > 0 && (
+                <svg className="grid-overlay" width={imgSize.w} height={imgSize.h}>
+                  <defs>
+                    <pattern id="grid" width={g} height={g} patternUnits="userSpaceOnUse">
+                      <path d={`M ${g} 0 L 0 0 0 ${g}`} fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="1" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#grid)" />
+                </svg>
+              )}
+              {tokens.map((t) => {
+                const px = t.size * g;
+                return (
+                  <div
+                    key={t.id}
+                    data-token-id={t.id}
+                    className={`token${canMove(t) ? " movable" : ""}`}
+                    style={{
+                      left: t.x - px / 2,
+                      top: t.y - px / 2,
+                      width: px,
+                      height: px,
+                      background: t.color,
+                    }}
+                    title={t.name}
+                  >
+                    <span className="token-initials">
+                      {t.name
+                        .split(/\s+/)
+                        .slice(0, 2)
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()}
+                    </span>
+                    <span className="token-name">{t.name}</span>
+                    {t.maxHp != null && t.hp != null && (
+                      <span className="token-hp">
+                        <span
+                          className="token-hp-fill"
+                          style={{
+                            width: `${Math.max(0, Math.min(100, (t.hp / Math.max(1, t.maxHp)) * 100))}%`,
+                          }}
+                        />
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              {pings.map((p) => (
+                <div key={p.key} className="ping" style={{ left: p.x, top: p.y }}>
+                  <span className="ping-ring" />
+                  <span className="ping-name">{p.userName}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <aside className="map-sidebar">
+          {error && <div className="error">{error}</div>}
+          <section>
+            <h4>Characters</h4>
+            {characters.map((c) => {
+              const onMap = tokens.some((t) => t.characterId === c.id);
+              const mine = c.ownerId === user?.id;
+              return (
+                <div key={c.id} className="row-between sidebar-row">
+                  <span className={onMap ? "" : "muted"}>{c.name}</span>
+                  {map && (isDM || mine) && !onMap && (
+                    <button className="ghost mini" onClick={() => placeCharacter(c.id)}>
+                      Place
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </section>
+          <section>
+            <h4>Tokens on map</h4>
+            {tokens.map((t) => (
+              <div key={t.id} className="row-between sidebar-row">
+                <span>
+                  <span className="swatch" style={{ background: t.color }} />
+                  {t.name}
+                </span>
+                {(isDM || canMove(t)) && (
+                  <button className="ghost mini" onClick={() => removeToken(t.id)}>
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </section>
+          {isDM && (
+            <>
+              {map && (
+                <section>
+                  <h4>Custom token</h4>
+                  <form onSubmit={placeCustom} className="stack">
+                    <div className="row-between">
+                      <input
+                        placeholder="Goblin, chest, door…"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                      />
+                      <input
+                        type="color"
+                        className="color-pick"
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                      />
+                    </div>
+                    <button className="ghost">Place token</button>
+                  </form>
+                </section>
+              )}
+              <section>
+                <h4>Upload map</h4>
+                <form onSubmit={uploadMap} className="stack">
+                  <input name="mapname" placeholder="Map name" />
+                  <input name="image" type="file" accept="image/png,image/jpeg,image/webp" required />
+                  <button className="ghost">Upload</button>
+                </form>
+              </section>
+            </>
+          )}
+          <p className="muted map-hint">Drag to pan · scroll to zoom · double-click to ping</p>
+        </aside>
+      </div>
+    </div>
+  );
+}
