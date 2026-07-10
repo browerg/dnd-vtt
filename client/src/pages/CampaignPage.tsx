@@ -270,6 +270,9 @@ export default function CampaignPage() {
                 <button className="primary" onClick={createInvite}>
                   Create invite link
                 </button>
+                <a className="ghost link export-link" href={`/api/campaigns/${campaignId}/export`} download>
+                  ⬇ Download campaign backup (JSON)
+                </a>
                 {inviteUrl && (
                   <div className="row-between invite-url">
                     <code>{inviteUrl}</code>

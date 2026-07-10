@@ -601,6 +601,7 @@ select {
 .handout-card img:hover { border-color: var(--accent); }
 .handout-pdf { font-size: 2.5rem; display: block; text-align: center; padding: 0.8rem 0; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; }
 .handout-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.export-link { text-align: center; font-size: 0.85rem; }
 .fog-overlay { position: absolute; inset: 0; pointer-events: none; }
 
 .token.current-turn {
