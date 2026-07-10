@@ -11,20 +11,24 @@ import { getIo } from "./realtime.js";
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 
-const IMAGE_TYPES: Record<string, string> = {
+// Static images plus looping video maps (animated water, torchlight, the
+// TV-table stuff) — the client renders .mp4/.webm with a <video> element.
+const MEDIA_TYPES: Record<string, string> = {
   "image/png": ".png",
   "image/jpeg": ".jpg",
   "image/webp": ".webp",
+  "video/mp4": ".mp4",
+  "video/webm": ".webm",
 };
 
 const upload = multer({
   storage: multer.diskStorage({
     destination: uploadsDir,
     filename: (_req, file, cb) =>
-      cb(null, `${randomBytes(12).toString("hex")}${IMAGE_TYPES[file.mimetype] ?? ".png"}`),
+      cb(null, `${randomBytes(12).toString("hex")}${MEDIA_TYPES[file.mimetype] ?? ".png"}`),
   }),
-  limits: { fileSize: 15 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => cb(null, file.mimetype in IMAGE_TYPES),
+  limits: { fileSize: 60 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, file.mimetype in MEDIA_TYPES),
 });
 
 export interface TokenPayload {
@@ -82,9 +86,12 @@ const mapRow = (r: any) => ({
   campaignId: r.campaign_id,
   name: r.name,
   imageUrl: `/uploads/${path.basename(r.image_path)}`,
+  isVideo: /\.(mp4|webm)$/i.test(r.image_path),
   gridSize: r.grid_size,
   gridOn: !!r.grid_on,
   active: !!r.active,
+  fogOn: !!r.fog_on,
+  fogCells: JSON.parse(r.fog_data ?? "[]") as string[],
 });
 
 export const mapsRouter = Router();
@@ -150,6 +157,34 @@ mapsRouter.put("/:id/maps/:mapId", (req, res) => {
     db.prepare("UPDATE maps SET active = 1 WHERE id = ?").run(map.id);
   }
   broadcastMapChange(campaignId);
+  res.json({ ok: true });
+});
+
+mapsRouter.put("/:id/maps/:mapId/fog", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM controls the fog." });
+  const map = db
+    .prepare("SELECT * FROM maps WHERE id = ? AND campaign_id = ?")
+    .get(Number(req.params.mapId), campaignId) as any;
+  if (!map) return res.status(404).json({ error: "Map not found." });
+
+  const b = req.body ?? {};
+  const fogOn = typeof b.fogOn === "boolean" ? (b.fogOn ? 1 : 0) : map.fog_on;
+  let fogData = map.fog_data;
+  if (Array.isArray(b.cells)) {
+    const cells = b.cells.filter((c: unknown) => typeof c === "string" && /^-?\d+,-?\d+$/.test(c));
+    if (cells.length > 100_000) return res.status(400).json({ error: "Too many fog cells." });
+    fogData = JSON.stringify(cells);
+  }
+  db.prepare("UPDATE maps SET fog_on = ?, fog_data = ? WHERE id = ?").run(fogOn, fogData, map.id);
+  getIo().to(`campaign:${campaignId}`).emit("fog:update", {
+    campaignId,
+    mapId: map.id,
+    fogOn: !!fogOn,
+    fogCells: JSON.parse(fogData),
+  });
   res.json({ ok: true });
 });
 

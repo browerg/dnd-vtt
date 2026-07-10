@@ -10,10 +10,29 @@ interface MapInfo {
   campaignId: number;
   name: string;
   imageUrl: string;
+  isVideo: boolean;
   gridSize: number;
   gridOn: boolean;
   active: boolean;
+  fogOn: boolean;
+  fogCells: string[];
 }
+
+interface Combatant {
+  id: number;
+  tokenId: number | null;
+  name: string;
+  initiative: number;
+}
+
+interface CombatState {
+  active: boolean;
+  round: number;
+  turn: number;
+  combatants: Combatant[];
+}
+
+type Tool = "move" | "reveal" | "hide";
 
 interface Token {
   id: number;
@@ -59,6 +78,13 @@ export default function MapPage() {
   const [customColor, setCustomColor] = useState("#b04545");
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [tool, setTool] = useState<Tool>("move");
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [combat, setCombat] = useState<CombatState>({ active: false, round: 0, turn: 0, combatants: [] });
+  const [combatantPick, setCombatantPick] = useState("");
+  const revealedRef = useRef(revealed);
+  revealedRef.current = revealed;
+  const fogSaveTimer = useRef<number>();
 
   const socketRef = useRef<Socket | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -67,6 +93,7 @@ export default function MapPage() {
   const dragRef = useRef<
     | { kind: "pan"; startX: number; startY: number; viewX: number; viewY: number }
     | { kind: "token"; tokenId: number; offsetX: number; offsetY: number; moved: boolean }
+    | { kind: "fog"; reveal: boolean }
     | null
   >(null);
   const lastEmit = useRef(0);
@@ -76,17 +103,20 @@ export default function MapPage() {
 
   const loadAll = useCallback(async () => {
     try {
-      const [active, list, detail, chars] = await Promise.all([
+      const [active, list, detail, chars, combatRes] = await Promise.all([
         api<{ map: MapInfo | null; tokens: Token[] }>(`/api/campaigns/${campaignId}/maps/active`),
         api<{ maps: MapInfo[] }>(`/api/campaigns/${campaignId}/maps`),
         api<{ yourRole: string }>(`/api/campaigns/${campaignId}`),
         api<{ characters: CharacterSummary[] }>(`/api/campaigns/${campaignId}/characters`),
+        api<{ state: CombatState }>(`/api/campaigns/${campaignId}/combat`),
       ]);
       setMap(active.map);
       setTokens(active.tokens);
       setMaps(list.maps);
       setRole(detail.yourRole);
       setCharacters(chars.characters);
+      setCombat(combatRes.state);
+      setRevealed(new Set(active.map?.fogCells ?? []));
       setLoaded(true);
     } catch (e: any) {
       setError(e.message);
@@ -118,6 +148,17 @@ export default function MapPage() {
       if (m.campaignId === campaignId) setTokens((prev) => prev.filter((t) => t.id !== m.tokenId));
     });
     socket.on("character:update", () => loadAll());
+    socket.on("combat:update", (m: { campaignId: number; state: CombatState }) => {
+      if (m.campaignId === campaignId) setCombat(m.state);
+    });
+    socket.on(
+      "fog:update",
+      (m: { campaignId: number; mapId: number; fogOn: boolean; fogCells: string[] }) => {
+        if (m.campaignId !== campaignId) return;
+        setMap((prev) => (prev && prev.id === m.mapId ? { ...prev, fogOn: m.fogOn } : prev));
+        setRevealed(new Set(m.fogCells));
+      }
+    );
     socket.on("map:ping", (m: { campaignId: number; x: number; y: number; userName: string }) => {
       if (m.campaignId !== campaignId) return;
       const ping: Ping = { key: ++pingKey.current, x: m.x, y: m.y, userName: m.userName };
@@ -139,10 +180,71 @@ export default function MapPage() {
 
   const canMove = (t: Token) => isDM || (t.ownerId !== null && t.ownerId === user?.id);
 
+  // ---- fog helpers ----
+  const pushFog = useCallback(
+    (cells: Set<string>) => {
+      if (!map) return;
+      window.clearTimeout(fogSaveTimer.current);
+      fogSaveTimer.current = window.setTimeout(() => {
+        api(`/api/campaigns/${campaignId}/maps/${map.id}/fog`, {
+          method: "PUT",
+          body: JSON.stringify({ cells: [...cells] }),
+        }).catch(() => {});
+      }, 350);
+    },
+    [campaignId, map]
+  );
+
+  const paintFog = (clientX: number, clientY: number, reveal: boolean) => {
+    if (!map) return;
+    const p = toMapCoords(clientX, clientY);
+    const g = map.gridSize;
+    const key = `${Math.floor(p.x / g)},${Math.floor(p.y / g)}`;
+    setRevealed((prev) => {
+      if (prev.has(key) === reveal) return prev;
+      const next = new Set(prev);
+      if (reveal) next.add(key);
+      else next.delete(key);
+      pushFog(next);
+      return next;
+    });
+  };
+
+  const setFog = (body: Record<string, unknown>) =>
+    map &&
+    api(`/api/campaigns/${campaignId}/maps/${map.id}/fog`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+
+  const revealAll = () => {
+    if (!map || imgSize.w === 0) return;
+    const g = map.gridSize;
+    const all = new Set<string>();
+    for (let cx = 0; cx < Math.ceil(imgSize.w / g); cx++)
+      for (let cy = 0; cy < Math.ceil(imgSize.h / g); cy++) all.add(`${cx},${cy}`);
+    setRevealed(all);
+    setFog({ cells: [...all] });
+  };
+
+  const hideAll = () => {
+    setRevealed(new Set());
+    setFog({ cells: [] });
+  };
+
   // ---- pointer handlers ----
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    (e.target as Element).setPointerCapture?.(e.pointerId);
+    try {
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+    } catch {
+      // stale/unknown pointer id — capture is best-effort, dragging still works
+    }
+    if (isDM && tool !== "move" && map?.fogOn) {
+      dragRef.current = { kind: "fog", reveal: tool === "reveal" };
+      paintFog(e.clientX, e.clientY, tool === "reveal");
+      return;
+    }
     const tokenEl = (e.target as Element).closest("[data-token-id]");
     if (tokenEl) {
       const tokenId = Number(tokenEl.getAttribute("data-token-id"));
@@ -171,6 +273,10 @@ export default function MapPage() {
   const onPointerMove = (e: React.PointerEvent) => {
     const d = dragRef.current;
     if (!d) return;
+    if (d.kind === "fog") {
+      paintFog(e.clientX, e.clientY, d.reveal);
+      return;
+    }
     if (d.kind === "pan") {
       setView((v) => ({ ...v, x: d.viewX + e.clientX - d.startX, y: d.viewY + e.clientY - d.startY }));
       return;
@@ -273,6 +379,18 @@ export default function MapPage() {
   if (!loaded) return <div className="page-center muted">Loading…</div>;
 
   const g = map?.gridSize ?? 70;
+  const currentCombatant = combat.active ? combat.combatants[combat.turn] : undefined;
+
+  let fogPath = "";
+  if (map?.fogOn && imgSize.w > 0) {
+    const cols = Math.ceil(imgSize.w / g);
+    const rows = Math.ceil(imgSize.h / g);
+    for (let cx = 0; cx < cols; cx++) {
+      for (let cy = 0; cy < rows; cy++) {
+        if (!revealed.has(`${cx},${cy}`)) fogPath += `M${cx * g} ${cy * g}h${g}v${g}h${-g}z`;
+      }
+    }
+  }
 
   return (
     <div className="shell map-shell">
@@ -284,6 +402,40 @@ export default function MapPage() {
         <span className="spacer" />
         {isDM && map && (
           <>
+            <label className="grid-toggle">
+              <input
+                type="checkbox"
+                checked={map.fogOn}
+                onChange={(e) => {
+                  setMap((prev) => (prev ? { ...prev, fogOn: e.target.checked } : prev));
+                  setFog({ fogOn: e.target.checked });
+                }}
+              />
+              Fog
+            </label>
+            {map.fogOn && (
+              <div className="seg" role="group" aria-label="Fog tool">
+                {(["move", "reveal", "hide"] as Tool[]).map((t) => (
+                  <button
+                    key={t}
+                    className={tool === t ? "seg-btn active" : "seg-btn"}
+                    onClick={() => setTool(t)}
+                  >
+                    {t === "move" ? "Move" : t === "reveal" ? "Reveal" : "Hide"}
+                  </button>
+                ))}
+              </div>
+            )}
+            {map.fogOn && (
+              <>
+                <button className="ghost mini" onClick={revealAll}>
+                  Reveal all
+                </button>
+                <button className="ghost mini" onClick={hideAll}>
+                  Hide all
+                </button>
+              </>
+            )}
             <label className="grid-toggle">
               <input type="checkbox" checked={map.gridOn} onChange={(e) => patchMap({ gridOn: e.target.checked })} />
               Grid
@@ -338,14 +490,27 @@ export default function MapPage() {
               className="map-world"
               style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
             >
-              <img
-                src={map.imageUrl}
-                alt={map.name}
-                draggable={false}
-                onLoad={(e) =>
-                  setImgSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
-                }
-              />
+              {map.isVideo ? (
+                <video
+                  src={map.imageUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  onLoadedMetadata={(e) =>
+                    setImgSize({ w: e.currentTarget.videoWidth, h: e.currentTarget.videoHeight })
+                  }
+                />
+              ) : (
+                <img
+                  src={map.imageUrl}
+                  alt={map.name}
+                  draggable={false}
+                  onLoad={(e) =>
+                    setImgSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
+                  }
+                />
+              )}
               {map.gridOn && imgSize.w > 0 && (
                 <svg className="grid-overlay" width={imgSize.w} height={imgSize.h}>
                   <defs>
@@ -362,7 +527,9 @@ export default function MapPage() {
                   <div
                     key={t.id}
                     data-token-id={t.id}
-                    className={`token${canMove(t) ? " movable" : ""}`}
+                    className={`token${canMove(t) ? " movable" : ""}${
+                      currentCombatant?.tokenId === t.id ? " current-turn" : ""
+                    }`}
                     style={{
                       left: t.x - px / 2,
                       top: t.y - px / 2,
@@ -394,6 +561,11 @@ export default function MapPage() {
                   </div>
                 );
               })}
+              {map.fogOn && fogPath && (
+                <svg className="fog-overlay" width={imgSize.w} height={imgSize.h}>
+                  <path d={fogPath} fill={isDM ? "rgba(8,6,14,0.45)" : "rgba(8,6,14,0.97)"} />
+                </svg>
+              )}
               {pings.map((p) => (
                 <div key={p.key} className="ping" style={{ left: p.x, top: p.y }}>
                   <span className="ping-ring" />
@@ -406,6 +578,96 @@ export default function MapPage() {
 
         <aside className="map-sidebar">
           {error && <div className="error">{error}</div>}
+          <section>
+            <h4>{combat.active ? `Combat — round ${combat.round}` : "Initiative"}</h4>
+            {combat.combatants.map((c, i) => (
+              <div
+                key={c.id}
+                className={`row-between sidebar-row${combat.active && i === combat.turn ? " current-row" : ""}`}
+              >
+                <span>
+                  {combat.active && i === combat.turn ? "▶ " : ""}
+                  {c.name}
+                </span>
+                <span className="init-badge">
+                  {c.initiative}
+                  {isDM && (
+                    <button
+                      className="ghost mini"
+                      title="Remove"
+                      onClick={() =>
+                        api(`/api/campaigns/${campaignId}/combat/combatants/${c.id}`, { method: "DELETE" })
+                      }
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              </div>
+            ))}
+            {combat.combatants.length === 0 && <p className="muted small">No combatants yet.</p>}
+            {isDM && (
+              <div className="stack combat-controls">
+                {!combat.active ? (
+                  <>
+                    <div className="row-between">
+                      <select value={combatantPick} onChange={(e) => setCombatantPick(e.target.value)}>
+                        <option value="">Add from map…</option>
+                        {tokens
+                          .filter((t) => !combat.combatants.some((c) => c.tokenId === t.id))
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        className="ghost mini"
+                        disabled={!combatantPick}
+                        onClick={async () => {
+                          setError("");
+                          try {
+                            await api(`/api/campaigns/${campaignId}/combat/combatants`, {
+                              method: "POST",
+                              body: JSON.stringify({ tokenId: Number(combatantPick) }),
+                            });
+                            setCombatantPick("");
+                          } catch (e: any) {
+                            setError(e.message);
+                          }
+                        }}
+                      >
+                        Roll & add
+                      </button>
+                    </div>
+                    {combat.combatants.length > 0 && (
+                      <button
+                        className="primary"
+                        onClick={() => api(`/api/campaigns/${campaignId}/combat/start`, { method: "POST" })}
+                      >
+                        ⚔️ Start combat
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="row-between">
+                    <button
+                      className="primary"
+                      onClick={() => api(`/api/campaigns/${campaignId}/combat/next`, { method: "POST" })}
+                    >
+                      Next turn →
+                    </button>
+                    <button
+                      className="ghost"
+                      onClick={() => api(`/api/campaigns/${campaignId}/combat/end`, { method: "POST" })}
+                    >
+                      End
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
           <section>
             <h4>Characters</h4>
             {characters.map((c) => {

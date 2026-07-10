@@ -520,3 +520,17 @@ select {
 .grid-toggle { display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: var(--muted); }
 .grid-size { width: 4.2rem; }
 .zoom-label { font-size: 0.85rem; min-width: 3.2rem; text-align: right; }
+
+.map-world video { display: block; user-select: none; }
+.fog-overlay { position: absolute; inset: 0; pointer-events: none; }
+
+.token.current-turn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent), 0 0 18px 4px rgba(201, 162, 75, 0.65);
+}
+
+.current-row { color: var(--accent); font-weight: 700; }
+.init-badge { display: flex; align-items: center; gap: 0.3rem; font-weight: 700; color: var(--accent); }
+.combat-controls { margin-top: 0.5rem; }
+.combat-controls select { flex: 1; min-width: 0; }
+.small { font-size: 0.85rem; }

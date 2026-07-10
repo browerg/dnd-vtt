@@ -45,6 +45,50 @@ const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 export const rollsRouter = Router();
 rollsRouter.use(requireAuth);
 
+// Rolls dice, stores the result, and pushes it to everyone allowed to see it.
+// Shared by the roll API and anything else that rolls on a player's behalf
+// (e.g. initiative in the combat tracker).
+export function performRoll(
+  roller: SessionUser,
+  campaignId: number,
+  formula: string,
+  label: string,
+  mode: RollDetail["mode"] = "normal",
+  visibility: "public" | "private" | "dm" | "blind" = "public"
+): RollPayload {
+  const detail = roll(formula, mode);
+  const info = db
+    .prepare(
+      `INSERT INTO rolls (campaign_id, user_id, formula, label, mode, visibility, detail, total)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(
+      campaignId,
+      roller.id,
+      formula.trim(),
+      label.trim(),
+      mode,
+      visibility,
+      JSON.stringify(detail),
+      detail.kept.total
+    );
+  const payload: RollPayload = {
+    id: Number(info.lastInsertRowid),
+    campaignId,
+    userId: roller.id,
+    userName: roller.display_name,
+    formula: formula.trim(),
+    label: label.trim(),
+    mode,
+    visibility,
+    detail,
+    total: detail.kept.total,
+    createdAt: new Date().toISOString(),
+  };
+  broadcastRoll(payload);
+  return payload;
+}
+
 rollsRouter.post("/:id/rolls", (req, res) => {
   const campaignId = Number(req.params.id);
   const role = memberRole(campaignId, user(req).id);
@@ -61,46 +105,20 @@ rollsRouter.post("/:id/rolls", (req, res) => {
   // A DM's "blind" roll is just a DM-visible roll.
   if (visibility === "blind" && isDMRole(role)) visibility = "dm";
 
-  let detail: RollDetail;
   try {
-    detail = roll(String(formula ?? ""), mode);
+    const payload = performRoll(
+      user(req),
+      campaignId,
+      String(formula ?? ""),
+      String(label ?? ""),
+      mode,
+      visibility
+    );
+    res.json({ roll: viewOf(payload, user(req).id, isDMRole(role)) });
   } catch (e) {
     if (e instanceof DiceError) return res.status(400).json({ error: e.message });
     throw e;
   }
-
-  const info = db
-    .prepare(
-      `INSERT INTO rolls (campaign_id, user_id, formula, label, mode, visibility, detail, total)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
-      campaignId,
-      user(req).id,
-      String(formula).trim(),
-      String(label ?? "").trim(),
-      mode,
-      visibility,
-      JSON.stringify(detail),
-      detail.kept.total
-    );
-
-  const payload: RollPayload = {
-    id: Number(info.lastInsertRowid),
-    campaignId,
-    userId: user(req).id,
-    userName: user(req).display_name,
-    formula: String(formula).trim(),
-    label: String(label ?? "").trim(),
-    mode,
-    visibility,
-    detail,
-    total: detail.kept.total,
-    createdAt: new Date().toISOString(),
-  };
-
-  broadcastRoll(payload);
-  res.json({ roll: viewOf(payload, user(req).id, isDMRole(role)) });
 });
 
 rollsRouter.get("/:id/rolls", (req, res) => {

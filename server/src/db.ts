@@ -43,6 +43,15 @@ db.exec(`
     PRIMARY KEY (campaign_id, user_id)
   );
 
+  CREATE TABLE IF NOT EXISTS combatants (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    token_id    INTEGER REFERENCES tokens(id) ON DELETE SET NULL,
+    name        TEXT NOT NULL,
+    initiative  REAL NOT NULL DEFAULT 0
+  );
+  CREATE INDEX IF NOT EXISTS idx_combatants_campaign ON combatants (campaign_id);
+
   CREATE TABLE IF NOT EXISTS maps (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -121,6 +130,10 @@ for (const ddl of [
   "ALTER TABLE campaigns ADD COLUMN session_number INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE campaigns ADD COLUMN house_rules TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE campaigns ADD COLUMN announcement TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaigns ADD COLUMN combat_round INTEGER NOT NULL DEFAULT 0",
+  "ALTER TABLE campaigns ADD COLUMN combat_turn INTEGER NOT NULL DEFAULT 0",
+  "ALTER TABLE maps ADD COLUMN fog_on INTEGER NOT NULL DEFAULT 0",
+  "ALTER TABLE maps ADD COLUMN fog_data TEXT NOT NULL DEFAULT '[]'",
 ]) {
   try {
     db.exec(ddl);
