@@ -85,14 +85,23 @@ const mapRow = (r: any) => ({
   id: r.id,
   campaignId: r.campaign_id,
   name: r.name,
-  imageUrl: `/uploads/${path.basename(r.image_path)}`,
-  isVideo: /\.(mp4|webm)$/i.test(r.image_path),
+  imageUrl: r.image_path ? `/uploads/${path.basename(r.image_path)}` : "",
+  isVideo: /\.(mp4|webm)$/i.test(r.image_path ?? ""),
+  youtubeId: r.youtube_id ?? "",
   gridSize: r.grid_size,
   gridOn: !!r.grid_on,
   active: !!r.active,
   fogOn: !!r.fog_on,
   fogCells: JSON.parse(r.fog_data ?? "[]") as string[],
 });
+
+// Accepts watch?v=, youtu.be/, shorts/, embed/ and live/ URL shapes.
+export function parseYouTubeId(url: string): string | null {
+  const m = url.match(
+    /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+  );
+  return m?.[1] ?? null;
+}
 
 export const mapsRouter = Router();
 mapsRouter.use(requireAuth);
@@ -120,14 +129,24 @@ mapsRouter.post("/:id/maps", upload.single("image"), (req, res) => {
   const role = memberRole(campaignId, user(req).id);
   if (!role) return res.status(404).json({ error: "Campaign not found." });
   if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can upload maps." });
-  if (!req.file) return res.status(400).json({ error: "Attach a PNG, JPEG, or WebP image." });
-  const name = String(req.body?.name ?? "").trim() || "New map";
+
+  let youtubeId = "";
+  if (!req.file) {
+    const url = String(req.body?.youtubeUrl ?? "").trim();
+    youtubeId = url ? parseYouTubeId(url) ?? "" : "";
+    if (!youtubeId) {
+      return res
+        .status(400)
+        .json({ error: "Attach an image/video file, or paste a valid YouTube link." });
+    }
+  }
+  const name = String(req.body?.name ?? "").trim() || (youtubeId ? "YouTube map" : "New map");
   const hasActive = db
     .prepare("SELECT 1 FROM maps WHERE campaign_id = ? AND active = 1")
     .get(campaignId);
   const info = db
-    .prepare("INSERT INTO maps (campaign_id, name, image_path, active) VALUES (?, ?, ?, ?)")
-    .run(campaignId, name, req.file.path, hasActive ? 0 : 1);
+    .prepare("INSERT INTO maps (campaign_id, name, image_path, youtube_id, active) VALUES (?, ?, ?, ?, ?)")
+    .run(campaignId, name, req.file?.path ?? "", youtubeId, hasActive ? 0 : 1);
   broadcastMapChange(campaignId);
   res.json({ id: Number(info.lastInsertRowid) });
 });
@@ -198,7 +217,7 @@ mapsRouter.delete("/:id/maps/:mapId", async (req, res) => {
     .get(Number(req.params.mapId), campaignId) as any;
   if (!map) return res.status(404).json({ error: "Map not found." });
   db.prepare("DELETE FROM maps WHERE id = ?").run(map.id);
-  await unlink(map.image_path).catch(() => {});
+  if (map.image_path) await unlink(map.image_path).catch(() => {});
   broadcastMapChange(campaignId);
   res.json({ ok: true });
 });

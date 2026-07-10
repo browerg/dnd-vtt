@@ -134,6 +134,7 @@ for (const ddl of [
   "ALTER TABLE campaigns ADD COLUMN combat_turn INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE maps ADD COLUMN fog_on INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE maps ADD COLUMN fog_data TEXT NOT NULL DEFAULT '[]'",
+  "ALTER TABLE maps ADD COLUMN youtube_id TEXT NOT NULL DEFAULT ''",
 ]) {
   try {
     db.exec(ddl);

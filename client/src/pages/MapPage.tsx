@@ -11,6 +11,7 @@ interface MapInfo {
   name: string;
   imageUrl: string;
   isVideo: boolean;
+  youtubeId: string;
   gridSize: number;
   gridOn: boolean;
   active: boolean;
@@ -126,6 +127,12 @@ export default function MapPage() {
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  // YouTube embeds are cross-origin, so we can't read their intrinsic size —
+  // treat them as a fixed 16:9 stage that the grid and fog draw over.
+  useEffect(() => {
+    if (map?.youtubeId) setImgSize({ w: 1920, h: 1080 });
+  }, [map?.id, map?.youtubeId]);
 
   useEffect(() => {
     const socket = io();
@@ -490,7 +497,16 @@ export default function MapPage() {
               className="map-world"
               style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
             >
-              {map.isVideo ? (
+              {map.youtubeId ? (
+                <div className="yt-stage" style={{ width: 1920, height: 1080 }}>
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${map.youtubeId}?autoplay=1&mute=1&loop=1&playlist=${map.youtubeId}&controls=0&rel=0&playsinline=1&modestbranding=1`}
+                    title={map.name}
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen={false}
+                  />
+                </div>
+              ) : map.isVideo ? (
                 <video
                   src={map.imageUrl}
                   autoPlay
@@ -728,9 +744,42 @@ export default function MapPage() {
                 <h4>Upload map</h4>
                 <form onSubmit={uploadMap} className="stack">
                   <input name="mapname" placeholder="Map name" />
-                  <input name="image" type="file" accept="image/png,image/jpeg,image/webp" required />
+                  <input
+                    name="image"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
+                    required
+                  />
                   <button className="ghost">Upload</button>
                 </form>
+                <form
+                  className="stack yt-form"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const url = (form.elements.namedItem("yturl") as HTMLInputElement).value;
+                    setError("");
+                    try {
+                      await api(`/api/campaigns/${campaignId}/maps`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                          youtubeUrl: url,
+                          name: (form.elements.namedItem("ytname") as HTMLInputElement).value,
+                        }),
+                      });
+                      form.reset();
+                    } catch (err: any) {
+                      setError(err.message);
+                    }
+                  }}
+                >
+                  <input name="ytname" placeholder="Map name" />
+                  <input name="yturl" placeholder="…or paste a YouTube link" required />
+                  <button className="ghost">Add YouTube map</button>
+                </form>
+                <p className="muted small">
+                  Heads up: YouTube maps can show ads mid-session — uploaded files never do.
+                </p>
               </section>
             </>
           )}
