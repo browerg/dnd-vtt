@@ -42,6 +42,18 @@ db.exec(`
     PRIMARY KEY (campaign_id, user_id)
   );
 
+  CREATE TABLE IF NOT EXISTS messages (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id    INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    user_id        INTEGER NOT NULL REFERENCES users(id),
+    channel        TEXT NOT NULL CHECK (channel IN ('ic','ooc','whisper')),
+    target_user_id INTEGER REFERENCES users(id),
+    speaker        TEXT NOT NULL DEFAULT '',
+    body           TEXT NOT NULL,
+    created_at     TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_messages_campaign ON messages (campaign_id, id);
+
   CREATE TABLE IF NOT EXISTS characters (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -75,3 +87,18 @@ db.exec(`
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
+
+// Additive migrations for tables that already exist in older databases.
+// SQLite has no ADD COLUMN IF NOT EXISTS; a duplicate-column error means done.
+for (const ddl of [
+  "ALTER TABLE campaigns ADD COLUMN chapter TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaigns ADD COLUMN session_number INTEGER NOT NULL DEFAULT 0",
+  "ALTER TABLE campaigns ADD COLUMN house_rules TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaigns ADD COLUMN announcement TEXT NOT NULL DEFAULT ''",
+]) {
+  try {
+    db.exec(ddl);
+  } catch (e: any) {
+    if (!String(e?.message).includes("duplicate column")) throw e;
+  }
+}

@@ -372,3 +372,38 @@ select {
 .hp-pill.dead { color: var(--danger); }
 .new-char { margin-top: 0.75rem; }
 .new-char input { flex: 1; }
+
+/* ---- hub + chat ---- */
+
+.hub-meta { font-size: 0.85rem; }
+.announcement {
+  background: rgba(201, 162, 75, 0.12);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+}
+.house-rules { margin: 0.5rem 0; }
+.house-rules summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+.house-rules p { white-space: pre-wrap; }
+
+.chat-panel { display: flex; flex-direction: column; }
+.chat-tabs { margin-top: 0; }
+.chat-tabs .tab { font-size: 0.85rem; padding: 0.4rem 0.3rem; }
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 300px;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: 0.6rem 0.2rem;
+}
+.chat-msg { font-size: 0.92rem; line-height: 1.35; }
+.chat-author { font-weight: 700; margin-right: 0.4rem; color: var(--accent); }
+.chat-msg .chat-author .muted { font-weight: 400; }
+.chat-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-compose { display: flex; gap: 0.5rem; }
+.chat-compose input { flex: 1; }
+.chat-compose select { max-width: 10rem; }

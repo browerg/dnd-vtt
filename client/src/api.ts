@@ -50,6 +50,19 @@ export interface RollPayload {
   createdAt: string;
 }
 
+export interface ChatMessage {
+  id: number;
+  campaignId: number;
+  userId: number;
+  userName: string;
+  channel: "ic" | "ooc" | "whisper";
+  targetUserId: number | null;
+  targetName: string | null;
+  speaker: string;
+  body: string;
+  createdAt: string;
+}
+
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     headers: { "Content-Type": "application/json" },

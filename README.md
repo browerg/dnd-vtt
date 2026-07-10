@@ -21,17 +21,17 @@ character sheets, live dice, interactive battle maps, and DM tools.
 
 ## Status
 
-- **Phase:** 1, Milestone 1.3 — character sheets **built and verified** (2026-07-09):
-  full 5e sheet (abilities, skills, saves, HP/AC/initiative, conditions, inventory,
-  spell slots + concentration, notes) with click-to-roll wired into the dice pipeline,
-  debounced autosave, live HP sync to the whole party, owner-or-DM edit permissions.
-  Milestones 1.1 (auth/campaigns/invites/presence) and 1.2 (server-authoritative dice,
-  3D dice, roll feed, secret rolls) verified earlier the same day.
+- **Phase:** 1 **complete** (2026-07-09) — all four milestones built and verified:
+  1.1 auth/campaigns/invites/live presence · 1.2 server-authoritative dice with 3D
+  physics dice, roll feed, secret rolls · 1.3 full 5e character sheets with
+  click-to-roll, autosave, live HP sync · 1.4 campaign hub (announcement, chapter,
+  session number, house rules) + tabbed chat (In Character speaks as your character,
+  Out of Character, private whispers), all live over Socket.IO.
 - **Stack:** TypeScript everywhere. React + Vite client, Express + Socket.IO server,
   SQLite via Node's built-in `node:sqlite` (swap for Postgres later if needed).
 - **Run it:** `npm run dev:server` and `npm run dev:client` from the repo root, then
   open http://localhost:5173.
-- **Next step:** Milestone 1.4 — campaign hub polish (announcements, house rules,
-  session number) and tabbed chat (IC / OOC / whispers). Then the Phase 1 game night
-  test. Deferred: SRD spell/monster data import, portrait uploads (needs file
-  storage), Google/Discord OAuth buttons (needs API keys).
+- **Next step:** 🎲 **Game night test #1** — run a real theater-of-the-mind session
+  with the group. Fix what hurt, then start Phase 2 (battle map). Deferred: SRD
+  spell/monster data import, portrait uploads (needs file storage), Google/Discord
+  OAuth buttons (needs API keys).

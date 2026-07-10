@@ -1,14 +1,25 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
-import { api, type Member, type RollPayload } from "../api";
+import { api, type ChatMessage, type Member, type RollPayload } from "../api";
 import { animateRoll } from "../dice3d";
 import type { CharacterSummary } from "../sheet";
+import { useAuth } from "../App";
 import DicePanel from "../components/DicePanel";
 import RollFeed from "../components/RollFeed";
+import ChatPanel from "../components/ChatPanel";
 
 interface CampaignDetail {
-  campaign: { id: number; name: string; description: string; created_at: string };
+  campaign: {
+    id: number;
+    name: string;
+    description: string;
+    chapter: string;
+    session_number: number;
+    house_rules: string;
+    announcement: string;
+    created_at: string;
+  };
   members: Member[];
   yourRole: string;
 }
@@ -17,7 +28,10 @@ export default function CampaignPage() {
   const { id } = useParams();
   const campaignId = Number(id);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [detail, setDetail] = useState<CampaignDetail | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [editingHub, setEditingHub] = useState(false);
   const [online, setOnline] = useState<Set<number>>(new Set());
   const [rolls, setRolls] = useState<RollPayload[]>([]);
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
@@ -34,15 +48,24 @@ export default function CampaignPage() {
     [campaignId]
   );
 
+  const loadDetail = useCallback(
+    () =>
+      api<CampaignDetail>(`/api/campaigns/${campaignId}`)
+        .then(setDetail)
+        .catch((e) => setError(e.message)),
+    [campaignId]
+  );
+
   useEffect(() => {
-    api<CampaignDetail>(`/api/campaigns/${campaignId}`)
-      .then(setDetail)
-      .catch((e) => setError(e.message));
+    loadDetail();
     api<{ rolls: RollPayload[] }>(`/api/campaigns/${campaignId}/rolls`)
       .then((r) => setRolls(r.rolls))
       .catch(() => {});
+    api<{ messages: ChatMessage[] }>(`/api/campaigns/${campaignId}/messages`)
+      .then((r) => setMessages(r.messages))
+      .catch(() => {});
     loadCharacters();
-  }, [campaignId, loadCharacters]);
+  }, [campaignId, loadCharacters, loadDetail]);
 
   useEffect(() => {
     const socket: Socket = io();
@@ -61,10 +84,47 @@ export default function CampaignPage() {
     socket.on("character:delete", (msg: { campaignId: number }) => {
       if (msg.campaignId === campaignId) loadCharacters();
     });
+    socket.on("chat", (msg: ChatMessage) => {
+      if (msg.campaignId === campaignId) setMessages((prev) => [...prev.slice(-199), msg]);
+    });
+    socket.on("campaign:update", (msg: { campaignId: number }) => {
+      if (msg.campaignId === campaignId) loadDetail();
+    });
     return () => {
       socket.disconnect();
     };
-  }, [campaignId, loadCharacters]);
+  }, [campaignId, loadCharacters, loadDetail]);
+
+  const sendChat = useCallback(
+    async (body: string, channel: "ic" | "ooc" | "whisper", targetUserId?: number) => {
+      await api(`/api/campaigns/${campaignId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ body, channel, targetUserId }),
+      });
+    },
+    [campaignId]
+  );
+
+  const saveHub = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!detail) return;
+    const c = detail.campaign;
+    await api(`/api/campaigns/${campaignId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name: c.name,
+        description: c.description,
+        chapter: c.chapter,
+        sessionNumber: c.session_number,
+        houseRules: c.house_rules,
+        announcement: c.announcement,
+      }),
+    });
+    setEditingHub(false);
+  };
+
+  const patchCampaign = (patch: Partial<CampaignDetail["campaign"]>) =>
+    setDetail((prev) => (prev ? { ...prev, campaign: { ...prev.campaign, ...patch } } : prev));
 
   const createCharacter = async (e: FormEvent) => {
     e.preventDefault();
@@ -120,9 +180,84 @@ export default function CampaignPage() {
       <main className="content columns">
         <div className="column">
           <section className="card">
-            <h3>About this campaign</h3>
-            <p className="muted">{detail.campaign.description || "No description yet."}</p>
-            {isDM && (
+            <div className="row-between">
+              <h3>Campaign hub</h3>
+              <span className="muted hub-meta">
+                {detail.campaign.chapter && <>{detail.campaign.chapter} · </>}
+                Session {detail.campaign.session_number}
+              </span>
+            </div>
+            {detail.campaign.announcement && !editingHub && (
+              <div className="announcement">📣 {detail.campaign.announcement}</div>
+            )}
+            {!editingHub ? (
+              <>
+                <p className="muted">{detail.campaign.description || "No description yet."}</p>
+                {detail.campaign.house_rules && (
+                  <details className="house-rules">
+                    <summary>House rules</summary>
+                    <p className="muted">{detail.campaign.house_rules}</p>
+                  </details>
+                )}
+                {isDM && (
+                  <button className="ghost mini" onClick={() => setEditingHub(true)}>
+                    Edit hub
+                  </button>
+                )}
+              </>
+            ) : (
+              <form onSubmit={saveHub} className="stack">
+                <label>
+                  Announcement
+                  <input
+                    value={detail.campaign.announcement}
+                    onChange={(e) => patchCampaign({ announcement: e.target.value })}
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    rows={2}
+                    value={detail.campaign.description}
+                    onChange={(e) => patchCampaign({ description: e.target.value })}
+                  />
+                </label>
+                <div className="row-between">
+                  <label>
+                    Current chapter
+                    <input
+                      value={detail.campaign.chapter}
+                      onChange={(e) => patchCampaign({ chapter: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Session #
+                    <input
+                      type="number"
+                      value={detail.campaign.session_number}
+                      onChange={(e) =>
+                        patchCampaign({ session_number: parseInt(e.target.value, 10) || 0 })
+                      }
+                    />
+                  </label>
+                </div>
+                <label>
+                  House rules
+                  <textarea
+                    rows={3}
+                    value={detail.campaign.house_rules}
+                    onChange={(e) => patchCampaign({ house_rules: e.target.value })}
+                  />
+                </label>
+                <div className="row-between">
+                  <button className="primary">Save hub</button>
+                  <button type="button" className="ghost" onClick={() => { setEditingHub(false); loadDetail(); }}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+            {isDM && !editingHub && (
               <div className="stack invite-box">
                 <button className="primary" onClick={createInvite}>
                   Create invite link
@@ -144,6 +279,16 @@ export default function CampaignPage() {
               <DicePanel onRoll={doRoll} />
             </section>
           )}
+          <section className="card">
+            <h3>Chat</h3>
+            <ChatPanel
+              messages={messages}
+              members={detail.members}
+              myId={user?.id ?? 0}
+              canChat={canRoll}
+              onSend={sendChat}
+            />
+          </section>
         </div>
         <div className="column">
           <section className="card">

@@ -5,6 +5,7 @@ import { authRouter } from "./auth.js";
 import { campaignsRouter, invitesRouter } from "./campaigns.js";
 import { rollsRouter } from "./rolls.js";
 import { charactersRouter } from "./characters.js";
+import { chatRouter } from "./chat.js";
 import { setupSockets } from "./sockets.js";
 import { setIo } from "./realtime.js";
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/campaigns", rollsRouter);
 app.use("/api/campaigns", charactersRouter);
+app.use("/api/campaigns", chatRouter);
 app.use("/api/campaigns", campaignsRouter);
 app.use("/api/invites", invitesRouter);
 

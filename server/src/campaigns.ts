@@ -2,6 +2,7 @@ import { Router, type Request } from "express";
 import { randomBytes } from "node:crypto";
 import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
+import { getIo } from "./realtime.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 
@@ -46,7 +47,10 @@ campaignsRouter.get("/:id", (req, res) => {
   const role = memberRole(id, user(req).id);
   if (!role) return res.status(404).json({ error: "Campaign not found." });
   const campaign = db
-    .prepare("SELECT id, name, description, created_at FROM campaigns WHERE id = ?")
+    .prepare(
+      `SELECT id, name, description, chapter, session_number, house_rules, announcement, created_at
+       FROM campaigns WHERE id = ?`
+    )
     .get(id);
   const members = db
     .prepare(
@@ -57,6 +61,36 @@ campaignsRouter.get("/:id", (req, res) => {
     )
     .all(id);
   res.json({ campaign, members, yourRole: role });
+});
+
+campaignsRouter.put("/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const role = memberRole(id, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (role !== "dm" && role !== "co-dm") {
+    return res.status(403).json({ error: "Only the DM can edit the campaign hub." });
+  }
+  const b = req.body ?? {};
+  const current = db
+    .prepare(
+      "SELECT name, description, chapter, session_number, house_rules, announcement FROM campaigns WHERE id = ?"
+    )
+    .get(id) as any;
+  const str = (v: unknown, fallback: string) => (typeof v === "string" ? v : fallback);
+  db.prepare(
+    `UPDATE campaigns SET name = ?, description = ?, chapter = ?, session_number = ?,
+     house_rules = ?, announcement = ? WHERE id = ?`
+  ).run(
+    str(b.name, current.name).trim() || current.name,
+    str(b.description, current.description),
+    str(b.chapter, current.chapter),
+    Number.isInteger(b.sessionNumber) ? b.sessionNumber : current.session_number,
+    str(b.houseRules, current.house_rules),
+    str(b.announcement, current.announcement),
+    id
+  );
+  getIo().to(`campaign:${id}`).emit("campaign:update", { campaignId: id });
+  res.json({ ok: true });
 });
 
 campaignsRouter.post("/:id/invites", (req, res) => {
