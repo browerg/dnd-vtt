@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -42,6 +42,15 @@ db.exec(`
     joined_at   TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (campaign_id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS monsters (
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT NOT NULL DEFAULT 'srd',
+    name   TEXT NOT NULL,
+    cr     REAL NOT NULL DEFAULT 0,
+    data   TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_monsters_name ON monsters (name COLLATE NOCASE);
 
   CREATE TABLE IF NOT EXISTS combatants (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,10 +144,39 @@ for (const ddl of [
   "ALTER TABLE maps ADD COLUMN fog_on INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE maps ADD COLUMN fog_data TEXT NOT NULL DEFAULT '[]'",
   "ALTER TABLE maps ADD COLUMN youtube_id TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE tokens ADD COLUMN monster_id INTEGER REFERENCES monsters(id) ON DELETE SET NULL",
+  "ALTER TABLE tokens ADD COLUMN hp INTEGER",
+  "ALTER TABLE tokens ADD COLUMN max_hp INTEGER",
 ]) {
   try {
     db.exec(ddl);
   } catch (e: any) {
     if (!String(e?.message).includes("duplicate column")) throw e;
+  }
+}
+
+// Seed the SRD monster collection on first boot (322 monsters, CC-BY-4.0 via Open5e).
+const monsterCount = (db.prepare("SELECT COUNT(*) AS n FROM monsters").get() as any).n;
+if (monsterCount === 0) {
+  const srdPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "srd", "srd-monsters.json");
+  try {
+    const raw = readFileSync(srdPath, "utf8").replace(/^﻿/, "");
+    const monsters = JSON.parse(raw) as any[];
+    // CRs come as strings and may be fractions ("1/4").
+    const parseCr = (v: unknown): number => {
+      const s = String(v ?? "0");
+      if (s.includes("/")) {
+        const [num, den] = s.split("/").map(Number);
+        return den ? num / den : 0;
+      }
+      return Number(s) || 0;
+    };
+    const insert = db.prepare("INSERT INTO monsters (source, name, cr, data) VALUES ('srd', ?, ?, ?)");
+    for (const m of monsters) {
+      insert.run(m.name, parseCr(m.challenge_rating), JSON.stringify(m));
+    }
+    console.log(`seeded ${monsters.length} SRD monsters`);
+  } catch (e) {
+    console.warn("SRD monster seed skipped:", (e as Error).message);
   }
 }

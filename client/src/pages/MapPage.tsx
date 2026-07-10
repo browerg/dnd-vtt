@@ -39,6 +39,7 @@ interface Token {
   id: number;
   mapId: number;
   characterId: number | null;
+  monsterId: number | null;
   ownerId: number | null;
   name: string;
   color: string;
@@ -47,6 +48,38 @@ interface Token {
   size: number;
   hp: number | null;
   maxHp: number | null;
+}
+
+interface MonsterHit {
+  id: number;
+  name: string;
+  cr: number;
+  type: string;
+  size: string;
+  hp: number;
+  ac: number;
+}
+
+interface MonsterDetail {
+  id: number;
+  name: string;
+  cr: number;
+  size: string;
+  type: string;
+  armor_class: number;
+  hit_points: number;
+  hit_dice: string;
+  speed: Record<string, number | boolean>;
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+  senses: string;
+  languages: string;
+  special_abilities: { name: string; desc: string }[] | null;
+  actions: { name: string; desc: string; attack_bonus?: number; damage_dice?: string; damage_bonus?: number }[] | null;
 }
 
 interface Ping {
@@ -83,6 +116,10 @@ export default function MapPage() {
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [combat, setCombat] = useState<CombatState>({ active: false, round: 0, turn: 0, combatants: [] });
   const [combatantPick, setCombatantPick] = useState("");
+  const [monsterQuery, setMonsterQuery] = useState("");
+  const [monsterHits, setMonsterHits] = useState<MonsterHit[]>([]);
+  const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
+  const [statblock, setStatblock] = useState<MonsterDetail | null>(null);
   const revealedRef = useRef(revealed);
   revealedRef.current = revealed;
   const fogSaveTimer = useRef<number>();
@@ -92,7 +129,7 @@ export default function MapPage() {
   const viewRef = useRef(view);
   viewRef.current = view;
   const dragRef = useRef<
-    | { kind: "pan"; startX: number; startY: number; viewX: number; viewY: number }
+    | { kind: "pan"; startX: number; startY: number; viewX: number; viewY: number; moved: boolean }
     | { kind: "token"; tokenId: number; offsetX: number; offsetY: number; moved: boolean }
     | { kind: "fog"; reveal: boolean }
     | null
@@ -133,6 +170,36 @@ export default function MapPage() {
   useEffect(() => {
     if (map?.youtubeId) setImgSize({ w: 1920, h: 1080 });
   }, [map?.id, map?.youtubeId]);
+
+  // Monster search (debounced).
+  useEffect(() => {
+    if (!monsterQuery.trim()) {
+      setMonsterHits([]);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      api<{ monsters: MonsterHit[] }>(`/api/monsters?q=${encodeURIComponent(monsterQuery)}`)
+        .then((r) => setMonsterHits(r.monsters))
+        .catch(() => {});
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [monsterQuery]);
+
+  // Stat block for the selected monster token.
+  const selectedToken = tokens.find((t) => t.id === selectedTokenId) ?? null;
+  useEffect(() => {
+    if (!selectedToken?.monsterId) {
+      setStatblock(null);
+      return;
+    }
+    let stale = false;
+    api<{ monster: MonsterDetail }>(`/api/monsters/${selectedToken.monsterId}`)
+      .then((r) => !stale && setStatblock(r.monster))
+      .catch(() => {});
+    return () => {
+      stale = true;
+    };
+  }, [selectedToken?.monsterId]);
 
   useEffect(() => {
     const socket = io();
@@ -274,6 +341,7 @@ export default function MapPage() {
       startY: e.clientY,
       viewX: view.x,
       viewY: view.y,
+      moved: false,
     };
   };
 
@@ -285,6 +353,7 @@ export default function MapPage() {
       return;
     }
     if (d.kind === "pan") {
+      if (Math.abs(e.clientX - d.startX) + Math.abs(e.clientY - d.startY) > 3) d.moved = true;
       setView((v) => ({ ...v, x: d.viewX + e.clientX - d.startX, y: d.viewY + e.clientY - d.startY }));
       return;
     }
@@ -303,7 +372,12 @@ export default function MapPage() {
   const onPointerUp = () => {
     const d = dragRef.current;
     dragRef.current = null;
+    if (d?.kind === "pan" && !d.moved) setSelectedTokenId(null);
     if (!d || d.kind !== "token" || !map) return;
+    if (!d.moved) {
+      setSelectedTokenId(d.tokenId);
+      return;
+    }
     setTokens((prev) =>
       prev.map((t) => {
         if (t.id !== d.tokenId) return t;
@@ -381,6 +455,36 @@ export default function MapPage() {
 
   const removeToken = (tokenId: number) =>
     map && api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens/${tokenId}`, { method: "DELETE" });
+
+  const spawnMonster = async (monsterId: number) => {
+    if (!map) return;
+    setError("");
+    try {
+      await api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens`, {
+        method: "POST",
+        body: JSON.stringify({ monsterId }),
+      });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const rollDice = (formula: string, label: string) =>
+    api(`/api/campaigns/${campaignId}/rolls`, {
+      method: "POST",
+      body: JSON.stringify({ formula, label, mode: "normal", visibility: "public" }),
+    }).catch((e: any) => setError(e.message));
+
+  const setTokenHp = (token: Token, hp: number) =>
+    map &&
+    api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens/${token.id}/hp`, {
+      method: "PUT",
+      body: JSON.stringify({ hp }),
+    }).catch((e: any) => setError(e.message));
+
+  const mod = (score: number) => Math.floor((score - 10) / 2);
+  const fmtMod = (m: number) => (m >= 0 ? `+${m}` : `${m}`);
+  const fmtCr = (cr: number) => ({ 0.125: "1/8", 0.25: "1/4", 0.5: "1/2" }[cr] ?? `${cr}`);
 
   if (error && !loaded) return <div className="page-center error">{error}</div>;
   if (!loaded) return <div className="page-center muted">Loading…</div>;
@@ -545,7 +649,7 @@ export default function MapPage() {
                     data-token-id={t.id}
                     className={`token${canMove(t) ? " movable" : ""}${
                       currentCombatant?.tokenId === t.id ? " current-turn" : ""
-                    }`}
+                    }${selectedTokenId === t.id ? " selected" : ""}`}
                     style={{
                       left: t.x - px / 2,
                       top: t.y - px / 2,
@@ -594,6 +698,93 @@ export default function MapPage() {
 
         <aside className="map-sidebar">
           {error && <div className="error">{error}</div>}
+          {isDM && selectedToken && statblock && (
+            <section className="statblock">
+              <div className="row-between">
+                <h4>{selectedToken.name}</h4>
+                <button className="ghost mini" onClick={() => setSelectedTokenId(null)}>
+                  ✕
+                </button>
+              </div>
+              <p className="muted small">
+                {statblock.size} {statblock.type} · CR {fmtCr(statblock.cr)}
+              </p>
+              <div className="row-between statline">
+                <span>
+                  AC <strong>{statblock.armor_class}</strong>
+                </span>
+                <span className="hp-editor">
+                  HP{" "}
+                  <button className="ghost mini" onClick={() => setTokenHp(selectedToken, (selectedToken.hp ?? 0) - 5)}>
+                    -5
+                  </button>
+                  <button className="ghost mini" onClick={() => setTokenHp(selectedToken, (selectedToken.hp ?? 0) - 1)}>
+                    -1
+                  </button>
+                  <strong>
+                    {selectedToken.hp}/{selectedToken.maxHp}
+                  </strong>
+                  <button className="ghost mini" onClick={() => setTokenHp(selectedToken, (selectedToken.hp ?? 0) + 1)}>
+                    +1
+                  </button>
+                  <button className="ghost mini" onClick={() => setTokenHp(selectedToken, (selectedToken.hp ?? 0) + 5)}>
+                    +5
+                  </button>
+                </span>
+              </div>
+              <p className="muted small">
+                {["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]
+                  .map(
+                    (k, i) =>
+                      `${["STR", "DEX", "CON", "INT", "WIS", "CHA"][i]} ${fmtMod(mod((statblock as any)[k]))}`
+                  )
+                  .join(" · ")}
+              </p>
+              {(statblock.special_abilities ?? []).map((a) => (
+                <details key={a.name} className="mon-ability">
+                  <summary>{a.name}</summary>
+                  <p className="muted small">{a.desc}</p>
+                </details>
+              ))}
+              {(statblock.actions ?? []).map((a) => (
+                <div key={a.name} className="mon-action">
+                  <div className="row-between">
+                    <strong className="small">{a.name}</strong>
+                    <span className="action-rolls">
+                      {a.attack_bonus != null && (
+                        <button
+                          className="ghost mini"
+                          onClick={() =>
+                            rollDice(`1d20+${a.attack_bonus}`, `${selectedToken.name}: ${a.name} (to hit)`)
+                          }
+                        >
+                          hit {fmtMod(a.attack_bonus)}
+                        </button>
+                      )}
+                      {a.damage_dice && (
+                        <button
+                          className="ghost mini"
+                          onClick={() =>
+                            rollDice(
+                              `${a.damage_dice}${a.damage_bonus ? `+${a.damage_bonus}` : ""}`,
+                              `${selectedToken.name}: ${a.name} damage`
+                            )
+                          }
+                        >
+                          dmg {a.damage_dice}
+                          {a.damage_bonus ? `+${a.damage_bonus}` : ""}
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                  <details className="mon-ability">
+                    <summary className="muted small">details</summary>
+                    <p className="muted small">{a.desc}</p>
+                  </details>
+                </div>
+              ))}
+            </section>
+          )}
           <section>
             <h4>{combat.active ? `Combat — round ${combat.round}` : "Initiative"}</h4>
             {combat.combatants.map((c, i) => (
@@ -755,6 +946,31 @@ export default function MapPage() {
                   </div>
                 ))}
               </section>
+              {map && (
+                <section>
+                  <h4>Monsters</h4>
+                  <input
+                    placeholder="Search 322 SRD monsters…"
+                    value={monsterQuery}
+                    onChange={(e) => setMonsterQuery(e.target.value)}
+                  />
+                  <div className="monster-hits">
+                    {monsterHits.map((m) => (
+                      <div key={m.id} className="row-between sidebar-row">
+                        <span className="mon-hit">
+                          {m.name} <span className="muted">CR {fmtCr(m.cr)}</span>
+                        </span>
+                        <button className="ghost mini" onClick={() => spawnMonster(m.id)}>
+                          Spawn
+                        </button>
+                      </div>
+                    ))}
+                    {monsterQuery.trim() && monsterHits.length === 0 && (
+                      <p className="muted small">No monsters match.</p>
+                    )}
+                  </div>
+                </section>
+              )}
               {map && (
                 <section>
                   <h4>Custom token</h4>

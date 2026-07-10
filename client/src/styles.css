@@ -547,6 +547,27 @@ select {
 }
 .map-pick:hover { color: var(--text); }
 .map-pick.active { color: var(--accent); font-weight: 700; cursor: default; }
+
+/* ---- monsters ---- */
+
+.token.selected { outline: 2px dashed rgba(255, 255, 255, 0.85); outline-offset: 2px; }
+
+.monster-hits { max-height: 200px; overflow-y: auto; margin-top: 0.4rem; }
+.mon-hit { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+.statblock {
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.6rem;
+  background: var(--bg);
+}
+.statline { margin: 0.3rem 0; }
+.hp-editor { display: flex; align-items: center; gap: 0.25rem; }
+.hp-editor .ghost.mini { padding: 0.1rem 0.35rem; }
+.mon-ability summary { cursor: pointer; font-size: 0.85rem; color: var(--text); }
+.mon-ability p { margin: 0.25rem 0 0.5rem; white-space: pre-wrap; }
+.mon-action { margin: 0.35rem 0; }
+.action-rolls { display: flex; gap: 0.3rem; flex-shrink: 0; }
 .fog-overlay { position: absolute; inset: 0; pointer-events: none; }
 
 .token.current-turn {

@@ -38,6 +38,7 @@ export interface TokenPayload {
   id: number;
   mapId: number;
   characterId: number | null;
+  monsterId: number | null;
   ownerId: number | null;
   name: string;
   color: string;
@@ -48,11 +49,12 @@ export interface TokenPayload {
   maxHp: number | null;
 }
 
+// Character tokens read HP from the sheet; monster/custom tokens carry their own.
 const TOKEN_COLS = `
-  t.id, t.map_id, t.character_id, t.name, t.color, t.x, t.y, t.size,
+  t.id, t.map_id, t.character_id, t.monster_id, t.name, t.color, t.x, t.y, t.size,
   c.user_id AS owner_id,
-  json_extract(c.data, '$.hp') AS hp,
-  json_extract(c.data, '$.maxHp') AS max_hp`;
+  COALESCE(json_extract(c.data, '$.hp'), t.hp) AS hp,
+  COALESCE(json_extract(c.data, '$.maxHp'), t.max_hp) AS max_hp`;
 const TOKEN_SELECT = `SELECT ${TOKEN_COLS}
   FROM tokens t LEFT JOIN characters c ON c.id = t.character_id`;
 
@@ -60,6 +62,7 @@ const toToken = (r: any): TokenPayload => ({
   id: r.id,
   mapId: r.map_id,
   characterId: r.character_id,
+  monsterId: r.monster_id,
   ownerId: r.owner_id,
   name: r.name,
   color: r.color,
@@ -236,7 +239,13 @@ mapsRouter.post("/:id/maps/:mapId/tokens", (req, res) => {
 
   const b = req.body ?? {};
   const characterId = b.characterId ? Number(b.characterId) : null;
+  const monsterId = b.monsterId ? Number(b.monsterId) : null;
   let name = String(b.name ?? "").trim();
+  let size = [1, 2, 3, 4].includes(b.size) ? b.size : 1;
+  let color = /^#[0-9a-fA-F]{6}$/.test(b.color ?? "") ? b.color : "#c9a24b";
+  let hp: number | null = null;
+  let maxHp: number | null = null;
+
   if (characterId) {
     const c = db
       .prepare("SELECT user_id, name FROM characters WHERE id = ? AND campaign_id = ?")
@@ -248,19 +257,60 @@ mapsRouter.post("/:id/maps/:mapId/tokens", (req, res) => {
     name = name || c.name;
   } else if (!isDMRole(role)) {
     return res.status(403).json({ error: "Only the DM can place custom tokens." });
+  } else if (monsterId) {
+    const m = db.prepare("SELECT name, data FROM monsters WHERE id = ?").get(monsterId) as any;
+    if (!m) return res.status(404).json({ error: "Monster not found." });
+    const d = JSON.parse(m.data);
+    if (!name) {
+      const twins = (
+        db
+          .prepare("SELECT COUNT(*) AS n FROM tokens WHERE map_id = ? AND monster_id = ?")
+          .get(map.id, monsterId) as any
+      ).n;
+      name = twins > 0 ? `${m.name} ${twins + 1}` : m.name;
+    }
+    hp = maxHp = d.hit_points ?? 10;
+    size = { tiny: 1, small: 1, medium: 1, large: 2, huge: 3, gargantuan: 4 }[
+      String(d.size ?? "medium").toLowerCase()
+    ] ?? 1;
+    color = /^#[0-9a-fA-F]{6}$/.test(b.color ?? "") ? b.color : "#a03636";
   }
   if (!name) return res.status(400).json({ error: "The token needs a name." });
 
-  const size = [1, 2, 3, 4].includes(b.size) ? b.size : 1;
-  const color = /^#[0-9a-fA-F]{6}$/.test(b.color ?? "") ? b.color : "#c9a24b";
   const x = Number.isFinite(b.x) ? b.x : map.grid_size * 1.5;
   const y = Number.isFinite(b.y) ? b.y : map.grid_size * 1.5;
   const info = db
-    .prepare("INSERT INTO tokens (map_id, character_id, name, color, x, y, size) VALUES (?, ?, ?, ?, ?, ?, ?)")
-    .run(map.id, characterId, name, color, x, y, size);
+    .prepare(
+      `INSERT INTO tokens (map_id, character_id, monster_id, name, color, x, y, size, hp, max_hp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(map.id, characterId, monsterId, name, color, x, y, size, hp, maxHp);
   const token = getToken(Number(info.lastInsertRowid))!;
   getIo().to(`campaign:${campaignId}`).emit("token:create", { campaignId, token });
   res.json({ token });
+});
+
+mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/hp", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM edits token HP." });
+  const token = getToken(Number(req.params.tokenId));
+  if (!token || token.campaignId !== campaignId) return res.status(404).json({ error: "Token not found." });
+  if (token.characterId) {
+    return res.status(400).json({ error: "Character HP lives on the character sheet." });
+  }
+  const hp = Number(req.body?.hp);
+  const maxHp = req.body?.maxHp !== undefined ? Number(req.body.maxHp) : token.maxHp;
+  if (!Number.isFinite(hp)) return res.status(400).json({ error: "HP must be a number." });
+  db.prepare("UPDATE tokens SET hp = ?, max_hp = ? WHERE id = ?").run(
+    Math.max(0, Math.round(hp)),
+    Number.isFinite(maxHp as number) ? Math.max(1, Math.round(maxHp as number)) : null,
+    token.id
+  );
+  const updated = getToken(token.id)!;
+  getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
+  res.json({ token: updated });
 });
 
 mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId", (req, res) => {
