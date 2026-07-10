@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
 import { api, type Member, type RollPayload } from "../api";
 import { animateRoll } from "../dice3d";
+import type { CharacterSummary } from "../sheet";
 import DicePanel from "../components/DicePanel";
 import RollFeed from "../components/RollFeed";
 
@@ -15,12 +16,23 @@ interface CampaignDetail {
 export default function CampaignPage() {
   const { id } = useParams();
   const campaignId = Number(id);
+  const navigate = useNavigate();
   const [detail, setDetail] = useState<CampaignDetail | null>(null);
   const [online, setOnline] = useState<Set<number>>(new Set());
   const [rolls, setRolls] = useState<RollPayload[]>([]);
+  const [characters, setCharacters] = useState<CharacterSummary[]>([]);
+  const [newCharName, setNewCharName] = useState("");
   const [inviteUrl, setInviteUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+
+  const loadCharacters = useCallback(
+    () =>
+      api<{ characters: CharacterSummary[] }>(`/api/campaigns/${campaignId}/characters`)
+        .then((r) => setCharacters(r.characters))
+        .catch(() => {}),
+    [campaignId]
+  );
 
   useEffect(() => {
     api<CampaignDetail>(`/api/campaigns/${campaignId}`)
@@ -29,7 +41,8 @@ export default function CampaignPage() {
     api<{ rolls: RollPayload[] }>(`/api/campaigns/${campaignId}/rolls`)
       .then((r) => setRolls(r.rolls))
       .catch(() => {});
-  }, [campaignId]);
+    loadCharacters();
+  }, [campaignId, loadCharacters]);
 
   useEffect(() => {
     const socket: Socket = io();
@@ -42,10 +55,26 @@ export default function CampaignPage() {
       setRolls((prev) => [...prev.slice(-99), roll]);
       if (roll.detail) animateRoll(roll.detail);
     });
+    socket.on("character:update", (msg: { campaignId: number }) => {
+      if (msg.campaignId === campaignId) loadCharacters();
+    });
+    socket.on("character:delete", (msg: { campaignId: number }) => {
+      if (msg.campaignId === campaignId) loadCharacters();
+    });
     return () => {
       socket.disconnect();
     };
-  }, [campaignId]);
+  }, [campaignId, loadCharacters]);
+
+  const createCharacter = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!newCharName.trim()) return;
+    const r = await api<{ id: number }>(`/api/campaigns/${campaignId}/characters`, {
+      method: "POST",
+      body: JSON.stringify({ name: newCharName }),
+    });
+    navigate(`/campaigns/${campaignId}/characters/${r.id}`);
+  };
 
   const doRoll = useCallback(
     async (body: { formula: string; label: string; mode: string; visibility: string }) => {
@@ -117,6 +146,33 @@ export default function CampaignPage() {
           )}
         </div>
         <div className="column">
+          <section className="card">
+            <h3>Characters</h3>
+            <ul className="member-list">
+              {characters.map((c) => (
+                <li key={c.id} className="row-between">
+                  <Link to={`/campaigns/${campaignId}/characters/${c.id}`} className="char-link">
+                    <strong>{c.name}</strong>
+                    {c.summary && <span className="muted"> · {c.summary}</span>}
+                    <span className="muted"> ({c.ownerName})</span>
+                  </Link>
+                  <span className={c.hp <= 0 ? "hp-pill dead" : c.hp <= c.maxHp / 3 ? "hp-pill hurt" : "hp-pill"}>
+                    {c.hp}/{c.maxHp}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {canRoll && (
+              <form onSubmit={createCharacter} className="row-between new-char">
+                <input
+                  placeholder="New character name"
+                  value={newCharName}
+                  onChange={(e) => setNewCharName(e.target.value)}
+                />
+                <button className="ghost">Create</button>
+              </form>
+            )}
+          </section>
           <section className="card">
             <h3>Party</h3>
             <ul className="member-list">

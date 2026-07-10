@@ -4,6 +4,7 @@ import { api, type User } from "./api";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CampaignPage from "./pages/CampaignPage";
+import CharacterSheetPage from "./pages/CharacterSheetPage";
 import JoinPage from "./pages/JoinPage";
 
 interface AuthState {
@@ -42,6 +43,10 @@ export default function App() {
         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
         <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" />} />
         <Route path="/campaigns/:id" element={user ? <CampaignPage /> : <Navigate to="/login" />} />
+        <Route
+          path="/campaigns/:id/characters/:charId"
+          element={user ? <CharacterSheetPage /> : <Navigate to="/login" />}
+        />
         <Route path="/join/:code" element={<JoinPage />} />
       </Routes>
     </AuthContext.Provider>

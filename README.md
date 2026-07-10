@@ -21,15 +21,17 @@ character sheets, live dice, interactive battle maps, and DM tools.
 
 ## Status
 
-- **Phase:** 1, Milestone 1.2 — dice system **built and verified** (2026-07-09):
-  server-authoritative roll formulas (`2d6+4`), advantage/disadvantage, live public
-  roll feed, private/DM/blind visibility, roll history, nat-20/nat-1 highlights, and
-  3D physics dice (dice-box-threejs) that land on the server's results, with sound.
-  Milestone 1.1 (auth, campaigns, roles, invites, live presence) verified earlier
-  the same day.
+- **Phase:** 1, Milestone 1.3 — character sheets **built and verified** (2026-07-09):
+  full 5e sheet (abilities, skills, saves, HP/AC/initiative, conditions, inventory,
+  spell slots + concentration, notes) with click-to-roll wired into the dice pipeline,
+  debounced autosave, live HP sync to the whole party, owner-or-DM edit permissions.
+  Milestones 1.1 (auth/campaigns/invites/presence) and 1.2 (server-authoritative dice,
+  3D dice, roll feed, secret rolls) verified earlier the same day.
 - **Stack:** TypeScript everywhere. React + Vite client, Express + Socket.IO server,
   SQLite via Node's built-in `node:sqlite` (swap for Postgres later if needed).
 - **Run it:** `npm run dev:server` and `npm run dev:client` from the repo root, then
   open http://localhost:5173.
-- **Next step:** Milestone 1.3 — character sheets with click-to-roll. Google/Discord
-  OAuth buttons still pending (needs API keys).
+- **Next step:** Milestone 1.4 — campaign hub polish (announcements, house rules,
+  session number) and tabbed chat (IC / OOC / whispers). Then the Phase 1 game night
+  test. Deferred: SRD spell/monster data import, portrait uploads (needs file
+  storage), Google/Discord OAuth buttons (needs API keys).
