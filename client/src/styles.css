@@ -529,8 +529,46 @@ select:focus { outline: none; border-color: var(--accent); }
 .slot-max { width: 2.8rem; text-align: center; }
 .concentration { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; color: var(--muted); margin: 0.6rem 0; }
 
-.char-link { display: block; }
+.char-link { display: block; flex: 1; min-width: 0; }
 .char-link:hover strong { color: var(--accent); }
+
+/* ---- portraits ---- */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-well);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  user-select: none;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.avatar-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--border-gold);
+  background: var(--bg-well);
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-btn:hover { border-color: var(--accent); box-shadow: 0 0 10px rgba(207, 166, 79, 0.3); }
+.avatar-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .hp-pill {
   font-size: 0.8rem;
   font-weight: 700;

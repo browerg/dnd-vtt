@@ -57,6 +57,7 @@ interface Token {
   maxHp: number | null;
   aura: number | null;
   auraMax: number | null;
+  portraitUrl: string;
 }
 
 interface MonsterHit {
@@ -766,18 +767,22 @@ export default function MapPage() {
                       top: t.y - px / 2,
                       width: px,
                       height: px,
-                      background: t.color,
+                      background: t.portraitUrl
+                        ? `url(${t.portraitUrl}) center/cover no-repeat, ${t.color}`
+                        : t.color,
                     }}
                     title={t.name}
                   >
-                    <span className="token-initials">
-                      {t.name
-                        .split(/\s+/)
-                        .slice(0, 2)
-                        .map((w) => w[0])
-                        .join("")
-                        .toUpperCase()}
-                    </span>
+                    {!t.portraitUrl && (
+                      <span className="token-initials">
+                        {t.name
+                          .split(/\s+/)
+                          .slice(0, 2)
+                          .map((w) => w[0])
+                          .join("")
+                          .toUpperCase()}
+                      </span>
+                    )}
                     <span className="token-name">{t.name}</span>
                     {t.auraMax != null && t.aura != null && (
                       <span className="token-aura">

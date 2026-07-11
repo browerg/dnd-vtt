@@ -1,5 +1,9 @@
 import { Router, type Request } from "express";
-import { db } from "./db.js";
+import multer from "multer";
+import { randomBytes } from "node:crypto";
+import { unlink } from "node:fs/promises";
+import path from "node:path";
+import { db, uploadsDir } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
@@ -7,6 +11,22 @@ import { getIo } from "./realtime.js";
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 const MAX_DATA_BYTES = 200_000;
+
+// Portraits are small images, unlike the 500MB battle maps.
+const PORTRAIT_TYPES: Record<string, string> = {
+  "image/png": ".png",
+  "image/jpeg": ".jpg",
+  "image/webp": ".webp",
+};
+const portraitUpload = multer({
+  storage: multer.diskStorage({
+    destination: uploadsDir,
+    filename: (_req, file, cb) =>
+      cb(null, `portrait-${randomBytes(10).toString("hex")}${PORTRAIT_TYPES[file.mimetype] ?? ".png"}`),
+  }),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, file.mimetype in PORTRAIT_TYPES),
+});
 
 // The sheet itself is a JSON blob — the schema lives client-side and will
 // evolve fast; the server only cares about ownership and campaign scoping.
@@ -102,8 +122,11 @@ interface CharacterRow {
   display_name: string;
   name: string;
   data: string;
+  portrait_path: string;
   updated_at: string;
 }
+
+const portraitUrl = (p: string) => (p ? `/uploads/${path.basename(p)}` : "");
 
 function toPayload(row: CharacterRow) {
   return {
@@ -113,6 +136,7 @@ function toPayload(row: CharacterRow) {
     ownerName: row.display_name,
     name: row.name,
     data: JSON.parse(row.data),
+    portraitUrl: portraitUrl(row.portrait_path),
     updatedAt: row.updated_at,
   };
 }
@@ -120,7 +144,7 @@ function toPayload(row: CharacterRow) {
 const getCharacter = (charId: number, campaignId: number): CharacterRow | undefined =>
   db
     .prepare(
-      `SELECT c.id, c.campaign_id, c.user_id, u.display_name, c.name, c.data, c.updated_at
+      `SELECT c.id, c.campaign_id, c.user_id, u.display_name, c.name, c.data, c.portrait_path, c.updated_at
        FROM characters c JOIN users u ON u.id = c.user_id
        WHERE c.id = ? AND c.campaign_id = ?`
     )
@@ -134,7 +158,7 @@ charactersRouter.get("/:id/characters", (req, res) => {
   if (!memberRole(campaignId, user(req).id)) return res.status(404).json({ error: "Campaign not found." });
   const rows = db
     .prepare(
-      `SELECT c.id, c.campaign_id, c.user_id, u.display_name, c.name, c.data, c.updated_at
+      `SELECT c.id, c.campaign_id, c.user_id, u.display_name, c.name, c.data, c.portrait_path, c.updated_at
        FROM characters c JOIN users u ON u.id = c.user_id
        WHERE c.campaign_id = ? ORDER BY c.name`
     )
@@ -154,6 +178,7 @@ charactersRouter.get("/:id/characters", (req, res) => {
         ownerId: p.ownerId,
         ownerName: p.ownerName,
         summary,
+        portraitUrl: p.portraitUrl,
         hp: d.hp,
         maxHp: d.maxHp,
         aura: d.system === "remnant" ? d.aura : undefined,
@@ -223,6 +248,48 @@ charactersRouter.put("/:id/characters/:charId", (req, res) => {
   res.json({ ok: true });
 });
 
+// Portrait upload/replace — shows on the sheet, the hub roster, and map tokens.
+charactersRouter.post("/:id/characters/:charId/portrait", portraitUpload.single("portrait"), async (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  const row = getCharacter(Number(req.params.charId), campaignId);
+  if (!row) return res.status(404).json({ error: "Character not found." });
+  if (row.user_id !== user(req).id && !isDMRole(role)) {
+    return res.status(403).json({ error: "Only the character's player or the DM can set the portrait." });
+  }
+  if (!req.file) return res.status(400).json({ error: "Attach a PNG, JPEG, or WebP image." });
+  if (row.portrait_path) await unlink(row.portrait_path).catch(() => {});
+  db.prepare("UPDATE characters SET portrait_path = ? WHERE id = ?").run(req.file.path, row.id);
+  broadcastCharacter(campaignId, row.id, user(req).id);
+  res.json({ portraitUrl: portraitUrl(req.file.path) });
+});
+
+charactersRouter.delete("/:id/characters/:charId/portrait", async (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  const row = getCharacter(Number(req.params.charId), campaignId);
+  if (!row) return res.status(404).json({ error: "Character not found." });
+  if (row.user_id !== user(req).id && !isDMRole(role)) {
+    return res.status(403).json({ error: "Only the character's player or the DM can remove the portrait." });
+  }
+  if (row.portrait_path) await unlink(row.portrait_path).catch(() => {});
+  db.prepare("UPDATE characters SET portrait_path = '' WHERE id = ?").run(row.id);
+  broadcastCharacter(campaignId, row.id, user(req).id);
+  res.json({ ok: true });
+});
+
+function broadcastCharacter(campaignId: number, charId: number, updatedBy: number) {
+  const fresh = getCharacter(charId, campaignId);
+  if (!fresh) return;
+  getIo().to(`campaign:${campaignId}`).emit("character:update", {
+    campaignId,
+    updatedBy,
+    character: toPayload(fresh),
+  });
+}
+
 charactersRouter.delete("/:id/characters/:charId", (req, res) => {
   const campaignId = Number(req.params.id);
   const role = memberRole(campaignId, user(req).id);
@@ -232,6 +299,7 @@ charactersRouter.delete("/:id/characters/:charId", (req, res) => {
   if (row.user_id !== user(req).id && !isDMRole(role)) {
     return res.status(403).json({ error: "Only the character's player or the DM can delete this sheet." });
   }
+  if (row.portrait_path) unlink(row.portrait_path).catch(() => {});
   db.prepare("DELETE FROM characters WHERE id = ?").run(row.id);
   getIo().to(`campaign:${campaignId}`).emit("character:delete", { campaignId, characterId: row.id });
   res.json({ ok: true });

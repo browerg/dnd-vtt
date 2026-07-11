@@ -322,6 +322,9 @@ export default function CampaignPage() {
             <ul className="member-list">
               {characters.map((c) => (
                 <li key={c.id} className="row-between">
+                  <span className="avatar">
+                    {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : c.name[0]?.toUpperCase() ?? "?"}
+                  </span>
                   <Link to={`/campaigns/${campaignId}/characters/${c.id}`} className="char-link">
                     <strong>{c.name}</strong>
                     {c.summary && <span className="muted"> · {c.summary}</span>}

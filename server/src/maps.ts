@@ -49,6 +49,7 @@ export interface TokenPayload {
   maxHp: number | null;
   aura: number | null;
   auraMax: number | null;
+  portraitUrl: string;
 }
 
 // Character tokens read HP from the sheet; monster/custom tokens carry their own.
@@ -59,7 +60,8 @@ const TOKEN_COLS = `
   COALESCE(json_extract(c.data, '$.hp'), t.hp) AS hp,
   COALESCE(json_extract(c.data, '$.maxHp'), t.max_hp) AS max_hp,
   json_extract(c.data, '$.aura') AS aura,
-  json_extract(c.data, '$.auraMax') AS aura_max`;
+  json_extract(c.data, '$.auraMax') AS aura_max,
+  c.portrait_path AS portrait_path`;
 const TOKEN_SELECT = `SELECT ${TOKEN_COLS}
   FROM tokens t LEFT JOIN characters c ON c.id = t.character_id`;
 
@@ -78,6 +80,7 @@ const toToken = (r: any): TokenPayload => ({
   maxHp: r.max_hp,
   aura: r.aura ?? null,
   auraMax: r.aura_max ?? null,
+  portraitUrl: r.portrait_path ? `/uploads/${path.basename(r.portrait_path)}` : "",
 });
 
 export const getToken = (tokenId: number): (TokenPayload & { campaignId: number }) | null => {

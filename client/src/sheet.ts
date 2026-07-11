@@ -99,6 +99,7 @@ export interface Character {
   ownerName: string;
   name: string;
   data: CharacterData;
+  portraitUrl: string;
   updatedAt: string;
 }
 
@@ -108,6 +109,7 @@ export interface CharacterSummary {
   ownerId: number;
   ownerName: string;
   summary: string;
+  portraitUrl: string;
   hp: number;
   maxHp: number;
 }

@@ -37,6 +37,27 @@ export default function CharacterSheetPage() {
   const [error, setError] = useState("");
   const saveTimer = useRef<number>();
   const dirtyRef = useRef(false);
+  const portraitInput = useRef<HTMLInputElement>(null);
+
+  const uploadPortrait = async (file: File) => {
+    const fd = new FormData();
+    fd.append("portrait", file);
+    const res = await fetch(`/api/campaigns/${campaignId}/characters/${characterId}/portrait`, {
+      method: "POST",
+      body: fd,
+    });
+    if (!res.ok) {
+      window.alert((await res.json()).error ?? "Portrait upload failed");
+      return;
+    }
+    const r = (await res.json()) as { portraitUrl: string };
+    setCharacter((prev) => (prev ? { ...prev, portraitUrl: r.portraitUrl } : prev));
+  };
+
+  const removePortrait = async () => {
+    await api(`/api/campaigns/${campaignId}/characters/${characterId}/portrait`, { method: "DELETE" });
+    setCharacter((prev) => (prev ? { ...prev, portraitUrl: "" } : prev));
+  };
 
   useEffect(() => {
     api<{ character: Character; canEdit: boolean }>(
@@ -151,6 +172,36 @@ export default function CharacterSheetPage() {
         <Link to={`/campaigns/${campaignId}`} className="ghost link">
           ← Campaign
         </Link>
+        <button
+          type="button"
+          className="avatar-btn"
+          title={ro ? character.name : "Set portrait (PNG/JPEG/WebP)"}
+          onClick={() => !ro && portraitInput.current?.click()}
+        >
+          {character.portraitUrl ? (
+            <img src={character.portraitUrl} alt={character.name} />
+          ) : (
+            <span>{character.name[0]?.toUpperCase() ?? "?"}</span>
+          )}
+        </button>
+        {!ro && character.portraitUrl && (
+          <button className="ghost mini" title="Remove portrait" onClick={removePortrait}>
+            ✕
+          </button>
+        )}
+        {!ro && (
+          <input
+            ref={portraitInput}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) uploadPortrait(f);
+              e.target.value = "";
+            }}
+          />
+        )}
         <span className="brand">{character.name}</span>
         <span className="muted">
           {character.ownerName}
