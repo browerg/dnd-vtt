@@ -41,7 +41,8 @@ export default function DicePanel({ onRoll, system }: Props) {
           ["advantage", "Adv"],
           ["disadvantage", "Dis"],
         ];
-  const [formula, setFormula] = useState("1d20");
+  // Remnant checks are 2d10 + attribute die; 5e lives on the d20.
+  const [formula, setFormula] = useState(system === "remnant" ? "2d10" : "1d20");
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState("normal");
   const [visibility, setVisibility] = useState("public");
@@ -108,7 +109,7 @@ export default function DicePanel({ onRoll, system }: Props) {
           className="formula-input"
           value={formula}
           onChange={(e) => setFormula(e.target.value)}
-          placeholder="2d6+4"
+          placeholder={system === "remnant" ? "2d10+1d6" : "2d6+4"}
           aria-label="Dice formula"
         />
         <button
@@ -150,7 +151,11 @@ export default function DicePanel({ onRoll, system }: Props) {
       <input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
-        placeholder="Label (optional) — e.g. Fireball damage"
+        placeholder={
+          system === "remnant"
+            ? "Label (optional) — e.g. Dust Channeling"
+            : "Label (optional) — e.g. Fireball damage"
+        }
         aria-label="Roll label"
       />
       <div className="row-between">
