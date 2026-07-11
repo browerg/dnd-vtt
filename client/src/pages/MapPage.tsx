@@ -48,16 +48,21 @@ interface Token {
   size: number;
   hp: number | null;
   maxHp: number | null;
+  aura: number | null;
+  auraMax: number | null;
 }
 
 interface MonsterHit {
   id: number;
   name: string;
+  system?: string;
   cr: number;
   type: string;
   size: string;
   hp: number;
   ac: number;
+  threat?: number;
+  armor?: number;
 }
 
 interface MonsterDetail {
@@ -80,6 +85,12 @@ interface MonsterDetail {
   languages: string;
   special_abilities: { name: string; desc: string }[] | null;
   actions: { name: string; desc: string; attack_bonus?: number; damage_dice?: string; damage_bonus?: number }[] | null;
+  // Remnant Grimm shape
+  system?: string;
+  threat?: number;
+  ferocity?: number;
+  armor?: number;
+  traits?: { name: string; desc: string }[];
 }
 
 interface Ping {
@@ -488,6 +499,27 @@ export default function MapPage() {
   const fmtMod = (m: number) => (m >= 0 ? `+${m}` : `${m}`);
   const fmtCr = (cr: number) => ({ 0.125: "1/8", 0.25: "1/4", 0.5: "1/2" }[cr] ?? `${cr}`);
 
+  const hpEditor = (token: Token) => (
+    <span className="hp-editor">
+      HP{" "}
+      <button className="ghost mini" onClick={() => setTokenHp(token, (token.hp ?? 0) - 5)}>
+        -5
+      </button>
+      <button className="ghost mini" onClick={() => setTokenHp(token, (token.hp ?? 0) - 1)}>
+        -1
+      </button>
+      <strong>
+        {token.hp}/{token.maxHp}
+      </strong>
+      <button className="ghost mini" onClick={() => setTokenHp(token, (token.hp ?? 0) + 1)}>
+        +1
+      </button>
+      <button className="ghost mini" onClick={() => setTokenHp(token, (token.hp ?? 0) + 5)}>
+        +5
+      </button>
+    </span>
+  );
+
   if (error && !loaded) return <div className="page-center error">{error}</div>;
   if (!loaded) return <div className="page-center muted">Loading…</div>;
 
@@ -670,6 +702,16 @@ export default function MapPage() {
                         .toUpperCase()}
                     </span>
                     <span className="token-name">{t.name}</span>
+                    {t.auraMax != null && t.aura != null && (
+                      <span className="token-aura">
+                        <span
+                          className="token-aura-fill"
+                          style={{
+                            width: `${Math.max(0, Math.min(100, (t.aura / Math.max(1, t.auraMax)) * 100))}%`,
+                          }}
+                        />
+                      </span>
+                    )}
                     {t.maxHp != null && t.hp != null && (
                       <span className="token-hp">
                         <span
@@ -708,6 +750,47 @@ export default function MapPage() {
                   ✕
                 </button>
               </div>
+              {statblock.system === "remnant" ? (
+                <>
+                  <p className="muted small">
+                    {statblock.size} {statblock.type} · Threat {statblock.threat}
+                  </p>
+                  <div className="row-between statline">
+                    <span>
+                      Armor <strong>{statblock.armor}</strong>
+                    </span>
+                    {hpEditor(selectedToken)}
+                  </div>
+                  <div className="row-between statline">
+                    <span>
+                      Ferocity <strong>d{statblock.ferocity}</strong>
+                    </span>
+                    <span className="action-rolls">
+                      <button
+                        className="ghost mini"
+                        onClick={() =>
+                          rollDice(`2d10+1d${statblock.ferocity}`, `${selectedToken.name}: Attack`)
+                        }
+                      >
+                        attack 2d10+1d{statblock.ferocity}
+                      </button>
+                      <button
+                        className="ghost mini"
+                        onClick={() => rollDice(`1d${statblock.ferocity}`, `${selectedToken.name}: Damage`)}
+                      >
+                        dmg 1d{statblock.ferocity}
+                      </button>
+                    </span>
+                  </div>
+                  {(statblock.traits ?? []).map((a) => (
+                    <details key={a.name} className="mon-ability">
+                      <summary>{a.name}</summary>
+                      <p className="muted small">{a.desc}</p>
+                    </details>
+                  ))}
+                </>
+              ) : (
+                <>
               <p className="muted small">
                 {statblock.size} {statblock.type} · CR {fmtCr(statblock.cr)}
               </p>
@@ -715,24 +798,7 @@ export default function MapPage() {
                 <span>
                   AC <strong>{statblock.armor_class}</strong>
                 </span>
-                <span className="hp-editor">
-                  HP{" "}
-                  <button className="ghost mini" onClick={() => setTokenHp(selectedToken, (selectedToken.hp ?? 0) - 5)}>
-                    -5
-                  </button>
-                  <button className="ghost mini" onClick={() => setTokenHp(selectedToken, (selectedToken.hp ?? 0) - 1)}>
-                    -1
-                  </button>
-                  <strong>
-                    {selectedToken.hp}/{selectedToken.maxHp}
-                  </strong>
-                  <button className="ghost mini" onClick={() => setTokenHp(selectedToken, (selectedToken.hp ?? 0) + 1)}>
-                    +1
-                  </button>
-                  <button className="ghost mini" onClick={() => setTokenHp(selectedToken, (selectedToken.hp ?? 0) + 5)}>
-                    +5
-                  </button>
-                </span>
+                {hpEditor(selectedToken)}
               </div>
               <p className="muted small">
                 {["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]
@@ -785,6 +851,8 @@ export default function MapPage() {
                   </details>
                 </div>
               ))}
+                </>
+              )}
             </section>
           )}
           <section>
@@ -963,7 +1031,10 @@ export default function MapPage() {
                     {monsterHits.map((m) => (
                       <div key={m.id} className="row-between sidebar-row">
                         <span className="mon-hit">
-                          {m.name} <span className="muted">CR {fmtCr(m.cr)}</span>
+                          {m.name}{" "}
+                          <span className="muted">
+                            {m.system === "remnant" ? `Threat ${m.threat}` : `CR ${fmtCr(m.cr)}`}
+                          </span>
                         </span>
                         <button className="ghost mini" onClick={() => spawnMonster(m.id)}>
                           Spawn

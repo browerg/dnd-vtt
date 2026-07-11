@@ -13,8 +13,11 @@ import { codexRouter } from "./codex.js";
 import { exportRouter } from "./export.js";
 import { spellsRouter } from "./spells.js";
 import { uploadsDir } from "./db.js";
+import { backfillGrimm } from "./grimm.js";
 import { setupSockets } from "./sockets.js";
 import { setIo } from "./realtime.js";
+
+backfillGrimm();
 
 const app = express();
 app.use(express.json());

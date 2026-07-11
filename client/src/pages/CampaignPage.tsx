@@ -9,6 +9,7 @@ import DicePanel from "../components/DicePanel";
 import RollFeed from "../components/RollFeed";
 import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
+import RemnantReference from "../components/RemnantReference";
 
 interface CampaignDetail {
   campaign: {
@@ -343,6 +344,12 @@ export default function CampaignPage() {
               </form>
             )}
           </section>
+          {detail.campaign.system === "remnant" && (
+            <section className="card">
+              <h3>Quick reference</h3>
+              <RemnantReference />
+            </section>
+          )}
           <section className="card">
             <h3>Party</h3>
             <ul className="member-list">

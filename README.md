@@ -1,7 +1,8 @@
 # D&D Virtual Tabletop (working name: dnd-vtt)
 
-A web-based virtual tabletop for running D&D campaigns with friends — campaign hub,
-character sheets, live dice, interactive battle maps, and DM tools.
+A web-based virtual tabletop for running campaigns with friends — campaign hub,
+character sheets, live dice, interactive battle maps, and DM tools. Speaks two
+systems: **Remnant** (the group's RWBY TTRPG — the default) and D&D 5e.
 
 ## The one guiding principle
 
@@ -42,6 +43,18 @@ character sheets, live dice, interactive battle maps, and DM tools.
   with a full custom monster editor (traits, actions with rollable attacks),
   clone-from-SRD, campaign-scoped visibility. Plus the SRD spellbook: 319 spells
   searchable from the character sheet with one-click add and full descriptions.
+- **Milestone 4 — Remnant mode** (2026-07-11): the group's actual system is now the
+  default. Per-campaign `system` setting (new campaigns are Remnant; D&D 5e under an
+  Advanced option). Edge/Setback roll modes (reroll the attribute die, keep
+  higher/lower). Full Remnant character sheet with auto-computed Aura pool, HP,
+  Defense Rating, and Semblance costs — verified against a real player PDF. All 15
+  handbook Grimm auto-seed into every Remnant campaign as editable custom monsters;
+  Grimm stat blocks (Threat/Ferocity/Armor/HP + traits) render in the bestiary and
+  the map's DM panel with one-click attack (2d10+1d{ferocity}) and damage rolls,
+  plus a Grimm editor. Character map tokens show a gold Aura bar above the HP bar.
+  Initiative rolls 2d10 + Finesse (characters) or + Ferocity (Grimm). A collapsible
+  quick-reference card (DCs, action economy, conditions, Final Flare, Semblance
+  costs, Dust combos) lives on every Remnant campaign hub.
 - **Next step:** 🎲 **game night test #1** — which needs **hosting** (friends can't
   reach localhost). Then fix what hurt. Deferred: character creator, portrait
   uploads, OAuth buttons, world map, wiki, measurement/drawing tools.

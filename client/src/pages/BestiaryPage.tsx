@@ -5,12 +5,15 @@ import { api } from "../api";
 interface Hit {
   id: number;
   source: "srd" | "custom";
+  system?: string;
   name: string;
   cr: number;
   type: string;
   size: string;
   hp: number;
   ac: number;
+  threat?: number;
+  armor?: number;
 }
 
 interface Ability {
@@ -47,6 +50,12 @@ interface Detail {
   languages: string;
   special_abilities: Ability[] | null;
   actions: Action[] | null;
+  // Remnant Grimm shape
+  system?: string;
+  threat?: number;
+  ferocity?: number;
+  armor?: number;
+  traits?: Ability[];
 }
 
 // Editor working state, flat for form binding.
@@ -96,6 +105,31 @@ const BLANK: Draft = {
   actions: [{ name: "", desc: "", attack_bonus: "", damage_dice: "", damage_bonus: "" }],
 };
 
+// Remnant Grimm editor state: Threat 1-5, Ferocity die, flat Armor, traits.
+interface GrimmDraft {
+  id: number | null;
+  name: string;
+  size: string;
+  type: string;
+  threat: number;
+  ferocity: number;
+  armor: number;
+  hitPoints: number;
+  traits: Ability[];
+}
+
+const BLANK_GRIMM: GrimmDraft = {
+  id: null,
+  name: "",
+  size: "Medium",
+  type: "Creature of Grimm",
+  threat: 1,
+  ferocity: 6,
+  armor: 0,
+  hitPoints: 20,
+  traits: [],
+};
+
 const fmtCr = (cr: number) => ({ 0.125: "1/8", 0.25: "1/4", 0.5: "1/2" }[cr] ?? `${cr}`);
 const mod = (s: number) => Math.floor((s - 10) / 2);
 const fmtMod = (m: number) => (m >= 0 ? `+${m}` : `${m}`);
@@ -131,22 +165,41 @@ function detailToDraft(d: Detail): Draft {
   };
 }
 
+function detailToGrimmDraft(d: Detail): GrimmDraft {
+  return {
+    id: d.id,
+    name: d.name,
+    size: d.size,
+    type: d.type,
+    threat: d.threat ?? 1,
+    ferocity: d.ferocity ?? 6,
+    armor: d.armor ?? 0,
+    hitPoints: d.hit_points,
+    traits: (d.traits ?? []).map((t) => ({ name: t.name, desc: t.desc })),
+  };
+}
+
 export default function BestiaryPage() {
   const { id } = useParams();
   const campaignId = Number(id);
   const [role, setRole] = useState("");
+  const [system, setSystem] = useState("dnd5e");
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [grimmDraft, setGrimmDraft] = useState<GrimmDraft | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   const isDM = role === "dm" || role === "co-dm";
 
   useEffect(() => {
-    api<{ yourRole: string }>(`/api/campaigns/${campaignId}`)
-      .then((r) => setRole(r.yourRole))
+    api<{ yourRole: string; campaign: { system: string } }>(`/api/campaigns/${campaignId}`)
+      .then((r) => {
+        setRole(r.yourRole);
+        setSystem(r.campaign.system);
+      })
       .catch((e) => setError(e.message));
   }, [campaignId]);
 
@@ -165,21 +218,23 @@ export default function BestiaryPage() {
 
   const open = (monsterId: number) => {
     setDraft(null);
+    setGrimmDraft(null);
     api<{ monster: Detail }>(`/api/monsters/${monsterId}`)
       .then((r) => setDetail(r.monster))
       .catch((e) => setError(e.message));
   };
 
   const save = async () => {
-    if (!draft) return;
+    const working = draft ?? grimmDraft;
+    if (!working) return;
     setError("");
     setNotice("");
-    const body = { ...draft, campaignId };
+    const body = grimmDraft ? { ...grimmDraft, system: "remnant", campaignId } : { ...draft, campaignId };
     try {
-      if (draft.id) {
-        await api(`/api/monsters/${draft.id}`, { method: "PUT", body: JSON.stringify(body) });
+      if (working.id) {
+        await api(`/api/monsters/${working.id}`, { method: "PUT", body: JSON.stringify(body) });
         setNotice("Saved.");
-        open(draft.id);
+        open(working.id);
       } else {
         const r = await api<{ id: number }>(`/api/monsters`, { method: "POST", body: JSON.stringify(body) });
         setNotice("Created.");
@@ -201,7 +256,13 @@ export default function BestiaryPage() {
       search();
       const d = await api<{ monster: Detail }>(`/api/monsters/${r.id}`);
       setDetail(d.monster);
-      setDraft(detailToDraft(d.monster));
+      if (d.monster.system === "remnant") {
+        setDraft(null);
+        setGrimmDraft(detailToGrimmDraft(d.monster));
+      } else {
+        setGrimmDraft(null);
+        setDraft(detailToDraft(d.monster));
+      }
     } catch (e: any) {
       setError(e.message);
     }
@@ -214,6 +275,7 @@ export default function BestiaryPage() {
       await api(`/api/monsters/${monsterId}`, { method: "DELETE" });
       setDetail(null);
       setDraft(null);
+      setGrimmDraft(null);
       search();
     } catch (e: any) {
       setError(e.message);
@@ -221,6 +283,7 @@ export default function BestiaryPage() {
   };
 
   const set = (patch: Partial<Draft>) => setDraft((d) => (d ? { ...d, ...patch } : d));
+  const setG = (patch: Partial<GrimmDraft>) => setGrimmDraft((d) => (d ? { ...d, ...patch } : d));
 
   return (
     <div className="shell">
@@ -235,10 +298,16 @@ export default function BestiaryPage() {
             className="primary"
             onClick={() => {
               setDetail(null);
-              setDraft({ ...BLANK, actions: BLANK.actions.map((a) => ({ ...a })) });
+              if (system === "remnant") {
+                setDraft(null);
+                setGrimmDraft({ ...BLANK_GRIMM, traits: [] });
+              } else {
+                setGrimmDraft(null);
+                setDraft({ ...BLANK, actions: BLANK.actions.map((a) => ({ ...a })) });
+              }
             }}
           >
-            + New monster
+            {system === "remnant" ? "+ New Grimm" : "+ New monster"}
           </button>
         )}
       </header>
@@ -261,7 +330,9 @@ export default function BestiaryPage() {
                     </span>
                   </span>
                   <span className="muted small">
-                    CR {fmtCr(h.cr)} · AC {h.ac} · {h.hp} hp
+                    {h.system === "remnant"
+                      ? `Threat ${h.threat} · Armor ${h.armor} · ${h.hp} hp`
+                      : `CR ${fmtCr(h.cr)} · AC ${h.ac} · ${h.hp} hp`}
                   </span>
                 </button>
               ))}
@@ -273,7 +344,7 @@ export default function BestiaryPage() {
           {error && <div className="error">{error}</div>}
           {notice && <div className="muted small">{notice}</div>}
 
-          {detail && !draft && (
+          {detail && !draft && !grimmDraft && (
             <section className="card">
               <div className="row-between">
                 <h3>{detail.name}</h3>
@@ -285,7 +356,14 @@ export default function BestiaryPage() {
                   )}
                   {isDM && detail.source === "custom" && (
                     <>
-                      <button className="ghost mini" onClick={() => setDraft(detailToDraft(detail))}>
+                      <button
+                        className="ghost mini"
+                        onClick={() =>
+                          detail.system === "remnant"
+                            ? setGrimmDraft(detailToGrimmDraft(detail))
+                            : setDraft(detailToDraft(detail))
+                        }
+                      >
                         Edit
                       </button>
                       <button className="ghost mini" onClick={() => remove(detail.id)}>
@@ -295,44 +373,66 @@ export default function BestiaryPage() {
                   )}
                 </span>
               </div>
-              <p className="muted small">
-                {detail.size} {detail.type} · CR {fmtCr(detail.cr)}
-              </p>
-              <p>
-                AC <strong>{detail.armor_class}</strong> · HP <strong>{detail.hit_points}</strong>
-                {detail.hit_dice && <span className="muted"> ({detail.hit_dice})</span>} · Speed{" "}
-                {Object.entries(detail.speed ?? {})
-                  .map(([k, v]) => `${k} ${v}`)
-                  .join(", ")}
-              </p>
-              <p className="muted small">
-                {(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as const)
-                  .map((k, i) => `${["STR", "DEX", "CON", "INT", "WIS", "CHA"][i]} ${detail[k]} (${fmtMod(mod(detail[k]))})`)
-                  .join(" · ")}
-              </p>
-              {detail.senses && <p className="muted small">Senses: {detail.senses}</p>}
-              {detail.languages && <p className="muted small">Languages: {detail.languages}</p>}
-              {(detail.special_abilities ?? []).map((a) => (
-                <p key={a.name} className="small">
-                  <strong>{a.name}.</strong> <span className="muted">{a.desc}</span>
-                </p>
-              ))}
-              {(detail.actions ?? []).length > 0 && <h4>Actions</h4>}
-              {(detail.actions ?? []).map((a) => (
-                <p key={a.name} className="small">
-                  <strong>{a.name}.</strong>{" "}
-                  {a.attack_bonus != null && a.attack_bonus !== "" && (
-                    <span className="muted">{fmtMod(Number(a.attack_bonus))} to hit, </span>
-                  )}
-                  {a.damage_dice && (
-                    <span className="muted">
-                      {a.damage_dice}
-                      {a.damage_bonus ? `+${a.damage_bonus}` : ""} dmg —{" "}
-                    </span>
-                  )}
-                  <span className="muted">{a.desc}</span>
-                </p>
-              ))}
+              {detail.system === "remnant" ? (
+                <>
+                  <p className="muted small">
+                    {detail.size} {detail.type} · Threat {detail.threat}
+                  </p>
+                  <p>
+                    Ferocity <strong>d{detail.ferocity}</strong> · Armor <strong>{detail.armor}</strong> · HP{" "}
+                    <strong>{detail.hit_points}</strong>
+                  </p>
+                  <p className="muted small">
+                    Attack 2d10+1d{detail.ferocity} vs Defense · Damage 1d{detail.ferocity} · No Aura
+                  </p>
+                  {(detail.traits ?? []).map((t) => (
+                    <p key={t.name} className="small">
+                      <strong>{t.name}.</strong> <span className="muted">{t.desc}</span>
+                    </p>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <p className="muted small">
+                    {detail.size} {detail.type} · CR {fmtCr(detail.cr)}
+                  </p>
+                  <p>
+                    AC <strong>{detail.armor_class}</strong> · HP <strong>{detail.hit_points}</strong>
+                    {detail.hit_dice && <span className="muted"> ({detail.hit_dice})</span>} · Speed{" "}
+                    {Object.entries(detail.speed ?? {})
+                      .map(([k, v]) => `${k} ${v}`)
+                      .join(", ")}
+                  </p>
+                  <p className="muted small">
+                    {(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as const)
+                      .map((k, i) => `${["STR", "DEX", "CON", "INT", "WIS", "CHA"][i]} ${detail[k]} (${fmtMod(mod(detail[k]))})`)
+                      .join(" · ")}
+                  </p>
+                  {detail.senses && <p className="muted small">Senses: {detail.senses}</p>}
+                  {detail.languages && <p className="muted small">Languages: {detail.languages}</p>}
+                  {(detail.special_abilities ?? []).map((a) => (
+                    <p key={a.name} className="small">
+                      <strong>{a.name}.</strong> <span className="muted">{a.desc}</span>
+                    </p>
+                  ))}
+                  {(detail.actions ?? []).length > 0 && <h4>Actions</h4>}
+                  {(detail.actions ?? []).map((a) => (
+                    <p key={a.name} className="small">
+                      <strong>{a.name}.</strong>{" "}
+                      {a.attack_bonus != null && a.attack_bonus !== "" && (
+                        <span className="muted">{fmtMod(Number(a.attack_bonus))} to hit, </span>
+                      )}
+                      {a.damage_dice && (
+                        <span className="muted">
+                          {a.damage_dice}
+                          {a.damage_bonus ? `+${a.damage_bonus}` : ""} dmg —{" "}
+                        </span>
+                      )}
+                      <span className="muted">{a.desc}</span>
+                    </p>
+                  ))}
+                </>
+              )}
             </section>
           )}
 
@@ -544,10 +644,130 @@ export default function BestiaryPage() {
             </section>
           )}
 
-          {!detail && !draft && (
+          {grimmDraft && (
+            <section className="card stack">
+              <h3>{grimmDraft.id ? `Edit: ${grimmDraft.name}` : "New Grimm"}</h3>
+              <div className="field-grid">
+                <label>
+                  Name
+                  <input value={grimmDraft.name} onChange={(e) => setG({ name: e.target.value })} />
+                </label>
+                <label>
+                  Size
+                  <select value={grimmDraft.size} onChange={(e) => setG({ size: e.target.value })}>
+                    {["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"].map((s) => (
+                      <option key={s}>{s}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Type
+                  <input value={grimmDraft.type} onChange={(e) => setG({ type: e.target.value })} />
+                </label>
+              </div>
+              <div className="field-grid">
+                <label>
+                  Threat (1–5)
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={grimmDraft.threat}
+                    onChange={(e) => setG({ threat: Number(e.target.value) })}
+                  />
+                </label>
+                <label>
+                  Ferocity
+                  <select value={grimmDraft.ferocity} onChange={(e) => setG({ ferocity: Number(e.target.value) })}>
+                    {[4, 6, 8, 10, 12].map((d) => (
+                      <option key={d} value={d}>
+                        d{d}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Armor
+                  <input
+                    type="number"
+                    min={0}
+                    value={grimmDraft.armor}
+                    onChange={(e) => setG({ armor: Number(e.target.value) })}
+                  />
+                </label>
+                <label>
+                  HP
+                  <input
+                    type="number"
+                    min={1}
+                    value={grimmDraft.hitPoints}
+                    onChange={(e) => setG({ hitPoints: Number(e.target.value) })}
+                  />
+                </label>
+              </div>
+
+              <h4>Traits</h4>
+              {grimmDraft.traits.map((t, i) => (
+                <div key={i} className="stack trait-row">
+                  <div className="row-between">
+                    <input
+                      placeholder="Trait name — e.g. Pack Tactics"
+                      value={t.name}
+                      onChange={(e) =>
+                        setG({
+                          traits: grimmDraft.traits.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
+                        })
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="ghost mini"
+                      onClick={() => setG({ traits: grimmDraft.traits.filter((_, j) => j !== i) })}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <textarea
+                    rows={2}
+                    placeholder="What it does"
+                    value={t.desc}
+                    onChange={(e) =>
+                      setG({
+                        traits: grimmDraft.traits.map((x, j) => (j === i ? { ...x, desc: e.target.value } : x)),
+                      })
+                    }
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                className="ghost mini"
+                onClick={() => setG({ traits: [...grimmDraft.traits, { name: "", desc: "" }] })}
+              >
+                + Add trait
+              </button>
+
+              <div className="row-between">
+                <button className="primary" onClick={save}>
+                  {grimmDraft.id ? "Save changes" : "Create Grimm"}
+                </button>
+                <button className="ghost" onClick={() => setGrimmDraft(null)}>
+                  Cancel
+                </button>
+              </div>
+            </section>
+          )}
+
+          {!detail && !draft && !grimmDraft && (
             <section className="card">
               <p className="muted">
-                Pick a monster to view its stat block{isDM ? ", clone an SRD monster to customize it, or hit + New monster to build your own — Grimm welcome" : ""}.
+                Pick a monster to view its stat block
+                {isDM
+                  ? system === "remnant"
+                    ? ", tweak the seeded Grimm, or hit + New Grimm to build your own"
+                    : ", clone an SRD monster to customize it, or hit + New monster to build your own — Grimm welcome"
+                  : ""}
+                .
               </p>
             </section>
           )}

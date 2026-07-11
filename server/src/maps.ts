@@ -47,14 +47,19 @@ export interface TokenPayload {
   size: number;
   hp: number | null;
   maxHp: number | null;
+  aura: number | null;
+  auraMax: number | null;
 }
 
 // Character tokens read HP from the sheet; monster/custom tokens carry their own.
+// Aura only exists on Remnant character sheets — null everywhere else.
 const TOKEN_COLS = `
   t.id, t.map_id, t.character_id, t.monster_id, t.name, t.color, t.x, t.y, t.size,
   c.user_id AS owner_id,
   COALESCE(json_extract(c.data, '$.hp'), t.hp) AS hp,
-  COALESCE(json_extract(c.data, '$.maxHp'), t.max_hp) AS max_hp`;
+  COALESCE(json_extract(c.data, '$.maxHp'), t.max_hp) AS max_hp,
+  json_extract(c.data, '$.aura') AS aura,
+  json_extract(c.data, '$.auraMax') AS aura_max`;
 const TOKEN_SELECT = `SELECT ${TOKEN_COLS}
   FROM tokens t LEFT JOIN characters c ON c.id = t.character_id`;
 
@@ -71,6 +76,8 @@ const toToken = (r: any): TokenPayload => ({
   size: r.size,
   hp: r.hp,
   maxHp: r.max_hp,
+  aura: r.aura ?? null,
+  auraMax: r.aura_max ?? null,
 });
 
 export const getToken = (tokenId: number): (TokenPayload & { campaignId: number }) | null => {

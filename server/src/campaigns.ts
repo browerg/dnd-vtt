@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { getIo } from "./realtime.js";
+import { seedGrimm } from "./grimm.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 
@@ -41,6 +42,13 @@ campaignsRouter.post("/", (req, res) => {
     id,
     user(req).id
   );
+  if (system === "remnant") {
+    try {
+      seedGrimm(id);
+    } catch (e) {
+      console.warn("Grimm seed skipped:", (e as Error).message);
+    }
+  }
   res.json({ id });
 });
 

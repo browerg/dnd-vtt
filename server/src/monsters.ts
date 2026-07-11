@@ -11,16 +11,18 @@ const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 
 const SIZES = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"];
 const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+const FEROCITY_DICE = [4, 6, 8, 10, 12];
+
+const num = (v: unknown, fallback: number, min: number, max: number) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+};
 
 // Normalize a submitted stat block into the same shape the SRD data uses,
 // so the map's stat block panel works identically for both.
 function sanitizeStatblock(b: any): { data: Record<string, unknown>; cr: number; name: string } | string {
   const name = String(b?.name ?? "").trim();
   if (!name) return "The monster needs a name.";
-  const num = (v: unknown, fallback: number, min: number, max: number) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
-  };
   const cr = num(b.cr, 0, 0, 40);
   const data: Record<string, unknown> = {
     name,
@@ -53,6 +55,30 @@ function sanitizeStatblock(b: any): { data: Record<string, unknown>; cr: number;
     };
   });
   return { data, cr, name };
+}
+
+// Remnant Grimm are a different shape: Threat 1-5, a Ferocity die, flat Armor,
+// HP and freeform traits. Threat doubles as the cr sort column.
+function sanitizeGrimm(b: any): { data: Record<string, unknown>; cr: number; name: string } | string {
+  const name = String(b?.name ?? "").trim();
+  if (!name) return "The Grimm needs a name.";
+  const threat = num(b.threat, 1, 1, 5);
+  const data: Record<string, unknown> = {
+    system: "remnant",
+    name,
+    threat,
+    ferocity: FEROCITY_DICE.includes(Number(b.ferocity)) ? Number(b.ferocity) : 6,
+    armor: num(b.armor, 0, 0, 12),
+    hit_points: num(b.hitPoints, 10, 1, 500),
+    size: SIZES.includes(b.size) ? b.size : "Medium",
+    type: String(b.type ?? "").trim() || "Creature of Grimm",
+    traits: Array.isArray(b.traits)
+      ? b.traits
+          .map((t: any) => ({ name: String(t?.name ?? "").trim(), desc: String(t?.desc ?? "").trim() }))
+          .filter((t: any) => t.name)
+      : [],
+  };
+  return { data, cr: threat, name };
 }
 
 function monsterRow(id: number): any | null {
@@ -99,12 +125,17 @@ monstersRouter.get("/", (req, res) => {
       return {
         id: r.id,
         source: r.source,
+        system: d.system ?? "dnd5e",
         name: r.name,
         cr: r.cr,
         type: d.type ?? "",
         size: d.size ?? "",
         hp: d.hit_points ?? 0,
         ac: d.armor_class ?? 10,
+        // Remnant-only stats; undefined for 5e blocks.
+        threat: d.threat,
+        armor: d.armor,
+        ferocity: d.ferocity,
       };
     }),
   });
@@ -124,7 +155,7 @@ monstersRouter.get("/:id", (req, res) => {
 monstersRouter.post("/", (req, res) => {
   const campaignId = Number(req.body?.campaignId);
   if (!requireCampaignDM(req, res, campaignId)) return;
-  const parsed = sanitizeStatblock(req.body);
+  const parsed = req.body?.system === "remnant" ? sanitizeGrimm(req.body) : sanitizeStatblock(req.body);
   if (typeof parsed === "string") return res.status(400).json({ error: parsed });
   const info = db
     .prepare("INSERT INTO monsters (source, campaign_id, name, cr, data) VALUES ('custom', ?, ?, ?, ?)")
@@ -137,7 +168,9 @@ monstersRouter.put("/:id", (req, res) => {
   if (!row) return res.status(404).json({ error: "Monster not found." });
   if (row.source !== "custom") return res.status(400).json({ error: "SRD monsters can't be edited — clone one instead." });
   if (!requireCampaignDM(req, res, row.campaign_id)) return;
-  const parsed = sanitizeStatblock(req.body);
+  // The stored shape decides the schema so a Grimm can't be mangled into a 5e block.
+  const parsed =
+    JSON.parse(row.data).system === "remnant" ? sanitizeGrimm(req.body) : sanitizeStatblock(req.body);
   if (typeof parsed === "string") return res.status(400).json({ error: parsed });
   db.prepare("UPDATE monsters SET name = ?, cr = ?, data = ? WHERE id = ?").run(
     parsed.name,

@@ -473,6 +473,36 @@ select {
   pointer-events: none;
 }
 .token-hp-fill { display: block; height: 100%; background: var(--online); }
+/* Remnant: the gold Aura shield bar hugs the token's base, right above HP. */
+.token-aura {
+  position: absolute;
+  bottom: -2px;
+  left: 8%;
+  width: 84%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 3px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.token-aura-fill { display: block; height: 100%; background: #e8c14b; }
+
+/* ---- Remnant quick reference ---- */
+
+.quickref details { margin: 0.35rem 0; }
+.quickref summary { cursor: pointer; font-weight: 600; font-size: 0.92rem; }
+.quickref summary:hover { color: var(--accent); }
+.qr-table { width: 100%; border-collapse: collapse; margin: 0.4rem 0; font-size: 0.85rem; }
+.qr-table th {
+  text-align: left;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 0.15rem 0.5rem 0.15rem 0;
+}
+.qr-table td { padding: 0.15rem 0.5rem 0.15rem 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.qr-table td:first-child { font-weight: 600; white-space: nowrap; }
+.qr-list { margin: 0.3rem 0 0.3rem 1.1rem; padding: 0; }
+.qr-list li { margin: 0.15rem 0; }
 
 .ping { position: absolute; pointer-events: none; }
 .ping-ring {
