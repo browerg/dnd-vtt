@@ -1074,7 +1074,13 @@ select:focus { outline: none; border-color: var(--accent); }
 }
 
 .current-row { color: var(--accent); font-weight: 700; }
-.init-badge { display: flex; align-items: center; gap: 0.3rem; font-weight: 700; color: var(--accent); }
+.sidebar-row.clickable { cursor: pointer; }
+.sidebar-row.clickable:hover .init-name { color: var(--accent); }
+.init-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.init-hp { color: var(--online); font-weight: 600; }
+.init-hp.dead { color: var(--danger); }
+.init-conds { color: var(--danger); font-size: 0.75rem; font-weight: 700; }
+.init-badge { display: flex; align-items: center; gap: 0.3rem; font-weight: 700; color: var(--accent); flex-shrink: 0; }
 .combat-controls { margin-top: 0.5rem; }
 .combat-controls select { flex: 1; min-width: 0; }
 .small { font-size: 0.85rem; }

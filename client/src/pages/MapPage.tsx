@@ -1119,31 +1119,50 @@ export default function MapPage() {
           )}
           <section>
             <h4>{combat.active ? `Combat — round ${combat.round}` : "Initiative"}</h4>
-            {combat.combatants.map((c, i) => (
-              <div
-                key={c.id}
-                className={`row-between sidebar-row${combat.active && i === combat.turn ? " current-row" : ""}`}
-              >
-                <span>
-                  {combat.active && i === combat.turn ? "▶ " : ""}
-                  {c.name}
-                </span>
-                <span className="init-badge">
-                  {c.initiative}
-                  {isDM && (
-                    <button
-                      className="ghost mini"
-                      title="Remove"
-                      onClick={() =>
-                        api(`/api/campaigns/${campaignId}/combat/combatants/${c.id}`, { method: "DELETE" })
-                      }
-                    >
-                      ✕
-                    </button>
-                  )}
-                </span>
-              </div>
-            ))}
+            {combat.combatants.map((c, i) => {
+              const tok = tokens.find((t) => t.id === c.tokenId);
+              return (
+                <div
+                  key={c.id}
+                  className={`row-between sidebar-row${combat.active && i === combat.turn ? " current-row" : ""}${
+                    tok ? " clickable" : ""
+                  }`}
+                  onClick={() => tok && setSelectedTokenId(tok.id)}
+                >
+                  <span className="init-name">
+                    {combat.active && i === combat.turn ? "▶ " : ""}
+                    {c.name}
+                    {tok && tok.hp != null && tok.maxHp != null && (
+                      <span className={`small init-hp${tok.hp <= 0 ? " dead" : ""}`}>
+                        {" "}
+                        {tok.hp}/{tok.maxHp}
+                      </span>
+                    )}
+                    {tok && tok.conditions.length > 0 && (
+                      <span className="init-conds" title={tok.conditions.join(", ")}>
+                        {" "}
+                        ⚠{tok.conditions.length}
+                      </span>
+                    )}
+                  </span>
+                  <span className="init-badge">
+                    {c.initiative}
+                    {isDM && (
+                      <button
+                        className="ghost mini"
+                        title="Remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          api(`/api/campaigns/${campaignId}/combat/combatants/${c.id}`, { method: "DELETE" });
+                        }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
             {combat.combatants.length === 0 && <p className="muted small">No combatants yet.</p>}
             {isDM && (
               <div className="stack combat-controls">
