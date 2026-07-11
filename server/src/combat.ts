@@ -79,21 +79,35 @@ combatRouter.post("/:id/combat/combatants", (req, res) => {
   const b = req.body ?? {};
   const tokenId = b.tokenId ? Number(b.tokenId) : null;
   let name = String(b.name ?? "").trim();
-  let dexMod = 0;
+  const system = (db.prepare("SELECT system FROM campaigns WHERE id = ?").get(campaignId) as any)
+    ?.system;
+
+  // Default initiative formula per system; refined below from the token.
+  let formula = system === "remnant" ? "2d10" : "1d20";
 
   if (tokenId) {
     const t = db
       .prepare(
-        `SELECT t.name, json_extract(c.data, '$.abilities.dex') AS dex
+        `SELECT t.name,
+                json_extract(c.data, '$.abilities.dex') AS dex,
+                json_extract(c.data, '$.attributes.finesse') AS finesse,
+                json_extract(mo.data, '$.ferocity') AS ferocity
          FROM tokens t
          JOIN maps m ON m.id = t.map_id AND m.campaign_id = ?
          LEFT JOIN characters c ON c.id = t.character_id
+         LEFT JOIN monsters mo ON mo.id = t.monster_id
          WHERE t.id = ?`
       )
       .get(campaignId, tokenId) as any;
     if (!t) return res.status(404).json({ error: "Token not found." });
     name = name || t.name;
-    if (t.dex != null) dexMod = Math.floor((t.dex - 10) / 2);
+    if (system === "remnant") {
+      const die = t.finesse ?? t.ferocity;
+      if (die) formula = `2d10+1d${die}`;
+    } else if (t.dex != null) {
+      const dexMod = Math.floor((t.dex - 10) / 2);
+      formula = dexMod === 0 ? "1d20" : dexMod > 0 ? `1d20+${dexMod}` : `1d20${dexMod}`;
+    }
   }
   if (!name) return res.status(400).json({ error: "The combatant needs a name." });
 
@@ -102,7 +116,6 @@ combatRouter.post("/:id/combat/combatants", (req, res) => {
     initiative = b.initiative;
   } else {
     // Roll it for real: shows up in the feed and on the 3D dice.
-    const formula = dexMod === 0 ? "1d20" : dexMod > 0 ? `1d20+${dexMod}` : `1d20${dexMod}`;
     try {
       initiative = performRoll(user(req), campaignId, formula, `${name}: Initiative`).total!;
     } catch (e) {

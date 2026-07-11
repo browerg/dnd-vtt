@@ -11,6 +11,60 @@ const MAX_DATA_BYTES = 200_000;
 // The sheet itself is a JSON blob — the schema lives client-side and will
 // evolve fast; the server only cares about ownership and campaign scoping.
 
+// New Remnant character: the starting array is 1d8/4d6/1d4 placed by the
+// player, so default everything to d6 and let them arrange it on the sheet.
+function remnantDefaultData() {
+  return {
+    system: "remnant",
+    age: "",
+    gender: "",
+    species: "Human",
+    hometown: "",
+    academy: "Beacon",
+    academyYear: "",
+    teamName: "",
+    teamRole: "",
+    teammates: ["", "", ""],
+    archetype: "Bladesman",
+    rank: "Initiate",
+    attributes: { brawn: 6, finesse: 6, resolve: 6, wit: 6, aura: 6, grit: 6 },
+    trainedSkills: [],
+    armor: "none",
+    aura: 45,
+    auraMax: 45,
+    hp: 14,
+    maxHp: 14,
+    weaponName: "",
+    weaponForms: [
+      { type: "", range: "Close", damage: 8, special: "" },
+      { type: "", range: "Mid", damage: 8, special: "" },
+    ],
+    activeForm: 0,
+    semblance: {
+      name: "",
+      undiscovered: false,
+      type: "Enhancement",
+      scope: "Personal",
+      intensity: "Minor",
+      duration: "Instant",
+      limitation: "",
+      description: "",
+      upgrades: [],
+    },
+    dust: {},
+    conditions: [],
+    lien: 0,
+    equipment: "",
+    bond: "",
+    trait: "",
+    ideal: "",
+    flaw: "",
+    fear: "",
+    backstory: "",
+    notes: "",
+  };
+}
+
 function defaultData() {
   return {
     race: "",
@@ -90,14 +144,20 @@ charactersRouter.get("/:id/characters", (req, res) => {
       const p = toPayload(r);
       // list view: summary only, no full sheet
       const d = p.data;
+      const summary =
+        d.system === "remnant"
+          ? [d.archetype, d.rank].filter(Boolean).join(" · ")
+          : `${d.race || ""} ${d.class || ""}`.trim() + (d.level ? ` ${d.level}` : "");
       return {
         id: p.id,
         name: p.name,
         ownerId: p.ownerId,
         ownerName: p.ownerName,
-        summary: `${d.race || ""} ${d.class || ""}`.trim() + (d.level ? ` ${d.level}` : ""),
+        summary,
         hp: d.hp,
         maxHp: d.maxHp,
+        aura: d.system === "remnant" ? d.aura : undefined,
+        auraMax: d.system === "remnant" ? d.auraMax : undefined,
       };
     }),
   });
@@ -110,9 +170,12 @@ charactersRouter.post("/:id/characters", (req, res) => {
   if (role === "spectator") return res.status(403).json({ error: "Spectators can't create characters." });
   const name = String(req.body?.name ?? "").trim();
   if (!name) return res.status(400).json({ error: "Your character needs a name." });
+  const system = (db.prepare("SELECT system FROM campaigns WHERE id = ?").get(campaignId) as any)
+    ?.system;
+  const data = system === "remnant" ? remnantDefaultData() : defaultData();
   const info = db
     .prepare("INSERT INTO characters (campaign_id, user_id, name, data) VALUES (?, ?, ?, ?)")
-    .run(campaignId, user(req).id, name, JSON.stringify(defaultData()));
+    .run(campaignId, user(req).id, name, JSON.stringify(data));
   res.json({ id: Number(info.lastInsertRowid) });
 });
 

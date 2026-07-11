@@ -651,6 +651,51 @@ select {
 
 .advanced-opts summary { cursor: pointer; }
 .sys-pick { margin-top: 0.5rem; gap: 0.35rem; }
+
+/* ---- remnant sheet ---- */
+
+.vital.pool { min-width: 13rem; }
+.pool-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.pool-fill { display: block; height: 100%; }
+.pool-fill.aura-pool { background: #e8c86a; box-shadow: 0 0 6px rgba(232, 200, 106, 0.7); }
+.pool-fill.hp-pool { background: var(--danger); }
+
+.aura-broken-banner,
+.final-flare-banner {
+  margin-top: 0.8rem;
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.aura-broken-banner { border: 1px solid #6fb3e0; color: #6fb3e0; background: rgba(111, 179, 224, 0.08); }
+.final-flare-banner { border: 1px solid var(--danger); color: var(--danger); background: rgba(224, 96, 96, 0.08); }
+
+.die-select { width: 4.2rem; text-align: center; font-weight: 700; }
+
+.weapon-name { max-width: 14rem; }
+.weapon-form.active-form { border-color: var(--accent); }
+
+.dust-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem; }
+.dust-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.dust-box.has-dust { border-color: var(--accent); }
+.dust-name { font-size: 0.82rem; font-weight: 600; }
 .fog-overlay { position: absolute; inset: 0; pointer-events: none; }
 
 .token.current-turn {

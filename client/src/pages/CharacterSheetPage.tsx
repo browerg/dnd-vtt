@@ -15,8 +15,10 @@ import {
   type Character,
   type CharacterData,
 } from "../sheet";
+import RemnantSheet from "../components/RemnantSheet";
+import type { RemnantData } from "../remnant";
 
-type RollMode = "normal" | "advantage" | "disadvantage";
+type RollMode = "normal" | "advantage" | "disadvantage" | "edge" | "setback";
 
 export default function CharacterSheetPage() {
   const { id, charId } = useParams();
@@ -86,7 +88,7 @@ export default function CharacterSheetPage() {
   );
 
   const update = useCallback(
-    (patch: Partial<CharacterData>, name?: string) => {
+    (patch: Record<string, unknown>, name?: string) => {
       setCharacter((prev) => {
         if (!prev) return prev;
         const next = {
@@ -124,8 +126,14 @@ export default function CharacterSheetPage() {
 
   if (error) return <div className="page-center error">{error}</div>;
   if (!character) return <div className="page-center muted">Loading…</div>;
+  const isRemnant = (character.data as unknown as RemnantData).system === "remnant";
   const d = character.data;
   const ro = !canEdit;
+  const modeOptions: RollMode[] = isRemnant
+    ? ["normal", "edge", "setback"]
+    : ["normal", "advantage", "disadvantage"];
+  const modeLabel = (m: RollMode) =>
+    ({ normal: "Normal", advantage: "Adv", disadvantage: "Dis", edge: "Edge", setback: "Setback" })[m];
 
   const num = (v: string, fallback = 0) => {
     const n = parseInt(v, 10);
@@ -135,7 +143,7 @@ export default function CharacterSheetPage() {
   const toggleInList = (list: string[], key: string) =>
     list.includes(key) ? list.filter((k) => k !== key) : [...list, key];
 
-  const passivePerception = 10 + skillMod(d, "perception");
+  const passivePerception = isRemnant ? 0 : 10 + skillMod(d, "perception");
 
   return (
     <div className="shell">
@@ -150,13 +158,13 @@ export default function CharacterSheetPage() {
         </span>
         <span className="spacer" />
         <div className="seg" role="group" aria-label="Roll mode for sheet rolls">
-          {(["normal", "advantage", "disadvantage"] as RollMode[]).map((m) => (
+          {modeOptions.map((m) => (
             <button
               key={m}
               className={rollMode === m ? "seg-btn active" : "seg-btn"}
               onClick={() => setRollMode(m)}
             >
-              {m === "normal" ? "Normal" : m === "advantage" ? "Adv" : "Dis"}
+              {modeLabel(m)}
             </button>
           ))}
         </div>
@@ -165,6 +173,15 @@ export default function CharacterSheetPage() {
         </span>
       </header>
 
+      {isRemnant ? (
+        <RemnantSheet
+          name={character.name}
+          d={character.data as unknown as RemnantData}
+          ro={ro}
+          update={update}
+          roll={roll}
+        />
+      ) : (
       <main className="content sheet">
         {/* ---- identity + vitals ---- */}
         <section className="card sheet-header">
@@ -674,6 +691,7 @@ export default function CharacterSheetPage() {
           </div>
         </div>
       </main>
+      )}
     </div>
   );
 }
