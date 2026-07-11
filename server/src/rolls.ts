@@ -96,7 +96,7 @@ rollsRouter.post("/:id/rolls", (req, res) => {
   if (role === "spectator") return res.status(403).json({ error: "Spectators can't roll dice." });
 
   const { formula, label } = req.body ?? {};
-  const mode = ["normal", "advantage", "disadvantage"].includes(req.body?.mode)
+  const mode = ["normal", "advantage", "disadvantage", "edge", "setback"].includes(req.body?.mode)
     ? req.body.mode
     : "normal";
   let visibility = ["public", "private", "dm", "blind"].includes(req.body?.visibility)

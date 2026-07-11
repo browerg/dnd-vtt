@@ -23,6 +23,7 @@ export interface DieGroup {
   count: number;
   sides: number;
   results: number[];
+  droppedResults?: number[];
 }
 
 export interface RollResult {
@@ -32,7 +33,7 @@ export interface RollResult {
 }
 
 export interface RollDetail {
-  mode: "normal" | "advantage" | "disadvantage";
+  mode: "normal" | "advantage" | "disadvantage" | "edge" | "setback";
   kept: RollResult;
   dropped?: RollResult;
 }

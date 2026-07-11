@@ -167,7 +167,7 @@ db.exec(`
     user_id     INTEGER NOT NULL REFERENCES users(id),
     formula     TEXT NOT NULL,
     label       TEXT NOT NULL DEFAULT '',
-    mode        TEXT NOT NULL DEFAULT 'normal' CHECK (mode IN ('normal','advantage','disadvantage')),
+    mode        TEXT NOT NULL DEFAULT 'normal' CHECK (mode IN ('normal','advantage','disadvantage','edge','setback')),
     visibility  TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public','private','dm','blind')),
     detail      TEXT NOT NULL,
     total       INTEGER NOT NULL,
@@ -183,6 +183,35 @@ db.exec(`
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
+
+// Older databases created rolls with a mode CHECK that predates edge/setback;
+// SQLite can't alter constraints, so rebuild the table once.
+const rollsSql =
+  ((db.prepare("SELECT sql FROM sqlite_master WHERE name = 'rolls' AND type = 'table'").get() as any)
+    ?.sql as string) ?? "";
+if (rollsSql && !rollsSql.includes("'edge'")) {
+  db.exec(`
+    BEGIN;
+    CREATE TABLE rolls_migrated (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      user_id     INTEGER NOT NULL REFERENCES users(id),
+      formula     TEXT NOT NULL,
+      label       TEXT NOT NULL DEFAULT '',
+      mode        TEXT NOT NULL DEFAULT 'normal' CHECK (mode IN ('normal','advantage','disadvantage','edge','setback')),
+      visibility  TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public','private','dm','blind')),
+      detail      TEXT NOT NULL,
+      total       INTEGER NOT NULL,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO rolls_migrated SELECT * FROM rolls;
+    DROP TABLE rolls;
+    ALTER TABLE rolls_migrated RENAME TO rolls;
+    CREATE INDEX IF NOT EXISTS idx_rolls_campaign ON rolls (campaign_id, id);
+    COMMIT;
+  `);
+  console.log("migrated rolls table for edge/setback modes");
+}
 
 // Additive migrations for tables that already exist in older databases.
 // SQLite has no ADD COLUMN IF NOT EXISTS; a duplicate-column error means done.

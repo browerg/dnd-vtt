@@ -15,6 +15,7 @@ interface CampaignDetail {
     id: number;
     name: string;
     description: string;
+    system: string;
     chapter: string;
     session_number: number;
     house_rules: string;
@@ -290,7 +291,7 @@ export default function CampaignPage() {
           {canRoll && (
             <section className="card">
               <h3>Roll dice</h3>
-              <DicePanel onRoll={doRoll} />
+              <DicePanel onRoll={doRoll} system={detail.campaign.system} />
             </section>
           )}
           <section className="card">

@@ -7,6 +7,8 @@ export interface DieGroup {
   count: number;
   sides: number;
   results: number[];
+  // Edge/Setback (Remnant): the per-die discarded rolls for the affected group.
+  droppedResults?: number[];
 }
 
 export interface RollResult {
@@ -16,7 +18,7 @@ export interface RollResult {
 }
 
 export interface RollDetail {
-  mode: "normal" | "advantage" | "disadvantage";
+  mode: "normal" | "advantage" | "disadvantage" | "edge" | "setback";
   kept: RollResult;
   dropped?: RollResult; // the other roll when advantage/disadvantage
 }
@@ -76,6 +78,26 @@ export function roll(formula: string, mode: RollDetail["mode"]): RollDetail {
   const parsed = parseFormula(formula);
   const first = rollOnce(parsed);
   if (mode === "normal") return { mode, kept: first };
+
+  // Remnant's Edge/Setback: only the final die group (the attribute die) is
+  // rolled twice per die, keep higher/lower — the 2d10 bell curve stays intact.
+  if (mode === "edge" || mode === "setback") {
+    const last = first.groups[first.groups.length - 1];
+    const keepHigher = mode === "edge";
+    const dropped: number[] = [];
+    last.results = last.results.map((r) => {
+      const other = randomInt(1, last.sides + 1);
+      const keep = keepHigher ? Math.max(r, other) : Math.min(r, other);
+      dropped.push(keep === r ? other : r);
+      return keep;
+    });
+    last.droppedResults = dropped;
+    first.total =
+      first.groups.reduce((sum, g) => sum + g.results.reduce((a, b) => a + b, 0), 0) +
+      first.modifier;
+    return { mode, kept: first };
+  }
+
   const second = rollOnce(parsed);
   const keepHigher = mode === "advantage";
   const [kept, dropped] =

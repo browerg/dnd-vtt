@@ -16,10 +16,22 @@ function natD20(roll: RollPayload): 20 | 1 | null {
   return g.results[0] === 20 ? 20 : g.results[0] === 1 ? 1 : null;
 }
 
+const MODE_BADGES: Record<string, string> = {
+  advantage: "ADV",
+  disadvantage: "DIS",
+  edge: "EDGE",
+  setback: "SETBACK",
+};
+
 function breakdown(roll: RollPayload): string {
   const kept = roll.detail?.kept;
   if (!kept) return "";
-  const parts = kept.groups.map((g) => `${g.count}d${g.sides} [${g.results.join(", ")}]`);
+  const parts = kept.groups.map((g) => {
+    const shown = g.droppedResults
+      ? g.results.map((r, i) => `${r} (not ${g.droppedResults![i]})`).join(", ")
+      : g.results.join(", ");
+    return `${g.count}d${g.sides} [${shown}]`;
+  });
   let text = parts.join(" + ");
   if (kept.modifier) text += ` ${kept.modifier > 0 ? "+" : "−"} ${Math.abs(kept.modifier)}`;
   return text;
@@ -43,7 +55,7 @@ export default function RollFeed({ rolls }: { rolls: RollPayload[] }) {
               <strong>{roll.userName}</strong>
               {roll.label && <span className="muted"> · {roll.label}</span>}
               {roll.mode !== "normal" && (
-                <span className="badge mode-badge">{roll.mode === "advantage" ? "ADV" : "DIS"}</span>
+                <span className="badge mode-badge">{MODE_BADGES[roll.mode] ?? roll.mode.toUpperCase()}</span>
               )}
               {VISIBILITY_TAGS[roll.visibility] && (
                 <span className="badge vis-badge">{VISIBILITY_TAGS[roll.visibility]}</span>

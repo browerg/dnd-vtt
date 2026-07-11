@@ -25,9 +25,22 @@ interface Props {
     mode: string;
     visibility: string;
   }) => Promise<void>;
+  system?: string; // remnant → Edge/Setback, dnd5e → Adv/Dis
 }
 
-export default function DicePanel({ onRoll }: Props) {
+export default function DicePanel({ onRoll, system }: Props) {
+  const modeOptions: [string, string][] =
+    system === "remnant"
+      ? [
+          ["normal", "Normal"],
+          ["edge", "Edge"],
+          ["setback", "Setback"],
+        ]
+      : [
+          ["normal", "Normal"],
+          ["advantage", "Adv"],
+          ["disadvantage", "Dis"],
+        ];
   const [formula, setFormula] = useState("1d20");
   const [label, setLabel] = useState("");
   const [mode, setMode] = useState("normal");
@@ -142,11 +155,7 @@ export default function DicePanel({ onRoll }: Props) {
       />
       <div className="row-between">
         <div className="seg" role="group" aria-label="Roll mode">
-          {[
-            ["normal", "Normal"],
-            ["advantage", "Adv"],
-            ["disadvantage", "Dis"],
-          ].map(([value, text]) => (
+          {modeOptions.map(([value, text]) => (
             <button
               type="button"
               key={value}
