@@ -66,9 +66,11 @@ systems: **Remnant** (the group's RWBY TTRPG — the default) and D&D 5e.
   (📏 Ruler, drag to measure, broadcast to the whole table) that reports Remnant
   range bands (Close/Mid/Long/Extreme) or feet on 5e campaigns.
 - **Also landed** (2026-07-11): character portraits (upload from the sheet — shows
-  on the sheet, the hub roster, and as the face of map tokens) and freehand map
+  on the sheet, the hub roster, and as the face of map tokens); freehand map
   drawing (✏️ Draw/Erase for everyone at the table, live-synced, saved per map,
-  DM can clear all ink).
+  DM can clear all ink); conditions on tokens (a red pip with hover list —
+  character tokens mirror their sheet live, monster tokens get DM-managed
+  condition chips in the stat block panel, Remnant or 5e list per campaign).
 - **Next step:** 🎲 **game night test #1** — pick a path from
   [docs/HOSTING.md](docs/HOSTING.md) and send invite links. Then fix what hurt.
   Deferred: character creator, OAuth buttons, world map, wiki.

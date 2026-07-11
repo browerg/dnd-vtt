@@ -50,6 +50,7 @@ export interface TokenPayload {
   aura: number | null;
   auraMax: number | null;
   portraitUrl: string;
+  conditions: string[];
 }
 
 // Character tokens read HP from the sheet; monster/custom tokens carry their own.
@@ -61,7 +62,8 @@ const TOKEN_COLS = `
   COALESCE(json_extract(c.data, '$.maxHp'), t.max_hp) AS max_hp,
   json_extract(c.data, '$.aura') AS aura,
   json_extract(c.data, '$.auraMax') AS aura_max,
-  c.portrait_path AS portrait_path`;
+  c.portrait_path AS portrait_path,
+  COALESCE(json_extract(c.data, '$.conditions'), t.conditions) AS conditions`;
 const TOKEN_SELECT = `SELECT ${TOKEN_COLS}
   FROM tokens t LEFT JOIN characters c ON c.id = t.character_id`;
 
@@ -81,7 +83,17 @@ const toToken = (r: any): TokenPayload => ({
   aura: r.aura ?? null,
   auraMax: r.aura_max ?? null,
   portraitUrl: r.portrait_path ? `/uploads/${path.basename(r.portrait_path)}` : "",
+  conditions: parseConditions(r.conditions),
 });
+
+function parseConditions(raw: unknown): string[] {
+  try {
+    const arr = JSON.parse(String(raw ?? "[]"));
+    return Array.isArray(arr) ? arr.filter((c) => typeof c === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 export const getToken = (tokenId: number): (TokenPayload & { campaignId: number }) | null => {
   const r = db
@@ -352,6 +364,28 @@ mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/hp", (req, res) => {
     Number.isFinite(maxHp as number) ? Math.max(1, Math.round(maxHp as number)) : null,
     token.id
   );
+  const updated = getToken(token.id)!;
+  getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
+  res.json({ token: updated });
+});
+
+// Conditions on monster/custom tokens (character tokens read their sheet).
+mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/conditions", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM edits token conditions." });
+  const token = getToken(Number(req.params.tokenId));
+  if (!token || token.campaignId !== campaignId) return res.status(404).json({ error: "Token not found." });
+  if (token.characterId) {
+    return res.status(400).json({ error: "Character conditions live on the character sheet." });
+  }
+  const conditions = req.body?.conditions;
+  if (!Array.isArray(conditions) || conditions.length > 20) {
+    return res.status(400).json({ error: "Conditions must be a short list." });
+  }
+  const clean = conditions.map((c) => String(c).slice(0, 30)).filter(Boolean);
+  db.prepare("UPDATE tokens SET conditions = ? WHERE id = ?").run(JSON.stringify(clean), token.id);
   const updated = getToken(token.id)!;
   getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
   res.json({ token: updated });

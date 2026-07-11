@@ -3,7 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
 import { api } from "../api";
 import { useAuth } from "../App";
-import type { CharacterSummary } from "../sheet";
+import { CONDITIONS, type CharacterSummary } from "../sheet";
+import { REMNANT_CONDITIONS } from "../remnant";
 
 interface MapInfo {
   id: number;
@@ -66,6 +67,7 @@ interface Token {
   aura: number | null;
   auraMax: number | null;
   portraitUrl: string;
+  conditions: string[];
 }
 
 interface MonsterHit {
@@ -632,6 +634,17 @@ export default function MapPage() {
       body: JSON.stringify({ hp }),
     }).catch((e: any) => setError(e.message));
 
+  const toggleTokenCondition = (token: Token, cond: string) =>
+    map &&
+    api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens/${token.id}/conditions`, {
+      method: "PUT",
+      body: JSON.stringify({
+        conditions: token.conditions.includes(cond)
+          ? token.conditions.filter((x) => x !== cond)
+          : [...token.conditions, cond],
+      }),
+    }).catch((e: any) => setError(e.message));
+
   const mod = (score: number) => Math.floor((score - 10) / 2);
   const fmtMod = (m: number) => (m >= 0 ? `+${m}` : `${m}`);
   const fmtCr = (cr: number) => ({ 0.125: "1/8", 0.25: "1/4", 0.5: "1/2" }[cr] ?? `${cr}`);
@@ -916,6 +929,11 @@ export default function MapPage() {
                           .toUpperCase()}
                       </span>
                     )}
+                    {t.conditions.length > 0 && (
+                      <span className="token-cond" title={t.conditions.join(", ")}>
+                        {t.conditions.length}
+                      </span>
+                    )}
                     <span className="token-name">{t.name}</span>
                     {t.auraMax != null && t.aura != null && (
                       <span className="token-aura">
@@ -1081,6 +1099,22 @@ export default function MapPage() {
               ))}
                 </>
               )}
+              <details className="mon-ability">
+                <summary>
+                  Conditions{selectedToken.conditions.length > 0 ? ` (${selectedToken.conditions.length})` : ""}
+                </summary>
+                <div className="condition-chips statblock-conds">
+                  {(statblock.system === "remnant" ? REMNANT_CONDITIONS : CONDITIONS).map((c) => (
+                    <button
+                      key={c}
+                      className={selectedToken.conditions.includes(c) ? "chip active" : "chip"}
+                      onClick={() => toggleTokenCondition(selectedToken, c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </details>
             </section>
           )}
           <section>
