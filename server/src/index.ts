@@ -1,5 +1,8 @@
 import express from "express";
 import { createServer } from "node:http";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { Server } from "socket.io";
 import { authRouter } from "./auth.js";
 import { campaignsRouter, invitesRouter } from "./campaigns.js";
@@ -35,6 +38,23 @@ app.use("/api/spells", spellsRouter);
 app.use("/uploads", express.static(uploadsDir, { maxAge: "7d", immutable: true }));
 app.use("/api/campaigns", campaignsRouter);
 app.use("/api/invites", invitesRouter);
+
+// Production: serve the built client (npm run build) from the same server,
+// with an SPA fallback so /campaigns/2/map refreshes cleanly. In dev the
+// Vite server owns the client and proxies /api here instead.
+const clientDist = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "client",
+  "dist"
+);
+if (existsSync(clientDist)) {
+  app.use(express.static(clientDist, { maxAge: "1h" }));
+  app.get(/^(?!\/api\/|\/uploads\/|\/socket\.io\/).*/, (_req, res) =>
+    res.sendFile(path.join(clientDist, "index.html"))
+  );
+}
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if ((err as any)?.code === "LIMIT_FILE_SIZE") {

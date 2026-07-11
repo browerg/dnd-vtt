@@ -19,6 +19,7 @@ systems: **Remnant** (the group's RWBY TTRPG — the default) and D&D 5e.
 | [docs/FEATURES.md](docs/FEATURES.md) | The full feature inventory from the brainstorm, organized and tagged by phase |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | The 5-phase build plan, with Phase 1 broken into buildable milestones |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Open decisions, risks, and things in the brainstorm that need a reality check |
+| [docs/HOSTING.md](docs/HOSTING.md) | How to put the table online for game night (tunnel / Tailscale / VPS) |
 
 ## Status
 
@@ -30,8 +31,11 @@ systems: **Remnant** (the group's RWBY TTRPG — the default) and D&D 5e.
   Out of Character, private whispers), all live over Socket.IO.
 - **Stack:** TypeScript everywhere. React + Vite client, Express + Socket.IO server,
   SQLite via Node's built-in `node:sqlite` (swap for Postgres later if needed).
-- **Run it:** `npm run dev:server` and `npm run dev:client` from the repo root, then
-  open http://localhost:5173.
+- **Run it (dev):** `npm run dev:server` and `npm run dev:client` from the repo root,
+  then open http://localhost:5173.
+- **Run it (production):** `npm run build && npm start` — one process serves the
+  client, API, sockets, and uploads on http://localhost:3001. See
+  [docs/HOSTING.md](docs/HOSTING.md) to put it online.
 - **Phase 2 complete + Phase 3 started** (2026-07-10). Battle map: uploads
   (image/video/YouTube link, 500MB limit), grid, tokens with live HP, snap-drag,
   pan/zoom, pings, fog of war, initiative tracker, map switch/delete UI. Monsters:
