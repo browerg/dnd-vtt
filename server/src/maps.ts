@@ -109,6 +109,7 @@ const mapRow = (r: any) => ({
   active: !!r.active,
   fogOn: !!r.fog_on,
   fogCells: JSON.parse(r.fog_data ?? "[]") as string[],
+  strokes: JSON.parse(r.draw_data ?? "[]"),
 });
 
 // Accepts watch?v=, youtu.be/, shorts/, embed/ and live/ URL shapes.
@@ -220,6 +221,37 @@ mapsRouter.put("/:id/maps/:mapId/fog", (req, res) => {
     fogOn: !!fogOn,
     fogCells: JSON.parse(fogData),
   });
+  res.json({ ok: true });
+});
+
+// Freehand drawings: any non-spectator can sketch; the whole stroke list is
+// saved at once (same simple model as fog) and broadcast live.
+mapsRouter.put("/:id/maps/:mapId/draw", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (role === "spectator") return res.status(403).json({ error: "Spectators can't draw." });
+  const map = db
+    .prepare("SELECT id FROM maps WHERE id = ? AND campaign_id = ?")
+    .get(Number(req.params.mapId), campaignId) as any;
+  if (!map) return res.status(404).json({ error: "Map not found." });
+
+  const strokes = req.body?.strokes;
+  if (!Array.isArray(strokes) || strokes.length > 500) {
+    return res.status(400).json({ error: "Too much ink — clear some drawings first." });
+  }
+  const clean = strokes
+    .map((s: any) => ({
+      id: String(s?.id ?? "").slice(0, 40),
+      color: /^#[0-9a-fA-F]{6}$/.test(s?.color ?? "") ? s.color : "#cfa64f",
+      size: Math.min(20, Math.max(1, Number(s?.size) || 4)),
+      points: Array.isArray(s?.points)
+        ? s.points.slice(0, 4000).map(Number).filter(Number.isFinite)
+        : [],
+    }))
+    .filter((s: any) => s.id && s.points.length >= 4);
+  db.prepare("UPDATE maps SET draw_data = ? WHERE id = ?").run(JSON.stringify(clean), map.id);
+  getIo().to(`campaign:${campaignId}`).emit("draw:update", { campaignId, mapId: map.id, strokes: clean });
   res.json({ ok: true });
 });
 

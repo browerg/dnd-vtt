@@ -17,6 +17,14 @@ interface MapInfo {
   active: boolean;
   fogOn: boolean;
   fogCells: string[];
+  strokes: Stroke[];
+}
+
+interface Stroke {
+  id: string;
+  color: string;
+  size: number;
+  points: number[]; // flat [x1, y1, x2, y2, …] in map coords
 }
 
 interface Combatant {
@@ -33,7 +41,7 @@ interface CombatState {
   combatants: Combatant[];
 }
 
-type Tool = "move" | "reveal" | "hide" | "ruler";
+type Tool = "move" | "reveal" | "hide" | "ruler" | "draw" | "erase";
 
 interface RulerLine {
   x1: number;
@@ -129,6 +137,12 @@ export default function MapPage() {
   const [remoteRulers, setRemoteRulers] = useState<Record<string, RulerLine>>({});
   const rulerTimers = useRef<Record<string, number>>({});
   const rulerEmit = useRef(0);
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [drawing, setDrawing] = useState<Stroke | null>(null);
+  const drawingRef = useRef<Stroke | null>(null);
+  drawingRef.current = drawing;
+  const [drawColor, setDrawColor] = useState("#cfa64f");
+  const mapIdRef = useRef<number | null>(null);
   const [pings, setPings] = useState<Ping[]>([]);
   const [view, setView] = useState<View>({ x: 0, y: 0, scale: 0.8 });
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
@@ -146,6 +160,7 @@ export default function MapPage() {
   const [statblock, setStatblock] = useState<MonsterDetail | null>(null);
   const revealedRef = useRef(revealed);
   revealedRef.current = revealed;
+  mapIdRef.current = map?.id ?? null;
   const fogSaveTimer = useRef<number>();
 
   const socketRef = useRef<Socket | null>(null);
@@ -157,6 +172,8 @@ export default function MapPage() {
     | { kind: "token"; tokenId: number; offsetX: number; offsetY: number; moved: boolean }
     | { kind: "fog"; reveal: boolean }
     | { kind: "ruler" }
+    | { kind: "draw" }
+    | { kind: "erase" }
     | null
   >(null);
   const lastEmit = useRef(0);
@@ -178,6 +195,7 @@ export default function MapPage() {
       setMaps(list.maps);
       setRole(detail.yourRole);
       setSystem(detail.campaign.system);
+      setStrokes(active.map?.strokes ?? []);
       setCharacters(chars.characters);
       setCombat(combatRes.state);
       setRevealed(new Set(active.map?.fogCells ?? []));
@@ -252,6 +270,9 @@ export default function MapPage() {
     socket.on("character:update", () => loadAll());
     socket.on("combat:update", (m: { campaignId: number; state: CombatState }) => {
       if (m.campaignId === campaignId) setCombat(m.state);
+    });
+    socket.on("draw:update", (m: { campaignId: number; mapId: number; strokes: Stroke[] }) => {
+      if (m.campaignId === campaignId && m.mapId === mapIdRef.current) setStrokes(m.strokes);
     });
     socket.on(
       "fog:update",
@@ -329,6 +350,28 @@ export default function MapPage() {
     });
   };
 
+  // ---- drawing helpers ----
+  const saveStrokes = (next: Stroke[]) => {
+    setStrokes(next);
+    if (map)
+      api(`/api/campaigns/${campaignId}/maps/${map.id}/draw`, {
+        method: "PUT",
+        body: JSON.stringify({ strokes: next }),
+      }).catch((e: any) => setError(e.message));
+  };
+
+  const eraseAt = (clientX: number, clientY: number) => {
+    const p = toMapCoords(clientX, clientY);
+    const threshold = 14 / viewRef.current.scale;
+    const hit = strokes.find((s) => {
+      for (let i = 0; i < s.points.length; i += 2) {
+        if (Math.hypot(s.points[i] - p.x, s.points[i + 1] - p.y) < threshold) return true;
+      }
+      return false;
+    });
+    if (hit) saveStrokes(strokes.filter((s) => s.id !== hit.id));
+  };
+
   const setFog = (body: Record<string, unknown>) =>
     map &&
     api(`/api/campaigns/${campaignId}/maps/${map.id}/fog`, {
@@ -363,6 +406,22 @@ export default function MapPage() {
       const p = toMapCoords(e.clientX, e.clientY);
       dragRef.current = { kind: "ruler" };
       setRuler({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
+      return;
+    }
+    if (tool === "draw" && role !== "spectator") {
+      const p = toMapCoords(e.clientX, e.clientY);
+      dragRef.current = { kind: "draw" };
+      setDrawing({
+        id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+        color: drawColor,
+        size: 4,
+        points: [p.x, p.y],
+      });
+      return;
+    }
+    if (tool === "erase" && role !== "spectator") {
+      dragRef.current = { kind: "erase" };
+      eraseAt(e.clientX, e.clientY);
       return;
     }
     if (isDM && tool !== "move" && map?.fogOn) {
@@ -412,6 +471,21 @@ export default function MapPage() {
       }
       return;
     }
+    if (d.kind === "draw") {
+      const p = toMapCoords(e.clientX, e.clientY);
+      setDrawing((prev) => {
+        if (!prev) return prev;
+        const n = prev.points.length;
+        // Skip micro-movements so strokes stay light.
+        if (Math.hypot(p.x - prev.points[n - 2], p.y - prev.points[n - 1]) < 2) return prev;
+        return { ...prev, points: [...prev.points, p.x, p.y] };
+      });
+      return;
+    }
+    if (d.kind === "erase") {
+      eraseAt(e.clientX, e.clientY);
+      return;
+    }
     if (d.kind === "fog") {
       paintFog(e.clientX, e.clientY, d.reveal);
       return;
@@ -441,6 +515,13 @@ export default function MapPage() {
       socketRef.current?.emit("map:ruler", { campaignId, x1: 0, y1: 0, x2: 0, y2: 0, active: false });
       return;
     }
+    if (d?.kind === "draw") {
+      const s = drawingRef.current;
+      setDrawing(null);
+      if (s && s.points.length >= 4) saveStrokes([...strokes, s]);
+      return;
+    }
+    if (d?.kind === "erase") return;
     if (d?.kind === "pan" && !d.moved) setSelectedTokenId(null);
     if (!d || d.kind !== "token" || !map) return;
     if (!d.moved) {
@@ -623,6 +704,40 @@ export default function MapPage() {
             📏 Ruler
           </button>
         )}
+        {map && role !== "spectator" && (
+          <>
+            <button
+              className={tool === "draw" ? "ghost mini active-tool" : "ghost mini"}
+              title="Sketch on the map — everyone sees it"
+              onClick={() => setTool(tool === "draw" ? "move" : "draw")}
+            >
+              ✏️ Draw
+            </button>
+            {(tool === "draw" || tool === "erase") && (
+              <>
+                <input
+                  type="color"
+                  className="color-pick ink-pick"
+                  title="Ink color"
+                  value={drawColor}
+                  onChange={(e) => setDrawColor(e.target.value)}
+                />
+                <button
+                  className={tool === "erase" ? "ghost mini active-tool" : "ghost mini"}
+                  title="Erase a drawing — click or drag over it"
+                  onClick={() => setTool(tool === "erase" ? "draw" : "erase")}
+                >
+                  Erase
+                </button>
+                {isDM && strokes.length > 0 && (
+                  <button className="ghost mini" title="Remove every drawing" onClick={() => saveStrokes([])}>
+                    Clear ink
+                  </button>
+                )}
+              </>
+            )}
+          </>
+        )}
         {isDM && map && (
           <>
             <label className="grid-toggle">
@@ -751,6 +866,24 @@ export default function MapPage() {
                     </pattern>
                   </defs>
                   <rect width="100%" height="100%" fill="url(#grid)" />
+                </svg>
+              )}
+              {(strokes.length > 0 || drawing) && (
+                <svg className="draw-overlay" width={imgSize.w || 1920} height={imgSize.h || 1080}>
+                  {strokes.concat(drawing ? [drawing] : []).map((s) => (
+                    <polyline
+                      key={s.id}
+                      points={Array.from(
+                        { length: s.points.length / 2 },
+                        (_, i) => `${s.points[2 * i]},${s.points[2 * i + 1]}`
+                      ).join(" ")}
+                      fill="none"
+                      stroke={s.color}
+                      strokeWidth={s.size}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  ))}
                 </svg>
               )}
               {tokens.map((t) => {

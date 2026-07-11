@@ -747,6 +747,11 @@ select:focus { outline: none; border-color: var(--accent); }
 }
 .dev-login-row { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
 
+/* ---- drawing ---- */
+
+.draw-overlay { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.ink-pick { width: 2.2rem; height: 2rem; }
+
 /* ---- measuring tape ---- */
 
 .active-tool { color: var(--accent); border-color: var(--border-gold); background: rgba(207, 166, 79, 0.08); }
