@@ -1,0 +1,146 @@
+[
+  {
+    "system": "remnant", "name": "Creep", "threat": 1, "ferocity": 4, "armor": 0, "hit_points": 12,
+    "size": "Small", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Swarm", "desc": "Always encountered in groups of 4+. For every three Creeps attacking the same target simultaneously, that target has Setback on Defense Rating checks." },
+      { "name": "Ankle Biter", "desc": "On hit, target makes Finesse check DC 11 or is Slowed until end of next turn." },
+      { "name": "Expendable", "desc": "Creeps don't trigger the Escalation rule and don't count against the Threat budget." },
+      { "name": "Scatter", "desc": "When more than half the Creeps in an encounter are destroyed, survivors flee." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Beowolf", "threat": 1, "ferocity": 6, "armor": 1, "hit_points": 20,
+    "size": "Medium", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Pack Tactics", "desc": "If two or more Beowolves attack the same target in the same round, each gains Edge on their attack roll." },
+      { "name": "Flinch Test", "desc": "On the first round Beowolves don't attack. A character who makes a Resolve check DC 11 forces the pack to commit; visible hesitation (or a failed Composure check) grants Beowolves Edge on their first attack." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Sabyr", "threat": 2, "ferocity": 8, "armor": 2, "hit_points": 38,
+    "size": "Medium", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Ambush Predator", "desc": "Attacking an unaware target automatically grants Edge and deals maximum damage on hit." },
+      { "name": "Pounce", "desc": "Action. Charges from Mid to Close as part of the attack. On hit, target makes Brawn check DC 13 or is knocked prone and Grappled; the Sabyr gains Edge on subsequent attacks until the Grapple is broken." },
+      { "name": "Sprint", "desc": "Bonus Action. Move two range bands instead of one." },
+      { "name": "Pack Hunt", "desc": "When two or more Sabyrs are present, a target attacked by both cannot use their Reaction until the start of their next turn." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Ursa", "threat": 2, "ferocity": 8, "armor": 3, "hit_points": 40,
+    "size": "Large", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Crushing Blow", "desc": "On a critical hit, target is knocked back one range band and must make a Grit check DC 14 or be knocked prone." },
+      { "name": "Thick Hide", "desc": "Ranged attacks deal half damage unless the attacker is Trained in Perception and makes a called shot targeting a weak point." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Nevermore", "threat": 2, "ferocity": 8, "armor": 2, "hit_points": 35,
+    "size": "Huge", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Airborne", "desc": "Operates at Long or Extreme range by default. Melee cannot reach it without Semblance, grappling, or environmental factors." },
+      { "name": "Feather Barrage", "desc": "Action. Razor feathers hit all characters at Mid range — each makes a Finesse check DC 14 or takes damage." },
+      { "name": "Screech", "desc": "Once per encounter. All characters make a Resolve check DC 11 or gain Setback on all rolls until end of next turn." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Alpha Beowolf", "threat": 3, "ferocity": 10, "armor": 3, "hit_points": 55,
+    "size": "Large", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Howl", "desc": "Bonus Action. All Beowolves within Long range gain Edge on attack rolls until the start of the Alpha's next turn." },
+      { "name": "Pack Tactics & Flinch Test", "desc": "Has all mechanics of the standard Beowolf." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "King Taijitu", "threat": 3, "ferocity": 10, "armor": 2, "hit_points": 60,
+    "size": "Huge", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Two Heads, Two Actions", "desc": "Gets two Actions per turn, one per head. Both cannot target the same character in the same turn." },
+      { "name": "White Head — Aggressor (Ferocity d10)", "desc": "Constrict: on hit, target makes Brawn check DC 14 or is Grappled." },
+      { "name": "Black Head — Cunning (Ferocity d8)", "desc": "Venom Strike: on hit, target makes Grit check DC 11 or is Poisoned — Setback on Brawn and Finesse checks for 3 rounds." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Apathy", "threat": 3, "ferocity": 6, "armor": 1, "hit_points": 30,
+    "size": "Medium", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Drain", "desc": "At the start of every round, every character makes a Resolve check DC 13: Partial — lose Bonus Action; Failure — lose Bonus Action AND Movement." },
+      { "name": "Cumulative Despair", "desc": "Each consecutive failed Drain check raises the DC by 1. Three consecutive failures: Despairing. An ally must spend a full Action and succeed on Resolve DC 14 to snap them out." },
+      { "name": "Ghostly Movement", "desc": "Silent. Only sight or Aura Sense detects them before Drain begins." },
+      { "name": "Pack Moan", "desc": "Each additional Apathy increases the Drain DC by 2." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Goliath", "threat": 3, "ferocity": 8, "armor": 6, "hit_points": 75,
+    "size": "Gargantuan", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Ancient Armor", "desc": "Standard attacks deal minimum damage. Called shots at plate gaps (joints, face) deal full damage. Spotting weak points: Wit check DC 13 or Training in Perception." },
+      { "name": "Tremor Step", "desc": "Whenever it moves range bands, every character at Close range makes a Finesse check DC 12 or is knocked prone." },
+      { "name": "Tusk Gore", "desc": "Action. On hit, target makes Grit check DC 16 or is launched two range bands, landing prone and taking an extra d8 impact damage." },
+      { "name": "Stomp", "desc": "Action. All characters at Close range make Finesse check DC 14 or take full damage and are knocked prone; success still takes half." },
+      { "name": "Memory of Failure", "desc": "Recognizes and prioritizes any Huntsman who previously failed to defeat this specific Goliath." },
+      { "name": "Immovable", "desc": "Cannot be forcibly moved. Only Gravity Dust can pin it for one round." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Ursa Major", "threat": 4, "ferocity": 12, "armor": 6, "hit_points": 90,
+    "size": "Huge", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Earthshaker", "desc": "Action. Ground slam — all characters at Close range make a Finesse check DC 14 or are knocked prone." },
+      { "name": "Crushing Blow & Thick Hide", "desc": "Has all mechanics of the standard Ursa." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Royal Nevermore", "threat": 4, "ferocity": 12, "armor": 4, "hit_points": 80,
+    "size": "Gargantuan", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Divebomb", "desc": "Moving from Extreme to Close in one turn deals automatic damage to every character at Close range on arrival — no attack roll." },
+      { "name": "Airborne, Feather Barrage, Screech", "desc": "Has all mechanics of the standard Nevermore." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Deathstalker", "threat": 4, "ferocity": 10, "armor": 8, "hit_points": 100,
+    "size": "Gargantuan", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Impenetrable Shell", "desc": "Standard attacks always deal minimum damage. Only called shots at weak points (underbelly, eyes, stinger joint) deal full damage." },
+      { "name": "Stinger", "desc": "Action. Ranged attack, Mid range. On hit, Grit check DC 17 or Poisoned — 1d8 damage at the start of each turn for 3 rounds." },
+      { "name": "Claw Sweep", "desc": "Action. Melee attack against all characters at Close range simultaneously." },
+      { "name": "Death Throes", "desc": "At 0 HP, takes one final frenzied Claw Sweep at Edge before dissolving." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Beringel", "threat": 4, "ferocity": 10, "armor": 4, "hit_points": 85,
+    "size": "Large", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Adaptive Fighter", "desc": "After round one, gains Edge on all attacks against whoever dealt the most damage, for the rest of the encounter." },
+      { "name": "Knuckle Rush", "desc": "Action. Charges Mid to Close as part of the attack. On hit, Brawn check DC 14 or knocked back one band and prone." },
+      { "name": "Chest Pound", "desc": "Bonus Action, once per encounter. All characters at Close and Mid make Resolve DC 14 or have Setback on their next attack." },
+      { "name": "Hurl Debris", "desc": "Action. Ranged, Long range. On hit, Finesse DC 14 or Staggered. Needs terrain to throw." },
+      { "name": "Pack Loyalty", "desc": "If Beowolves are present, all of them always have Pack Tactics active." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Grimm Dragon", "threat": 5, "ferocity": 12, "armor": 10, "hit_points": 200,
+    "size": "Gargantuan", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "Titan Presence", "desc": "At combat start every character makes Resolve DC 17. Failure: Setback on all rolls for the first two rounds." },
+      { "name": "Flight", "desc": "Operates at Extreme range by default; may land to Close/Mid." },
+      { "name": "Grimm Breath", "desc": "Action, recharge 5+ on d10. Targets all characters in one range band — massive damage and Burning." },
+      { "name": "Spawn Point", "desc": "While alive: at the start of each round roll a d6 — that many Threat 1 Grimm arrive from the nearest edge." },
+      { "name": "Ancient Shell", "desc": "Armor 10 cannot be bypassed by called shots alone; reducing it needs environment, teamwork, or exceptional Semblance use." }
+    ]
+  },
+  {
+    "system": "remnant", "name": "Nuckelavee", "threat": 5, "ferocity": 12, "armor": 8, "hit_points": 180,
+    "size": "Huge", "type": "Creature of Grimm",
+    "traits": [
+      { "name": "The Reaper's Cry", "desc": "Before initiative, every character makes Resolve DC 20. Partial: Setback on Resolve checks for the encounter. Failure: Terrified." },
+      { "name": "Relentless Pursuit", "desc": "Cannot be outrun — it closes any range-band increase at the end of the round at no cost. Escape needs Semblance, obstacles, or tactics." },
+      { "name": "Mane Whip", "desc": "Action. Hits all characters at Close AND Mid. Each makes Finesse DC 17 or takes full damage and is knocked prone." },
+      { "name": "Mounted Charge", "desc": "Action, cannot be Intercepted. On hit: double damage die and thrown two bands, landing prone. On crit: target triggers their Final Flare if HP remains." },
+      { "name": "Tenacity", "desc": "Frozen, Shocked, Staggered, and Knockback have no effect. Only Gravity Dust and Burning work — and it does not stop moving." },
+      { "name": "Death Scream", "desc": "At 0 HP, releases one final Reaper's Cry at full effect (Resolve DC 20)." }
+    ]
+  }
+]
