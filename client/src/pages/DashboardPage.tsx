@@ -9,6 +9,7 @@ export default function DashboardPage() {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [system, setSystem] = useState("remnant");
   const [error, setError] = useState("");
 
   const load = () =>
@@ -24,10 +25,11 @@ export default function DashboardPage() {
     try {
       await api("/api/campaigns", {
         method: "POST",
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({ name, description, system }),
       });
       setName("");
       setDescription("");
+      setSystem("remnant");
       setShowForm(false);
       await load();
     } catch (err: any) {
@@ -66,6 +68,18 @@ export default function DashboardPage() {
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
             />
+            <details className="advanced-opts">
+              <summary className="muted small">Advanced</summary>
+              <label className="stack sys-pick">
+                <span className="muted small">
+                  Game system — Remnant is the standard here; only change this if you know you need to.
+                </span>
+                <select value={system} onChange={(e) => setSystem(e.target.value)}>
+                  <option value="remnant">Remnant (RWBY)</option>
+                  <option value="dnd5e">D&amp;D 5e</option>
+                </select>
+              </label>
+            </details>
             {error && <div className="error">{error}</div>}
             <button className="primary">Create campaign</button>
           </form>
@@ -79,7 +93,10 @@ export default function DashboardPage() {
               <h3>{c.name}</h3>
               <p className="muted clamp">{c.description || "No description yet."}</p>
               <div className="row-between">
-                <span className={`badge role-${c.role}`}>{c.role.toUpperCase()}</span>
+                <span>
+                  <span className={`badge role-${c.role}`}>{c.role.toUpperCase()}</span>
+                  {c.system === "dnd5e" && <span className="badge vis-badge">D&amp;D 5e</span>}
+                </span>
                 <span className="muted">
                   {c.member_count} {c.member_count === 1 ? "member" : "members"}
                 </span>

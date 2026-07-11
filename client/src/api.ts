@@ -8,6 +8,7 @@ export interface CampaignSummary {
   id: number;
   name: string;
   description: string;
+  system: string;
   role: string;
   member_count: number;
 }

@@ -648,6 +648,9 @@ select {
 .spell-desc { margin-left: 3.8rem; }
 .spell-desc summary { cursor: pointer; }
 .spell-search { margin-top: 0.6rem; border-top: 1px solid var(--border); padding-top: 0.6rem; }
+
+.advanced-opts summary { cursor: pointer; }
+.sys-pick { margin-top: 0.5rem; gap: 0.35rem; }
 .fog-overlay { position: absolute; inset: 0; pointer-events: none; }
 
 .token.current-turn {

@@ -200,6 +200,8 @@ for (const ddl of [
   "ALTER TABLE tokens ADD COLUMN hp INTEGER",
   "ALTER TABLE tokens ADD COLUMN max_hp INTEGER",
   "ALTER TABLE monsters ADD COLUMN campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE",
+  // Existing campaigns predate the system setting and were built on 5e.
+  "ALTER TABLE campaigns ADD COLUMN system TEXT NOT NULL DEFAULT 'dnd5e'",
 ]) {
   try {
     db.exec(ddl);

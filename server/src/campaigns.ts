@@ -19,7 +19,7 @@ campaignsRouter.use(requireAuth);
 campaignsRouter.get("/", (req, res) => {
   const rows = db
     .prepare(
-      `SELECT c.id, c.name, c.description, m.role,
+      `SELECT c.id, c.name, c.description, c.system, m.role,
               (SELECT COUNT(*) FROM campaign_members WHERE campaign_id = c.id) AS member_count
        FROM campaigns c JOIN campaign_members m ON m.campaign_id = c.id
        WHERE m.user_id = ? ORDER BY c.created_at DESC`
@@ -31,9 +31,11 @@ campaignsRouter.get("/", (req, res) => {
 campaignsRouter.post("/", (req, res) => {
   const { name, description } = req.body ?? {};
   if (!name?.trim()) return res.status(400).json({ error: "Campaign needs a name." });
+  // Remnant is the house system; dnd5e is the tucked-away alternative.
+  const system = req.body?.system === "dnd5e" ? "dnd5e" : "remnant";
   const info = db
-    .prepare("INSERT INTO campaigns (name, description, created_by) VALUES (?, ?, ?)")
-    .run(name.trim(), (description ?? "").trim(), user(req).id);
+    .prepare("INSERT INTO campaigns (name, description, system, created_by) VALUES (?, ?, ?, ?)")
+    .run(name.trim(), (description ?? "").trim(), system, user(req).id);
   const id = Number(info.lastInsertRowid);
   db.prepare("INSERT INTO campaign_members (campaign_id, user_id, role) VALUES (?, ?, 'dm')").run(
     id,
@@ -48,7 +50,7 @@ campaignsRouter.get("/:id", (req, res) => {
   if (!role) return res.status(404).json({ error: "Campaign not found." });
   const campaign = db
     .prepare(
-      `SELECT id, name, description, chapter, session_number, house_rules, announcement, created_at
+      `SELECT id, name, description, system, chapter, session_number, house_rules, announcement, created_at
        FROM campaigns WHERE id = ?`
     )
     .get(id);
