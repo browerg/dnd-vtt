@@ -59,6 +59,13 @@ systems: **Remnant** (the group's RWBY TTRPG — the default) and D&D 5e.
   Initiative rolls 2d10 + Finesse (characters) or + Ferocity (Grimm). A collapsible
   quick-reference card (DCs, action economy, conditions, Final Flare, Semblance
   costs, Dust combos) lives on every Remnant campaign hub.
-- **Next step:** 🎲 **game night test #1** — which needs **hosting** (friends can't
-  reach localhost). Then fix what hurt. Deferred: character creator, portrait
-  uploads, OAuth buttons, world map, wiki, measurement/drawing tools.
+- **Polish + hosting sprint** (2026-07-11): full visual overhaul ("academy after
+  dark" — Cinzel/Alegreya Sans, gold-on-night palette, atmosphere and motion),
+  battle-map toolbar overflow fixed, production build served by the one server
+  process, docs/HOSTING.md written. Plus a live measuring tape on the battle map
+  (📏 Ruler, drag to measure, broadcast to the whole table) that reports Remnant
+  range bands (Close/Mid/Long/Extreme) or feet on 5e campaigns.
+- **Next step:** 🎲 **game night test #1** — pick a path from
+  [docs/HOSTING.md](docs/HOSTING.md) and send invite links. Then fix what hurt.
+  Deferred: character creator, portrait uploads, OAuth buttons, world map, wiki,
+  drawing tools.

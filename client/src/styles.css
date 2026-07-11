@@ -709,6 +709,34 @@ select:focus { outline: none; border-color: var(--accent); }
 }
 .dev-login-row { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
 
+/* ---- measuring tape ---- */
+
+.active-tool { color: var(--accent); border-color: var(--border-gold); background: rgba(207, 166, 79, 0.08); }
+.ruler-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.ruler-stroke {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: 10 7;
+  stroke-linecap: round;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+.ruler-stroke.remote { stroke: #8fb7e0; }
+.ruler-dot { fill: var(--accent); stroke: rgba(0, 0, 0, 0.6); stroke-width: 1.5; }
+.ruler-label {
+  position: absolute;
+  transform: translate(-50%, -160%);
+  background: rgba(8, 6, 14, 0.85);
+  border: 1px solid var(--border-gold);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 2px 9px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.ruler-label .ruler-user { color: var(--muted); font-weight: 400; }
+
 .ping { position: absolute; pointer-events: none; }
 .ping-ring {
   position: absolute;

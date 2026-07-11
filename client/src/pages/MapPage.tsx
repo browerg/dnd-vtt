@@ -33,7 +33,14 @@ interface CombatState {
   combatants: Combatant[];
 }
 
-type Tool = "move" | "reveal" | "hide";
+type Tool = "move" | "reveal" | "hide" | "ruler";
+
+interface RulerLine {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
 
 interface Token {
   id: number;
@@ -116,6 +123,11 @@ export default function MapPage() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [role, setRole] = useState("");
+  const [system, setSystem] = useState("dnd5e");
+  const [ruler, setRuler] = useState<RulerLine | null>(null);
+  const [remoteRulers, setRemoteRulers] = useState<Record<string, RulerLine>>({});
+  const rulerTimers = useRef<Record<string, number>>({});
+  const rulerEmit = useRef(0);
   const [pings, setPings] = useState<Ping[]>([]);
   const [view, setView] = useState<View>({ x: 0, y: 0, scale: 0.8 });
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
@@ -143,6 +155,7 @@ export default function MapPage() {
     | { kind: "pan"; startX: number; startY: number; viewX: number; viewY: number; moved: boolean }
     | { kind: "token"; tokenId: number; offsetX: number; offsetY: number; moved: boolean }
     | { kind: "fog"; reveal: boolean }
+    | { kind: "ruler" }
     | null
   >(null);
   const lastEmit = useRef(0);
@@ -155,7 +168,7 @@ export default function MapPage() {
       const [active, list, detail, chars, combatRes] = await Promise.all([
         api<{ map: MapInfo | null; tokens: Token[] }>(`/api/campaigns/${campaignId}/maps/active`),
         api<{ maps: MapInfo[] }>(`/api/campaigns/${campaignId}/maps`),
-        api<{ yourRole: string }>(`/api/campaigns/${campaignId}`),
+        api<{ yourRole: string; campaign: { system: string } }>(`/api/campaigns/${campaignId}`),
         api<{ characters: CharacterSummary[] }>(`/api/campaigns/${campaignId}/characters`),
         api<{ state: CombatState }>(`/api/campaigns/${campaignId}/combat`),
       ]);
@@ -163,6 +176,7 @@ export default function MapPage() {
       setTokens(active.tokens);
       setMaps(list.maps);
       setRole(detail.yourRole);
+      setSystem(detail.campaign.system);
       setCharacters(chars.characters);
       setCombat(combatRes.state);
       setRevealed(new Set(active.map?.fogCells ?? []));
@@ -252,6 +266,23 @@ export default function MapPage() {
       setPings((prev) => [...prev, ping]);
       setTimeout(() => setPings((prev) => prev.filter((p) => p.key !== ping.key)), 2200);
     });
+    socket.on(
+      "map:ruler",
+      (m: { campaignId: number; x1: number; y1: number; x2: number; y2: number; active: boolean; userName: string }) => {
+        if (m.campaignId !== campaignId) return;
+        window.clearTimeout(rulerTimers.current[m.userName]);
+        const drop = () =>
+          setRemoteRulers((prev) => {
+            const next = { ...prev };
+            delete next[m.userName];
+            return next;
+          });
+        if (!m.active) return drop();
+        setRemoteRulers((prev) => ({ ...prev, [m.userName]: { x1: m.x1, y1: m.y1, x2: m.x2, y2: m.y2 } }));
+        // Safety net: if the sender vanishes mid-drag, don't leave a ghost tape.
+        rulerTimers.current[m.userName] = window.setTimeout(drop, 4000);
+      }
+    );
     return () => {
       socket.disconnect();
       socketRef.current = null;
@@ -327,6 +358,12 @@ export default function MapPage() {
     } catch {
       // stale/unknown pointer id — capture is best-effort, dragging still works
     }
+    if (tool === "ruler") {
+      const p = toMapCoords(e.clientX, e.clientY);
+      dragRef.current = { kind: "ruler" };
+      setRuler({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
+      return;
+    }
     if (isDM && tool !== "move" && map?.fogOn) {
       dragRef.current = { kind: "fog", reveal: tool === "reveal" };
       paintFog(e.clientX, e.clientY, tool === "reveal");
@@ -361,6 +398,19 @@ export default function MapPage() {
   const onPointerMove = (e: React.PointerEvent) => {
     const d = dragRef.current;
     if (!d) return;
+    if (d.kind === "ruler") {
+      const p = toMapCoords(e.clientX, e.clientY);
+      setRuler((prev) => (prev ? { ...prev, x2: p.x, y2: p.y } : prev));
+      const now = performance.now();
+      if (now - rulerEmit.current > 50) {
+        rulerEmit.current = now;
+        setRuler((prev) => {
+          if (prev) socketRef.current?.emit("map:ruler", { campaignId, ...prev, active: true });
+          return prev;
+        });
+      }
+      return;
+    }
     if (d.kind === "fog") {
       paintFog(e.clientX, e.clientY, d.reveal);
       return;
@@ -385,6 +435,11 @@ export default function MapPage() {
   const onPointerUp = () => {
     const d = dragRef.current;
     dragRef.current = null;
+    if (d?.kind === "ruler") {
+      setRuler(null);
+      socketRef.current?.emit("map:ruler", { campaignId, x1: 0, y1: 0, x2: 0, y2: 0, active: false });
+      return;
+    }
     if (d?.kind === "pan" && !d.moved) setSelectedTokenId(null);
     if (!d || d.kind !== "token" || !map) return;
     if (!d.moved) {
@@ -526,6 +581,19 @@ export default function MapPage() {
   const g = map?.gridSize ?? 70;
   const currentCombatant = combat.active ? combat.combatants[combat.turn] : undefined;
 
+  // Distance in grid squares; Remnant reads it as a range band, 5e as feet.
+  const rulerLabel = (r: RulerLine) => {
+    const cells = Math.hypot(r.x2 - r.x1, r.y2 - r.y1) / g;
+    if (system === "remnant") {
+      const band = cells <= 2 ? "Close" : cells <= 10 ? "Mid" : cells <= 24 ? "Long" : "Extreme";
+      return `${band} · ${cells.toFixed(1)} sq`;
+    }
+    return `${Math.round(cells * 5)} ft · ${cells.toFixed(1)} sq`;
+  };
+  const activeRulers = (ruler ? [{ name: "", r: ruler }] : []).concat(
+    Object.entries(remoteRulers).map(([name, r]) => ({ name, r }))
+  );
+
   let fogPath = "";
   if (map?.fogOn && imgSize.w > 0) {
     const cols = Math.ceil(imgSize.w / g);
@@ -545,6 +613,15 @@ export default function MapPage() {
         </Link>
         <span className="brand">{map ? map.name : "Battle map"}</span>
         <span className="spacer" />
+        {map && (
+          <button
+            className={tool === "ruler" ? "ghost mini active-tool" : "ghost mini"}
+            title="Measure distance — drag across the map"
+            onClick={() => setTool(tool === "ruler" ? "move" : "ruler")}
+          >
+            📏 Ruler
+          </button>
+        )}
         {isDM && map && (
           <>
             <label className="grid-toggle">
@@ -734,6 +811,19 @@ export default function MapPage() {
                 <div key={p.key} className="ping" style={{ left: p.x, top: p.y }}>
                   <span className="ping-ring" />
                   <span className="ping-name">{p.userName}</span>
+                </div>
+              ))}
+              {activeRulers.map(({ name, r }) => (
+                <div key={name || "you"}>
+                  <svg className="ruler-svg" width={imgSize.w || 1920} height={imgSize.h || 1080}>
+                    <line className={`ruler-stroke${name ? " remote" : ""}`} x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} />
+                    <circle className="ruler-dot" cx={r.x1} cy={r.y1} r={5} />
+                    <circle className="ruler-dot" cx={r.x2} cy={r.y2} r={5} />
+                  </svg>
+                  <span className="ruler-label" style={{ left: (r.x1 + r.x2) / 2, top: (r.y1 + r.y2) / 2 }}>
+                    {rulerLabel(r)}
+                    {name && <span className="ruler-user"> · {name}</span>}
+                  </span>
                 </div>
               ))}
             </div>

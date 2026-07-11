@@ -44,6 +44,26 @@ export function setupSockets(io: Server) {
       });
     });
 
+    // Live measuring tape: relayed to everyone else in the room while the
+    // sender drags; active:false clears it. Nothing is persisted.
+    socket.on(
+      "map:ruler",
+      (msg: { campaignId: number; x1: number; y1: number; x2: number; y2: number; active: boolean }) => {
+        const campaignId = Number(msg?.campaignId);
+        if (!memberRole(campaignId, user.id)) return;
+        if (msg?.active && ![msg?.x1, msg?.y1, msg?.x2, msg?.y2].every(Number.isFinite)) return;
+        socket.to(room(campaignId)).emit("map:ruler", {
+          campaignId,
+          x1: msg.x1,
+          y1: msg.y1,
+          x2: msg.x2,
+          y2: msg.y2,
+          active: !!msg?.active,
+          userName: user.display_name,
+        });
+      }
+    );
+
     socket.on("campaign:leave", (campaignId: number) => {
       socket.leave(room(Number(campaignId)));
       broadcastPresence(io, Number(campaignId));
