@@ -504,6 +504,14 @@ select {
 .qr-list { margin: 0.3rem 0 0.3rem 1.1rem; padding: 0; }
 .qr-list li { margin: 0.15rem 0; }
 
+/* Dev-only quick login on the login card */
+.dev-login {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+}
+.dev-login-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
 .ping { position: absolute; pointer-events: none; }
 .ping-ring {
   position: absolute;

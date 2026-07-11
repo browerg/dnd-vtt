@@ -1,6 +1,12 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { api, type User } from "../api";
 import { useAuth } from "../App";
+
+interface DevUser {
+  id: number;
+  display_name: string;
+  is_dm: number;
+}
 
 export default function LoginPage() {
   const { setUser } = useAuth();
@@ -10,6 +16,28 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [devUsers, setDevUsers] = useState<DevUser[]>([]);
+
+  // Dev-only account switcher; the endpoint 404s outside `npm run dev`.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    api<{ users: DevUser[] }>("/api/auth/dev-users")
+      .then((r) => setDevUsers(r.users))
+      .catch(() => {});
+  }, []);
+
+  const devLogin = async (userId: number) => {
+    setError("");
+    try {
+      const user = await api<User>("/api/auth/dev-login", {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+      });
+      setUser(user);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -74,6 +102,18 @@ export default function LoginPage() {
             {mode === "login" ? "Log in" : "Create account"}
           </button>
         </form>
+        {devUsers.length > 0 && (
+          <div className="dev-login">
+            <p className="muted small">Dev quick login</p>
+            <div className="dev-login-row">
+              {devUsers.map((u) => (
+                <button key={u.id} className="ghost mini" onClick={() => devLogin(u.id)}>
+                  {u.display_name} {u.is_dm ? "(DM)" : "(player)"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

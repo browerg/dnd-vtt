@@ -113,3 +113,35 @@ authRouter.post("/logout", (req, res) => {
 authRouter.get("/me", (req, res) => {
   res.json({ user: getSessionUser(req) });
 });
+
+// ---- dev quick login ----
+// One-click account switching for solo testing (DM in one window, player in
+// another). Locked down twice: only when the server was started with
+// `npm run dev` (production uses `npm start`), and only for requests from this
+// machine — a hosted instance never exposes it.
+const DEV_MODE = process.env.npm_lifecycle_event === "dev";
+
+const isLocalRequest = (req: Request) =>
+  ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(req.socket.remoteAddress ?? "");
+
+authRouter.get("/dev-users", (req, res) => {
+  if (!DEV_MODE || !isLocalRequest(req)) return res.status(404).json({ error: "Not found" });
+  const users = db
+    .prepare(
+      `SELECT u.id, u.display_name,
+              EXISTS(SELECT 1 FROM campaign_members m WHERE m.user_id = u.id AND m.role = 'dm') AS is_dm
+       FROM users u ORDER BY is_dm DESC, u.id`
+    )
+    .all();
+  res.json({ users });
+});
+
+authRouter.post("/dev-login", (req, res) => {
+  if (!DEV_MODE || !isLocalRequest(req)) return res.status(404).json({ error: "Not found" });
+  const user = db
+    .prepare("SELECT id, email, display_name FROM users WHERE id = ?")
+    .get(Number(req.body?.userId)) as SessionUser | undefined;
+  if (!user) return res.status(404).json({ error: "No such user." });
+  startSession(res, user.id);
+  res.json(user);
+});
