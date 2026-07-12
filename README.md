@@ -20,6 +20,7 @@ systems: **Remnant** (the group's RWBY TTRPG — the default) and D&D 5e.
 | [docs/ROADMAP.md](docs/ROADMAP.md) | The 5-phase build plan, with Phase 1 broken into buildable milestones |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Open decisions, risks, and things in the brainstorm that need a reality check |
 | [docs/HOSTING.md](docs/HOSTING.md) | How to put the table online for game night (tunnel / Tailscale / VPS) |
+| [docs/PLAYTEST.md](docs/PLAYTEST.md) | Guided solo playtest — learn every feature hands-on before game night |
 
 ## Status
 
