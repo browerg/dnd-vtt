@@ -5,8 +5,8 @@ import { api, type ChatMessage, type Member, type RollPayload } from "../api";
 import { animateRoll } from "../dice3d";
 import type { CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
-import DicePanel from "../components/DicePanel";
-import RollFeed from "../components/RollFeed";
+import DiceDock from "../components/DiceDock";
+import RollDock from "../components/RollDock";
 import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
@@ -298,12 +298,6 @@ export default function CampaignPage() {
               </div>
             )}
           </section>
-          {canRoll && (
-            <section className="card">
-              <h3>Roll dice</h3>
-              <DicePanel onRoll={doRoll} system={detail.campaign.system} />
-            </section>
-          )}
           <section className="card">
             <h3>Codex</h3>
             <CodexPanel
@@ -376,12 +370,10 @@ export default function CampaignPage() {
               ))}
             </ul>
           </section>
-          <section className="card feed-card">
-            <h3>Rolls</h3>
-            <RollFeed rolls={rolls} />
-          </section>
         </div>
       </main>
+      {canRoll && <DiceDock onRoll={doRoll} system={detail.campaign.system} defaultOpen />}
+      <RollDock rolls={rolls} defaultOpen />
     </div>
   );
 }

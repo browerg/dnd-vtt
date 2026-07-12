@@ -9,10 +9,19 @@ interface Favorite {
 }
 
 const FAV_KEY = "dice-favorites";
+const REC_KEY = "dice-recents";
 
 function loadFavorites(): Favorite[] {
   try {
     return JSON.parse(localStorage.getItem(FAV_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function loadRecents(): Favorite[] {
+  try {
+    return JSON.parse(localStorage.getItem(REC_KEY) ?? "[]");
   } catch {
     return [];
   }
@@ -51,7 +60,17 @@ export default function DicePanel({ onRoll, system }: Props) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [favorites, setFavorites] = useState<Favorite[]>(loadFavorites);
+  const [recents, setRecents] = useState<Favorite[]>(loadRecents);
   const [manualTotal, setManualTotal] = useState("");
+
+  // Remember what actually got rolled, most-recent first, distinct by
+  // formula+mode, capped small. Feeds the "recently used" chips.
+  const pushRecent = (entry: Favorite) => {
+    if (!entry.formula.trim()) return;
+    setRecents((prev) =>
+      [entry, ...prev.filter((r) => !(r.formula === entry.formula && r.mode === entry.mode))].slice(0, 8)
+    );
+  };
   const [manualDice, setManualDice] = useState("");
 
   // Somebody rolled physical dice at the table — post the total they read off.
@@ -85,6 +104,10 @@ export default function DicePanel({ onRoll, system }: Props) {
     localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
   }, [favorites]);
 
+  useEffect(() => {
+    localStorage.setItem(REC_KEY, JSON.stringify(recents));
+  }, [recents]);
+
   const saveFavorite = () => {
     if (!formula.trim()) return;
     const fav: Favorite = { formula: formula.trim(), label: label.trim(), mode };
@@ -98,6 +121,7 @@ export default function DicePanel({ onRoll, system }: Props) {
     setBusy(true);
     try {
       await onRoll({ ...fav, visibility });
+      pushRecent({ formula: fav.formula, label: fav.label, mode: fav.mode });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -118,6 +142,7 @@ export default function DicePanel({ onRoll, system }: Props) {
     setBusy(true);
     try {
       await onRoll({ formula, label, mode, visibility });
+      pushRecent({ formula: formula.trim(), label: label.trim(), mode });
       setLabel("");
     } catch (err: any) {
       setError(err.message);
@@ -177,6 +202,26 @@ export default function DicePanel({ onRoll, system }: Props) {
               </button>
             </span>
           ))}
+        </div>
+      )}
+      {recents.length > 0 && (
+        <div className="fav-row recent-row">
+          <span className="fav-lead muted small">Recent</span>
+          {recents
+            .filter((r) => !favorites.some((f) => f.formula === r.formula && f.label === r.label))
+            .slice(0, 6)
+            .map((r, i) => (
+              <span key={`${r.mode}|${r.label}|${r.formula}|${i}`} className="fav-chip recent-chip">
+                <button
+                  type="button"
+                  title={`${r.formula}${r.mode !== "normal" ? ` (${r.mode})` : ""}`}
+                  onClick={() => rollFavorite(r)}
+                  disabled={busy}
+                >
+                  {r.label || r.formula}
+                </button>
+              </span>
+            ))}
         </div>
       )}
       <input

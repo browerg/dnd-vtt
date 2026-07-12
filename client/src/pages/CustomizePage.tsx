@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../App";
 import { previewDice } from "../dice3d";
+import { BACKGROUNDS, getBackground, setBackground } from "../background";
 
 // Curated colorsets from the 3D dice library. Swatches are approximations —
 // the real judge is the preview roll.
@@ -24,8 +25,14 @@ const DICE_SETS: { key: string; name: string; from: string; to: string }[] = [
 export default function CustomizePage() {
   const { user, setUser } = useAuth();
   const [selected, setSelected] = useState(user?.diceTheme || "white");
+  const [bg, setBg] = useState(getBackground());
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+
+  const pickBg = (key: string) => {
+    setBg(key);
+    setBackground(key); // applies instantly + persists (client-side)
+  };
 
   const pick = async (key: string) => {
     setSelected(key);
@@ -81,6 +88,28 @@ export default function CustomizePage() {
           <p className="muted small">
             Swatches are approximate — the tumbling dice you just saw are the real thing.
           </p>
+        </section>
+        <section className="card">
+          <h3>Table backdrop</h3>
+          <p className="muted">
+            A mood behind everything — set the scene for your campaign. Saved on this device.
+          </p>
+          <div className="bg-grid">
+            {BACKGROUNDS.map((b) => (
+              <button
+                key={b.key || "none"}
+                className={`bg-swatch-btn${bg === b.key ? " selected" : ""}`}
+                onClick={() => pickBg(b.key)}
+                title={b.name}
+              >
+                <span
+                  className="bg-swatch"
+                  style={{ background: b.css || "var(--bg-well)" }}
+                />
+                <span className="bg-name">{b.name}</span>
+              </button>
+            ))}
+          </div>
         </section>
         <section className="card">
           <h3>More someday</h3>

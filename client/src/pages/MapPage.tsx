@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
-import { api } from "../api";
+import { api, type RollPayload } from "../api";
 import { useAuth } from "../App";
+import { animateRoll } from "../dice3d";
 import { CONDITIONS, type CharacterSummary } from "../sheet";
 import { REMNANT_CONDITIONS } from "../remnant";
+import DiceDock from "../components/DiceDock";
+import RollDock from "../components/RollDock";
 
 interface MapInfo {
   id: number;
@@ -135,6 +138,7 @@ export default function MapPage() {
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [role, setRole] = useState("");
   const [system, setSystem] = useState("dnd5e");
+  const [rolls, setRolls] = useState<RollPayload[]>([]);
   const [ruler, setRuler] = useState<RulerLine | null>(null);
   const [remoteRulers, setRemoteRulers] = useState<Record<string, RulerLine>>({});
   const rulerTimers = useRef<Record<string, number>>({});
@@ -182,6 +186,28 @@ export default function MapPage() {
   const pingKey = useRef(0);
 
   const isDM = role === "dm" || role === "co-dm";
+  const canRoll = role !== "" && role !== "spectator";
+
+  // Seed the roll log; live rolls arrive over the socket above.
+  useEffect(() => {
+    api<{ rolls: RollPayload[] }>(`/api/campaigns/${campaignId}/rolls`)
+      .then((r) => setRolls(r.rolls))
+      .catch(() => {});
+  }, [campaignId]);
+
+  const doRoll = useCallback(
+    async (body: {
+      formula: string;
+      label: string;
+      mode: string;
+      visibility: string;
+      manual?: boolean;
+      total?: number;
+    }) => {
+      await api(`/api/campaigns/${campaignId}/rolls`, { method: "POST", body: JSON.stringify(body) });
+    },
+    [campaignId]
+  );
 
   const loadAll = useCallback(async () => {
     try {
@@ -284,6 +310,12 @@ export default function MapPage() {
         setRevealed(new Set(m.fogCells));
       }
     );
+    socket.on("roll", async (roll: RollPayload) => {
+      if (roll.campaignId !== campaignId) return;
+      // Same pipeline as the hub: let the 3D dice settle before the number lands.
+      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme);
+      setRolls((prev) => [...prev.slice(-99), roll]);
+    });
     socket.on("map:ping", (m: { campaignId: number; x: number; y: number; userName: string }) => {
       if (m.campaignId !== campaignId) return;
       const ping: Ping = { key: ++pingKey.current, x: m.x, y: m.y, userName: m.userName };
@@ -1395,6 +1427,8 @@ export default function MapPage() {
           <p className="muted map-hint">Drag to pan · scroll to zoom · double-click to ping</p>
         </aside>
       </div>
+      {canRoll && <DiceDock onRoll={doRoll} system={system} />}
+      <RollDock rolls={rolls} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { api, type User } from "./api";
+import { applyBackground, getBackground } from "./background";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CampaignPage from "./pages/CampaignPage";
@@ -31,6 +32,11 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Restore the chosen backdrop before anything paints.
+  useEffect(() => {
+    applyBackground(getBackground());
+  }, []);
+
   const logout = async () => {
     await api("/api/auth/logout", { method: "POST" });
     setUser(null);
@@ -41,6 +47,8 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ user, setUser, logout }}>
+      {/* The chosen backdrop, behind everything (driven by the --app-bg var). */}
+      <div className="app-bg" aria-hidden />
       {/* Lives outside the routes so the 3D dice canvas survives navigation. */}
       <div id="dice-overlay" className="dice-overlay" />
       <Routes>
