@@ -6,8 +6,7 @@ app open; each step says what to click and what you should see. Budget about
 an hour. Nothing here can break anything — and you have a backup button anyway
 (you'll find it in Part 2).
 
-**The one-paragraph version of how a session works:** the DM (you, as
-"Melinda") describes the world and controls the monsters; each player controls
+**The one-paragraph version of how a session works:** the DM describes the world and controls the monsters; each player controls
 one character (Susy controls Skylar). When the outcome of an action is
 uncertain — swinging a sword, sneaking past a guard — the player rolls dice
 against a target number. Combat is taken in turns, in an order decided by an
