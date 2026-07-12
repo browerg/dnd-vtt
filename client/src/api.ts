@@ -2,6 +2,7 @@ export interface User {
   id: number;
   email: string;
   display_name: string;
+  diceTheme?: string;
 }
 
 export interface CampaignSummary {
@@ -51,6 +52,7 @@ export interface RollPayload {
   detail: RollDetail | null; // null = blind roll, result hidden from roller
   total: number | null;
   createdAt: string;
+  diceTheme?: string; // roller's 3D dice colorset
 }
 
 export interface ChatMessage {

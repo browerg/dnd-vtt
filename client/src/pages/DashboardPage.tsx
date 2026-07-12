@@ -42,6 +42,12 @@ export default function DashboardPage() {
       <header className="topbar">
         <span className="brand">⚔️ Tabletop</span>
         <span className="spacer" />
+        <Link to="/customize" className="ghost link">
+          🎨 Customize
+        </Link>
+        <Link to="/shop" className="ghost link">
+          🏪 Shop
+        </Link>
         <span className="muted">{user?.display_name}</span>
         <button className="ghost" onClick={logout}>
           Log out

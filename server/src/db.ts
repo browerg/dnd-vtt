@@ -234,6 +234,7 @@ for (const ddl of [
   // Existing campaigns predate the system setting and were built on 5e.
   "ALTER TABLE campaigns ADD COLUMN system TEXT NOT NULL DEFAULT 'dnd5e'",
   "ALTER TABLE characters ADD COLUMN portrait_path TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE users ADD COLUMN dice_theme TEXT NOT NULL DEFAULT ''",
 ]) {
   try {
     db.exec(ddl);

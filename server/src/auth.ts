@@ -8,7 +8,24 @@ export interface SessionUser {
   id: number;
   email: string;
   display_name: string;
+  diceTheme?: string;
 }
+
+// Curated dice colorsets from @3d-dice/dice-box-threejs. '' means the default.
+export const DICE_THEMES = new Set([
+  "white",
+  "black",
+  "radiant",
+  "fire",
+  "ice",
+  "lightning",
+  "poison",
+  "bloodmoon",
+  "pinkdreams",
+  "astralsea",
+  "glitterparty",
+  "dragons",
+]);
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
@@ -30,7 +47,7 @@ export function getSessionUser(req: Request): SessionUser | null {
 export function userForToken(token: string): SessionUser | null {
   const row = db
     .prepare(
-      `SELECT u.id, u.email, u.display_name FROM sessions s
+      `SELECT u.id, u.email, u.display_name, u.dice_theme AS diceTheme FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ? AND s.expires_at > datetime('now')`
     )
@@ -112,6 +129,18 @@ authRouter.post("/logout", (req, res) => {
 
 authRouter.get("/me", (req, res) => {
   res.json({ user: getSessionUser(req) });
+});
+
+// Pick your dice — the theme rides along on every roll you make.
+authRouter.put("/me/dice", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  const theme = String(req.body?.theme ?? "");
+  if (theme !== "" && !DICE_THEMES.has(theme)) {
+    return res.status(400).json({ error: "That dice set doesn't exist." });
+  }
+  db.prepare("UPDATE users SET dice_theme = ? WHERE id = ?").run(theme, user.id);
+  res.json({ ok: true, diceTheme: theme });
 });
 
 // ---- dev quick login ----

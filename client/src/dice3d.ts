@@ -11,7 +11,8 @@ const LINGER_MS = 1800;
 let box: DiceBox | null = null;
 let ready: Promise<void> | null = null;
 let running = false;
-const queue: { notation: string; onLanded: () => void }[] = [];
+let currentTheme = "white";
+const queue: { notation: string; theme: string; onLanded: () => void }[] = [];
 
 function ensureBox(): Promise<void> {
   if (!ready) {
@@ -67,14 +68,25 @@ export function notationFor(detail: RollDetail): string | null {
 // Resolves once this roll's dice have landed and stand still (callers hold
 // the feed entry back until then). Resolves immediately when the roll won't
 // animate — hidden tab, unsupported dice, or a busy table.
-export function animateRoll(detail: RollDetail): Promise<void> {
+// `theme` is the roller's colorset, so everyone sees Susy roll HER dice.
+export function animateRoll(detail: RollDetail, theme?: string): Promise<void> {
   // Hidden tabs get no animation frames, so the physics would stall forever.
   if (document.hidden) return Promise.resolve();
   const notation = notationFor(detail);
   if (!notation) return Promise.resolve();
   if (queue.length >= 3) return Promise.resolve(); // table's busy
   return new Promise((onLanded) => {
-    queue.push({ notation, onLanded });
+    queue.push({ notation, theme: theme || "white", onLanded });
+    if (!running) void drain();
+  });
+}
+
+// Customize page: throw a themed set with random results, just to look at.
+export function previewDice(theme: string): Promise<void> {
+  if (document.hidden) return Promise.resolve();
+  if (queue.length >= 3) return Promise.resolve();
+  return new Promise((onLanded) => {
+    queue.push({ notation: "2d10+1d6", theme: theme || "white", onLanded });
     if (!running) void drain();
   });
 }
@@ -86,6 +98,10 @@ async function drain(): Promise<void> {
     let entry: (typeof queue)[number] | undefined;
     while ((entry = queue.shift())) {
       try {
+        if (entry.theme !== currentTheme) {
+          await box!.updateConfig({ theme_colorset: entry.theme });
+          currentTheme = entry.theme;
+        }
         // If the tab loses visibility mid-roll the physics stalls; don't let
         // one stuck animation wedge the queue forever.
         await Promise.race([

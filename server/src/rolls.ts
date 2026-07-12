@@ -19,6 +19,7 @@ export interface RollPayload {
   detail: RollDetail | null; // null when masked (blind roll, roller's view)
   total: number | null;
   createdAt: string;
+  diceTheme?: string; // roller's 3D dice colorset — everyone sees their dice
 }
 
 // What a given viewer is allowed to see of a roll. Returns null if nothing.
@@ -57,6 +58,10 @@ export function performRoll(
   visibility: "public" | "private" | "dm" | "blind" = "public"
 ): RollPayload {
   const detail = roll(formula, mode);
+  // Read fresh — the session object can predate a theme change.
+  const diceTheme =
+    ((db.prepare("SELECT dice_theme FROM users WHERE id = ?").get(roller.id) as any)
+      ?.dice_theme as string) ?? "";
   const info = db
     .prepare(
       `INSERT INTO rolls (campaign_id, user_id, formula, label, mode, visibility, detail, total)
@@ -84,6 +89,7 @@ export function performRoll(
     detail,
     total: detail.kept.total,
     createdAt: new Date().toISOString(),
+    diceTheme,
   };
   broadcastRoll(payload);
   return payload;
@@ -137,6 +143,7 @@ rollsRouter.post("/:id/rolls", (req, res) => {
       detail,
       total,
       createdAt: new Date().toISOString(),
+      diceTheme: user(req).diceTheme ?? "",
     };
     broadcastRoll(payload);
     return res.json({ roll: viewOf(payload, user(req).id, isDMRole(role)) });
@@ -166,7 +173,7 @@ rollsRouter.get("/:id/rolls", (req, res) => {
 
   const rows = db
     .prepare(
-      `SELECT r.id, r.campaign_id, r.user_id, u.display_name, r.formula, r.label, r.mode,
+      `SELECT r.id, r.campaign_id, r.user_id, u.display_name, u.dice_theme, r.formula, r.label, r.mode,
               r.visibility, r.detail, r.total, r.created_at
        FROM rolls r JOIN users u ON u.id = r.user_id
        WHERE r.campaign_id = ? ORDER BY r.id DESC LIMIT 100`
@@ -188,6 +195,7 @@ rollsRouter.get("/:id/rolls", (req, res) => {
           detail: JSON.parse(r.detail),
           total: r.total,
           createdAt: r.created_at,
+          diceTheme: r.dice_theme ?? "",
         },
         user(req).id,
         viewerIsDM
