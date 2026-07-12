@@ -9,6 +9,7 @@ import { animateRoll } from "../dice3d";
 import type { CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
+import RollDock from "../components/RollDock";
 import { PANEL_BY_ID, availablePanels, type PanelCtx } from "../dashboard/panels";
 import {
   GRID_COLS,
@@ -286,8 +287,9 @@ export default function CampaignDashboardPage() {
         })}
       </Grid>
 
-      {/* Quick dice, reachable from every campaign screen (bottom-left). */}
+      {/* Quick dice + roll notifications, reachable from every campaign screen. */}
       {canWrite && <DiceDock onRoll={doRoll} system={system} />}
+      <RollDock rolls={rolls} />
     </div>
   );
 }

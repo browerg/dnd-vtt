@@ -19,11 +19,16 @@ export default function RollDock({ rolls, defaultOpen = false }: Props) {
   const [toast, setToast] = useState<RollPayload | null>(null);
   const prevLen = useRef(rolls.length);
   const toastTimer = useRef<number | undefined>(undefined);
+  // Navigating to a page fetches the whole roll history at once; that initial
+  // hydration shouldn't fire a toast or bump the unread count. Only rolls that
+  // land after the dock has settled are real "new roll" notifications.
+  const mountedAt = useRef(Date.now());
 
   useEffect(() => {
     if (rolls.length > prevLen.current) {
+      const isHydration = Date.now() - mountedAt.current < 1200;
       const latest = rolls[rolls.length - 1];
-      if (!open) {
+      if (!open && !isHydration) {
         setUnread((n) => n + (rolls.length - prevLen.current));
         setToast(latest);
         window.clearTimeout(toastTimer.current);

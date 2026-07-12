@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import SheetView from "../components/SheetView";
-import CampaignDiceDock from "../components/CampaignDiceDock";
+import CampaignDocks from "../components/CampaignDocks";
 
 export default function CharacterSheetPage() {
   const { id, charId } = useParams();
@@ -16,7 +16,7 @@ export default function CharacterSheetPage() {
         <span className="brand">Character sheet</span>
       </header>
       <SheetView campaignId={campaignId} characterId={characterId} />
-      <CampaignDiceDock />
+      <CampaignDocks />
     </div>
   );
 }
