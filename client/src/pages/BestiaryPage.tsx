@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
+import CampaignDiceDock from "../components/CampaignDiceDock";
 
 interface Hit {
   id: number;
@@ -773,6 +774,7 @@ export default function BestiaryPage() {
           )}
         </div>
       </main>
+      <CampaignDiceDock />
     </div>
   );
 }

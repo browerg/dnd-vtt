@@ -8,6 +8,7 @@ import { api, type ChatMessage, type Member, type RollPayload } from "../api";
 import { animateRoll } from "../dice3d";
 import type { CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
+import DiceDock from "../components/DiceDock";
 import { PANEL_BY_ID, availablePanels, type PanelCtx } from "../dashboard/panels";
 import {
   GRID_COLS,
@@ -284,6 +285,9 @@ export default function CampaignDashboardPage() {
           );
         })}
       </Grid>
+
+      {/* Quick dice, reachable from every campaign screen (bottom-left). */}
+      {canWrite && <DiceDock onRoll={doRoll} system={system} />}
     </div>
   );
 }
