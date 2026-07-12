@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { uploadItemImage } from "../api";
 import { useCharacterData } from "../useCharacterData";
 import InventoryEditor from "./InventoryEditor";
 import type { InventoryItem } from "../sheet";
@@ -51,6 +52,7 @@ export default function InventoryPanel({
         ro={!canEdit}
         onItems={(inv) => update({ inventory: inv })}
         onMoney={(n) => update(isRemnant ? { lien: n } : { gold: n })}
+        onUpload={(file) => uploadItemImage(campaignId, characterId, file)}
       />
     </div>
   );

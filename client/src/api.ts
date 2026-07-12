@@ -77,3 +77,16 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) throw new Error(body.error ?? `Request failed (${res.status})`);
   return body as T;
 }
+
+// Upload an inventory item photo; returns the stored image URL.
+export async function uploadItemImage(campaignId: number, characterId: number, file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("image", file);
+  const res = await fetch(`/api/campaigns/${campaignId}/characters/${characterId}/item-image`, {
+    method: "POST",
+    body: fd,
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error ?? "Image upload failed");
+  return (body as { url: string }).url;
+}

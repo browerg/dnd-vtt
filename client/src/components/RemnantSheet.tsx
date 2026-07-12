@@ -31,6 +31,7 @@ interface Props {
   ro: boolean; // read-only
   update: (patch: Partial<RemnantData>, name?: string) => void;
   roll: (formula: string, label: string) => void;
+  onUpload?: (file: File) => Promise<string>;
 }
 
 const num = (v: string, fallback = 0) => {
@@ -38,7 +39,7 @@ const num = (v: string, fallback = 0) => {
   return Number.isNaN(n) ? fallback : n;
 };
 
-export default function RemnantSheet({ name, d, ro, update, roll }: Props) {
+export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Props) {
   const tb = trainingBonus(d.rank);
   const auraMax = auraMaxFor(d);
   const hpMax = hpMaxFor(d);
@@ -533,6 +534,7 @@ export default function RemnantSheet({ name, d, ro, update, roll }: Props) {
               ro={ro}
               onItems={(inv) => update({ inventory: inv })}
               onMoney={(n) => update({ lien: n })}
+              onUpload={onUpload}
             />
           </section>
 

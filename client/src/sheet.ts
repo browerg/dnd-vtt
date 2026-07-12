@@ -55,6 +55,8 @@ export interface InventoryItem {
   qty: number;
   weight: number;
   equipped: boolean;
+  description?: string;
+  imageUrl?: string;
 }
 
 export interface SpellEntry {

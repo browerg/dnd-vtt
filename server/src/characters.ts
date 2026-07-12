@@ -28,6 +28,19 @@ const portraitUpload = multer({
   fileFilter: (_req, file, cb) => cb(null, file.mimetype in PORTRAIT_TYPES),
 });
 
+// Inventory item photos: same small-image rules as portraits. The image URL is
+// stored inside the sheet JSON (not a column), so old files aren't auto-reaped
+// when an item changes — acceptable for a private tool.
+const itemImageUpload = multer({
+  storage: multer.diskStorage({
+    destination: uploadsDir,
+    filename: (_req, file, cb) =>
+      cb(null, `item-${randomBytes(10).toString("hex")}${PORTRAIT_TYPES[file.mimetype] ?? ".png"}`),
+  }),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, file.mimetype in PORTRAIT_TYPES),
+});
+
 // The sheet itself is a JSON blob — the schema lives client-side and will
 // evolve fast; the server only cares about ownership and campaign scoping.
 
@@ -280,6 +293,25 @@ charactersRouter.delete("/:id/characters/:charId/portrait", async (req, res) => 
   broadcastCharacter(campaignId, row.id, user(req).id);
   res.json({ ok: true });
 });
+
+// Inventory item photo upload. Returns a URL the client stores on the item in
+// the sheet JSON; owner-or-DM only, same as editing the sheet.
+charactersRouter.post(
+  "/:id/characters/:charId/item-image",
+  itemImageUpload.single("image"),
+  (req, res) => {
+    const campaignId = Number(req.params.id);
+    const role = memberRole(campaignId, user(req).id);
+    if (!role) return res.status(404).json({ error: "Campaign not found." });
+    const row = getCharacter(Number(req.params.charId), campaignId);
+    if (!row) return res.status(404).json({ error: "Character not found." });
+    if (row.user_id !== user(req).id && !isDMRole(role)) {
+      return res.status(403).json({ error: "Only the character's player or the DM can add item photos." });
+    }
+    if (!req.file) return res.status(400).json({ error: "Attach a PNG, JPEG, or WebP image." });
+    res.json({ url: `/uploads/${path.basename(req.file.path)}` });
+  }
+);
 
 function broadcastCharacter(campaignId: number, charId: number, updatedBy: number) {
   const fresh = getCharacter(charId, campaignId);

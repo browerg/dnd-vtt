@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
-import { api } from "../api";
+import { api, uploadItemImage } from "../api";
 import { useAuth } from "../App";
 import {
   ABILITIES,
@@ -231,6 +231,7 @@ export default function SheetView({ campaignId, characterId }: Props) {
           ro={ro}
           update={update}
           roll={roll}
+          onUpload={(file) => uploadItemImage(campaignId, characterId, file)}
         />
       ) : (
         <main className="content sheet">
