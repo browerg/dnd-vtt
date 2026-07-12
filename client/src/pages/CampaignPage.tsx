@@ -191,6 +191,9 @@ export default function CampaignPage() {
         </Link>
         <span className="brand">{detail.campaign.name}</span>
         <span className="spacer" />
+        <Link to={`/campaigns/${campaignId}`} className="ghost link">
+          ⊞ Dashboard
+        </Link>
         <Link to={`/campaigns/${campaignId}/map`} className="ghost link">
           🗺️ Battle map
         </Link>

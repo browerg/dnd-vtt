@@ -1323,3 +1323,126 @@ select:focus { outline: none; border-color: var(--accent); }
 @media (max-height: 620px) {
   .dock { bottom: 0.6rem; }
 }
+
+/* =====================================================================
+   Dashboard — free drag/resize grid of panels (react-grid-layout).
+   ===================================================================== */
+.dashboard-shell { min-height: 100vh; }
+.dashboard-grid { position: relative; }
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 42%),
+    var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(207, 166, 79, 0.14);
+  background: rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+.panel-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-size: 0.92rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.panel-icon { font-family: initial; }
+.panel-drag { cursor: grab; }
+.panel-drag:active { cursor: grabbing; }
+.panel-remove {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.1rem 0.45rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.panel-remove:hover { color: var(--danger); border-color: var(--danger); }
+.panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.85rem 0.95rem;
+}
+.panel-empty { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.5rem; }
+
+/* The sheet panel: neutralize the full-page centering so it fills the tile */
+.panel-body .sheet-view .content { max-width: 100%; margin: 0; padding: 0.25rem 0; }
+.sheet-view-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(207, 166, 79, 0.14);
+}
+.sheet-view-name { font-size: 1.05rem; }
+/* On a full page the sheet keeps its comfortable reading width */
+.shell > .sheet-view { max-width: 1100px; width: 100%; margin: 0 auto; padding: 1.25rem; }
+
+/* Edit mode: make panels feel grabbable and show the resize corner */
+.dashboard-grid.editing .panel { outline: 1px dashed var(--border-gold); }
+.dashboard-grid.editing .panel-head { background: rgba(207, 166, 79, 0.08); }
+.react-grid-item.react-grid-placeholder {
+  background: rgba(207, 166, 79, 0.18);
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius);
+  opacity: 0.7;
+}
+.react-resizable-handle {
+  filter: invert(0.7) sepia(1) saturate(3) hue-rotate(5deg);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.dashboard-grid.editing .react-resizable-handle { opacity: 0.7; }
+.dashboard-grid.editing .panel:hover .react-resizable-handle { opacity: 1; }
+
+/* Add-panel dropdown in the topbar */
+.add-panel-wrap { position: relative; }
+.add-panel-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 30;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  background: rgba(26, 23, 39, 0.98);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+.add-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--radius-sm);
+  text-align: left;
+}
+.add-panel-item:hover { background: rgba(207, 166, 79, 0.1); color: var(--accent); }

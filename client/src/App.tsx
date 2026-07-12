@@ -5,6 +5,7 @@ import { applyBackground, getBackground } from "./background";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CampaignPage from "./pages/CampaignPage";
+import CampaignDashboardPage from "./pages/CampaignDashboardPage";
 import CharacterSheetPage from "./pages/CharacterSheetPage";
 import MapPage from "./pages/MapPage";
 import BestiaryPage from "./pages/BestiaryPage";
@@ -54,7 +55,8 @@ export default function App() {
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
         <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" />} />
-        <Route path="/campaigns/:id" element={user ? <CampaignPage /> : <Navigate to="/login" />} />
+        <Route path="/campaigns/:id" element={user ? <CampaignDashboardPage /> : <Navigate to="/login" />} />
+        <Route path="/campaigns/:id/hub" element={user ? <CampaignPage /> : <Navigate to="/login" />} />
         <Route
           path="/campaigns/:id/characters/:charId"
           element={user ? <CharacterSheetPage /> : <Navigate to="/login" />}
