@@ -24,6 +24,8 @@ interface Props {
     label: string;
     mode: string;
     visibility: string;
+    manual?: boolean;
+    total?: number;
   }) => Promise<void>;
   system?: string; // remnant → Edge/Setback, dnd5e → Adv/Dis
 }
@@ -49,6 +51,35 @@ export default function DicePanel({ onRoll, system }: Props) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [favorites, setFavorites] = useState<Favorite[]>(loadFavorites);
+  const [manualTotal, setManualTotal] = useState("");
+  const [manualDice, setManualDice] = useState("");
+
+  // Somebody rolled physical dice at the table — post the total they read off.
+  const submitManual = async () => {
+    const total = Math.round(Number(manualTotal));
+    if (!Number.isFinite(total) || manualTotal.trim() === "") {
+      setError("Enter the total you rolled.");
+      return;
+    }
+    setError("");
+    setBusy(true);
+    try {
+      await onRoll({
+        formula: manualDice.trim() || "real dice",
+        label,
+        mode: "normal",
+        visibility,
+        manual: true,
+        total,
+      });
+      setManualTotal("");
+      setLabel("");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
@@ -182,6 +213,29 @@ export default function DicePanel({ onRoll, system }: Props) {
           <option value="blind">Blind (only DM)</option>
         </select>
       </div>
+      <details className="manual-roll">
+        <summary className="muted small">✍️ Rolled real dice at the table?</summary>
+        <div className="row-between manual-row">
+          <input
+            type="number"
+            className="manual-total"
+            placeholder="Total"
+            value={manualTotal}
+            onChange={(e) => setManualTotal(e.target.value)}
+            aria-label="Total you rolled"
+          />
+          <input
+            placeholder={system === "remnant" ? "What you rolled — 2d10+d6" : "What you rolled — d20+5"}
+            value={manualDice}
+            onChange={(e) => setManualDice(e.target.value)}
+            aria-label="What you rolled"
+          />
+          <button type="button" className="ghost" disabled={busy} onClick={submitManual}>
+            Post
+          </button>
+        </div>
+        <p className="muted small">Uses the label and visibility above. On your honor. 🎲</p>
+      </details>
       {error && <div className="error">{error}</div>}
     </form>
   );

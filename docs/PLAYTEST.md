@@ -46,6 +46,10 @@ Find the **Roll dice** card on the campaign hub.
 5. Type a label like `Fireball damage`, then click **★** — you just saved a
    favorite chip. Click the chip to roll it instantly. Game-night gold for
    attacks you make constantly. The ✕ on the chip removes it.
+6. Open **✍️ Rolled real dice at the table?** below the panel. Some players
+   love their physical dice — they roll on the table, type the total here,
+   and it posts to the feed marked "rolled at the table" (honor system, no
+   3D animation). Try posting a 17.
 
 - [ ] Saw a crossed-out die on an Edge roll
 - [ ] Saved and rolled a favorite

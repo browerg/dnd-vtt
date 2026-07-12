@@ -105,6 +105,43 @@ rollsRouter.post("/:id/rolls", (req, res) => {
   // A DM's "blind" roll is just a DM-visible roll.
   if (visibility === "blind" && isDMRole(role)) visibility = "dm";
 
+  // Physical dice at the table: the player enters the total by hand. Stored
+  // like any roll but flagged manual so the feed shows it wasn't server-rolled.
+  if (req.body?.manual === true) {
+    const total = Math.round(Number(req.body?.total));
+    if (!Number.isFinite(total) || Math.abs(total) > 100_000) {
+      return res.status(400).json({ error: "Enter the total you rolled." });
+    }
+    const manualFormula = String(formula ?? "real dice").trim().slice(0, 60) || "real dice";
+    const manualLabel = String(label ?? "").trim().slice(0, 120);
+    const detail: RollDetail = {
+      mode: "normal",
+      kept: { groups: [], modifier: 0, total },
+      manual: true,
+    };
+    const info = db
+      .prepare(
+        `INSERT INTO rolls (campaign_id, user_id, formula, label, mode, visibility, detail, total)
+         VALUES (?, ?, ?, ?, 'normal', ?, ?, ?)`
+      )
+      .run(campaignId, user(req).id, manualFormula, manualLabel, visibility, JSON.stringify(detail), total);
+    const payload: RollPayload = {
+      id: Number(info.lastInsertRowid),
+      campaignId,
+      userId: user(req).id,
+      userName: user(req).display_name,
+      formula: manualFormula,
+      label: manualLabel,
+      mode: "normal",
+      visibility,
+      detail,
+      total,
+      createdAt: new Date().toISOString(),
+    };
+    broadcastRoll(payload);
+    return res.json({ roll: viewOf(payload, user(req).id, isDMRole(role)) });
+  }
+
   try {
     const payload = performRoll(
       user(req),

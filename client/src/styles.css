@@ -962,6 +962,13 @@ select:focus { outline: none; border-color: var(--accent); }
 .handout-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .export-link { text-align: center; font-size: 0.85rem; }
 
+.manual-roll summary { cursor: pointer; }
+.manual-roll summary:hover { color: var(--text); }
+.manual-row { margin-top: 0.5rem; }
+.manual-total { width: 5.5rem; }
+.manual-row input:not(.manual-total) { flex: 1; min-width: 0; }
+.manual-roll p { margin: 0.35rem 0 0; }
+
 .fav-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .fav-chip {
   display: inline-flex;

@@ -36,6 +36,7 @@ export interface RollDetail {
   mode: "normal" | "advantage" | "disadvantage" | "edge" | "setback";
   kept: RollResult;
   dropped?: RollResult;
+  manual?: boolean; // physical dice at the table — total entered by hand
 }
 
 export interface RollPayload {

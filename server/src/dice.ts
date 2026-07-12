@@ -21,6 +21,7 @@ export interface RollDetail {
   mode: "normal" | "advantage" | "disadvantage" | "edge" | "setback";
   kept: RollResult;
   dropped?: RollResult; // the other roll when advantage/disadvantage
+  manual?: boolean; // physical dice at the table — total entered by hand
 }
 
 const MAX_DICE = 100;

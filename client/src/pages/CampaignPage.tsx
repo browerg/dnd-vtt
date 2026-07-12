@@ -77,10 +77,12 @@ export default function CampaignPage() {
     socket.on("presence", (p: { campaignId: number; onlineUserIds: number[] }) => {
       if (p.campaignId === campaignId) setOnline(new Set(p.onlineUserIds));
     });
-    socket.on("roll", (roll: RollPayload) => {
+    socket.on("roll", async (roll: RollPayload) => {
       if (roll.campaignId !== campaignId) return;
+      // Let the 3D dice land and settle before the number hits the feed —
+      // the queue keeps multiple in-flight rolls in arrival order.
+      if (roll.detail) await animateRoll(roll.detail);
       setRolls((prev) => [...prev.slice(-99), roll]);
-      if (roll.detail) animateRoll(roll.detail);
     });
     socket.on("character:update", (msg: { campaignId: number }) => {
       if (msg.campaignId === campaignId) loadCharacters();
@@ -144,7 +146,14 @@ export default function CampaignPage() {
   };
 
   const doRoll = useCallback(
-    async (body: { formula: string; label: string; mode: string; visibility: string }) => {
+    async (body: {
+      formula: string;
+      label: string;
+      mode: string;
+      visibility: string;
+      manual?: boolean;
+      total?: number;
+    }) => {
       await api(`/api/campaigns/${campaignId}/rolls`, {
         method: "POST",
         body: JSON.stringify(body),

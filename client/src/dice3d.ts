@@ -11,7 +11,7 @@ const LINGER_MS = 1800;
 let box: DiceBox | null = null;
 let ready: Promise<void> | null = null;
 let running = false;
-const queue: string[] = [];
+const queue: { notation: string; onLanded: () => void }[] = [];
 
 function ensureBox(): Promise<void> {
   if (!ready) {
@@ -64,33 +64,39 @@ export function notationFor(detail: RollDetail): string | null {
   return `${sets}@${forced}`;
 }
 
-export function animateRoll(detail: RollDetail): void {
+// Resolves once this roll's dice have landed and stand still (callers hold
+// the feed entry back until then). Resolves immediately when the roll won't
+// animate — hidden tab, unsupported dice, or a busy table.
+export function animateRoll(detail: RollDetail): Promise<void> {
   // Hidden tabs get no animation frames, so the physics would stall forever.
-  // The feed already has the result; skip the theater.
-  if (document.hidden) return;
+  if (document.hidden) return Promise.resolve();
   const notation = notationFor(detail);
-  if (!notation) return;
-  if (queue.length >= 3) return; // table's busy — feed still shows everything
-  queue.push(notation);
-  if (!running) void drain();
+  if (!notation) return Promise.resolve();
+  if (queue.length >= 3) return Promise.resolve(); // table's busy
+  return new Promise((onLanded) => {
+    queue.push({ notation, onLanded });
+    if (!running) void drain();
+  });
 }
 
 async function drain(): Promise<void> {
   running = true;
   try {
     await ensureBox();
-    let notation: string | undefined;
-    while ((notation = queue.shift())) {
+    let entry: (typeof queue)[number] | undefined;
+    while ((entry = queue.shift())) {
       try {
         // If the tab loses visibility mid-roll the physics stalls; don't let
         // one stuck animation wedge the queue forever.
         await Promise.race([
-          box!.roll(notation),
+          box!.roll(entry.notation),
           new Promise((_, reject) => setTimeout(() => reject(new Error("animation timeout")), 15000)),
         ]);
+        entry.onLanded();
         await new Promise((r) => setTimeout(r, LINGER_MS));
       } catch (e) {
         console.error("dice animation failed", e);
+        entry.onLanded();
       }
       box!.clearDice();
     }

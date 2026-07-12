@@ -61,7 +61,12 @@ export default function RollFeed({ rolls }: { rolls: RollPayload[] }) {
                 <span className="badge vis-badge">{VISIBILITY_TAGS[roll.visibility]}</span>
               )}
             </div>
-            {roll.detail ? (
+            {roll.detail?.manual ? (
+              <div className="roll-body">
+                <span className="roll-breakdown muted">✍️ {roll.formula} — rolled at the table</span>
+                <span className="roll-total">{roll.total}</span>
+              </div>
+            ) : roll.detail ? (
               <div className="roll-body">
                 <span className="roll-breakdown">
                   🎲 {breakdown(roll)}
