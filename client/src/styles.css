@@ -1233,10 +1233,15 @@ select:focus { outline: none; border-color: var(--accent); }
 /* Collapsed: a round tab in the corner */
 .dock-tab {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 3.1rem;
   height: 3.1rem;
+  padding: 0;
   border-radius: 50%;
   font-size: 1.35rem;
+  line-height: 1;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 45%),
     rgba(26, 23, 39, 0.94);
@@ -1267,23 +1272,29 @@ select:focus { outline: none; border-color: var(--accent); }
   box-shadow: 0 0 8px rgba(224, 92, 92, 0.5);
 }
 
-/* Toast: latest roll while the log is collapsed */
+/* Toast: latest roll while the log is collapsed. Fixed top-left, clear of the
+   bottom-right sidebar; a raised, readable surface with a gold accent edge. */
 .roll-toast {
-  display: block;
-  margin-bottom: 0.5rem;
-  max-width: min(78vw, 300px);
-  margin-left: auto;
-  padding: 0.55rem 0.8rem;
+  position: fixed;
+  top: 3.9rem;
+  left: 1rem;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: min(80vw, 320px);
+  padding: 0.6rem 0.9rem;
   text-align: left;
-  background: rgba(26, 23, 39, 0.96);
-  border: 1px solid var(--border-gold);
+  background: linear-gradient(180deg, #2a2540, #201b34);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
   animation: rise 0.2s ease-out both;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
 }
-.roll-toast:hover { border-color: var(--accent); }
+.roll-toast:hover { border-color: var(--accent-hover); }
 .toast-total {
   font-family: var(--font-display);
   font-weight: 700;
