@@ -74,6 +74,7 @@ function remnantDefaultData() {
     dust: {},
     conditions: [],
     lien: 0,
+    inventory: [],
     equipment: "",
     bond: "",
     trait: "",

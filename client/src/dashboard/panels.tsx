@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { ChatMessage, Member, RollPayload } from "../api";
 import type { CharacterSummary } from "../sheet";
 import SheetView from "../components/SheetView";
+import InventoryPanel from "../components/InventoryPanel";
 import RollFeed from "../components/RollFeed";
 import DicePanel from "../components/DicePanel";
 import ChatPanel from "../components/ChatPanel";
@@ -81,6 +82,16 @@ export const PANELS: PanelDef[] = [
           </Link>
         </div>
       ),
+  },
+  {
+    id: "inventory",
+    title: "Inventory",
+    icon: "🎒",
+    minW: 3,
+    minH: 5,
+    defaultW: 4,
+    defaultH: 11,
+    render: (ctx) => <InventoryPanel campaignId={ctx.campaignId} characterId={ctx.myCharacterId} />,
   },
   {
     id: "dice",

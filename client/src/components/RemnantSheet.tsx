@@ -23,6 +23,7 @@ import {
   type RemnantAttrKey,
   type RemnantData,
 } from "../remnant";
+import InventoryEditor from "./InventoryEditor";
 
 interface Props {
   name: string;
@@ -522,14 +523,23 @@ export default function RemnantSheet({ name, d, ro, update, roll }: Props) {
             <p className="muted small">A vial holds 3 charges. Dust doesn't replenish on rests — buy, loot, or craft it.</p>
           </section>
 
+          {/* inventory */}
+          <section className="card stack">
+            <h3>Inventory</h3>
+            <InventoryEditor
+              items={d.inventory}
+              money={d.lien}
+              moneyLabel="Lien 🪙"
+              ro={ro}
+              onItems={(inv) => update({ inventory: inv })}
+              onMoney={(n) => update({ lien: n })}
+            />
+          </section>
+
           {/* background & notes */}
           <section className="card stack">
             <h3>Background</h3>
             <div className="field-grid">
-              <label>
-                Lien
-                <input type="number" value={d.lien} disabled={ro} onChange={(e) => update({ lien: num(e.target.value) })} />
-              </label>
               <label>
                 Bond / motivation
                 <input value={d.bond} disabled={ro} onChange={(e) => update({ bond: e.target.value })} />

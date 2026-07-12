@@ -1,6 +1,8 @@
 // Remnant (RWBY TTRPG) rules: attributes as die sizes, 2d10 + attribute die,
 // Aura pool as shield + Semblance fuel, small HP with the Final Flare.
 
+import type { InventoryItem } from "./sheet";
+
 export type RemnantAttrKey = "brawn" | "finesse" | "resolve" | "wit" | "aura" | "grit";
 
 export const REMNANT_ATTRIBUTES: { key: RemnantAttrKey; name: string; blurb: string }[] = [
@@ -184,6 +186,7 @@ export interface RemnantData {
   dust: Record<string, number>; // charges by type key
   conditions: string[];
   lien: number;
+  inventory: InventoryItem[];
   equipment: string;
   bond: string;
   trait: string;
