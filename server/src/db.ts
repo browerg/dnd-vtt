@@ -161,6 +161,14 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_characters_campaign ON characters (campaign_id);
 
+  CREATE TABLE IF NOT EXISTS session_notes (
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    body        TEXT NOT NULL DEFAULT '',
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (campaign_id, user_id)
+  );
+
   CREATE TABLE IF NOT EXISTS rolls (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,

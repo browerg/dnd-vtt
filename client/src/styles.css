@@ -1541,3 +1541,14 @@ select:focus { outline: none; border-color: var(--accent); }
 .npc-new input { width: 7rem; padding: 0.3rem 0.5rem; }
 .npc-control-toggle { display: flex; align-items: center; gap: 0.4rem; }
 .npc-empty { padding: 1rem 0.25rem; }
+
+/* Private notes panel: a notepad that fills the tile */
+.notes-panel { display: flex; flex-direction: column; height: 100%; gap: 0.4rem; }
+.notes-head { display: flex; align-items: center; justify-content: space-between; }
+.notes-area {
+  flex: 1;
+  min-height: 7rem;
+  width: 100%;
+  resize: none;
+  line-height: 1.55;
+}

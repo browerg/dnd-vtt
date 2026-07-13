@@ -5,6 +5,7 @@ import type { CharacterSummary } from "../sheet";
 import SheetView from "../components/SheetView";
 import InventoryPanel from "../components/InventoryPanel";
 import NPCPanel from "../components/NPCPanel";
+import NotesPanel from "../components/NotesPanel";
 import RollFeed from "../components/RollFeed";
 import DicePanel from "../components/DicePanel";
 import ChatPanel from "../components/ChatPanel";
@@ -225,6 +226,16 @@ export const PANELS: PanelDef[] = [
         refreshKey={ctx.codexRefresh}
       />
     ),
+  },
+  {
+    id: "notes",
+    title: "My notes",
+    icon: "📝",
+    minW: 3,
+    minH: 5,
+    defaultW: 4,
+    defaultH: 10,
+    render: (ctx) => <NotesPanel campaignId={ctx.campaignId} />,
   },
   {
     id: "chat",

@@ -19,6 +19,7 @@ const PLAYER_LAYOUT: GridItem[] = [
   { i: "party", x: 8, y: 0, w: 4, h: 6, minW: 2, minH: 4 },
   { i: "dice", x: 8, y: 6, w: 4, h: 10, minW: 3, minH: 6 },
   { i: "rolls", x: 8, y: 16, w: 4, h: 12, minW: 3, minH: 5 },
+  { i: "notes", x: 0, y: 18, w: 8, h: 9, minW: 3, minH: 5 },
 ];
 
 // The DM lands control-first: party/roster/rolls up top, codex + dice below.
