@@ -1549,6 +1549,8 @@ select:focus { outline: none; border-color: var(--accent); }
 .npc-new { display: inline-flex; align-items: center; gap: 0.25rem; }
 .npc-new input { width: 7rem; padding: 0.3rem 0.5rem; }
 .npc-control-toggle { display: flex; align-items: center; gap: 0.4rem; }
+.npc-actions { gap: 0.5rem; flex-wrap: wrap; }
+.npc-delete:hover { color: var(--danger); border-color: var(--danger); }
 .npc-empty { padding: 1rem 0.25rem; }
 
 /* Private notes panel: a notepad that fills the tile */

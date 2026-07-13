@@ -42,6 +42,13 @@ export default function NPCPanel({ ctx }: { ctx: PanelCtx }) {
     // ctx.characters refreshes via the character:update broadcast.
   };
 
+  const deleteNpc = async (id: number, name: string) => {
+    if (!window.confirm(`Delete NPC “${name}”? This removes its sheet for good.`)) return;
+    setSelectedId(null); // let it fall back to the first remaining NPC
+    await api(`/api/campaigns/${campaignId}/characters/${id}`, { method: "DELETE" }).catch(() => {});
+    // ctx.characters refreshes via the character:delete broadcast.
+  };
+
   return (
     <div className="npc-panel">
       <div className="npc-tabs">
@@ -79,14 +86,19 @@ export default function NPCPanel({ ctx }: { ctx: PanelCtx }) {
       </div>
 
       {isDM && active && (
-        <label className="npc-control-toggle muted small">
-          <input
-            type="checkbox"
-            checked={!!active.playerControllable}
-            onChange={(e) => toggleControl(active.id, e.target.checked)}
-          />
-          Players can control {active.name}
-        </label>
+        <div className="npc-actions row-between">
+          <label className="npc-control-toggle muted small">
+            <input
+              type="checkbox"
+              checked={!!active.playerControllable}
+              onChange={(e) => toggleControl(active.id, e.target.checked)}
+            />
+            Players can control {active.name}
+          </label>
+          <button className="ghost mini npc-delete" onClick={() => deleteNpc(active.id, active.name)}>
+            Delete NPC
+          </button>
+        </div>
       )}
 
       {activeId ? (
