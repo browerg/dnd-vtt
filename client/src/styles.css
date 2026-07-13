@@ -32,7 +32,10 @@ html { background: var(--bg); }
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* Transparent so the fixed .app-bg backdrop (and the atmosphere layers below)
+     show through — an opaque body background paints over negative z-index
+     layers and would hide them. The html canvas above is the base color. */
+  background: transparent;
   color: var(--text);
   font-size: 1.02rem;
   line-height: 1.45;
