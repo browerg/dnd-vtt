@@ -14,6 +14,7 @@ import {
   type Character,
 } from "../sheet";
 import RemnantSheet from "./RemnantSheet";
+import InventoryEditor from "./InventoryEditor";
 import type { RemnantData } from "../remnant";
 
 type RollMode = "normal" | "advantage" | "disadvantage" | "edge" | "setback";
@@ -468,87 +469,16 @@ export default function SheetView({ campaignId, characterId }: Props) {
             <div className="column">
               {/* ---- inventory ---- */}
               <section className="card">
-                <div className="row-between">
-                  <h3>Inventory</h3>
-                  <label className="gold">
-                    🪙
-                    <input
-                      type="number"
-                      value={d.gold}
-                      disabled={ro}
-                      onChange={(e) => update({ gold: num(e.target.value) })}
-                    />
-                  </label>
-                </div>
-                <ul className="item-list">
-                  {d.inventory.map((item) => (
-                    <li key={item.id} className="item-row">
-                      <input
-                        type="checkbox"
-                        title="Equipped"
-                        checked={item.equipped}
-                        disabled={ro}
-                        onChange={() =>
-                          update({
-                            inventory: d.inventory.map((i) =>
-                              i.id === item.id ? { ...i, equipped: !i.equipped } : i
-                            ),
-                          })
-                        }
-                      />
-                      <input
-                        className="item-name"
-                        value={item.name}
-                        disabled={ro}
-                        onChange={(e) =>
-                          update({
-                            inventory: d.inventory.map((i) =>
-                              i.id === item.id ? { ...i, name: e.target.value } : i
-                            ),
-                          })
-                        }
-                      />
-                      <input
-                        type="number"
-                        className="item-qty"
-                        title="Quantity"
-                        value={item.qty}
-                        disabled={ro}
-                        onChange={(e) =>
-                          update({
-                            inventory: d.inventory.map((i) =>
-                              i.id === item.id ? { ...i, qty: num(e.target.value, 1) } : i
-                            ),
-                          })
-                        }
-                      />
-                      {!ro && (
-                        <button
-                          className="ghost mini"
-                          title="Remove"
-                          onClick={() => update({ inventory: d.inventory.filter((i) => i.id !== item.id) })}
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-                {!ro && (
-                  <button
-                    className="ghost"
-                    onClick={() =>
-                      update({
-                        inventory: [
-                          ...d.inventory,
-                          { id: crypto.randomUUID(), name: "", qty: 1, weight: 0, equipped: false },
-                        ],
-                      })
-                    }
-                  >
-                    + Add item
-                  </button>
-                )}
+                <h3>Inventory</h3>
+                <InventoryEditor
+                  items={d.inventory}
+                  money={d.gold}
+                  moneyLabel="Gold 🪙"
+                  ro={ro}
+                  onItems={(inv) => update({ inventory: inv })}
+                  onMoney={(n) => update({ gold: n })}
+                  onUpload={(file) => uploadItemImage(campaignId, characterId, file)}
+                />
               </section>
 
               {/* ---- spellcasting ---- */}
