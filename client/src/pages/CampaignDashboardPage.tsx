@@ -171,7 +171,9 @@ export default function CampaignDashboardPage() {
 
   const myCharacterId = useMemo(() => {
     if (!user) return null;
-    return characters.find((c) => c.ownerId === user.id)?.id ?? null;
+    // Prefer the player's own character over any NPC they happen to own (DMs).
+    const mine = characters.filter((c) => c.ownerId === user.id);
+    return (mine.find((c) => !c.isNpc) ?? mine[0])?.id ?? null;
   }, [characters, user]);
 
   const ctx: PanelCtx | null = useMemo(() => {

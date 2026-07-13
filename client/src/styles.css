@@ -1476,3 +1476,52 @@ select:focus { outline: none; border-color: var(--accent); }
   text-align: left;
 }
 .add-panel-item:hover { background: rgba(207, 166, 79, 0.1); color: var(--accent); }
+
+/* NPC panel: DM's cast as tabs across the top */
+.npc-panel { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; }
+.npc-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(207, 166, 79, 0.14);
+}
+.npc-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem 0.25rem 0.3rem;
+  background: var(--bg-well);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  max-width: 12rem;
+}
+.npc-tab:hover { color: var(--text); border-color: var(--border-gold); }
+.npc-tab.active {
+  color: var(--accent-ink);
+  background: linear-gradient(180deg, #dfba64, #c49b43);
+  border-color: transparent;
+  font-weight: 700;
+}
+.npc-tab-face {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.npc-tab.active .npc-tab-face { border-color: rgba(0, 0, 0, 0.25); color: var(--text); }
+.npc-tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.npc-tab-flag { font-size: 0.72rem; }
+.npc-new { display: inline-flex; align-items: center; gap: 0.25rem; }
+.npc-new input { width: 7rem; padding: 0.3rem 0.5rem; }
+.npc-control-toggle { display: flex; align-items: center; gap: 0.4rem; }
+.npc-empty { padding: 1rem 0.25rem; }

@@ -138,9 +138,18 @@ interface CharacterRow {
   data: string;
   portrait_path: string;
   updated_at: string;
+  is_npc: number;
+  player_controllable: number;
 }
 
 const portraitUrl = (p: string) => (p ? `/uploads/${path.basename(p)}` : "");
+
+// Who may edit a sheet: its owner, any DM, or — for a player-controllable NPC —
+// any non-spectator member.
+const canEditCharacter = (row: CharacterRow, userId: number, role: string) =>
+  row.user_id === userId ||
+  isDMRole(role) ||
+  (!!row.is_npc && !!row.player_controllable && role !== "spectator");
 
 function toPayload(row: CharacterRow) {
   return {
@@ -152,13 +161,18 @@ function toPayload(row: CharacterRow) {
     data: JSON.parse(row.data),
     portraitUrl: portraitUrl(row.portrait_path),
     updatedAt: row.updated_at,
+    isNpc: !!row.is_npc,
+    playerControllable: !!row.player_controllable,
   };
 }
+
+const CHAR_COLS = `c.id, c.campaign_id, c.user_id, u.display_name, c.name, c.data, c.portrait_path,
+       c.updated_at, c.is_npc, c.player_controllable`;
 
 const getCharacter = (charId: number, campaignId: number): CharacterRow | undefined =>
   db
     .prepare(
-      `SELECT c.id, c.campaign_id, c.user_id, u.display_name, c.name, c.data, c.portrait_path, c.updated_at
+      `SELECT ${CHAR_COLS}
        FROM characters c JOIN users u ON u.id = c.user_id
        WHERE c.id = ? AND c.campaign_id = ?`
     )
@@ -172,7 +186,7 @@ charactersRouter.get("/:id/characters", (req, res) => {
   if (!memberRole(campaignId, user(req).id)) return res.status(404).json({ error: "Campaign not found." });
   const rows = db
     .prepare(
-      `SELECT c.id, c.campaign_id, c.user_id, u.display_name, c.name, c.data, c.portrait_path, c.updated_at
+      `SELECT ${CHAR_COLS}
        FROM characters c JOIN users u ON u.id = c.user_id
        WHERE c.campaign_id = ? ORDER BY c.name`
     )
@@ -197,6 +211,8 @@ charactersRouter.get("/:id/characters", (req, res) => {
         maxHp: d.maxHp,
         aura: d.system === "remnant" ? d.aura : undefined,
         auraMax: d.system === "remnant" ? d.auraMax : undefined,
+        isNpc: p.isNpc,
+        playerControllable: p.playerControllable,
       };
     }),
   });
@@ -209,12 +225,15 @@ charactersRouter.post("/:id/characters", (req, res) => {
   if (role === "spectator") return res.status(403).json({ error: "Spectators can't create characters." });
   const name = String(req.body?.name ?? "").trim();
   if (!name) return res.status(400).json({ error: "Your character needs a name." });
+  // Only the DM stocks NPCs.
+  const isNpc = Boolean(req.body?.isNpc) && isDMRole(role);
   const system = (db.prepare("SELECT system FROM campaigns WHERE id = ?").get(campaignId) as any)
     ?.system;
   const data = system === "remnant" ? remnantDefaultData() : defaultData();
   const info = db
-    .prepare("INSERT INTO characters (campaign_id, user_id, name, data) VALUES (?, ?, ?, ?)")
-    .run(campaignId, user(req).id, name, JSON.stringify(data));
+    .prepare("INSERT INTO characters (campaign_id, user_id, name, data, is_npc) VALUES (?, ?, ?, ?, ?)")
+    .run(campaignId, user(req).id, name, JSON.stringify(data), isNpc ? 1 : 0);
+  broadcastCharacter(campaignId, Number(info.lastInsertRowid), user(req).id);
   res.json({ id: Number(info.lastInsertRowid) });
 });
 
@@ -224,8 +243,7 @@ charactersRouter.get("/:id/characters/:charId", (req, res) => {
   if (!role) return res.status(404).json({ error: "Campaign not found." });
   const row = getCharacter(Number(req.params.charId), campaignId);
   if (!row) return res.status(404).json({ error: "Character not found." });
-  const canEdit = row.user_id === user(req).id || isDMRole(role);
-  res.json({ character: toPayload(row), canEdit });
+  res.json({ character: toPayload(row), canEdit: canEditCharacter(row, user(req).id, role) });
 });
 
 charactersRouter.put("/:id/characters/:charId", (req, res) => {
@@ -234,7 +252,7 @@ charactersRouter.put("/:id/characters/:charId", (req, res) => {
   if (!role) return res.status(404).json({ error: "Campaign not found." });
   const row = getCharacter(Number(req.params.charId), campaignId);
   if (!row) return res.status(404).json({ error: "Character not found." });
-  if (row.user_id !== user(req).id && !isDMRole(role)) {
+  if (!canEditCharacter(row, user(req).id, role)) {
     return res.status(403).json({ error: "Only the character's player or the DM can edit this sheet." });
   }
 
@@ -260,6 +278,21 @@ charactersRouter.put("/:id/characters/:charId", (req, res) => {
       character: { ...toPayload({ ...row, name, data: json }), updatedAt: new Date().toISOString() },
     });
   res.json({ ok: true });
+});
+
+// DM toggles whether players may drive an NPC (view + edit + roll as it).
+charactersRouter.post("/:id/characters/:charId/npc-control", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can change NPC control." });
+  const row = getCharacter(Number(req.params.charId), campaignId);
+  if (!row) return res.status(404).json({ error: "Character not found." });
+  if (!row.is_npc) return res.status(400).json({ error: "Only NPCs can be player-controllable." });
+  const on = Boolean(req.body?.playerControllable);
+  db.prepare("UPDATE characters SET player_controllable = ? WHERE id = ?").run(on ? 1 : 0, row.id);
+  broadcastCharacter(campaignId, row.id, user(req).id);
+  res.json({ ok: true, playerControllable: on });
 });
 
 // Portrait upload/replace — shows on the sheet, the hub roster, and map tokens.

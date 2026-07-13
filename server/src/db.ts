@@ -235,6 +235,9 @@ for (const ddl of [
   "ALTER TABLE campaigns ADD COLUMN system TEXT NOT NULL DEFAULT 'dnd5e'",
   "ALTER TABLE characters ADD COLUMN portrait_path TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE users ADD COLUMN dice_theme TEXT NOT NULL DEFAULT ''",
+  // NPCs the DM runs; player_controllable lets players drive one too.
+  "ALTER TABLE characters ADD COLUMN is_npc INTEGER NOT NULL DEFAULT 0",
+  "ALTER TABLE characters ADD COLUMN player_controllable INTEGER NOT NULL DEFAULT 0",
 ]) {
   try {
     db.exec(ddl);

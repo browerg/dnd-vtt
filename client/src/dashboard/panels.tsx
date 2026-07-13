@@ -4,6 +4,7 @@ import type { ChatMessage, Member, RollPayload } from "../api";
 import type { CharacterSummary } from "../sheet";
 import SheetView from "../components/SheetView";
 import InventoryPanel from "../components/InventoryPanel";
+import NPCPanel from "../components/NPCPanel";
 import RollFeed from "../components/RollFeed";
 import DicePanel from "../components/DicePanel";
 import ChatPanel from "../components/ChatPanel";
@@ -148,26 +149,39 @@ export const PANELS: PanelDef[] = [
     minH: 4,
     defaultW: 4,
     defaultH: 8,
-    render: (ctx) => (
-      <ul className="member-list">
-        {ctx.characters.map((c) => (
-          <li key={c.id} className="row-between">
-            <span className="avatar">
-              {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : c.name[0]?.toUpperCase() ?? "?"}
-            </span>
-            <Link to={`/campaigns/${ctx.campaignId}/characters/${c.id}`} className="char-link">
-              <strong>{c.name}</strong>
-              {c.summary && <span className="muted"> · {c.summary}</span>}
-              <span className="muted"> ({c.ownerName})</span>
-            </Link>
-            <span className={hpClass(c.hp, c.maxHp)}>
-              {c.hp}/{c.maxHp}
-            </span>
-          </li>
-        ))}
-        {ctx.characters.length === 0 && <li className="muted">No characters yet.</li>}
-      </ul>
-    ),
+    render: (ctx) => {
+      const pcs = ctx.characters.filter((c) => !c.isNpc);
+      return (
+        <ul className="member-list">
+          {pcs.map((c) => (
+            <li key={c.id} className="row-between">
+              <span className="avatar">
+                {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : c.name[0]?.toUpperCase() ?? "?"}
+              </span>
+              <Link to={`/campaigns/${ctx.campaignId}/characters/${c.id}`} className="char-link">
+                <strong>{c.name}</strong>
+                {c.summary && <span className="muted"> · {c.summary}</span>}
+                <span className="muted"> ({c.ownerName})</span>
+              </Link>
+              <span className={hpClass(c.hp, c.maxHp)}>
+                {c.hp}/{c.maxHp}
+              </span>
+            </li>
+          ))}
+          {pcs.length === 0 && <li className="muted">No characters yet.</li>}
+        </ul>
+      );
+    },
+  },
+  {
+    id: "npcs",
+    title: "NPCs",
+    icon: "🎭",
+    minW: 4,
+    minH: 8,
+    defaultW: 6,
+    defaultH: 16,
+    render: (ctx) => <NPCPanel ctx={ctx} />,
   },
   {
     id: "quickref",

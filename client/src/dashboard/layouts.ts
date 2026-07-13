@@ -26,9 +26,10 @@ const DM_LAYOUT: GridItem[] = [
   { i: "party", x: 0, y: 0, w: 3, h: 6, minW: 2, minH: 4 },
   { i: "roster", x: 3, y: 0, w: 5, h: 6, minW: 3, minH: 4 },
   { i: "rolls", x: 8, y: 0, w: 4, h: 12, minW: 3, minH: 5 },
-  { i: "codex", x: 0, y: 6, w: 8, h: 14, minW: 4, minH: 6 },
+  { i: "npcs", x: 0, y: 6, w: 8, h: 16, minW: 4, minH: 8 },
   { i: "dice", x: 8, y: 12, w: 4, h: 10, minW: 3, minH: 6 },
-  { i: "hub", x: 0, y: 20, w: 4, h: 7, minW: 3, minH: 4 },
+  { i: "codex", x: 0, y: 22, w: 8, h: 14, minW: 4, minH: 6 },
+  { i: "hub", x: 8, y: 22, w: 4, h: 7, minW: 3, minH: 4 },
 ];
 
 export function defaultLayout(role: string): GridItem[] {
