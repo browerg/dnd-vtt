@@ -90,3 +90,13 @@ export async function uploadItemImage(campaignId: number, characterId: number, f
   if (!res.ok) throw new Error(body.error ?? "Image upload failed");
   return (body as { url: string }).url;
 }
+
+// Upload a general image (e.g. a custom table backdrop); returns its URL.
+export async function uploadImage(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("image", file);
+  const res = await fetch(`/api/uploads/image`, { method: "POST", body: fd });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error ?? "Image upload failed");
+  return (body as { url: string }).url;
+}

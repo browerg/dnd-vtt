@@ -69,16 +69,29 @@ export function getBackground(): string {
   }
 }
 
-export function applyBackground(key: string): void {
-  const opt = BACKGROUNDS.find((b) => b.key === key);
-  document.documentElement.style.setProperty("--app-bg", opt && opt.css ? opt.css : "transparent");
+// A stored value is either a preset key or "custom:<image-url>".
+export const CUSTOM_PREFIX = "custom:";
+
+export function applyBackground(value: string): void {
+  let css = "transparent";
+  if (value.startsWith(CUSTOM_PREFIX)) {
+    const url = value.slice(CUSTOM_PREFIX.length);
+    if (url) css = `center / cover no-repeat url("${url}")`;
+  } else {
+    const opt = BACKGROUNDS.find((b) => b.key === value);
+    if (opt && opt.css) css = opt.css;
+  }
+  document.documentElement.style.setProperty("--app-bg", css);
 }
 
-export function setBackground(key: string): void {
+export function setBackground(value: string): void {
   try {
-    localStorage.setItem(KEY, key);
+    localStorage.setItem(KEY, value);
   } catch {
     /* private mode — just apply for this session */
   }
-  applyBackground(key);
+  applyBackground(value);
 }
+
+export const customImageUrl = (value: string): string | null =>
+  value.startsWith(CUSTOM_PREFIX) ? value.slice(CUSTOM_PREFIX.length) : null;

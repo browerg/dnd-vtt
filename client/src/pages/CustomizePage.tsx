@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../api";
+import { api, uploadImage } from "../api";
 import { useAuth } from "../App";
 import { previewDice } from "../dice3d";
-import { BACKGROUNDS, getBackground, setBackground } from "../background";
+import { BACKGROUNDS, CUSTOM_PREFIX, customImageUrl, getBackground, setBackground } from "../background";
 
 // Curated colorsets from the 3D dice library. Swatches are approximations —
 // the real judge is the preview roll.
@@ -29,9 +29,24 @@ export default function CustomizePage() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
-  const pickBg = (key: string) => {
-    setBg(key);
-    setBackground(key); // applies instantly + persists (client-side)
+  const [uploadingBg, setUploadingBg] = useState(false);
+
+  const pickBg = (value: string) => {
+    setBg(value);
+    setBackground(value); // applies instantly + persists (client-side)
+  };
+
+  const uploadBg = async (file: File) => {
+    setUploadingBg(true);
+    setError("");
+    try {
+      const url = await uploadImage(file);
+      pickBg(CUSTOM_PREFIX + url);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setUploadingBg(false);
+    }
   };
 
   const pick = async (key: string) => {
@@ -109,6 +124,29 @@ export default function CustomizePage() {
                 <span className="bg-name">{b.name}</span>
               </button>
             ))}
+            <label
+              className={`bg-swatch-btn${bg.startsWith(CUSTOM_PREFIX) ? " selected" : ""}`}
+              title="Upload your own image"
+            >
+              <span
+                className="bg-swatch bg-swatch-upload"
+                style={customImageUrl(bg) ? { background: `center / cover url("${customImageUrl(bg)}")` } : undefined}
+              >
+                {!customImageUrl(bg) && <span className="bg-upload-plus">＋</span>}
+              </span>
+              <span className="bg-name">{uploadingBg ? "Uploading…" : "Your image"}</span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+                disabled={uploadingBg}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) uploadBg(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
           </div>
         </section>
         <section className="card">

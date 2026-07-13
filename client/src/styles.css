@@ -1225,6 +1225,15 @@ select:focus { outline: none; border-color: var(--accent); }
   background-size: cover;
 }
 .bg-name { font-size: 0.82rem; font-weight: 600; }
+.bg-swatch-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  cursor: pointer;
+}
+.bg-upload-plus { font-size: 1.6rem; color: var(--muted); line-height: 1; }
+.bg-swatch-btn label { cursor: pointer; }
 
 /* =====================================================================
    Floating docks — collapsible corner widgets (dice bottom-left, roll log
