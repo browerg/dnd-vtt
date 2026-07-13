@@ -1260,20 +1260,27 @@ export default function MapPage() {
           </section>
           <section>
             <h4>Characters</h4>
-            {characters.map((c) => {
-              const onMap = tokens.some((t) => t.characterId === c.id);
-              const mine = c.ownerId === user?.id;
-              return (
-                <div key={c.id} className="row-between sidebar-row">
-                  <span className={onMap ? "" : "muted"}>{c.name}</span>
-                  {map && (isDM || mine) && !onMap && (
-                    <button className="ghost mini" onClick={() => placeCharacter(c.id)}>
-                      Place
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+            {characters
+              // Don't leak secret NPC names to players — only the DM (or a
+              // shared, player-controllable NPC) shows in the list.
+              .filter((c) => !c.isNpc || isDM || c.playerControllable)
+              .map((c) => {
+                const onMap = tokens.some((t) => t.characterId === c.id);
+                const mine = c.ownerId === user?.id;
+                return (
+                  <div key={c.id} className="row-between sidebar-row">
+                    <span className={onMap ? "" : "muted"}>
+                      {c.name}
+                      {c.isNpc && <span className="badge npc-badge">NPC</span>}
+                    </span>
+                    {map && (isDM || mine) && !onMap && (
+                      <button className="ghost mini" onClick={() => placeCharacter(c.id)}>
+                        Place
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
           </section>
           <section>
             <h4>Tokens on map</h4>
