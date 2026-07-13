@@ -326,21 +326,36 @@ export default function CampaignPage() {
           <section className="card">
             <h3>Characters</h3>
             <ul className="member-list">
-              {characters.map((c) => (
-                <li key={c.id} className="row-between">
-                  <span className="avatar">
-                    {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : c.name[0]?.toUpperCase() ?? "?"}
-                  </span>
-                  <Link to={`/campaigns/${campaignId}/characters/${c.id}`} className="char-link">
+              {characters.map((c) => {
+                const canView = isDM || c.ownerId === user?.id || (c.isNpc && c.playerControllable);
+                const label = (
+                  <>
                     <strong>{c.name}</strong>
+                    {c.isNpc && <span className="badge npc-badge">NPC</span>}
                     {c.summary && <span className="muted"> · {c.summary}</span>}
                     <span className="muted"> ({c.ownerName})</span>
-                  </Link>
-                  <span className={c.hp <= 0 ? "hp-pill dead" : c.hp <= c.maxHp / 3 ? "hp-pill hurt" : "hp-pill"}>
-                    {c.hp}/{c.maxHp}
-                  </span>
-                </li>
-              ))}
+                  </>
+                );
+                return (
+                  <li key={c.id} className="row-between">
+                    <span className="avatar">
+                      {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : c.name[0]?.toUpperCase() ?? "?"}
+                    </span>
+                    {canView ? (
+                      <Link to={`/campaigns/${campaignId}/characters/${c.id}`} className="char-link">
+                        {label}
+                      </Link>
+                    ) : (
+                      <span className="char-link locked" title="This sheet is private to its player and the DM">
+                        {label} <span className="lock">🔒</span>
+                      </span>
+                    )}
+                    <span className={c.hp <= 0 ? "hp-pill dead" : c.hp <= c.maxHp / 3 ? "hp-pill hurt" : "hp-pill"}>
+                      {c.hp}/{c.maxHp}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
             {canRoll && (
               <form onSubmit={createCharacter} className="row-between new-char">

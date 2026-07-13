@@ -561,6 +561,19 @@ select:focus { outline: none; border-color: var(--accent); }
 
 .char-link { display: block; flex: 1; min-width: 0; }
 .char-link:hover strong { color: var(--accent); }
+.char-link.locked { cursor: default; opacity: 0.75; }
+.char-link.locked:hover strong { color: inherit; }
+.char-link .lock { font-size: 0.8rem; }
+.npc-badge {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  padding: 0.05rem 0.35rem;
+  margin-left: 0.35rem;
+  color: var(--accent);
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  vertical-align: middle;
+}
 
 /* ---- portraits ---- */
 

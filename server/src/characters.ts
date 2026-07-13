@@ -144,6 +144,11 @@ interface CharacterRow {
 
 const portraitUrl = (p: string) => (p ? `/uploads/${path.basename(p)}` : "");
 
+// Who may VIEW a full sheet: its owner, any DM, or a player-controllable NPC
+// (shared with the table). Everyone else's sheet stays private.
+const canViewCharacter = (row: CharacterRow, userId: number, role: string) =>
+  row.user_id === userId || isDMRole(role) || (!!row.is_npc && !!row.player_controllable);
+
 // Who may edit a sheet: its owner, any DM, or — for a player-controllable NPC —
 // any non-spectator member.
 const canEditCharacter = (row: CharacterRow, userId: number, role: string) =>
@@ -243,6 +248,9 @@ charactersRouter.get("/:id/characters/:charId", (req, res) => {
   if (!role) return res.status(404).json({ error: "Campaign not found." });
   const row = getCharacter(Number(req.params.charId), campaignId);
   if (!row) return res.status(404).json({ error: "Character not found." });
+  if (!canViewCharacter(row, user(req).id, role)) {
+    return res.status(403).json({ error: "This sheet is private to its player and the DM." });
+  }
   res.json({ character: toPayload(row), canEdit: canEditCharacter(row, user(req).id, role) });
 });
 

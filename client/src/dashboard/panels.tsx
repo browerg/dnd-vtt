@@ -153,21 +153,35 @@ export const PANELS: PanelDef[] = [
       const pcs = ctx.characters.filter((c) => !c.isNpc);
       return (
         <ul className="member-list">
-          {pcs.map((c) => (
-            <li key={c.id} className="row-between">
-              <span className="avatar">
-                {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : c.name[0]?.toUpperCase() ?? "?"}
-              </span>
-              <Link to={`/campaigns/${ctx.campaignId}/characters/${c.id}`} className="char-link">
+          {pcs.map((c) => {
+            const canView = ctx.isDM || c.ownerId === ctx.myId;
+            const label = (
+              <>
                 <strong>{c.name}</strong>
                 {c.summary && <span className="muted"> · {c.summary}</span>}
                 <span className="muted"> ({c.ownerName})</span>
-              </Link>
-              <span className={hpClass(c.hp, c.maxHp)}>
-                {c.hp}/{c.maxHp}
-              </span>
-            </li>
-          ))}
+              </>
+            );
+            return (
+              <li key={c.id} className="row-between">
+                <span className="avatar">
+                  {c.portraitUrl ? <img src={c.portraitUrl} alt="" /> : c.name[0]?.toUpperCase() ?? "?"}
+                </span>
+                {canView ? (
+                  <Link to={`/campaigns/${ctx.campaignId}/characters/${c.id}`} className="char-link">
+                    {label}
+                  </Link>
+                ) : (
+                  <span className="char-link locked" title="This sheet is private to its player and the DM">
+                    {label} <span className="lock">🔒</span>
+                  </span>
+                )}
+                <span className={hpClass(c.hp, c.maxHp)}>
+                  {c.hp}/{c.maxHp}
+                </span>
+              </li>
+            );
+          })}
           {pcs.length === 0 && <li className="muted">No characters yet.</li>}
         </ul>
       );
