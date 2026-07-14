@@ -1563,3 +1563,21 @@ select:focus { outline: none; border-color: var(--accent); }
   resize: none;
   line-height: 1.55;
 }
+
+/* Account avatars (out-of-character identity) */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+  border: 1px solid var(--gold-hairline, rgba(200, 170, 90, 0.35));
+  vertical-align: middle;
+}
+.avatar-initial {
+  color: #f7f2e4;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
