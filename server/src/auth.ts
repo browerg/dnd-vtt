@@ -148,6 +148,28 @@ authRouter.put("/me/dice", (req, res) => {
   res.json({ ok: true, diceTheme: theme });
 });
 
+// Edit your account identity — name, avatar, pronouns, bio. Account-space only;
+// this is who *you* are, not your character.
+authRouter.put("/me/profile", (req, res) => {
+  const current = getSessionUser(req);
+  if (!current) return res.status(401).json({ error: "Not logged in" });
+  const displayName = String(req.body?.displayName ?? "").trim();
+  const pronouns = String(req.body?.pronouns ?? "").trim();
+  const bio = String(req.body?.bio ?? "").trim();
+  const avatarPath = String(req.body?.avatarPath ?? "").trim();
+  if (!displayName) return res.status(400).json({ error: "Display name can't be empty." });
+  if (displayName.length > 40) return res.status(400).json({ error: "Display name is too long (40 characters max)." });
+  if (pronouns.length > 30) return res.status(400).json({ error: "Pronouns are too long (30 characters max)." });
+  if (bio.length > 280) return res.status(400).json({ error: "Bio is too long (280 characters max)." });
+  if (avatarPath && !avatarPath.startsWith("/uploads/")) {
+    return res.status(400).json({ error: "Invalid avatar image." });
+  }
+  db.prepare(
+    "UPDATE users SET display_name = ?, pronouns = ?, bio = ?, avatar_path = ? WHERE id = ?"
+  ).run(displayName, pronouns, bio, avatarPath, current.id);
+  res.json({ user: getSessionUser(req) });
+});
+
 // ---- dev quick login ----
 // One-click account switching for solo testing (DM in one window, player in
 // another). Locked down twice: only when the server was started with
