@@ -246,6 +246,9 @@ for (const ddl of [
   // NPCs the DM runs; player_controllable lets players drive one too.
   "ALTER TABLE characters ADD COLUMN is_npc INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE characters ADD COLUMN player_controllable INTEGER NOT NULL DEFAULT 0",
+  "ALTER TABLE users ADD COLUMN avatar_path TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE users ADD COLUMN pronouns TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''",
 ]) {
   try {
     db.exec(ddl);

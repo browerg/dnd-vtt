@@ -9,6 +9,9 @@ export interface SessionUser {
   email: string;
   display_name: string;
   diceTheme?: string;
+  avatarPath?: string;
+  pronouns?: string;
+  bio?: string;
 }
 
 // Curated dice colorsets from @3d-dice/dice-box-threejs. '' means the default.
@@ -47,7 +50,9 @@ export function getSessionUser(req: Request): SessionUser | null {
 export function userForToken(token: string): SessionUser | null {
   const row = db
     .prepare(
-      `SELECT u.id, u.email, u.display_name, u.dice_theme AS diceTheme FROM sessions s
+      `SELECT u.id, u.email, u.display_name, u.dice_theme AS diceTheme,
+              u.avatar_path AS avatarPath, u.pronouns, u.bio
+       FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ? AND s.expires_at > datetime('now')`
     )
