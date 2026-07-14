@@ -3,6 +3,9 @@ export interface User {
   email: string;
   display_name: string;
   diceTheme?: string;
+  avatarPath?: string;
+  pronouns?: string;
+  bio?: string;
 }
 
 export interface CampaignSummary {
