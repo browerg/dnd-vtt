@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import { handleBulletKeyDown } from "../bulletList";
 
 // A private, autosaving notepad — one per player per campaign. Nobody else
 // (not even the DM) sees it. Playtesters said a running notes doc is vital.
@@ -46,6 +47,7 @@ export default function NotesPanel({ campaignId }: { campaignId: number }) {
         placeholder="Session notes — clues, NPC names, loot, that thing the DM definitely wants you to remember…"
         value={body}
         disabled={!loaded}
+        onKeyDown={handleBulletKeyDown}
         onChange={(e) => {
           setBody(e.target.value);
           save(e.target.value);

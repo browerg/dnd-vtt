@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api } from "../api";
+import { handleBulletKeyDown } from "../bulletList";
 
 interface Quest {
   id: number;
@@ -326,7 +327,7 @@ export default function CodexPanel({ campaignId, isDM, canWrite, myId, refreshKe
           {canWrite && (
             <form onSubmit={addEntry} className="stack codex-form">
               <input name="title" placeholder="Entry title — e.g. Session 3: the crypt" required />
-              <textarea name="body" rows={3} placeholder="What happened…" />
+              <textarea name="body" rows={3} placeholder="What happened…" onKeyDown={handleBulletKeyDown} />
               <button className="ghost">Add entry</button>
             </form>
           )}
