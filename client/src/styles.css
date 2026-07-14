@@ -1581,3 +1581,45 @@ select:focus { outline: none; border-color: var(--accent); }
   line-height: 1;
   text-transform: uppercase;
 }
+
+/* Profile page */
+.profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.profile-card {
+  max-width: 34rem;
+}
+.profile-head {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+.profile-head-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.profile-avatar-pick {
+  position: relative;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.profile-avatar-edit {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold, #c9a24b);
+  color: #1a1206;
+  font-size: 0.85rem;
+  border: 2px solid var(--bg-well, #14100a);
+}

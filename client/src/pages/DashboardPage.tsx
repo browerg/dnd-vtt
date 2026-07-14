@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, type CampaignSummary } from "../api";
 import { useAuth } from "../App";
+import { Avatar } from "../components/Avatar";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -48,7 +49,10 @@ export default function DashboardPage() {
         <Link to="/shop" className="ghost link">
           🏪 Shop
         </Link>
-        <span className="muted">{user?.display_name}</span>
+        <Link to="/profile" className="ghost link profile-link">
+          <Avatar name={user?.display_name ?? ""} src={user?.avatarPath || undefined} id={user?.id} size={24} />
+          <span>{user?.display_name}</span>
+        </Link>
         <button className="ghost" onClick={logout}>
           Log out
         </button>

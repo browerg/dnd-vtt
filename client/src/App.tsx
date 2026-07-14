@@ -12,6 +12,7 @@ import BestiaryPage from "./pages/BestiaryPage";
 import JoinPage from "./pages/JoinPage";
 import CustomizePage from "./pages/CustomizePage";
 import ShopPage from "./pages/ShopPage";
+import ProfilePage from "./pages/ProfilePage";
 
 interface AuthState {
   user: User | null;
@@ -64,6 +65,7 @@ export default function App() {
         <Route path="/campaigns/:id/map" element={user ? <MapPage /> : <Navigate to="/login" />} />
         <Route path="/campaigns/:id/bestiary" element={user ? <BestiaryPage /> : <Navigate to="/login" />} />
         <Route path="/customize" element={user ? <CustomizePage /> : <Navigate to="/login" />} />
+        <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
         <Route path="/shop" element={user ? <ShopPage /> : <Navigate to="/login" />} />
         <Route path="/join/:code" element={<JoinPage />} />
       </Routes>
