@@ -10,6 +10,7 @@ import RollDock from "../components/RollDock";
 import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
+import { Avatar } from "../components/Avatar";
 
 interface CampaignDetail {
   campaign: {
@@ -381,6 +382,7 @@ export default function CampaignPage() {
                 <li key={m.id} className="row-between">
                   <span>
                     <span className={online.has(m.id) ? "dot online" : "dot"} />
+                    <Avatar name={m.display_name} src={m.avatar_path || undefined} id={m.id} size={22} />
                     {m.display_name}
                   </span>
                   <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>

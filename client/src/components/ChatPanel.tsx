@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ChatMessage, Member } from "../api";
+import { Avatar } from "./Avatar";
 
 type Tab = "ic" | "ooc" | "whisper";
 
@@ -56,6 +57,14 @@ export default function ChatPanel({ messages, members, myId, canChat, onSend }: 
         {shown.length === 0 && <p className="muted">Nothing here yet.</p>}
         {shown.map((m) => (
           <div key={m.id} className="chat-msg">
+            {m.channel !== "ic" && (
+              <Avatar
+                name={m.userName}
+                src={members.find((mem) => mem.id === m.userId)?.avatar_path || undefined}
+                id={m.userId}
+                size={18}
+              />
+            )}
             <span className="chat-author">
               {m.channel === "ic" && m.speaker ? (
                 <>

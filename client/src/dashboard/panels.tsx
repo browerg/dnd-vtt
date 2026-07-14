@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { ChatMessage, Member, RollPayload } from "../api";
 import type { CharacterSummary } from "../sheet";
+import { Avatar } from "../components/Avatar";
 import SheetView from "../components/SheetView";
 import InventoryPanel from "../components/InventoryPanel";
 import NPCPanel from "../components/NPCPanel";
@@ -134,6 +135,7 @@ export const PANELS: PanelDef[] = [
           <li key={m.id} className="row-between">
             <span>
               <span className={ctx.online.has(m.id) ? "dot online" : "dot"} />
+              <Avatar name={m.display_name} src={m.avatar_path || undefined} id={m.id} size={22} />
               {m.display_name}
             </span>
             <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>
