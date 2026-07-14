@@ -87,7 +87,7 @@ export default function CampaignPage() {
       if (roll.campaignId !== campaignId) return;
       // Let the 3D dice land and settle before the number hits the feed —
       // the queue keeps multiple in-flight rolls in arrival order.
-      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme);
+      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme, { userName: roll.userName, label: roll.label });
       setRolls((prev) => [...prev.slice(-99), roll]);
     });
     socket.on("character:update", (msg: { campaignId: number }) => {

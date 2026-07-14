@@ -13,6 +13,7 @@ import JoinPage from "./pages/JoinPage";
 import CustomizePage from "./pages/CustomizePage";
 import ShopPage from "./pages/ShopPage";
 import ProfilePage from "./pages/ProfilePage";
+import CriticalRollOverlay from "./components/CriticalRollOverlay";
 
 interface AuthState {
   user: User | null;
@@ -53,6 +54,7 @@ export default function App() {
       <div className="app-bg" aria-hidden />
       {/* Lives outside the routes so the 3D dice canvas survives navigation. */}
       <div id="dice-overlay" className="dice-overlay" />
+      <CriticalRollOverlay />
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
         <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" />} />

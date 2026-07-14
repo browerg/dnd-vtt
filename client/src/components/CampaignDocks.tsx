@@ -40,7 +40,7 @@ export default function CampaignDocks() {
     socket.on("connect", () => socket.emit("campaign:join", campaignId));
     socket.on("roll", async (roll: RollPayload) => {
       if (roll.campaignId !== campaignId) return;
-      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme);
+      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme, { userName: roll.userName, label: roll.label });
       setRolls((prev) => [...prev.slice(-99), roll]);
     });
     return () => {

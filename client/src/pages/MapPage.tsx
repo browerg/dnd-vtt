@@ -332,7 +332,7 @@ export default function MapPage() {
     socket.on("roll", async (roll: RollPayload) => {
       if (roll.campaignId !== campaignId) return;
       // Same pipeline as the hub: let the 3D dice settle before the number lands.
-      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme);
+      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme, { userName: roll.userName, label: roll.label });
       setRolls((prev) => [...prev.slice(-99), roll]);
     });
     socket.on("map:ping", (m: { campaignId: number; x: number; y: number; userName: string }) => {

@@ -121,7 +121,7 @@ export default function CampaignDashboardPage() {
     });
     socket.on("roll", async (roll: RollPayload) => {
       if (roll.campaignId !== campaignId) return;
-      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme);
+      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme, { userName: roll.userName, label: roll.label });
       setRolls((prev) => [...prev.slice(-99), roll]);
     });
     socket.on("character:update", (msg: { campaignId: number }) => {

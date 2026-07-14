@@ -1,0 +1,489 @@
+.critical-roll-overlay {
+  --critical-primary: #d9ad50;
+  --critical-secondary: #78dff2;
+  --critical-rgb: 217, 173, 80;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+  font-family: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+}
+
+.critical-roll-overlay.nat1 {
+  --critical-primary: #e34858;
+  --critical-secondary: #8a1727;
+  --critical-rgb: 227, 72, 88;
+}
+
+.critical-screen-flash,
+.critical-vignette,
+.critical-scan,
+.critical-rings,
+.critical-particles,
+.critical-fractures {
+  position: absolute;
+  inset: 0;
+}
+
+.critical-screen-flash {
+  z-index: -4;
+  background:
+    radial-gradient(circle at center, rgba(var(--critical-rgb), 0.42), transparent 38%),
+    rgba(var(--critical-rgb), 0.12);
+  animation: critical-flash 0.82s ease-out both;
+}
+
+.nat1 .critical-screen-flash {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 8%,
+      rgba(227, 72, 88, 0.07) 8% 8.4%,
+      transparent 8.4% 17%
+    ),
+    radial-gradient(circle at center, rgba(227, 72, 88, 0.36), transparent 42%);
+  animation: critical-failure-flash 0.72s steps(5, end) both;
+}
+
+.critical-vignette {
+  z-index: -3;
+  box-shadow:
+    inset 0 0 150px 45px rgba(var(--critical-rgb), 0.2),
+    inset 0 0 34px 4px rgba(var(--critical-rgb), 0.48);
+  animation: critical-vignette 2.8s ease-out both;
+}
+
+.critical-scan {
+  z-index: -2;
+  width: 100%;
+  height: 2px;
+  top: -5%;
+  bottom: auto;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, var(--critical-secondary), transparent);
+  box-shadow: 0 0 22px rgba(var(--critical-rgb), 0.72);
+  animation: critical-scan 1.2s 0.12s ease-out both;
+}
+
+.critical-rings {
+  z-index: -1;
+  display: grid;
+  place-items: center;
+}
+
+.critical-rings span {
+  position: absolute;
+  width: min(62vw, 650px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(var(--critical-rgb), 0.32);
+  border-radius: 50%;
+  opacity: 0;
+  animation: critical-ring 1.45s cubic-bezier(0.14, 0.74, 0.26, 1) both;
+}
+
+.critical-rings span:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.critical-rings span:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+.nat1 .critical-rings span {
+  border-radius: 0;
+  transform: rotate(45deg);
+  animation-name: critical-ring-failure;
+}
+
+.critical-particles {
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+}
+
+.critical-particles span {
+  --particle-angle: 0deg;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 28px;
+  background: linear-gradient(var(--critical-primary), transparent);
+  box-shadow: 0 0 10px rgba(var(--critical-rgb), 0.82);
+  transform-origin: 50% 0;
+  opacity: 0;
+  animation: critical-particle 1.35s 0.1s ease-out both;
+}
+
+.critical-particles span:nth-child(1) { --particle-angle: 0deg; }
+.critical-particles span:nth-child(2) { --particle-angle: 18deg; }
+.critical-particles span:nth-child(3) { --particle-angle: 36deg; }
+.critical-particles span:nth-child(4) { --particle-angle: 54deg; }
+.critical-particles span:nth-child(5) { --particle-angle: 72deg; }
+.critical-particles span:nth-child(6) { --particle-angle: 90deg; }
+.critical-particles span:nth-child(7) { --particle-angle: 108deg; }
+.critical-particles span:nth-child(8) { --particle-angle: 126deg; }
+.critical-particles span:nth-child(9) { --particle-angle: 144deg; }
+.critical-particles span:nth-child(10) { --particle-angle: 162deg; }
+.critical-particles span:nth-child(11) { --particle-angle: 180deg; }
+.critical-particles span:nth-child(12) { --particle-angle: 198deg; }
+.critical-particles span:nth-child(13) { --particle-angle: 216deg; }
+.critical-particles span:nth-child(14) { --particle-angle: 234deg; }
+.critical-particles span:nth-child(15) { --particle-angle: 252deg; }
+.critical-particles span:nth-child(16) { --particle-angle: 270deg; }
+.critical-particles span:nth-child(17) { --particle-angle: 288deg; }
+.critical-particles span:nth-child(18) { --particle-angle: 306deg; }
+.critical-particles span:nth-child(19) { --particle-angle: 324deg; }
+.critical-particles span:nth-child(20) { --particle-angle: 342deg; }
+
+.nat1 .critical-particles span {
+  width: 2px;
+  height: 44px;
+  animation-name: critical-failure-particle;
+}
+
+.critical-fractures {
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+}
+
+.critical-fractures span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: min(42vw, 430px);
+  height: 2px;
+  opacity: 0;
+  background:
+    linear-gradient(
+      90deg,
+      var(--critical-primary) 0 17%,
+      transparent 17% 19%,
+      var(--critical-primary) 19% 34%,
+      transparent 34% 38%,
+      var(--critical-primary) 38% 100%
+    );
+  clip-path: polygon(0 0, 32% 100%, 48% 0, 66% 100%, 100% 35%, 100% 70%, 67% 72%, 48% 45%, 30% 76%, 0 45%);
+  transform-origin: left center;
+  filter: drop-shadow(0 0 5px rgba(227, 72, 88, 0.85));
+  animation: critical-fracture 0.72s 0.12s ease-out both;
+}
+
+.critical-fractures span:nth-child(1) { transform: rotate(-8deg); }
+.critical-fractures span:nth-child(2) { transform: rotate(63deg); }
+.critical-fractures span:nth-child(3) { transform: rotate(136deg); }
+.critical-fractures span:nth-child(4) { transform: rotate(207deg); }
+.critical-fractures span:nth-child(5) { transform: rotate(289deg); }
+
+.critical-emblem {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: clamp(150px, 22vw, 270px);
+  aspect-ratio: 1;
+  place-items: center;
+  margin-bottom: clamp(150px, 21vh, 205px);
+  color: var(--critical-primary);
+  animation: critical-emblem-enter 0.78s cubic-bezier(0.12, 0.78, 0.2, 1.18) both;
+}
+
+.critical-emblem-frame {
+  position: absolute;
+  inset: 12%;
+  border: 2px solid currentColor;
+  transform: rotate(45deg);
+  box-shadow:
+    inset 0 0 42px rgba(var(--critical-rgb), 0.14),
+    0 0 45px rgba(var(--critical-rgb), 0.18);
+  animation: critical-frame-turn 4.5s linear infinite;
+}
+
+.dnd5e.nat20 .critical-emblem-frame {
+  border-radius: 50%;
+}
+
+.nat1 .critical-emblem-frame {
+  border-radius: 0;
+  border-style: double;
+  animation: critical-frame-failure 0.3s steps(2, end) 4;
+}
+
+.critical-emblem::before,
+.critical-emblem::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 92%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  box-shadow: 0 0 10px rgba(var(--critical-rgb), 0.74);
+}
+
+.critical-emblem::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.critical-emblem::before {
+  transform: translate(-50%, -50%);
+}
+
+.critical-emblem strong,
+.critical-emblem-shadow {
+  position: absolute;
+  font-family: "Cinzel", Georgia, serif;
+  font-size: clamp(5.5rem, 15vw, 12rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.critical-emblem strong {
+  color: transparent;
+  background: linear-gradient(180deg, #fff4c8 0%, var(--critical-primary) 46%, #8b5a14 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 0 14px rgba(var(--critical-rgb), 0.68));
+}
+
+.nat1 .critical-emblem strong {
+  background: linear-gradient(180deg, #ffd4d7 0%, #e34858 48%, #5c0815 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.critical-emblem-shadow {
+  color: transparent;
+  -webkit-text-stroke: 10px rgba(var(--critical-rgb), 0.14);
+  transform: scale(1.13);
+  filter: blur(2px);
+}
+
+.critical-banner {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 56%;
+  width: min(90vw, 840px);
+  padding: 1.25rem clamp(1rem, 4vw, 3.5rem);
+  color: #f4f7f9;
+  text-align: center;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(90deg, transparent, rgba(5, 9, 16, 0.92) 12%, rgba(5, 9, 16, 0.97) 50%, rgba(5, 9, 16, 0.92) 88%, transparent);
+  animation: critical-banner-enter 0.58s 0.28s cubic-bezier(0.16, 0.8, 0.2, 1) both;
+}
+
+.critical-banner-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--critical-primary), var(--critical-secondary), transparent);
+  box-shadow: 0 0 10px rgba(var(--critical-rgb), 0.62);
+}
+
+.critical-banner-line.bottom {
+  top: auto;
+  bottom: 0;
+}
+
+.critical-kicker {
+  margin: 0;
+  color: var(--critical-secondary);
+  font-size: clamp(0.64rem, 1.4vw, 0.78rem);
+  font-weight: 800;
+  letter-spacing: 0.28em;
+}
+
+.critical-banner h2 {
+  margin: 0.25rem 0 0;
+  color: var(--critical-primary);
+  font-family: "Cinzel", Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 22px rgba(var(--critical-rgb), 0.42);
+}
+
+.critical-message {
+  display: flex;
+  justify-content: center;
+  gap: 0.55rem;
+  margin: 0.45rem 0 0;
+  color: #9fb0bf;
+  font-size: clamp(0.8rem, 1.8vw, 1rem);
+}
+
+.critical-message strong {
+  color: #f5f7f8;
+}
+
+.critical-label {
+  margin: 0.35rem 0 0;
+  color: #71899c;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.nat1 .critical-banner {
+  animation-name: critical-banner-failure;
+}
+
+.nat1 .critical-banner h2 {
+  animation: critical-text-glitch 0.42s 0.55s steps(2, end) 2;
+}
+
+@keyframes critical-flash {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes critical-failure-flash {
+  0%, 100% { opacity: 0; }
+  18% { opacity: 1; transform: translateX(0); }
+  34% { opacity: 0.18; transform: translateX(-5px); }
+  52% { opacity: 0.78; transform: translateX(4px); }
+  72% { opacity: 0.12; transform: translateX(-2px); }
+}
+
+@keyframes critical-vignette {
+  0% { opacity: 0; }
+  14% { opacity: 1; }
+  72% { opacity: 0.82; }
+  100% { opacity: 0; }
+}
+
+@keyframes critical-scan {
+  0% { top: -4%; opacity: 0; }
+  20% { opacity: 0.72; }
+  100% { top: 104%; opacity: 0; }
+}
+
+@keyframes critical-ring {
+  0% { opacity: 0.8; transform: scale(0.18); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+
+@keyframes critical-ring-failure {
+  0% { opacity: 0.72; transform: rotate(45deg) scale(0.12); }
+  68% { opacity: 0.32; }
+  100% { opacity: 0; transform: rotate(225deg) scale(1.35); }
+}
+
+@keyframes critical-particle {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(0) scaleY(0.2);
+  }
+  18% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(-42vh) scaleY(1.1);
+  }
+}
+
+@keyframes critical-failure-particle {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(0) scaleY(0.1);
+  }
+  24% { opacity: 0.78; }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(-31vh) scaleY(1.5);
+  }
+}
+
+@keyframes critical-fracture {
+  0% { width: 0; opacity: 0; }
+  16% { opacity: 1; }
+  100% { width: min(42vw, 430px); opacity: 0.72; }
+}
+
+@keyframes critical-emblem-enter {
+  0% { opacity: 0; transform: scale(0.25) rotate(-24deg); }
+  62% { opacity: 1; transform: scale(1.08) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes critical-frame-turn {
+  to { transform: rotate(405deg); }
+}
+
+@keyframes critical-frame-failure {
+  0% { transform: rotate(43deg) scale(1); }
+  50% { transform: rotate(48deg) scale(1.05); }
+  100% { transform: rotate(45deg) scale(1); }
+}
+
+@keyframes critical-banner-enter {
+  0% { opacity: 0; transform: translate(-50%, 20px) scaleX(0.7); }
+  100% { opacity: 1; transform: translate(-50%, 0) scaleX(1); }
+}
+
+@keyframes critical-banner-failure {
+  0% { opacity: 0; transform: translate(-53%, 10px) scaleX(0.78); }
+  42% { opacity: 1; transform: translate(-48%, 0) scaleX(1.04); }
+  62% { transform: translate(-52%, 0) scaleX(0.98); }
+  100% { opacity: 1; transform: translate(-50%, 0) scaleX(1); }
+}
+
+@keyframes critical-text-glitch {
+  0%, 100% { transform: none; text-shadow: 0 0 22px rgba(var(--critical-rgb), 0.42); }
+  25% { transform: translateX(-4px); text-shadow: 5px 0 #76111f, -5px 0 #ef8994; }
+  65% { transform: translateX(3px); text-shadow: -4px 0 #76111f, 4px 0 #ef8994; }
+}
+
+@media (max-width: 620px) {
+  .critical-emblem {
+    margin-bottom: 165px;
+  }
+
+  .critical-banner {
+    top: 54%;
+  }
+
+  .critical-message {
+    align-items: center;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .critical-screen-flash,
+  .critical-vignette,
+  .critical-scan,
+  .critical-rings span,
+  .critical-particles span,
+  .critical-fractures span,
+  .critical-emblem,
+  .critical-emblem-frame,
+  .critical-banner,
+  .critical-banner h2 {
+    animation: none !important;
+  }
+
+  .critical-screen-flash {
+    opacity: 0.18;
+  }
+
+  .critical-rings,
+  .critical-particles,
+  .critical-fractures,
+  .critical-scan {
+    display: none;
+  }
+}
