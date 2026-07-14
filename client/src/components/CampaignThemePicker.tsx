@@ -82,7 +82,7 @@ export default function CampaignThemePicker({
               <span className="muted small">Your view can follow the campaign or use a personal override.</span>
             </div>
             <button type="button" className="ghost mini" onClick={() => setOpen(false)} aria-label="Close theme picker">
-              Ã¢Å“â€¢
+              {"\u2715"}
             </button>
           </div>
 

@@ -25,9 +25,9 @@ export default function CampaignThemeBrand({
         <span className="brand campaign-theme-brand">{theme.brand}</span>
         <span className="campaign-theme-subline">
           {campaignName}
-          {chapter ? ` Ã‚Â· ${chapter}` : ""}
-          {typeof sessionNumber === "number" ? ` Ã‚Â· Session ${sessionNumber}` : ""}
-          {` Ã‚Â· ${pageLabel}`}
+          {chapter ? ` \u00B7 ${chapter}` : ""}
+          {typeof sessionNumber === "number" ? ` \u00B7 Session ${sessionNumber}` : ""}
+          {` \u00B7 ${pageLabel}`}
         </span>
       </span>
     </div>
