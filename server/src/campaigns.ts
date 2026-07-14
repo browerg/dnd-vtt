@@ -64,7 +64,7 @@ campaignsRouter.get("/:id", (req, res) => {
     .get(id);
   const members = db
     .prepare(
-      `SELECT u.id, u.display_name, m.role FROM campaign_members m
+      `SELECT u.id, u.display_name, u.avatar_path, m.role FROM campaign_members m
        JOIN users u ON u.id = m.user_id WHERE m.campaign_id = ?
        ORDER BY CASE m.role WHEN 'dm' THEN 0 WHEN 'co-dm' THEN 1 WHEN 'player' THEN 2 ELSE 3 END,
                 u.display_name`

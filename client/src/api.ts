@@ -17,6 +17,7 @@ export interface CampaignSummary {
 export interface Member {
   id: number;
   display_name: string;
+  avatar_path?: string;
   role: string;
 }
 
