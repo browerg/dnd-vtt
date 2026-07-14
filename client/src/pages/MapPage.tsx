@@ -8,6 +8,7 @@ import { CONDITIONS, type CharacterSummary } from "../sheet";
 import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
+import AnnouncementCenter from "../components/AnnouncementCenter";
 
 interface MapInfo {
   id: number;
@@ -734,6 +735,7 @@ export default function MapPage() {
 
   return (
     <div className="shell map-shell">
+      <AnnouncementCenter campaignId={campaignId} />
       <header className="topbar">
         <Link to={`/campaigns/${campaignId}`} className="ghost link">
           ← Campaign

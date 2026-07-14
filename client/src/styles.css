@@ -1623,3 +1623,51 @@ select:focus { outline: none; border-color: var(--accent); }
   font-size: 0.85rem;
   border: 2px solid var(--bg-well, #14100a);
 }
+
+/* DM announcements */
+.announce-dm {
+  position: fixed;
+  bottom: 0.8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+.announce-compose {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.5rem;
+}
+.announce-compose input {
+  min-width: 16rem;
+}
+.announce-toast {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 96;
+  max-width: min(90vw, 34rem);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.6rem;
+  background: var(--bg-well, #14100a);
+  border: 1px solid var(--gold-hairline, rgba(200, 170, 90, 0.5));
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  animation: announce-in 160ms ease-out;
+}
+@keyframes announce-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.announce-icon { font-size: 1.3rem; }
+.announce-toast.kind-combat { border-color: #c0392b; }
+.announce-toast.kind-alert { border-color: #e0a021; }
+.announce-toast.kind-quest { border-color: var(--gold, #c9a24b); }

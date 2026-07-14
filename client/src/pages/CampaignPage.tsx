@@ -7,6 +7,7 @@ import type { CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
+import AnnouncementCenter from "../components/AnnouncementCenter";
 import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
@@ -186,6 +187,7 @@ export default function CampaignPage() {
 
   return (
     <div className="shell">
+      <AnnouncementCenter campaignId={campaignId} />
       <header className="topbar">
         <Link to="/" className="ghost link">
           ← Campaigns
