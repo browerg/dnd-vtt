@@ -34,6 +34,23 @@ const upload = multer({
   fileFilter: (_req, file, cb) => cb(null, file.mimetype in MEDIA_TYPES),
 });
 
+
+const TOKEN_IMAGE_TYPES: Record<string, string> = {
+  "image/png": ".png",
+  "image/jpeg": ".jpg",
+  "image/webp": ".webp",
+};
+
+const tokenImageUpload = multer({
+  storage: multer.diskStorage({
+    destination: uploadsDir,
+    filename: (_req, file, cb) =>
+      cb(null, `token-${randomBytes(12).toString("hex")}${TOKEN_IMAGE_TYPES[file.mimetype] ?? ".png"}`),
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, file.mimetype in TOKEN_IMAGE_TYPES),
+});
+
 export interface TokenPayload {
   id: number;
   mapId: number;
@@ -50,6 +67,8 @@ export interface TokenPayload {
   aura: number | null;
   auraMax: number | null;
   portraitUrl: string;
+  imageUrl: string;
+  imageScale: number;
   conditions: string[];
 }
 
@@ -57,6 +76,7 @@ export interface TokenPayload {
 // Aura only exists on Remnant character sheets — null everywhere else.
 const TOKEN_COLS = `
   t.id, t.map_id, t.character_id, t.monster_id, t.name, t.color, t.x, t.y, t.size,
+  t.image_path, t.image_scale,
   c.user_id AS owner_id,
   COALESCE(json_extract(c.data, '$.hp'), t.hp) AS hp,
   COALESCE(json_extract(c.data, '$.maxHp'), t.max_hp) AS max_hp,
@@ -83,6 +103,8 @@ const toToken = (r: any): TokenPayload => ({
   aura: r.aura ?? null,
   auraMax: r.aura_max ?? null,
   portraitUrl: r.portrait_path ? `/uploads/${path.basename(r.portrait_path)}` : "",
+  imageUrl: r.image_path ? `/uploads/${path.basename(r.image_path)}` : "",
+  imageScale: Number.isFinite(r.image_scale) ? r.image_scale : 1,
   conditions: parseConditions(r.conditions),
 });
 
@@ -276,8 +298,14 @@ mapsRouter.delete("/:id/maps/:mapId", async (req, res) => {
     .prepare("SELECT * FROM maps WHERE id = ? AND campaign_id = ?")
     .get(Number(req.params.mapId), campaignId) as any;
   if (!map) return res.status(404).json({ error: "Map not found." });
+  const tokenImages = db
+    .prepare("SELECT image_path FROM tokens WHERE map_id = ? AND image_path <> ''")
+    .all(map.id) as any[];
   db.prepare("DELETE FROM maps WHERE id = ?").run(map.id);
   if (map.image_path) await unlink(map.image_path).catch(() => {});
+  await Promise.all(
+    tokenImages.map((row) => row.image_path && unlink(row.image_path).catch(() => {}))
+  );
   broadcastMapChange(campaignId);
   res.json({ ok: true });
 });
@@ -346,6 +374,99 @@ mapsRouter.post("/:id/maps/:mapId/tokens", (req, res) => {
   res.json({ token });
 });
 
+
+mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/appearance", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+
+  const token = getToken(Number(req.params.tokenId));
+  if (!token || token.campaignId !== campaignId || token.mapId !== Number(req.params.mapId)) {
+    return res.status(404).json({ error: "Token not found." });
+  }
+  if (!isDMRole(role) && token.ownerId !== user(req).id) {
+    return res.status(403).json({ error: "Only the DM or token owner can edit its appearance." });
+  }
+
+  const body = req.body ?? {};
+  const requestedSize = Number(body.size);
+  const size = [1, 2, 3, 4].includes(requestedSize) ? requestedSize : token.size;
+  const requestedScale = Number(body.imageScale);
+  const imageScale = Number.isFinite(requestedScale)
+    ? Math.min(2.5, Math.max(0.5, requestedScale))
+    : token.imageScale;
+  const color = /^#[0-9a-fA-F]{6}$/.test(body.color ?? "") ? body.color : token.color;
+
+  db.prepare("UPDATE tokens SET size = ?, image_scale = ?, color = ? WHERE id = ?").run(
+    size,
+    imageScale,
+    color,
+    token.id
+  );
+  const updated = getToken(token.id)!;
+  getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
+  res.json({ token: updated });
+});
+
+mapsRouter.post(
+  "/:id/maps/:mapId/tokens/:tokenId/image",
+  tokenImageUpload.single("image"),
+  async (req, res) => {
+    const discardUpload = () => req.file?.path && unlink(req.file.path).catch(() => {});
+    const campaignId = Number(req.params.id);
+    const role = memberRole(campaignId, user(req).id);
+    if (!role) {
+      await discardUpload();
+      return res.status(404).json({ error: "Campaign not found." });
+    }
+
+    const token = getToken(Number(req.params.tokenId));
+    if (!token || token.campaignId !== campaignId || token.mapId !== Number(req.params.mapId)) {
+      await discardUpload();
+      return res.status(404).json({ error: "Token not found." });
+    }
+    if (!isDMRole(role) && token.ownerId !== user(req).id) {
+      await discardUpload();
+      return res.status(403).json({ error: "Only the DM or token owner can edit its appearance." });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: "Choose a PNG, JPG, or WebP image under 10 MB." });
+    }
+
+    const previous = db.prepare("SELECT image_path FROM tokens WHERE id = ?").get(token.id) as any;
+    db.prepare("UPDATE tokens SET image_path = ? WHERE id = ?").run(req.file.path, token.id);
+    if (previous?.image_path && previous.image_path !== req.file.path) {
+      await unlink(previous.image_path).catch(() => {});
+    }
+
+    const updated = getToken(token.id)!;
+    getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
+    res.json({ token: updated });
+  }
+);
+
+mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId/image", async (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+
+  const token = getToken(Number(req.params.tokenId));
+  if (!token || token.campaignId !== campaignId || token.mapId !== Number(req.params.mapId)) {
+    return res.status(404).json({ error: "Token not found." });
+  }
+  if (!isDMRole(role) && token.ownerId !== user(req).id) {
+    return res.status(403).json({ error: "Only the DM or token owner can edit its appearance." });
+  }
+
+  const previous = db.prepare("SELECT image_path FROM tokens WHERE id = ?").get(token.id) as any;
+  db.prepare("UPDATE tokens SET image_path = '' WHERE id = ?").run(token.id);
+  if (previous?.image_path) await unlink(previous.image_path).catch(() => {});
+
+  const updated = getToken(token.id)!;
+  getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
+  res.json({ token: updated });
+});
+
 mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/hp", (req, res) => {
   const campaignId = Number(req.params.id);
   const role = memberRole(campaignId, user(req).id);
@@ -391,7 +512,7 @@ mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/conditions", (req, res) => {
   res.json({ token: updated });
 });
 
-mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId", (req, res) => {
+mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId", async (req, res) => {
   const campaignId = Number(req.params.id);
   const role = memberRole(campaignId, user(req).id);
   if (!role) return res.status(404).json({ error: "Campaign not found." });
@@ -400,7 +521,9 @@ mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId", (req, res) => {
   if (!isDMRole(role) && token.ownerId !== user(req).id) {
     return res.status(403).json({ error: "Only the DM or the token's player can remove it." });
   }
+  const imageRow = db.prepare("SELECT image_path FROM tokens WHERE id = ?").get(token.id) as any;
   db.prepare("DELETE FROM tokens WHERE id = ?").run(token.id);
+  if (imageRow?.image_path) await unlink(imageRow.image_path).catch(() => {});
   getIo().to(`campaign:${campaignId}`).emit("token:delete", { campaignId, tokenId: token.id });
   res.json({ ok: true });
 });

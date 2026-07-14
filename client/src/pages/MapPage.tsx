@@ -12,6 +12,7 @@ import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
+import "./MapTokenArt.css";
 
 interface MapInfo {
   id: number;
@@ -74,6 +75,8 @@ interface Token {
   aura: number | null;
   auraMax: number | null;
   portraitUrl: string;
+  imageUrl: string;
+  imageScale: number;
   conditions: string[];
 }
 
@@ -162,6 +165,8 @@ export default function MapPage() {
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
   const [customName, setCustomName] = useState("");
   const [customColor, setCustomColor] = useState("#b04545");
+  const [customImagePreview, setCustomImagePreview] = useState("");
+  const [tokenArtBusy, setTokenArtBusy] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [tool, setTool] = useState<Tool>("move");
@@ -192,6 +197,14 @@ export default function MapPage() {
   >(null);
   const lastEmit = useRef(0);
   const pingKey = useRef(0);
+
+  useEffect(
+    () => () => {
+      if (customImagePreview) URL.revokeObjectURL(customImagePreview);
+    },
+    [customImagePreview]
+  );
+
 
   const isDM = role === "dm" || role === "co-dm";
   const canRoll = role !== "" && role !== "spectator";
@@ -646,14 +659,103 @@ export default function MapPage() {
     }
   };
 
+  const uploadTokenImage = async (tokenId: number, file: File) => {
+    if (!map) throw new Error("No active map.");
+    if (file.size > 10 * 1024 * 1024) throw new Error("Token images must be under 10 MB.");
+
+    const formData = new FormData();
+    formData.append("image", file);
+    const response = await fetch(
+      `/api/campaigns/${campaignId}/maps/${map.id}/tokens/${tokenId}/image`,
+      { method: "POST", body: formData }
+    );
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error ?? "Token image upload failed.");
+    return body as { token: Token };
+  };
+
+  const chooseCustomImage = (file?: File) => {
+    if (customImagePreview) URL.revokeObjectURL(customImagePreview);
+    setCustomImagePreview(file ? URL.createObjectURL(file) : "");
+  };
+
   const placeCustom = async (e: FormEvent) => {
     e.preventDefault();
     if (!map || !customName.trim()) return;
-    await api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens`, {
-      method: "POST",
-      body: JSON.stringify({ name: customName, color: customColor }),
-    });
-    setCustomName("");
+
+    const form = e.currentTarget as HTMLFormElement;
+    const file = (form.elements.namedItem("tokenImage") as HTMLInputElement).files?.[0];
+    const size = Number((form.elements.namedItem("tokenSize") as HTMLSelectElement).value) || 1;
+
+    setError("");
+    try {
+      const created = await api<{ token: Token }>(
+        `/api/campaigns/${campaignId}/maps/${map.id}/tokens`,
+        {
+          method: "POST",
+          body: JSON.stringify({ name: customName, color: customColor, size }),
+        }
+      );
+      if (file) await uploadTokenImage(created.token.id, file);
+      setCustomName("");
+      setCustomImagePreview("");
+      form.reset();
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const updateTokenAppearance = async (
+    token: Token,
+    changes: { size?: number; imageScale?: number; color?: string }
+  ) => {
+    if (!map) return;
+    setError("");
+    try {
+      const result = await api<{ token: Token }>(
+        `/api/campaigns/${campaignId}/maps/${map.id}/tokens/${token.id}/appearance`,
+        { method: "PUT", body: JSON.stringify(changes) }
+      );
+      setTokens((prev) => prev.map((item) => (item.id === token.id ? result.token : item)));
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const uploadSelectedTokenArt = async (e: FormEvent, token: Token) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const file = (form.elements.namedItem("selectedTokenImage") as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    setTokenArtBusy(token.id);
+    setError("");
+    try {
+      const result = await uploadTokenImage(token.id, file);
+      setTokens((prev) => prev.map((item) => (item.id === token.id ? result.token : item)));
+      form.reset();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setTokenArtBusy(null);
+    }
+  };
+
+  const removeTokenArt = async (token: Token) => {
+    if (!map) return;
+    setTokenArtBusy(token.id);
+    setError("");
+    try {
+      const result = await api<{ token: Token }>(
+        `/api/campaigns/${campaignId}/maps/${map.id}/tokens/${token.id}/image`,
+        { method: "DELETE" }
+      );
+      setTokens((prev) => prev.map((item) => (item.id === token.id ? result.token : item)));
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setTokenArtBusy(null);
+    }
   };
 
   const removeToken = (tokenId: number) =>
@@ -965,11 +1067,12 @@ export default function MapPage() {
               )}
               {tokens.map((t) => {
                 const px = t.size * g;
+                const hasCutout = Boolean(t.imageUrl);
                 return (
                   <div
                     key={t.id}
                     data-token-id={t.id}
-                    className={`token${canMove(t) ? " movable" : ""}${
+                    className={`token${hasCutout ? " image-token" : ""}${canMove(t) ? " movable" : ""}${
                       currentCombatant?.tokenId === t.id ? " current-turn" : ""
                     }${selectedTokenId === t.id ? " selected" : ""}`}
                     style={{
@@ -977,18 +1080,29 @@ export default function MapPage() {
                       top: t.y - px / 2,
                       width: px,
                       height: px,
-                      background: t.portraitUrl
-                        ? `url(${t.portraitUrl}) center/cover no-repeat, ${t.color}`
-                        : t.color,
+                      background: hasCutout
+                        ? "transparent"
+                        : t.portraitUrl
+                          ? `url(${t.portraitUrl}) center/cover no-repeat, ${t.color}`
+                          : t.color,
                     }}
                     title={t.name}
                   >
-                    {!t.portraitUrl && (
+                    {hasCutout && (
+                      <img
+                        className="token-cutout"
+                        src={t.imageUrl}
+                        alt=""
+                        draggable={false}
+                        style={{ transform: `scale(${t.imageScale || 1})` }}
+                      />
+                    )}
+                    {!hasCutout && !t.portraitUrl && (
                       <span className="token-initials">
                         {t.name
                           .split(/\s+/)
                           .slice(0, 2)
-                          .map((w) => w[0])
+                          .map((word) => word[0])
                           .join("")
                           .toUpperCase()}
                       </span>
@@ -1052,6 +1166,120 @@ export default function MapPage() {
 
         <aside className="map-sidebar">
           {error && <div className="error">{error}</div>}
+          {selectedToken && (isDM || canMove(selectedToken)) && (
+            <section className="token-art-panel">
+              <div className="row-between">
+                <h4>Token appearance</h4>
+                <button className="ghost mini" onClick={() => setSelectedTokenId(null)}>
+                  {"\u2715"}
+                </button>
+              </div>
+
+              <div className={`token-art-preview${selectedToken.imageUrl ? " has-cutout" : ""}`}>
+                {selectedToken.imageUrl ? (
+                  <img
+                    src={selectedToken.imageUrl}
+                    alt=""
+                    style={{ transform: `scale(${selectedToken.imageScale || 1})` }}
+                  />
+                ) : (
+                  <span style={{ background: selectedToken.color }}>
+                    {selectedToken.name
+                      .split(/\s+/)
+                      .slice(0, 2)
+                      .map((word) => word[0])
+                      .join("")
+                      .toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              <form
+                className="stack token-art-upload"
+                onSubmit={(event) => uploadSelectedTokenArt(event, selectedToken)}
+              >
+                <label className="small">
+                  PNG cutout or token art
+                  <input
+                    name="selectedTokenImage"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    required
+                  />
+                </label>
+                <button className="ghost mini" disabled={tokenArtBusy === selectedToken.id}>
+                  {tokenArtBusy === selectedToken.id
+                    ? "Uploading..."
+                    : selectedToken.imageUrl
+                      ? "Replace image"
+                      : "Upload image"}
+                </button>
+              </form>
+
+              <label className="token-art-control">
+                <span>Footprint</span>
+                <select
+                  value={selectedToken.size}
+                  onChange={(event) =>
+                    updateTokenAppearance(selectedToken, { size: Number(event.target.value) })
+                  }
+                >
+                  <option value={1}>1 square</option>
+                  <option value={2}>2 x 2</option>
+                  <option value={3}>3 x 3</option>
+                  <option value={4}>4 x 4</option>
+                </select>
+              </label>
+
+              {selectedToken.imageUrl && (
+                <label className="token-art-control token-scale-control">
+                  <span>
+                    Art scale <strong>{Math.round((selectedToken.imageScale || 1) * 100)}%</strong>
+                  </span>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2.5"
+                    step="0.05"
+                    value={selectedToken.imageScale || 1}
+                    onChange={(event) => {
+                      const imageScale = Number(event.target.value);
+                      setTokens((prev) =>
+                        prev.map((item) =>
+                          item.id === selectedToken.id ? { ...item, imageScale } : item
+                        )
+                      );
+                    }}
+                    onPointerUp={(event) =>
+                      updateTokenAppearance(selectedToken, {
+                        imageScale: Number(event.currentTarget.value),
+                      })
+                    }
+                    onKeyUp={(event) =>
+                      updateTokenAppearance(selectedToken, {
+                        imageScale: Number(event.currentTarget.value),
+                      })
+                    }
+                  />
+                </label>
+              )}
+
+              {selectedToken.imageUrl && (
+                <button
+                  type="button"
+                  className="ghost mini token-art-remove"
+                  disabled={tokenArtBusy === selectedToken.id}
+                  onClick={() => removeTokenArt(selectedToken)}
+                >
+                  Remove image and use standard token
+                </button>
+              )}
+              <p className="muted small token-art-tip">
+                Transparent PNGs work best. The footprint controls occupied squares; art scale
+                only changes the visible cutout.
+              </p>
+            </section>
+          )}
           {isDM && selectedToken && statblock && (
             <section className="statblock">
               <div className="row-between">
@@ -1319,7 +1547,11 @@ export default function MapPage() {
             {tokens.map((t) => (
               <div key={t.id} className="row-between sidebar-row">
                 <span>
-                  <span className="swatch" style={{ background: t.color }} />
+                  {t.imageUrl ? (
+                    <img className="token-list-thumb" src={t.imageUrl} alt="" />
+                  ) : (
+                    <span className="swatch" style={{ background: t.color }} />
+                  )}
                   {t.name}
                 </span>
                 {(isDM || canMove(t)) && (
@@ -1402,20 +1634,46 @@ export default function MapPage() {
               {map && (
                 <section>
                   <h4>Custom token</h4>
-                  <form onSubmit={placeCustom} className="stack">
+                  <form onSubmit={placeCustom} className="stack custom-token-form">
                     <div className="row-between">
                       <input
-                        placeholder="Goblin, chest, door…"
+                        placeholder="Dragon, chest, door..."
                         value={customName}
                         onChange={(e) => setCustomName(e.target.value)}
+                        required
                       />
                       <input
                         type="color"
                         className="color-pick"
                         value={customColor}
                         onChange={(e) => setCustomColor(e.target.value)}
+                        title="Fallback token color"
                       />
                     </div>
+                    <label className="small">
+                      Footprint
+                      <select name="tokenSize" defaultValue="1">
+                        <option value="1">1 square</option>
+                        <option value="2">2 x 2</option>
+                        <option value="3">3 x 3</option>
+                        <option value="4">4 x 4</option>
+                      </select>
+                    </label>
+                    <label className="custom-token-image-pick small">
+                      Transparent PNG or image (optional)
+                      <input
+                        name="tokenImage"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(event) => chooseCustomImage(event.target.files?.[0])}
+                      />
+                    </label>
+                    {customImagePreview && (
+                      <div className="custom-token-preview">
+                        <img src={customImagePreview} alt="New token preview" />
+                        <span>Cutout preview</span>
+                      </div>
+                    )}
                     <button className="ghost">Place token</button>
                   </form>
                 </section>

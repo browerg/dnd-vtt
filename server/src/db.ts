@@ -237,6 +237,8 @@ for (const ddl of [
   "ALTER TABLE tokens ADD COLUMN monster_id INTEGER REFERENCES monsters(id) ON DELETE SET NULL",
   "ALTER TABLE tokens ADD COLUMN hp INTEGER",
   "ALTER TABLE tokens ADD COLUMN max_hp INTEGER",
+  "ALTER TABLE tokens ADD COLUMN image_path TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE tokens ADD COLUMN image_scale REAL NOT NULL DEFAULT 1",
   "ALTER TABLE tokens ADD COLUMN conditions TEXT NOT NULL DEFAULT '[]'",
   "ALTER TABLE monsters ADD COLUMN campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE",
   // Existing campaigns predate the system setting and were built on 5e.
