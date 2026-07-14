@@ -73,6 +73,32 @@ campaignsRouter.get("/:id", (req, res) => {
   res.json({ campaign, members, yourRole: role });
 });
 
+// Manual DM broadcast — pops a transient toast for everyone in the campaign.
+// Not persisted; purely a live notification over the campaign socket room.
+campaignsRouter.post("/:id/announce", (req, res) => {
+  const id = Number(req.params.id);
+  const role = memberRole(id, user(req).id);
+  if (role !== "dm" && role !== "co-dm") {
+    return res.status(403).json({ error: "Only the DM can send announcements." });
+  }
+  const message = String(req.body?.message ?? "").trim();
+  const kind = ["info", "combat", "quest", "alert"].includes(req.body?.kind)
+    ? req.body.kind
+    : "info";
+  if (!message) return res.status(400).json({ error: "Announcement can't be empty." });
+  if (message.length > 200) {
+    return res.status(400).json({ error: "Announcement is too long (200 characters max)." });
+  }
+  getIo().to(`campaign:${id}`).emit("announcement:push", {
+    campaignId: id,
+    message,
+    kind,
+    at: Date.now(),
+    from: user(req).display_name,
+  });
+  res.json({ ok: true });
+});
+
 campaignsRouter.put("/:id", (req, res) => {
   const id = Number(req.params.id);
   const role = memberRole(id, user(req).id);
