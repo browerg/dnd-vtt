@@ -1,5 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import path from "node:path";
 import { db } from "./db.js";
 
 const SESSION_DAYS = 30;
@@ -164,9 +165,12 @@ authRouter.put("/me/profile", (req, res) => {
   if (avatarPath && !avatarPath.startsWith("/uploads/")) {
     return res.status(400).json({ error: "Invalid avatar image." });
   }
+  // Reconstruct the path from just the filename so no traversal segments are
+  // ever stored — same defense the character/map/codex uploaders use.
+  const safeAvatar = avatarPath ? `/uploads/${path.basename(avatarPath)}` : "";
   db.prepare(
     "UPDATE users SET display_name = ?, pronouns = ?, bio = ?, avatar_path = ? WHERE id = ?"
-  ).run(displayName, pronouns, bio, avatarPath, current.id);
+  ).run(displayName, pronouns, bio, safeAvatar, current.id);
   res.json({ user: getSessionUser(req) });
 });
 
