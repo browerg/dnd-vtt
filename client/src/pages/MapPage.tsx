@@ -1,3 +1,6 @@
+import CampaignThemeBrand from "../components/CampaignThemeBrand";
+import CampaignThemePicker from "../components/CampaignThemePicker";
+import { useCampaignTheme, type ThemeId } from "../theme";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
@@ -139,6 +142,10 @@ export default function MapPage() {
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [role, setRole] = useState("");
   const [system, setSystem] = useState("dnd5e");
+  const [campaignTheme, setCampaignTheme] = useState("");
+  const [campaignName, setCampaignName] = useState("Campaign");
+  const [campaignChapter, setCampaignChapter] = useState("");
+  const [campaignSession, setCampaignSession] = useState(0);
   const [rolls, setRolls] = useState<RollPayload[]>([]);
   const [ruler, setRuler] = useState<RulerLine | null>(null);
   const [remoteRulers, setRemoteRulers] = useState<Record<string, RulerLine>>({});
@@ -188,6 +195,13 @@ export default function MapPage() {
 
   const isDM = role === "dm" || role === "co-dm";
   const canRoll = role !== "" && role !== "spectator";
+  const themeView = useCampaignTheme({
+    campaignId,
+    userId: user?.id,
+    system,
+    campaignTheme,
+  });
+  const updateCampaignTheme = (theme: ThemeId) => setCampaignTheme(theme);
 
   // Seed the roll log; live rolls arrive over the socket above.
   useEffect(() => {
@@ -215,7 +229,7 @@ export default function MapPage() {
       const [active, list, detail, chars, combatRes] = await Promise.all([
         api<{ map: MapInfo | null; tokens: Token[] }>(`/api/campaigns/${campaignId}/maps/active`),
         api<{ maps: MapInfo[] }>(`/api/campaigns/${campaignId}/maps`),
-        api<{ yourRole: string; campaign: { system: string } }>(`/api/campaigns/${campaignId}`),
+        api<{ yourRole: string; campaign: { system: string; theme: string; name: string; chapter: string; session_number: number } }>(`/api/campaigns/${campaignId}`),
         api<{ characters: CharacterSummary[] }>(`/api/campaigns/${campaignId}/characters`),
         api<{ state: CombatState }>(`/api/campaigns/${campaignId}/combat`),
       ]);
@@ -224,6 +238,10 @@ export default function MapPage() {
       setMaps(list.maps);
       setRole(detail.yourRole);
       setSystem(detail.campaign.system);
+      setCampaignTheme(detail.campaign.theme ?? "");
+      setCampaignName(detail.campaign.name);
+      setCampaignChapter(detail.campaign.chapter ?? "");
+      setCampaignSession(detail.campaign.session_number ?? 0);
       setStrokes(active.map?.strokes ?? []);
       setCharacters(chars.characters);
       setCombat(combatRes.state);
@@ -734,13 +752,17 @@ export default function MapPage() {
   }
 
   return (
-    <div className="shell map-shell">
+    <div className="shell map-shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
-      <header className="topbar">
-        <Link to={`/campaigns/${campaignId}`} className="ghost link">
-          ← Campaign
-        </Link>
-        <span className="brand">{map ? map.name : "Battle map"}</span>
+      <header className="topbar campaign-topbar">
+        <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-back-link">{"\u2190"}</Link>
+        <CampaignThemeBrand
+          campaignName={campaignName}
+          chapter={campaignChapter}
+          sessionNumber={campaignSession}
+          themeId={themeView.themeId}
+          pageLabel={map?.name || (system === "remnant" ? "Tactical map" : "Battle map")}
+        />
         <span className="spacer" />
         {map && (
           <button
@@ -852,6 +874,14 @@ export default function MapPage() {
             </select>
           </>
         )}
+        <CampaignThemePicker
+          campaignId={campaignId}
+          role={role}
+          system={system}
+          campaignTheme={campaignTheme}
+          view={themeView}
+          onCampaignThemeChange={updateCampaignTheme}
+        />
         <span className="muted zoom-label">{Math.round(view.scale * 100)}%</span>
       </header>
 

@@ -1,3 +1,6 @@
+import CampaignThemeBrand from "../components/CampaignThemeBrand";
+import CampaignThemePicker from "../components/CampaignThemePicker";
+import { useCampaignTheme, type ThemeId } from "../theme";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
@@ -23,6 +26,7 @@ interface CampaignDetail {
     session_number: number;
     house_rules: string;
     announcement: string;
+    theme: string;
     created_at: string;
   };
   members: Member[];
@@ -179,6 +183,14 @@ export default function CampaignPage() {
     setCopied(true);
   };
 
+  const themeView = useCampaignTheme({
+    campaignId,
+    userId: user?.id,
+    system: detail?.campaign.system,
+    campaignTheme: detail?.campaign.theme,
+  });
+  const updateCampaignTheme = (theme: ThemeId) => patchCampaign({ theme });
+
   if (error) return <div className="page-center error">{error}</div>;
   if (!detail) return <div className="page-center muted">Loading…</div>;
 
@@ -186,30 +198,40 @@ export default function CampaignPage() {
   const canRoll = detail.yourRole !== "spectator";
 
   return (
-    <div className="shell">
+    <div className="shell campaign-themed" data-system={detail.campaign.system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
-      <header className="topbar">
-        <Link to="/" className="ghost link">
-          ← Campaigns
-        </Link>
-        <span className="brand">{detail.campaign.name}</span>
+      <header className="topbar campaign-topbar">
+        <Link to="/" className="ghost link campaign-back-link">{"\u2190"}</Link>
+        <CampaignThemeBrand
+          campaignName={detail.campaign.name}
+          chapter={detail.campaign.chapter}
+          sessionNumber={detail.campaign.session_number}
+          themeId={themeView.themeId}
+          pageLabel={detail.campaign.system === "remnant" ? "Campaign control" : "Campaign hub"}
+        />
         <span className="spacer" />
-        <Link to={`/campaigns/${campaignId}`} className="ghost link">
-          ⊞ Dashboard
+        <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-nav-link">Dashboard</Link>
+        <Link to={`/campaigns/${campaignId}/map`} className="ghost link campaign-nav-link">
+          {detail.campaign.system === "remnant" ? "Tactical map" : "Battle map"}
         </Link>
-        <Link to={`/campaigns/${campaignId}/map`} className="ghost link">
-          🗺️ Battle map
+        <Link to={`/campaigns/${campaignId}/bestiary`} className="ghost link campaign-nav-link">
+          {detail.campaign.system === "remnant" ? "Grimm archive" : "Bestiary"}
         </Link>
-        <Link to={`/campaigns/${campaignId}/bestiary`} className="ghost link">
-          📖 Bestiary
-        </Link>
+        <CampaignThemePicker
+          campaignId={campaignId}
+          role={detail.yourRole}
+          system={detail.campaign.system}
+          campaignTheme={detail.campaign.theme}
+          view={themeView}
+          onCampaignThemeChange={updateCampaignTheme}
+        />
         <span className={`badge role-${detail.yourRole}`}>{detail.yourRole.toUpperCase()}</span>
       </header>
       <main className="content columns">
         <div className="column">
           <section className="card">
             <div className="row-between">
-              <h3>Campaign hub</h3>
+              <h3>{detail.campaign.system === "remnant" ? "Mission control" : "Campaign hub"}</h3>
               <span className="muted hub-meta">
                 {detail.campaign.chapter && <>{detail.campaign.chapter} · </>}
                 Session {detail.campaign.session_number}

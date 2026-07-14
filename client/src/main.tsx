@@ -8,6 +8,7 @@ import "@fontsource/alegreya-sans/400.css";
 import "@fontsource/alegreya-sans/500.css";
 import "@fontsource/alegreya-sans/700.css";
 import "./styles.css";
+import "./themes.css";
 
 // NOTE: no <React.StrictMode> — its dev-only double-mount detaches
 // react-draggable's event handlers, which silently breaks drag/resize on the

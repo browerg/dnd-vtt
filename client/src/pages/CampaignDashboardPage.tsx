@@ -1,3 +1,6 @@
+import CampaignThemeBrand from "../components/CampaignThemeBrand";
+import CampaignThemePicker from "../components/CampaignThemePicker";
+import { useCampaignTheme, type ThemeId } from "../theme";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
@@ -23,6 +26,36 @@ import {
 
 const Grid = WidthProvider(GridLayout);
 
+const REMNANT_PANEL_TITLES: Record<string, string> = {
+  sheet: "Operative profile",
+  inventory: "Dust & inventory",
+  dice: "Combat dice",
+  rolls: "Session log",
+  party: "Team status",
+  roster: "Operatives",
+  npcs: "Field assets",
+  quickref: "Huntsman reference",
+  codex: "Archives",
+  notes: "Mission notes",
+  chat: "Comms channel",
+  hub: "Campaign briefing",
+};
+
+const REMNANT_PANEL_ICONS: Record<string, string> = {
+  sheet: "\u25C7",
+  inventory: "\u25C6",
+  dice: "\u2B21",
+  rolls: "\u25A4",
+  party: "\u25C8",
+  roster: "\u25C9",
+  npcs: "\u25B3",
+  quickref: "\u25B1",
+  codex: "\u25A6",
+  notes: "\u2301",
+  chat: "\u2301",
+  hub: "\u2726",
+};
+
 interface CampaignDetail {
   campaign: {
     id: number;
@@ -33,6 +66,7 @@ interface CampaignDetail {
     session_number: number;
     house_rules: string;
     announcement: string;
+    theme: string;
     created_at: string;
   };
   members: Member[];
@@ -169,6 +203,15 @@ export default function CampaignDashboardPage() {
   const isDM = detail?.yourRole === "dm" || detail?.yourRole === "co-dm";
   const canWrite = !!detail && detail.yourRole !== "spectator";
   const system = detail?.campaign.system ?? "dnd5e";
+  const isRemnant = system === "remnant";
+  const themeView = useCampaignTheme({
+    campaignId,
+    userId: user?.id,
+    system,
+    campaignTheme: detail?.campaign.theme,
+  });
+  const updateCampaignTheme = (theme: ThemeId) =>
+    setDetail((current) => current ? { ...current, campaign: { ...current.campaign, theme } } : current);
 
   const myCharacterId = useMemo(() => {
     if (!user) return null;
@@ -205,22 +248,26 @@ export default function CampaignDashboardPage() {
   const addable = availablePanels(detail.yourRole, system).filter((p) => !present.has(p.id));
 
   return (
-    <div className="shell dashboard-shell">
+    <div className="shell dashboard-shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
-      <header className="topbar">
-        <Link to="/" className="ghost link">
-          ← Campaigns
-        </Link>
-        <span className="brand">{detail.campaign.name}</span>
+      <header className="topbar campaign-topbar">
+        <Link to="/" className="ghost link campaign-back-link" title="Back to campaigns">{"\u2190"}</Link>
+        <CampaignThemeBrand
+          campaignName={detail.campaign.name}
+          chapter={detail.campaign.chapter}
+          sessionNumber={detail.campaign.session_number}
+          themeId={themeView.themeId}
+          pageLabel="Dashboard"
+        />
         <span className="spacer" />
-        <Link to={`/campaigns/${campaignId}/hub`} className="ghost link">
-          🏰 Hub
+        <Link to={`/campaigns/${campaignId}/hub`} className="ghost link campaign-nav-link">
+          Campaign
         </Link>
-        <Link to={`/campaigns/${campaignId}/map`} className="ghost link">
-          🗺️ Map
+        <Link to={`/campaigns/${campaignId}/map`} className="ghost link campaign-nav-link">
+          {isRemnant ? "Tactical map" : "Battle map"}
         </Link>
-        <Link to={`/campaigns/${campaignId}/bestiary`} className="ghost link">
-          📖 Bestiary
+        <Link to={`/campaigns/${campaignId}/bestiary`} className="ghost link campaign-nav-link">
+          {isRemnant ? "Grimm archive" : "Bestiary"}
         </Link>
         {editing && (
           <div className="add-panel-wrap">
@@ -253,6 +300,14 @@ export default function CampaignDashboardPage() {
         >
           {editing ? "✓ Done" : "✎ Edit layout"}
         </button>
+        <CampaignThemePicker
+          campaignId={campaignId}
+          role={detail.yourRole}
+          system={system}
+          campaignTheme={detail.campaign.theme}
+          view={themeView}
+          onCampaignThemeChange={updateCampaignTheme}
+        />
         <span className={`badge role-${detail.yourRole}`}>{detail.yourRole.toUpperCase()}</span>
       </header>
 
@@ -274,10 +329,11 @@ export default function CampaignDashboardPage() {
           const def = PANEL_BY_ID[item.i];
           if (!def || (def.system && def.system !== system)) return <div key={item.i} style={{ display: "none" }} />;
           return (
-            <div key={item.i} className="panel">
+            <div key={item.i} className={`panel panel-${item.i}`}>
               <div className={`panel-head${editing ? " panel-drag" : ""}`}>
                 <span className="panel-title">
-                  <span className="panel-icon">{def.icon}</span> {def.title}
+                  <span className="panel-icon">{isRemnant ? REMNANT_PANEL_ICONS[item.i] ?? "\u25C7" : def.icon}</span>{" "}
+                  {isRemnant ? REMNANT_PANEL_TITLES[item.i] ?? def.title : def.title}
                 </span>
                 {editing && (
                   <button className="panel-remove" title="Remove panel" onClick={() => removePanel(item.i)}>

@@ -241,6 +241,7 @@ for (const ddl of [
   "ALTER TABLE monsters ADD COLUMN campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE",
   // Existing campaigns predate the system setting and were built on 5e.
   "ALTER TABLE campaigns ADD COLUMN system TEXT NOT NULL DEFAULT 'dnd5e'",
+  "ALTER TABLE campaigns ADD COLUMN theme TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE characters ADD COLUMN portrait_path TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE users ADD COLUMN dice_theme TEXT NOT NULL DEFAULT ''",
   // NPCs the DM runs; player_controllable lets players drive one too.

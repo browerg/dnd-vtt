@@ -1,3 +1,7 @@
+import { useAuth } from "../App";
+import CampaignThemeBrand from "../components/CampaignThemeBrand";
+import CampaignThemePicker from "../components/CampaignThemePicker";
+import { useCampaignTheme, type ThemeId } from "../theme";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
@@ -183,8 +187,13 @@ function detailToGrimmDraft(d: Detail): GrimmDraft {
 export default function BestiaryPage() {
   const { id } = useParams();
   const campaignId = Number(id);
+  const { user } = useAuth();
   const [role, setRole] = useState("");
   const [system, setSystem] = useState("dnd5e");
+  const [campaignTheme, setCampaignTheme] = useState("");
+  const [campaignName, setCampaignName] = useState("Campaign");
+  const [campaignChapter, setCampaignChapter] = useState("");
+  const [campaignSession, setCampaignSession] = useState(0);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -194,12 +203,18 @@ export default function BestiaryPage() {
   const [notice, setNotice] = useState("");
 
   const isDM = role === "dm" || role === "co-dm";
+  const themeView = useCampaignTheme({ campaignId, userId: user?.id, system, campaignTheme });
+  const updateCampaignTheme = (theme: ThemeId) => setCampaignTheme(theme);
 
   useEffect(() => {
-    api<{ yourRole: string; campaign: { system: string } }>(`/api/campaigns/${campaignId}`)
+    api<{ yourRole: string; campaign: { system: string; theme: string; name: string; chapter: string; session_number: number } }>(`/api/campaigns/${campaignId}`)
       .then((r) => {
         setRole(r.yourRole);
         setSystem(r.campaign.system);
+        setCampaignTheme(r.campaign.theme ?? "");
+        setCampaignName(r.campaign.name);
+        setCampaignChapter(r.campaign.chapter ?? "");
+        setCampaignSession(r.campaign.session_number ?? 0);
       })
       .catch((e) => setError(e.message));
   }, [campaignId]);
@@ -287,12 +302,16 @@ export default function BestiaryPage() {
   const setG = (patch: Partial<GrimmDraft>) => setGrimmDraft((d) => (d ? { ...d, ...patch } : d));
 
   return (
-    <div className="shell">
-      <header className="topbar">
-        <Link to={`/campaigns/${campaignId}`} className="ghost link">
-          ← Campaign
-        </Link>
-        <span className="brand">📖 Bestiary</span>
+    <div className="shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
+      <header className="topbar campaign-topbar">
+        <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-back-link">{"\u2190"}</Link>
+        <CampaignThemeBrand
+          campaignName={campaignName}
+          chapter={campaignChapter}
+          sessionNumber={campaignSession}
+          themeId={themeView.themeId}
+          pageLabel={system === "remnant" ? "Grimm archive" : "Bestiary"}
+        />
         <span className="spacer" />
         {isDM && (
           <button
@@ -311,6 +330,14 @@ export default function BestiaryPage() {
             {system === "remnant" ? "+ New Grimm" : "+ New monster"}
           </button>
         )}
+        <CampaignThemePicker
+          campaignId={campaignId}
+          role={role}
+          system={system}
+          campaignTheme={campaignTheme}
+          view={themeView}
+          onCampaignThemeChange={updateCampaignTheme}
+        />
       </header>
       <main className="content columns bestiary">
         <div className="column">
