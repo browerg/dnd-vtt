@@ -145,6 +145,7 @@ export interface WeaponForm {
   type: string;
   range: string;
   damage: number; // die size
+  styleDie?: number; // optional extra die added to damage (0/undefined = none)
   special: string;
 }
 

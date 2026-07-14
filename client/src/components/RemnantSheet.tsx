@@ -365,6 +365,25 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
                       </option>
                     ))}
                   </select>
+                  <select
+                    value={form.styleDie ?? 0}
+                    disabled={ro}
+                    title="Style die — added to damage"
+                    onChange={(e) =>
+                      update({
+                        weaponForms: d.weaponForms.map((f, j) =>
+                          j === i ? { ...f, styleDie: num(e.target.value, 0) } : f
+                        ),
+                      })
+                    }
+                  >
+                    <option value={0}>+ —</option>
+                    {DIE_SIZES.map((s) => (
+                      <option key={s} value={s}>
+                        +d{s}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <input
                   placeholder="Special / effect"
@@ -392,10 +411,13 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
                   <button
                     className="ghost mini"
                     onClick={() =>
-                      roll(`1d${form.damage}`, `${name}: ${form.type || `Form ${i === 0 ? "A" : "B"}`} damage`)
+                      roll(
+                        form.styleDie ? `1d${form.damage}+1d${form.styleDie}` : `1d${form.damage}`,
+                        `${name}: ${form.type || `Form ${i === 0 ? "A" : "B"}`} damage`
+                      )
                     }
                   >
-                    Damage (d{form.damage})
+                    Damage (d{form.damage}{form.styleDie ? ` + d${form.styleDie}` : ""})
                   </button>
                 </div>
               </div>
