@@ -14,10 +14,12 @@ import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import MapObjects from "../components/MapObjects";
 import SceneDirector from "../components/SceneDirector";
+import PreparedTokenTray, { type MonsterPreparation } from "../components/PreparedTokenTray";
 import YouTubeMapPlayer from "../components/YouTubeMapPlayer";
 import "./MapTokenArt.css";
 import "./MapObjects.css";
 import "./SceneDirector.css";
+import "./PreparedTokenTray.css";
 import "./MapAudio.css";
 
 interface MapInfo {
@@ -201,6 +203,7 @@ export default function MapPage() {
   const [combatantPick, setCombatantPick] = useState("");
   const [monsterQuery, setMonsterQuery] = useState("");
   const [monsterHits, setMonsterHits] = useState<MonsterHit[]>([]);
+  const [monsterToPrepare, setMonsterToPrepare] = useState<MonsterPreparation | null>(null);
   const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
   const [statblock, setStatblock] = useState<MonsterDetail | null>(null);
   const revealedRef = useRef(revealed);
@@ -933,21 +936,37 @@ export default function MapPage() {
     }
   };
 
-  const removeToken = (tokenId: number) =>
-    map && api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens/${tokenId}`, { method: "DELETE" });
-
-  const spawnMonster = async (monsterId: number) => {
+  const removeToken = async (tokenId: number) => {
     if (!map) return;
-    setError("");
-    try {
-      await api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens`, {
-        method: "POST",
-        body: JSON.stringify({ monsterId }),
-      });
-    } catch (e: any) {
-      setError(e.message);
+    const token = tokens.find((item) => item.id === tokenId);
+    if (isDM && token && token.characterId == null) {
+      const returnToTray = window.confirm(
+        `Return "${token.name}" to Prepared Tokens?
+
+Choose Cancel to permanently delete it instead.`
+      );
+      if (returnToTray) {
+        await api(
+          `/api/campaigns/${campaignId}/maps/${map.id}/tokens/${tokenId}/return-to-tray`,
+          { method: "POST" }
+        );
+        window.dispatchEvent(new Event("prepared-tokens:refresh"));
+        return;
+      }
+      if (!window.confirm(`Permanently delete "${token.name}"?`)) return;
     }
+    await api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens/${tokenId}`, {
+      method: "DELETE",
+    });
   };
+
+  const prepareMonster = (monster: MonsterHit) =>
+    setMonsterToPrepare({
+      id: monster.id,
+      name: monster.name,
+      hp: monster.hp,
+      size: monster.size,
+    });
 
   const rollDice = (formula: string, label: string) =>
     api(`/api/campaigns/${campaignId}/rolls`, {
@@ -1857,6 +1876,14 @@ export default function MapPage() {
                 ))}
               </section>
               {map && (
+                <PreparedTokenTray
+                  campaignId={campaignId}
+                  mapId={map.id}
+                  monster={monsterToPrepare}
+                  onCloseMonster={() => setMonsterToPrepare(null)}
+                />
+              )}
+              {map && (
                 <section>
                   <h4>Monsters</h4>
                   <input
@@ -1876,8 +1903,8 @@ export default function MapPage() {
                             {m.system === "remnant" ? `Threat ${m.threat}` : `CR ${fmtCr(m.cr)}`}
                           </span>
                         </span>
-                        <button className="ghost mini" onClick={() => spawnMonster(m.id)}>
-                          Spawn
+                        <button className="ghost mini" onClick={() => prepareMonster(m)}>
+                          Prepare
                         </button>
                       </div>
                     ))}

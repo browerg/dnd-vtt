@@ -596,7 +596,15 @@ mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId", async (req, res) => {
   }
   const imageRow = db.prepare("SELECT image_path FROM tokens WHERE id = ?").get(token.id) as any;
   db.prepare("DELETE FROM tokens WHERE id = ?").run(token.id);
-  if (imageRow?.image_path) await unlink(imageRow.image_path).catch(() => {});
+  if (imageRow?.image_path) {
+    const stillPrepared = db
+      .prepare("SELECT 1 FROM prepared_tokens WHERE image_path = ? LIMIT 1")
+      .get(imageRow.image_path);
+    const stillUsedByToken = db
+      .prepare("SELECT 1 FROM tokens WHERE image_path = ? LIMIT 1")
+      .get(imageRow.image_path);
+    if (!stillPrepared && !stillUsedByToken) await unlink(imageRow.image_path).catch(() => {});
+  }
   getIo().to(`campaign:${campaignId}`).emit("token:delete", { campaignId, tokenId: token.id });
   res.json({ ok: true });
 });

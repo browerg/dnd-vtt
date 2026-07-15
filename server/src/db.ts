@@ -155,6 +155,22 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_map_scenes_map ON map_scenes (map_id);
 
+  CREATE TABLE IF NOT EXISTS prepared_tokens (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    monster_id  INTEGER REFERENCES monsters(id) ON DELETE SET NULL,
+    name        TEXT NOT NULL,
+    color       TEXT NOT NULL DEFAULT '#a03636',
+    size        INTEGER NOT NULL DEFAULT 1,
+    hp          INTEGER,
+    max_hp      INTEGER,
+    image_path  TEXT NOT NULL DEFAULT '',
+    image_scale REAL NOT NULL DEFAULT 1,
+    conditions  TEXT NOT NULL DEFAULT '[]',
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_prepared_tokens_campaign ON prepared_tokens (campaign_id);
+
   CREATE TABLE IF NOT EXISTS tokens (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     map_id       INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
