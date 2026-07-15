@@ -192,6 +192,20 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_prepared_encounter_group_items_group
     ON prepared_encounter_group_items (group_id);
 
+  CREATE TABLE IF NOT EXISTS scene_prepared_encounters (
+    scene_id  INTEGER PRIMARY KEY REFERENCES map_scenes(id) ON DELETE CASCADE,
+    group_id  INTEGER NOT NULL REFERENCES prepared_encounter_groups(id) ON DELETE CASCADE,
+    anchor_x  REAL NOT NULL DEFAULT 4,
+    anchor_y  REAL NOT NULL DEFAULT 4
+  );
+
+  CREATE TABLE IF NOT EXISTS scene_encounter_deployments (
+    scene_id          INTEGER NOT NULL REFERENCES map_scenes(id) ON DELETE CASCADE,
+    prepared_token_id INTEGER NOT NULL REFERENCES prepared_tokens(id) ON DELETE CASCADE,
+    token_id          INTEGER REFERENCES tokens(id) ON DELETE SET NULL,
+    PRIMARY KEY (scene_id, prepared_token_id)
+  );
+
   CREATE TABLE IF NOT EXISTS tokens (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     map_id       INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,

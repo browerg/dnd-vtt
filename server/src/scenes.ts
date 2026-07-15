@@ -31,15 +31,27 @@ type SceneData = {
   drawData: string;
 };
 
-const sceneRow = (row: any) => ({
-  id: row.id,
-  mapId: row.map_id,
-  name: row.name,
-  announcement: row.announcement,
-  enemyCount: Number(row.enemy_count ?? 0),
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-});
+const sceneRow = (row: any) => {
+  const link = db.prepare(`
+    SELECT l.group_id, l.anchor_x, l.anchor_y, g.name AS group_name
+    FROM scene_prepared_encounters l
+    JOIN prepared_encounter_groups g ON g.id = l.group_id
+    WHERE l.scene_id = ?
+  `).get(row.id) as any;
+  return {
+    id: row.id,
+    mapId: row.map_id,
+    name: row.name,
+    announcement: row.announcement,
+    enemyCount: Number(row.enemy_count ?? 0),
+    encounterGroupId: link?.group_id ?? null,
+    encounterGroupName: link?.group_name ?? "",
+    encounterAnchorX: Number(link?.anchor_x ?? 4),
+    encounterAnchorY: Number(link?.anchor_y ?? 4),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+};
 
 function ownedMap(campaignId: number, mapId: number) {
   return db.prepare("SELECT * FROM maps WHERE id = ? AND campaign_id = ?").get(mapId, campaignId) as any;
@@ -76,6 +88,77 @@ function captureScene(mapId: number): SceneData {
     fogData: String(map?.fog_data ?? "[]"),
     drawData: String(map?.draw_data ?? "[]"),
   };
+}
+
+type SceneEncounterMember = {
+  preparedTokenId: number;
+  monsterId: number | null;
+  name: string;
+  color: string;
+  size: number;
+  hp: number | null;
+  maxHp: number | null;
+  imagePath: string;
+  imageScale: number;
+  conditions: string;
+  offsetX: number;
+  offsetY: number;
+};
+
+function sceneEncounterMembers(groupId: number): SceneEncounterMember[] {
+  return db.prepare(`
+    SELECT p.id AS prepared_token_id, p.monster_id, p.name, p.color, p.size, p.hp, p.max_hp,
+           p.image_path, p.image_scale, p.conditions, i.offset_x, i.offset_y
+    FROM prepared_encounter_group_items i
+    JOIN prepared_tokens p ON p.id = i.prepared_token_id
+    WHERE i.group_id = ?
+    ORDER BY i.sort_order, i.id
+  `).all(groupId).map((row: any) => ({
+    preparedTokenId: row.prepared_token_id,
+    monsterId: row.monster_id ?? null,
+    name: row.name,
+    color: row.color,
+    size: row.size,
+    hp: row.hp,
+    maxHp: row.max_hp,
+    imagePath: String(row.image_path ?? ""),
+    imageScale: Number(row.image_scale ?? 1),
+    conditions: String(row.conditions ?? "[]"),
+    offsetX: Number(row.offset_x ?? 0),
+    offsetY: Number(row.offset_y ?? 0),
+  })) as SceneEncounterMember[];
+}
+
+function saveSceneEncounterLink(
+  sceneId: number,
+  campaignId: number,
+  groupIdInput: unknown,
+  anchorXInput: unknown,
+  anchorYInput: unknown
+) {
+  if (groupIdInput === undefined) return;
+
+  const groupId = Number(groupIdInput);
+  if (!Number.isInteger(groupId) || groupId <= 0) {
+    db.prepare("DELETE FROM scene_prepared_encounters WHERE scene_id = ?").run(sceneId);
+    return;
+  }
+
+  const group = db.prepare(
+    "SELECT id FROM prepared_encounter_groups WHERE id = ? AND campaign_id = ?"
+  ).get(groupId, campaignId) as any;
+  if (!group) throw new Error("Prepared encounter group not found.");
+
+  const anchorX = Number.isFinite(Number(anchorXInput)) ? Number(anchorXInput) : 4;
+  const anchorY = Number.isFinite(Number(anchorYInput)) ? Number(anchorYInput) : 4;
+  db.prepare(`
+    INSERT INTO scene_prepared_encounters (scene_id, group_id, anchor_x, anchor_y)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(scene_id) DO UPDATE SET
+      group_id = excluded.group_id,
+      anchor_x = excluded.anchor_x,
+      anchor_y = excluded.anchor_y
+  `).run(sceneId, groupId, anchorX, anchorY);
 }
 
 export const scenesRouter = Router();
@@ -117,6 +200,13 @@ scenesRouter.post("/:id/maps/:mapId/scenes", (req, res) => {
     VALUES (?, ?, ?, ?, ?)
   `).run(mapId, name, announcement, data.tokens.length, JSON.stringify(data));
 
+  saveSceneEncounterLink(
+    Number(result.lastInsertRowid),
+    campaignId,
+    req.body?.encounterGroupId,
+    req.body?.encounterAnchorX,
+    req.body?.encounterAnchorY
+  );
   const row = db.prepare("SELECT * FROM map_scenes WHERE id = ?").get(Number(result.lastInsertRowid));
   res.json({ scene: sceneRow(row) });
 });
@@ -147,6 +237,14 @@ scenesRouter.put("/:id/maps/:mapId/scenes/:sceneId", (req, res) => {
     SET name = ?, announcement = ?, updated_at = datetime('now')
     WHERE id = ?
   `).run(name, announcement, scene.id);
+
+  saveSceneEncounterLink(
+    scene.id,
+    campaignId,
+    req.body?.encounterGroupId,
+    req.body?.encounterAnchorX,
+    req.body?.encounterAnchorY
+  );
 
   const updated = db.prepare("SELECT * FROM map_scenes WHERE id = ?").get(scene.id);
   res.json({ scene: sceneRow(updated) });
@@ -195,6 +293,16 @@ scenesRouter.post("/:id/maps/:mapId/scenes/:sceneId/duplicate", (req, res) => {
     INSERT INTO map_scenes (map_id, name, announcement, enemy_count, scene_data)
     VALUES (?, ?, ?, ?, ?)
   `).run(mapId, `${scene.name} copy`, scene.announcement, scene.enemy_count, scene.scene_data);
+
+  const copiedLink = db.prepare(
+    "SELECT group_id, anchor_x, anchor_y FROM scene_prepared_encounters WHERE scene_id = ?"
+  ).get(scene.id) as any;
+  if (copiedLink) {
+    db.prepare(`
+      INSERT INTO scene_prepared_encounters (scene_id, group_id, anchor_x, anchor_y)
+      VALUES (?, ?, ?, ?)
+    `).run(Number(result.lastInsertRowid), copiedLink.group_id, copiedLink.anchor_x, copiedLink.anchor_y);
+  }
 
   const row = db.prepare("SELECT * FROM map_scenes WHERE id = ?").get(Number(result.lastInsertRowid));
   res.json({ scene: sceneRow(row) });
@@ -264,6 +372,74 @@ scenesRouter.post("/:id/maps/:mapId/scenes/:sceneId/activate", (req, res) => {
   } catch (error) {
     db.exec("ROLLBACK");
     throw error;
+  }
+
+const sceneEncounter = db.prepare(`
+    SELECT l.group_id, l.anchor_x, l.anchor_y, g.name AS group_name
+    FROM scene_prepared_encounters l
+    JOIN prepared_encounter_groups g ON g.id = l.group_id
+    WHERE l.scene_id = ? AND g.campaign_id = ?
+  `).get(scene.id, campaignId) as any;
+
+  const deployedSceneTokens: any[] = [];
+  if (sceneEncounter) {
+    const map = ownedMap(campaignId, mapId);
+    const members = sceneEncounterMembers(sceneEncounter.group_id);
+    const findDeployment = db.prepare(`
+      SELECT d.token_id
+      FROM scene_encounter_deployments d
+      JOIN tokens t ON t.id = d.token_id
+      WHERE d.scene_id = ? AND d.prepared_token_id = ? AND t.map_id = ?
+    `);
+    const insertDeployment = db.prepare(`
+      INSERT INTO scene_encounter_deployments (scene_id, prepared_token_id, token_id)
+      VALUES (?, ?, ?)
+      ON CONFLICT(scene_id, prepared_token_id) DO UPDATE SET token_id = excluded.token_id
+    `);
+    const updateEncounterToken = db.prepare(`
+      UPDATE tokens
+      SET x = ?, y = ?, hp = ?, max_hp = ?, conditions = ?,
+          name = ?, color = ?, size = ?, image_path = ?, image_scale = ?, monster_id = ?
+      WHERE id = ? AND map_id = ?
+    `);
+    const insertEncounterToken = db.prepare(`
+      INSERT INTO tokens
+        (map_id, character_id, monster_id, name, color, x, y, size, hp, max_hp,
+         image_path, image_scale, conditions)
+      VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    db.exec("BEGIN");
+    try {
+      for (const member of members) {
+        const x = (Number(sceneEncounter.anchor_x) + member.offsetX) * map.grid_size;
+        const y = (Number(sceneEncounter.anchor_y) + member.offsetY) * map.grid_size;
+        const existing = findDeployment.get(scene.id, member.preparedTokenId, mapId) as any;
+        let tokenId = Number(existing?.token_id ?? 0);
+
+        if (tokenId) {
+          updateEncounterToken.run(
+            x, y, member.hp, member.maxHp, member.conditions,
+            member.name, member.color, member.size, member.imagePath,
+            member.imageScale, member.monsterId, tokenId, mapId
+          );
+        } else {
+          const inserted = insertEncounterToken.run(
+            mapId, member.monsterId, member.name, member.color, x, y, member.size,
+            member.hp, member.maxHp, member.imagePath, member.imageScale, member.conditions
+          );
+          tokenId = Number(inserted.lastInsertRowid);
+          insertDeployment.run(scene.id, member.preparedTokenId, tokenId);
+        }
+
+        const row = db.prepare("SELECT id FROM tokens WHERE id = ?").get(tokenId);
+        if (row) deployedSceneTokens.push(row);
+      }
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
   }
 
   const io = getIo();

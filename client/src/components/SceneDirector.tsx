@@ -9,8 +9,18 @@ interface Scene {
   name: string;
   announcement: string;
   enemyCount: number;
+  encounterGroupId: number | null;
+  encounterGroupName: string;
+  encounterAnchorX: number;
+  encounterAnchorY: number;
   createdAt: string;
   updatedAt: string;
+}
+
+interface EncounterGroupOption {
+  id: number;
+  name: string;
+  members: { id: number; name: string }[];
 }
 
 interface Props {
@@ -22,16 +32,23 @@ interface Props {
 export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
   const [open, setOpen] = useState(false);
   const [scenes, setScenes] = useState<Scene[]>([]);
+  const [encounterGroups, setEncounterGroups] = useState<EncounterGroupOption[]>([]);
   const [busy, setBusy] = useState<number | "new" | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
     try {
-      const result = await api<{ scenes: Scene[] }>(
-        `/api/campaigns/${campaignId}/maps/${mapId}/scenes`
-      );
-      setScenes(result.scenes);
+      const [sceneResult, groupResult] = await Promise.all([
+        api<{ scenes: Scene[] }>(
+          `/api/campaigns/${campaignId}/maps/${mapId}/scenes`
+        ),
+        api<{ groups: EncounterGroupOption[] }>(
+          `/api/campaigns/${campaignId}/prepared-encounters`
+        ),
+      ]);
+      setScenes(sceneResult.scenes);
+      setEncounterGroups(groupResult.groups);
     } catch (e: any) {
       setError(e.message);
     }
@@ -72,6 +89,9 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
         body: JSON.stringify({
           name: data.get("name"),
           announcement: data.get("announcement"),
+          encounterGroupId: Number(data.get("encounterGroupId")) || null,
+          encounterAnchorX: Number(data.get("encounterAnchorX")) || 4,
+          encounterAnchorY: Number(data.get("encounterAnchorY")) || 4,
         }),
       });
       form.reset();
@@ -116,6 +136,33 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
     await api(`/api/campaigns/${campaignId}/maps/${mapId}/scenes/${scene.id}`, {
       method: "PUT",
       body: JSON.stringify({ announcement }),
+    });
+    await load();
+  };
+
+  const editEncounterGroup = async (scene: Scene) => {
+    const choices = encounterGroups
+      .map((group) => `${group.id}: ${group.name}`)
+      .join("\n");
+    const picked = prompt(
+      `Prepared encounter group ID for "${scene.name}" (blank removes it):\n\n${choices}`,
+      scene.encounterGroupId ? String(scene.encounterGroupId) : ""
+    );
+    if (picked === null) return;
+    const groupId = Number(picked) || null;
+    let anchorX = scene.encounterAnchorX;
+    let anchorY = scene.encounterAnchorY;
+    if (groupId) {
+      anchorX = Number(prompt("Horizontal grid coordinate", String(anchorX)) ?? anchorX);
+      anchorY = Number(prompt("Vertical grid coordinate", String(anchorY)) ?? anchorY);
+    }
+    await api(`/api/campaigns/${campaignId}/maps/${mapId}/scenes/${scene.id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        encounterGroupId: groupId,
+        encounterAnchorX: anchorX,
+        encounterAnchorY: anchorY,
+      }),
     });
     await load();
   };
@@ -177,6 +224,27 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
                 <input name="name" placeholder="Grimm ambush" required />
               </label>
               <label>
+                Prepared encounter group
+                <select name="encounterGroupId" defaultValue="">
+                  <option value="">None — use only captured map tokens</option>
+                  {encounterGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name} ({group.members.length})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="scene-director-anchor-grid">
+                <label>
+                  Group grid X
+                  <input name="encounterAnchorX" type="number" step=".5" defaultValue="4" />
+                </label>
+                <label>
+                  Group grid Y
+                  <input name="encounterAnchorY" type="number" step=".5" defaultValue="4" />
+                </label>
+              </div>
+              <label>
                 Activation announcement
                 <textarea name="announcement" rows={2} placeholder="A howl tears through the forest..." />
               </label>
@@ -198,11 +266,18 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
                       {busy === scene.id ? "Working..." : "Activate"}
                     </button>
                   </div>
+                  {scene.encounterGroupName && (
+                    <p className="scene-director-linked-encounter">
+                      Linked encounter: <strong>{scene.encounterGroupName}</strong> · anchor{" "}
+                      {scene.encounterAnchorX}, {scene.encounterAnchorY}
+                    </p>
+                  )}
                   {scene.announcement && <p className="scene-director-announcement">“{scene.announcement}”</p>}
                   <div className="scene-director-actions">
                     <button className="ghost mini" onClick={() => recapture(scene)}>Recapture</button>
                     <button className="ghost mini" onClick={() => rename(scene)}>Rename</button>
                     <button className="ghost mini" onClick={() => editAnnouncement(scene)}>Announcement</button>
+                    <button className="ghost mini" onClick={() => editEncounterGroup(scene)}>Encounter</button>
                     <button className="ghost mini" onClick={() => duplicate(scene)}>Duplicate</button>
                     <button className="danger mini" onClick={() => remove(scene)}>Delete</button>
                   </div>

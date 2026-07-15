@@ -120,3 +120,29 @@
     bottom: 120px;
   }
 }
+
+
+.scene-director-anchor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.scene-director-linked-encounter {
+  margin: 8px 0;
+  padding: 7px 9px;
+  border-left: 3px solid rgba(220, 82, 108, .8);
+  background: rgba(220, 82, 108, .08);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.scene-director-linked-encounter strong {
+  color: inherit;
+}
+
+@media (max-width: 560px) {
+  .scene-director-anchor-grid {
+    grid-template-columns: 1fr;
+  }
+}
