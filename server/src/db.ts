@@ -171,6 +171,27 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_prepared_tokens_campaign ON prepared_tokens (campaign_id);
 
+  CREATE TABLE IF NOT EXISTS prepared_encounter_groups (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_prepared_encounter_groups_campaign
+    ON prepared_encounter_groups (campaign_id);
+
+  CREATE TABLE IF NOT EXISTS prepared_encounter_group_items (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id          INTEGER NOT NULL REFERENCES prepared_encounter_groups(id) ON DELETE CASCADE,
+    prepared_token_id INTEGER NOT NULL REFERENCES prepared_tokens(id) ON DELETE CASCADE,
+    offset_x          REAL NOT NULL DEFAULT 0,
+    offset_y          REAL NOT NULL DEFAULT 0,
+    sort_order        INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(group_id, prepared_token_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_prepared_encounter_group_items_group
+    ON prepared_encounter_group_items (group_id);
+
   CREATE TABLE IF NOT EXISTS tokens (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     map_id       INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,

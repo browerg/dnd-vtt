@@ -268,3 +268,172 @@ preparedTokensRouter.delete("/:id/prepared-tokens/:preparedId", async (req, res)
   }
   res.json({ ok: true });
 });
+
+const encounterGroupPayload = (row: any) => {
+  const members = db.prepare(`
+    SELECT p.id, p.name, p.image_path, p.color, p.size, i.offset_x, i.offset_y
+    FROM prepared_encounter_group_items i
+    JOIN prepared_tokens p ON p.id = i.prepared_token_id
+    WHERE i.group_id = ?
+    ORDER BY i.sort_order, i.id
+  `).all(row.id) as any[];
+
+  return {
+    id: row.id,
+    campaignId: row.campaign_id,
+    name: row.name,
+    members: members.map((member) => ({
+      id: member.id,
+      name: member.name,
+      imageUrl: member.image_path ? `/uploads/${path.basename(member.image_path)}` : "",
+      color: member.color,
+      size: member.size,
+      offsetX: member.offset_x,
+      offsetY: member.offset_y,
+    })),
+  };
+};
+
+preparedTokensRouter.get("/:id/prepared-encounters", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = campaignRole(req, campaignId);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can view prepared encounters." });
+
+  const groups = db.prepare(
+    "SELECT * FROM prepared_encounter_groups WHERE campaign_id = ? ORDER BY id DESC"
+  ).all(campaignId) as any[];
+  res.json({ groups: groups.map(encounterGroupPayload) });
+});
+
+preparedTokensRouter.post("/:id/prepared-encounters", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = campaignRole(req, campaignId);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can create prepared encounters." });
+
+  const name = String(req.body?.name ?? "").trim().slice(0, 80);
+  const tokenIds: number[] = Array.isArray(req.body?.tokenIds)
+    ? [...new Set<number>(
+        req.body.tokenIds
+          .map((value: unknown) => Number(value))
+          .filter((value: number) => Number.isInteger(value))
+      )].slice(0, 40)
+    : [];
+  if (!name) return res.status(400).json({ error: "The encounter needs a name." });
+  if (tokenIds.length < 2) return res.status(400).json({ error: "Choose at least two prepared tokens." });
+
+  const placeholders = tokenIds.map(() => "?").join(",");
+  const valid = db.prepare(
+    `SELECT id FROM prepared_tokens WHERE campaign_id = ? AND id IN (${placeholders})`
+  ).all(campaignId, ...tokenIds) as any[];
+  if (valid.length !== tokenIds.length) {
+    return res.status(400).json({ error: "One or more prepared tokens are no longer available." });
+  }
+
+  db.exec("BEGIN");
+  try {
+    const result = db.prepare(
+      "INSERT INTO prepared_encounter_groups (campaign_id, name) VALUES (?, ?)"
+    ).run(campaignId, name);
+    const groupId = Number(result.lastInsertRowid);
+    const columns = Math.min(4, Math.max(2, Math.ceil(Math.sqrt(tokenIds.length))));
+    const insert = db.prepare(`
+      INSERT INTO prepared_encounter_group_items
+        (group_id, prepared_token_id, offset_x, offset_y, sort_order)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    tokenIds.forEach((tokenId: number, index: number) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      insert.run(groupId, tokenId, column * 2, row * 2, index);
+    });
+    db.exec("COMMIT");
+    const group = db.prepare("SELECT * FROM prepared_encounter_groups WHERE id = ?").get(groupId);
+    res.json({ group: encounterGroupPayload(group) });
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+});
+
+preparedTokensRouter.post("/:id/prepared-encounters/:groupId/deploy", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = campaignRole(req, campaignId);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can deploy prepared encounters." });
+
+  const group = db.prepare(
+    "SELECT * FROM prepared_encounter_groups WHERE id = ? AND campaign_id = ?"
+  ).get(Number(req.params.groupId), campaignId) as any;
+  if (!group) return res.status(404).json({ error: "Prepared encounter not found." });
+
+  const mapId = Number(req.body?.mapId);
+  const map = db.prepare(
+    "SELECT * FROM maps WHERE id = ? AND campaign_id = ?"
+  ).get(mapId, campaignId) as any;
+  if (!map) return res.status(404).json({ error: "Map not found." });
+
+  const members = db.prepare(`
+    SELECT p.*, i.offset_x, i.offset_y
+    FROM prepared_encounter_group_items i
+    JOIN prepared_tokens p ON p.id = i.prepared_token_id
+    WHERE i.group_id = ?
+    ORDER BY i.sort_order, i.id
+  `).all(group.id) as any[];
+  if (members.length === 0) {
+    return res.status(400).json({ error: "This encounter has no available prepared tokens." });
+  }
+
+  const anchorX = Number.isFinite(Number(req.body?.x))
+    ? Number(req.body.x)
+    : map.grid_size * 2;
+  const anchorY = Number.isFinite(Number(req.body?.y))
+    ? Number(req.body.y)
+    : map.grid_size * 2;
+
+  const insert = db.prepare(`
+    INSERT INTO tokens
+      (map_id, character_id, monster_id, name, color, x, y, size, hp, max_hp,
+       image_path, image_scale, conditions)
+    VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const tokenIds: number[] = [];
+
+  db.exec("BEGIN");
+  try {
+    for (const member of members) {
+      const x = anchorX + member.offset_x * map.grid_size;
+      const y = anchorY + member.offset_y * map.grid_size;
+      const result = insert.run(
+        map.id, member.monster_id, member.name, member.color, x, y, member.size,
+        member.hp, member.max_hp, member.image_path, member.image_scale, member.conditions
+      );
+      tokenIds.push(Number(result.lastInsertRowid));
+    }
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  const tokens = tokenIds.map((id) => getToken(id)!).filter(Boolean);
+  for (const token of tokens) {
+    getIo().to(`campaign:${campaignId}`).emit("token:create", { campaignId, token });
+  }
+  res.json({ tokens });
+});
+
+preparedTokensRouter.delete("/:id/prepared-encounters/:groupId", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = campaignRole(req, campaignId);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can delete prepared encounters." });
+
+  const group = db.prepare(
+    "SELECT id FROM prepared_encounter_groups WHERE id = ? AND campaign_id = ?"
+  ).get(Number(req.params.groupId), campaignId) as any;
+  if (!group) return res.status(404).json({ error: "Prepared encounter not found." });
+  db.prepare("DELETE FROM prepared_encounter_groups WHERE id = ?").run(group.id);
+  res.json({ ok: true });
+});

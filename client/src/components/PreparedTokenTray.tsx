@@ -23,6 +23,21 @@ interface PreparedToken {
   conditions: string[];
 }
 
+interface EncounterGroup {
+  id: number;
+  campaignId: number;
+  name: string;
+  members: {
+    id: number;
+    name: string;
+    imageUrl: string;
+    color: string;
+    size: number;
+    offsetX: number;
+    offsetY: number;
+  }[];
+}
+
 interface Props {
   campaignId: number;
   mapId: number;
@@ -37,16 +52,30 @@ const sizeFromMonster = (size: string) =>
 
 export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseMonster }: Props) {
   const [tokens, setTokens] = useState<PreparedToken[]>([]);
+  const [groups, setGroups] = useState<EncounterGroup[]>([]);
+  const [selectedForGroup, setSelectedForGroup] = useState<Set<number>>(new Set());
+  const [groupName, setGroupName] = useState("");
+  const [groupBusy, setGroupBusy] = useState<number | "create" | null>(null);
   const [busy, setBusy] = useState<number | "prepare" | null>(null);
   const [editing, setEditing] = useState<PreparedToken | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     try {
-      const result = await api<{ preparedTokens: PreparedToken[] }>(
-        `/api/campaigns/${campaignId}/prepared-tokens`
-      );
-      setTokens(result.preparedTokens);
+      const [tokenResult, groupResult] = await Promise.all([
+        api<{ preparedTokens: PreparedToken[] }>(
+          `/api/campaigns/${campaignId}/prepared-tokens`
+        ),
+        api<{ groups: EncounterGroup[] }>(
+          `/api/campaigns/${campaignId}/prepared-encounters`
+        ),
+      ]);
+      setTokens(tokenResult.preparedTokens);
+      setGroups(groupResult.groups);
+      setSelectedForGroup((previous) => {
+        const validIds = new Set(tokenResult.preparedTokens.map((token) => token.id));
+        return new Set([...previous].filter((id) => validIds.has(id)));
+      });
     } catch (e: any) {
       setError(e.message);
     }
@@ -61,6 +90,55 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
     window.addEventListener("prepared-tokens:refresh", refresh);
     return () => window.removeEventListener("prepared-tokens:refresh", refresh);
   }, [load]);
+
+  const createEncounterGroup = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (selectedForGroup.size < 2) {
+      setError("Choose at least two prepared tokens for the encounter.");
+      return;
+    }
+    setGroupBusy("create");
+    setError("");
+    try {
+      await api(`/api/campaigns/${campaignId}/prepared-encounters`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: groupName,
+          tokenIds: [...selectedForGroup],
+        }),
+      });
+      setGroupName("");
+      setSelectedForGroup(new Set());
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setGroupBusy(null);
+    }
+  };
+
+  const deployEncounterGroup = async (group: EncounterGroup) => {
+    setGroupBusy(group.id);
+    setError("");
+    try {
+      await api(`/api/campaigns/${campaignId}/prepared-encounters/${group.id}/deploy`, {
+        method: "POST",
+        body: JSON.stringify({ mapId }),
+      });
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setGroupBusy(null);
+    }
+  };
+
+  const deleteEncounterGroup = async (group: EncounterGroup) => {
+    if (!confirm(`Delete encounter group "${group.name}"? The prepared tokens will stay in the tray.`)) return;
+    await api(`/api/campaigns/${campaignId}/prepared-encounters/${group.id}`, {
+      method: "DELETE",
+    });
+    await load();
+  };
 
   const prepare = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -136,6 +214,55 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
           <button className="ghost mini" onClick={() => void load()} title="Refresh tray">↻</button>
         </div>
         {error && <p className="error small">{error}</p>}
+        {groups.length > 0 && (
+          <div className="prepared-encounter-groups">
+            {groups.map((group) => (
+              <article className="prepared-encounter-card" key={group.id}>
+                <div>
+                  <strong>{group.name}</strong>
+                  <small>{group.members.length} reusable tokens</small>
+                </div>
+                <div className="prepared-encounter-thumbs">
+                  {group.members.slice(0, 6).map((member) =>
+                    member.imageUrl ? (
+                      <img key={member.id} src={member.imageUrl} alt="" />
+                    ) : (
+                      <span key={member.id} style={{ background: member.color }} />
+                    )
+                  )}
+                </div>
+                <div className="prepared-token-actions">
+                  <button
+                    disabled={groupBusy === group.id || group.members.length === 0}
+                    onClick={() => deployEncounterGroup(group)}
+                  >
+                    {groupBusy === group.id ? "Deploying..." : "Deploy group"}
+                  </button>
+                  <button className="danger mini" onClick={() => deleteEncounterGroup(group)}>
+                    Delete group
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {tokens.length >= 2 && (
+          <form className="prepared-encounter-builder" onSubmit={createEncounterGroup}>
+            <input
+              value={groupName}
+              onChange={(event) => setGroupName(event.target.value)}
+              placeholder="Encounter name, e.g. Beowolf Ambush"
+              required
+            />
+            <button disabled={groupBusy === "create" || selectedForGroup.size < 2}>
+              {groupBusy === "create"
+                ? "Saving..."
+                : `Save selected as group (${selectedForGroup.size})`}
+            </button>
+          </form>
+        )}
+
         {tokens.length === 0 && <p className="muted small">No unused encounter tokens.</p>}
         <div className="prepared-token-list">
           {tokens.map((token) => (
@@ -161,6 +288,25 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
               }}
               onDragEnd={(event) => event.currentTarget.classList.remove("is-dragging")}
             >
+              <label
+                className="prepared-token-group-picker"
+                title="Select this token for an encounter group"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedForGroup.has(token.id)}
+                  onChange={(event) => {
+                    setSelectedForGroup((previous) => {
+                      const next = new Set(previous);
+                      if (event.target.checked) next.add(token.id);
+                      else next.delete(token.id);
+                      return next;
+                    });
+                  }}
+                />
+                Group
+              </label>
               <div className="prepared-token-summary">
                 {token.imageUrl ? (
                   <img src={token.imageUrl} alt="" />
