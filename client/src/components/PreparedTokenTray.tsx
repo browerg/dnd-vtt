@@ -217,7 +217,26 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
         {groups.length > 0 && (
           <div className="prepared-encounter-groups">
             {groups.map((group) => (
-              <article className="prepared-encounter-card" key={group.id}>
+              <article
+                className="prepared-encounter-card"
+                key={group.id}
+                draggable={groupBusy !== group.id && group.members.length > 0}
+                title="Drag the full encounter onto the map"
+                onDragStart={(event) => {
+                  event.dataTransfer.effectAllowed = "copy";
+                  event.dataTransfer.setData(
+                    "application/x-prepared-encounter",
+                    JSON.stringify({
+                      id: group.id,
+                      name: group.name,
+                      members: group.members,
+                    })
+                  );
+                  event.dataTransfer.setData("text/plain", group.name);
+                  event.currentTarget.classList.add("is-dragging");
+                }}
+                onDragEnd={(event) => event.currentTarget.classList.remove("is-dragging")}
+              >
                 <div>
                   <strong>{group.name}</strong>
                   <small>{group.members.length} reusable tokens</small>
@@ -236,8 +255,9 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
                     disabled={groupBusy === group.id || group.members.length === 0}
                     onClick={() => deployEncounterGroup(group)}
                   >
-                    {groupBusy === group.id ? "Deploying..." : "Deploy group"}
+                    {groupBusy === group.id ? "Deploying..." : "Deploy top-left"}
                   </button>
+                  <span className="prepared-token-drag-hint">⋮⋮ Drag group to map</span>
                   <button className="danger mini" onClick={() => deleteEncounterGroup(group)}>
                     Delete group
                   </button>

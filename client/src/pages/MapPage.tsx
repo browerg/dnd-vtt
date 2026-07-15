@@ -157,6 +157,25 @@ interface PreparedTokenDropPreview extends PreparedTokenDrag {
   y: number;
 }
 
+interface PreparedEncounterDrag {
+  id: number;
+  name: string;
+  members: {
+    id: number;
+    name: string;
+    imageUrl: string;
+    color: string;
+    size: number;
+    offsetX: number;
+    offsetY: number;
+  }[];
+}
+
+interface PreparedEncounterDropPreview extends PreparedEncounterDrag {
+  x: number;
+  y: number;
+}
+
 export default function MapPage() {
   const { id } = useParams();
   const campaignId = Number(id);
@@ -193,6 +212,8 @@ export default function MapPage() {
   const [view, setView] = useState<View>({ x: 0, y: 0, scale: 0.8 });
   const [preparedTokenDropPreview, setPreparedTokenDropPreview] =
     useState<PreparedTokenDropPreview | null>(null);
+  const [preparedEncounterDropPreview, setPreparedEncounterDropPreview] =
+    useState<PreparedEncounterDropPreview | null>(null);
   const [preparedTokenDropBusy, setPreparedTokenDropBusy] = useState(false);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
   const [customName, setCustomName] = useState("");
@@ -794,14 +815,61 @@ export default function MapPage() {
     }
   };
 
+  const readPreparedEncounterDrag = (
+    event: React.DragEvent
+  ): PreparedEncounterDrag | null => {
+    const raw = event.dataTransfer.getData("application/x-prepared-encounter");
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Number.isInteger(parsed.id) || !Array.isArray(parsed.members)) return null;
+      return {
+        id: parsed.id,
+        name: String(parsed.name ?? "Prepared encounter"),
+        members: parsed.members
+          .map((member: any) => ({
+            id: Number(member.id),
+            name: String(member.name ?? "Token"),
+            imageUrl: String(member.imageUrl ?? ""),
+            color: String(member.color ?? "#a03636"),
+            size: Math.min(4, Math.max(1, Number(member.size) || 1)),
+            offsetX: Number(member.offsetX) || 0,
+            offsetY: Number(member.offsetY) || 0,
+          }))
+          .filter((member: any) => Number.isInteger(member.id)),
+      };
+    } catch {
+      return null;
+    }
+  };
+
   const onPreparedTokenDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    if (!event.dataTransfer.types.includes("application/x-prepared-token")) return;
+    const isToken = event.dataTransfer.types.includes("application/x-prepared-token");
+    const isEncounter = event.dataTransfer.types.includes("application/x-prepared-encounter");
+    if (!isToken && !isEncounter) return;
+
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    const dragged = readPreparedTokenDrag(event);
-    if (!dragged || !map) return;
+    event.dataTransfer.dropEffect = isEncounter ? "copy" : "move";
+    if (!map) return;
 
     const point = toMapCoords(event.clientX, event.clientY);
+
+    if (isEncounter) {
+      const encounter = readPreparedEncounterDrag(event);
+      if (!encounter) return;
+      let x = point.x;
+      let y = point.y;
+      if (map.gridOn) {
+        x = Math.round(x / map.gridSize) * map.gridSize;
+        y = Math.round(y / map.gridSize) * map.gridSize;
+      }
+      setPreparedTokenDropPreview(null);
+      setPreparedEncounterDropPreview({ ...encounter, x, y });
+      return;
+    }
+
+    const dragged = readPreparedTokenDrag(event);
+    if (!dragged) return;
     let x = point.x;
     let y = point.y;
     if (map.gridOn) {
@@ -809,12 +877,45 @@ export default function MapPage() {
       x = Math.round((x - half) / map.gridSize) * map.gridSize + half;
       y = Math.round((y - half) / map.gridSize) * map.gridSize + half;
     }
+    setPreparedEncounterDropPreview(null);
     setPreparedTokenDropPreview({ ...dragged, x, y });
   };
 
   const onPreparedTokenDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+    if (!map) return;
+
+    const encounter = readPreparedEncounterDrag(event);
+    if (encounter) {
+      event.preventDefault();
+      const point = toMapCoords(event.clientX, event.clientY);
+      let x = point.x;
+      let y = point.y;
+      if (map.gridOn) {
+        x = Math.round(x / map.gridSize) * map.gridSize;
+        y = Math.round(y / map.gridSize) * map.gridSize;
+      }
+
+      setPreparedTokenDropBusy(true);
+      setError("");
+      try {
+        await api(
+          `/api/campaigns/${campaignId}/prepared-encounters/${encounter.id}/deploy`,
+          {
+            method: "POST",
+            body: JSON.stringify({ mapId: map.id, x, y }),
+          }
+        );
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setPreparedTokenDropBusy(false);
+        setPreparedEncounterDropPreview(null);
+      }
+      return;
+    }
+
     const dragged = readPreparedTokenDrag(event);
-    if (!dragged || !map) return;
+    if (!dragged) return;
     event.preventDefault();
 
     const point = toMapCoords(event.clientX, event.clientY);
@@ -1320,11 +1421,13 @@ Choose Cancel to permanently delete it instead.`
         </div>
       )}
 
-      {preparedTokenDropPreview && (
+      {(preparedTokenDropPreview || preparedEncounterDropPreview) && (
         <div className="prepared-token-drop-status">
           {preparedTokenDropBusy
-            ? "Deploying token..."
-            : `Drop ${preparedTokenDropPreview.name} onto this square`}
+            ? "Deploying..."
+            : preparedEncounterDropPreview
+              ? `Drop encounter: ${preparedEncounterDropPreview.name}`
+              : `Drop ${preparedTokenDropPreview?.name} onto this square`}
         </div>
       )}
       <div className="map-layout">
@@ -1341,6 +1444,7 @@ Choose Cancel to permanently delete it instead.`
           onDragLeave={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
               setPreparedTokenDropPreview(null);
+              setPreparedEncounterDropPreview(null);
             }
           }}
           onDrop={onPreparedTokenDrop}
@@ -1507,6 +1611,34 @@ Choose Cancel to permanently delete it instead.`
                   </div>
                 );
               })}
+              {preparedEncounterDropPreview && (
+                <div
+                  className="prepared-encounter-drop-preview"
+                  style={{
+                    left: preparedEncounterDropPreview.x,
+                    top: preparedEncounterDropPreview.y,
+                  }}
+                >
+                  {preparedEncounterDropPreview.members.map((member) => (
+                    <div
+                      className="prepared-encounter-member-preview"
+                      key={member.id}
+                      style={{
+                        left: member.offsetX * g - (member.size * g) / 2,
+                        top: member.offsetY * g - (member.size * g) / 2,
+                        width: member.size * g,
+                        height: member.size * g,
+                        background: member.imageUrl ? "transparent" : member.color,
+                      }}
+                    >
+                      {member.imageUrl && (
+                        <img src={member.imageUrl} alt="" draggable={false} />
+                      )}
+                    </div>
+                  ))}
+                  <span>{preparedEncounterDropPreview.name}</span>
+                </div>
+              )}
               {preparedTokenDropPreview && (
                 <div
                   className="prepared-token-drop-preview"

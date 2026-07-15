@@ -249,3 +249,56 @@
   width: auto;
   margin: 0;
 }
+
+
+.prepared-encounter-card[draggable="true"] {
+  cursor: grab;
+}
+
+.prepared-encounter-card.is-dragging {
+  opacity: .48;
+  cursor: grabbing;
+}
+
+.prepared-encounter-drop-preview {
+  position: absolute;
+  z-index: 49;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.prepared-encounter-member-preview {
+  position: absolute;
+  border: 2px dashed rgba(255, 216, 105, .95);
+  border-radius: 50%;
+  box-sizing: border-box;
+  opacity: .72;
+  filter: drop-shadow(0 0 10px rgba(255, 197, 70, .85));
+  animation: prepared-token-preview-pulse .7s ease-in-out infinite alternate;
+}
+
+.prepared-encounter-member-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.prepared-encounter-drop-preview > span {
+  position: absolute;
+  left: 0;
+  top: -28px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(8, 7, 12, .94);
+  color: white;
+  font-size: 11px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prepared-encounter-member-preview {
+    animation: none;
+  }
+}
