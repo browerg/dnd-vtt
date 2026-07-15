@@ -143,6 +143,18 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_map_objects_map ON map_objects (map_id);
 
+  CREATE TABLE IF NOT EXISTS map_scenes (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    map_id       INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+    name         TEXT NOT NULL,
+    announcement TEXT NOT NULL DEFAULT '',
+    enemy_count  INTEGER NOT NULL DEFAULT 0,
+    scene_data   TEXT NOT NULL DEFAULT '{}',
+    created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_map_scenes_map ON map_scenes (map_id);
+
   CREATE TABLE IF NOT EXISTS tokens (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     map_id       INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,

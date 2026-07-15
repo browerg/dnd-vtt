@@ -1,0 +1,122 @@
+.scene-director-button {
+  position: fixed;
+  right: 275px;
+  bottom: 70px;
+  z-index: 80;
+  border: 1px solid rgba(184, 72, 96, .72);
+  border-radius: 999px;
+  background: rgba(20, 13, 22, .96);
+  color: #ffd4dc;
+  padding: 10px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  cursor: pointer;
+}
+
+.scene-director-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(3, 3, 7, .8);
+  backdrop-filter: blur(7px);
+}
+
+.scene-director-panel {
+  width: min(720px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid rgba(184, 72, 96, .55);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(29, 20, 31, .99), rgba(10, 9, 15, .99));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .72);
+}
+
+.scene-director-panel h2,
+.scene-director-card h3 {
+  margin: 0;
+}
+
+.scene-director-kicker {
+  color: #d86c83;
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.scene-director-explainer {
+  margin: 10px 0 18px;
+}
+
+.scene-director-new {
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid rgba(231, 203, 117, .22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .025);
+}
+
+.scene-director-new label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.scene-director-list {
+  display: grid;
+  gap: 10px;
+}
+
+.scene-director-card {
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.scene-director-announcement {
+  margin: 10px 0;
+  color: #e5c7cd;
+  font-style: italic;
+}
+
+.scene-director-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.scene-director-notice {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  z-index: 160;
+  display: grid;
+  gap: 4px;
+  width: min(680px, calc(100vw - 34px));
+  padding: 16px 22px;
+  border: 1px solid rgba(184, 72, 96, .75);
+  border-radius: 14px;
+  background: rgba(18, 10, 20, .97);
+  color: white;
+  box-shadow: 0 22px 65px rgba(0, 0, 0, .68);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.scene-director-notice span {
+  color: #d86c83;
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 850px) {
+  .scene-director-button {
+    right: 20px;
+    bottom: 120px;
+  }
+}

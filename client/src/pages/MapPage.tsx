@@ -13,9 +13,11 @@ import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import MapObjects from "../components/MapObjects";
+import SceneDirector from "../components/SceneDirector";
 import YouTubeMapPlayer from "../components/YouTubeMapPlayer";
 import "./MapTokenArt.css";
 import "./MapObjects.css";
+import "./SceneDirector.css";
 import "./MapAudio.css";
 
 interface MapInfo {
@@ -952,6 +954,7 @@ export default function MapPage() {
   return (
     <div className="shell map-shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
+      {map && <SceneDirector campaignId={campaignId} mapId={map.id} isDM={isDM} />}
       <header className="topbar campaign-topbar">
         <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-back-link">{"\u2190"}</Link>
         <CampaignThemeBrand
