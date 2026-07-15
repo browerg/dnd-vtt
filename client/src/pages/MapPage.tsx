@@ -150,6 +150,12 @@ export default function MapPage() {
   const [map, setMap] = useState<MapInfo | null>(null);
   const [maps, setMaps] = useState<MapInfo[]>([]);
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [enteringTokenIds, setEnteringTokenIds] = useState<Set<number>>(new Set());
+  const [brokenAuraTokenIds, setBrokenAuraTokenIds] = useState<Set<number>>(new Set());
+  const [combatEffectNotice, setCombatEffectNotice] = useState("");
+  const combatEffectReadyRef = useRef(false);
+  const previousTokenIdsRef = useRef<Set<number>>(new Set());
+  const previousAuraRef = useRef<Record<number, number | null>>({});
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [role, setRole] = useState("");
   const [system, setSystem] = useState("dnd5e");
@@ -201,6 +207,77 @@ export default function MapPage() {
   revealedRef.current = revealed;
   mapIdRef.current = map?.id ?? null;
   const fogSaveTimer = useRef<number>();
+
+  // RWBY token entrance and Aura transition effects.
+  useEffect(() => {
+    const currentIds = new Set(tokens.map((token) => token.id));
+    const currentAura: Record<number, number | null> = {};
+    const newEncounterIds: number[] = [];
+    const newlyBrokenAuraIds: number[] = [];
+
+    for (const token of tokens) {
+      currentAura[token.id] = token.aura;
+      if (
+        combatEffectReadyRef.current &&
+        !previousTokenIdsRef.current.has(token.id) &&
+        token.monsterId != null
+      ) {
+        newEncounterIds.push(token.id);
+      }
+
+      const previousAura = previousAuraRef.current[token.id];
+      if (
+        combatEffectReadyRef.current &&
+        previousAura != null &&
+        previousAura > 0 &&
+        token.aura != null &&
+        token.aura <= 0
+      ) {
+        newlyBrokenAuraIds.push(token.id);
+      }
+    }
+
+    previousTokenIdsRef.current = currentIds;
+    previousAuraRef.current = currentAura;
+
+    if (!combatEffectReadyRef.current) {
+      combatEffectReadyRef.current = true;
+      return;
+    }
+
+    if (newEncounterIds.length > 0) {
+      setEnteringTokenIds((previous) => new Set([...previous, ...newEncounterIds]));
+      setCombatEffectNotice(
+        newEncounterIds.length === 1 ? "A Grimm enters the battlefield." : "Grimm enter the battlefield."
+      );
+      window.setTimeout(() => {
+        setEnteringTokenIds((previous) => {
+          const next = new Set(previous);
+          newEncounterIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }, 1800);
+      window.setTimeout(() => setCombatEffectNotice(""), 3200);
+    }
+
+    if (newlyBrokenAuraIds.length > 0) {
+      setBrokenAuraTokenIds((previous) => new Set([...previous, ...newlyBrokenAuraIds]));
+      const brokenNames = tokens
+        .filter((token) => newlyBrokenAuraIds.includes(token.id))
+        .map((token) => token.name);
+      setCombatEffectNotice(
+        brokenNames.length === 1 ? `${brokenNames[0]}'s AURA IS BROKEN` : "AURA BREAK"
+      );
+      window.setTimeout(() => {
+        setBrokenAuraTokenIds((previous) => {
+          const next = new Set(previous);
+          newlyBrokenAuraIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }, 1700);
+      window.setTimeout(() => setCombatEffectNotice(""), 3600);
+    }
+  }, [tokens]);
 
   const socketRef = useRef<Socket | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -954,6 +1031,12 @@ export default function MapPage() {
   return (
     <div className="shell map-shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
+      {combatEffectNotice && (
+        <div className="rwby-combat-effect-notice" role="status">
+          <span>Combat effect</span>
+          <strong>{combatEffectNotice}</strong>
+        </div>
+      )}
       {map && <SceneDirector campaignId={campaignId} mapId={map.id} isDM={isDM} />}
       <header className="topbar campaign-topbar">
         <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-back-link">{"\u2190"}</Link>
@@ -1227,7 +1310,18 @@ export default function MapPage() {
                     data-token-id={t.id}
                     className={`token${hasCutout ? " image-token" : ""}${canMove(t) ? " movable" : ""}${
                       currentCombatant?.tokenId === t.id ? " current-turn" : ""
-                    }${selectedTokenId === t.id ? " selected" : ""}`}
+                    }${selectedTokenId === t.id ? " selected" : ""}${
+                      t.auraMax != null && t.aura != null && t.aura > 0 ? " aura-active" : ""
+                    }${
+                      t.auraMax != null &&
+                      t.aura != null &&
+                      t.aura > 0 &&
+                      t.aura / Math.max(1, t.auraMax) <= 0.25
+                        ? " aura-critical"
+                        : ""
+                    }${brokenAuraTokenIds.has(t.id) ? " aura-breaking" : ""}${
+                      enteringTokenIds.has(t.id) ? " grimm-entering" : ""
+                    }`}
                     style={{
                       left: t.x - px / 2,
                       top: t.y - px / 2,
@@ -1241,6 +1335,15 @@ export default function MapPage() {
                     }}
                     title={t.name}
                   >
+                    {t.auraMax != null && t.aura != null && t.aura > 0 && (
+                      <span className="token-aura-shell" aria-hidden="true" />
+                    )}
+                    {brokenAuraTokenIds.has(t.id) && (
+                      <span className="token-aura-break-ring" aria-hidden="true" />
+                    )}
+                    {enteringTokenIds.has(t.id) && (
+                      <span className="token-grimm-smoke" aria-hidden="true" />
+                    )}
                     {hasCutout && (
                       <img
                         className="token-cutout"

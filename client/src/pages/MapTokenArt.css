@@ -233,3 +233,147 @@
     animation: none;
   }
 }
+
+
+/* RWBY combat effects */
+.token-aura-shell,
+.token-aura-break-ring,
+.token-grimm-smoke {
+  position: absolute;
+  inset: -12%;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.token-aura-shell {
+  border: max(2px, .05em) solid rgba(120, 225, 255, .7);
+  box-shadow:
+    0 0 8px rgba(120, 225, 255, .65),
+    0 0 18px rgba(120, 225, 255, .38),
+    inset 0 0 12px rgba(255, 255, 255, .18);
+  animation: rwby-aura-shimmer 2.15s ease-in-out infinite;
+}
+
+.token.aura-critical .token-aura-shell {
+  border-color: rgba(255, 198, 72, .92);
+  box-shadow:
+    0 0 10px rgba(255, 176, 45, .9),
+    0 0 24px rgba(255, 90, 60, .58);
+  animation: rwby-aura-critical .68s ease-in-out infinite;
+}
+
+.token-aura-break-ring {
+  inset: -24%;
+  border: 4px solid rgba(145, 235, 255, .95);
+  box-shadow:
+    0 0 18px rgba(145, 235, 255, .95),
+    0 0 46px rgba(255, 255, 255, .72);
+  animation: rwby-aura-break 1.35s cubic-bezier(.12, .74, .18, 1) forwards;
+}
+
+.token.aura-breaking {
+  animation: rwby-aura-token-shock .48s linear 3;
+}
+
+.token-grimm-smoke {
+  inset: -45%;
+  border-radius: 44%;
+  background:
+    radial-gradient(circle at 50% 60%, rgba(185, 30, 45, .82), transparent 24%),
+    radial-gradient(circle at 32% 45%, rgba(20, 20, 25, .95), transparent 38%),
+    radial-gradient(circle at 68% 42%, rgba(12, 12, 17, .94), transparent 40%);
+  filter: blur(3px);
+  animation: rwby-grimm-smoke 1.6s ease-out forwards;
+}
+
+.token.grimm-entering {
+  animation: rwby-grimm-entrance 1.25s cubic-bezier(.15, .85, .2, 1) both;
+}
+
+.rwby-combat-effect-notice {
+  position: fixed;
+  top: 86px;
+  left: 50%;
+  z-index: 170;
+  display: grid;
+  gap: 4px;
+  width: min(620px, calc(100vw - 34px));
+  padding: 14px 22px;
+  border: 1px solid rgba(196, 65, 88, .82);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(18, 8, 18, .97), rgba(45, 9, 18, .97));
+  box-shadow: 0 20px 65px rgba(0, 0, 0, .7);
+  color: white;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: rwby-effect-notice .28s ease-out both;
+}
+
+.rwby-combat-effect-notice span {
+  color: #e47a91;
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.rwby-combat-effect-notice strong {
+  font-size: clamp(17px, 2.5vw, 26px);
+  letter-spacing: .05em;
+}
+
+@keyframes rwby-aura-shimmer {
+  0%, 100% { opacity: .58; transform: scale(.97); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+@keyframes rwby-aura-critical {
+  0%, 100% { opacity: .65; transform: scale(.97); }
+  50% { opacity: 1; transform: scale(1.11); }
+}
+
+@keyframes rwby-aura-break {
+  0% { opacity: 1; transform: scale(.45); }
+  65% { opacity: .9; transform: scale(1.55); }
+  100% { opacity: 0; transform: scale(2.2); }
+}
+
+@keyframes rwby-aura-token-shock {
+  0%, 100% { transform: translate(0, 0); filter: brightness(1); }
+  25% { transform: translate(-3px, 1px); filter: brightness(1.7); }
+  75% { transform: translate(3px, -1px); filter: brightness(1.25); }
+}
+
+@keyframes rwby-grimm-smoke {
+  0% { opacity: 0; transform: scale(.25) rotate(-12deg); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.55) rotate(10deg); }
+}
+
+@keyframes rwby-grimm-entrance {
+  0% { opacity: 0; transform: scale(.35); filter: brightness(.2) contrast(1.6); }
+  55% { opacity: 1; transform: scale(1.18); filter: brightness(1.25) contrast(1.25); }
+  100% { transform: scale(1); filter: none; }
+}
+
+@keyframes rwby-effect-notice {
+  from { opacity: 0; transform: translate(-50%, -14px) scale(.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token-aura-shell,
+  .token.aura-critical .token-aura-shell,
+  .token-aura-break-ring,
+  .token.aura-breaking,
+  .token-grimm-smoke,
+  .token.grimm-entering,
+  .rwby-combat-effect-notice {
+    animation: none !important;
+  }
+
+  .token-grimm-smoke,
+  .token-aura-break-ring {
+    display: none;
+  }
+}
