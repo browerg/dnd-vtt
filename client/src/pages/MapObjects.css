@@ -200,3 +200,52 @@
 .map-object-dm-notes {
   border-color: rgba(184, 72, 96, .36);
 }
+
+
+.map-object-trigger-fields {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(231, 203, 117, .28);
+  border-radius: 10px;
+}
+
+.map-object-trigger-fields legend {
+  padding: 0 6px;
+  color: #d6b85f;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.map-object-interact-button {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.map-object-trigger-notice {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  z-index: 130;
+  max-width: min(620px, calc(100vw - 32px));
+  padding: 14px 20px;
+  border: 1px solid rgba(231, 203, 117, .65);
+  border-radius: 12px;
+  background: rgba(14, 12, 21, .96);
+  color: #fff3c2;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .58);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+
+.map-object-loot.is-locked {
+  border-style: dashed;
+  opacity: 0.78;
+}
+
+.map-object-loot.is-locked p {
+  color: var(--muted);
+  font-style: italic;
+}

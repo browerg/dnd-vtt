@@ -45,6 +45,10 @@ const mapObject = (row: any, isDM: boolean) => ({
   y: row.y,
   size: row.size,
   imageUrl: row.image_path ? `/uploads/${path.basename(row.image_path)}` : "",
+  interactionLabel: row.interaction_label ?? "",
+  triggerMessage: isDM ? row.trigger_message ?? "" : "",
+  triggerState: isDM ? row.trigger_state ?? "" : "",
+  revealObjectId: isDM ? row.reveal_object_id ?? null : null,
   createdAt: row.created_at,
 });
 
@@ -102,12 +106,22 @@ mapObjectsRouter.post("/:id/maps/:mapId/objects", objectUpload.single("image"), 
   const x = Number.isFinite(Number(req.body.x)) ? Number(req.body.x) : 400;
   const y = Number.isFinite(Number(req.body.y)) ? Number(req.body.y) : 300;
   const size = Math.min(4, Math.max(0.5, Number(req.body.size) || 1));
+  const interactionLabel = String(req.body.interactionLabel ?? "").trim();
+  const triggerMessage = String(req.body.triggerMessage ?? "").trim();
+  const triggerState = STATES.has(String(req.body.triggerState)) ? String(req.body.triggerState) : "";
+  const revealObjectId = Number.isInteger(Number(req.body.revealObjectId))
+    ? Number(req.body.revealObjectId)
+    : null;
 
   const result = db.prepare(`
     INSERT INTO map_objects
-      (map_id, type, name, description, dm_notes, loot, state, hidden, x, y, size, image_path)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(mapId, type, name, description, dmNotes, loot, state, hidden, x, y, size, req.file?.path ?? "");
+      (map_id, type, name, description, dm_notes, loot, state, hidden, x, y, size, image_path,
+       interaction_label, trigger_message, trigger_state, reveal_object_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    mapId, type, name, description, dmNotes, loot, state, hidden, x, y, size,
+    req.file?.path ?? "", interactionLabel, triggerMessage, triggerState, revealObjectId
+  );
 
   const row = db.prepare("SELECT * FROM map_objects WHERE id = ?").get(Number(result.lastInsertRowid)) as any;
   emitChange(campaignId, mapId);
@@ -139,13 +153,29 @@ mapObjectsRouter.put("/:id/maps/:mapId/objects/:objectId", (req, res) => {
   const x = Number.isFinite(body.x) ? body.x : current.x;
   const y = Number.isFinite(body.y) ? body.y : current.y;
   const size = Number.isFinite(body.size) ? Math.min(4, Math.max(0.5, body.size)) : current.size;
+  const interactionLabel =
+    typeof body.interactionLabel === "string" ? body.interactionLabel : current.interaction_label;
+  const triggerMessage =
+    typeof body.triggerMessage === "string" ? body.triggerMessage : current.trigger_message;
+  const triggerState =
+    typeof body.triggerState === "string" && (body.triggerState === "" || STATES.has(body.triggerState))
+      ? body.triggerState
+      : current.trigger_state;
+  const revealObjectId =
+    body.revealObjectId === null || Number.isInteger(body.revealObjectId)
+      ? body.revealObjectId
+      : current.reveal_object_id;
 
   db.prepare(`
     UPDATE map_objects
     SET type = ?, name = ?, description = ?, dm_notes = ?, loot = ?, state = ?,
-        hidden = ?, x = ?, y = ?, size = ?
+        hidden = ?, x = ?, y = ?, size = ?, interaction_label = ?, trigger_message = ?,
+        trigger_state = ?, reveal_object_id = ?
     WHERE id = ?
-  `).run(type, name, description, dmNotes, loot, state, hidden, x, y, size, current.id);
+  `).run(
+    type, name, description, dmNotes, loot, state, hidden, x, y, size,
+    interactionLabel, triggerMessage, triggerState, revealObjectId, current.id
+  );
 
   const row = db.prepare("SELECT * FROM map_objects WHERE id = ?").get(current.id) as any;
   emitChange(campaignId, mapId);
@@ -177,6 +207,45 @@ mapObjectsRouter.post("/:id/maps/:mapId/objects/:objectId/image", objectUpload.s
   emitChange(campaignId, mapId);
   const row = db.prepare("SELECT * FROM map_objects WHERE id = ?").get(current.id) as any;
   res.json({ object: mapObject(row, true) });
+});
+
+mapObjectsRouter.post("/:id/maps/:mapId/objects/:objectId/interact", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+
+  const mapId = Number(req.params.mapId);
+  const current = db.prepare(`
+    SELECT o.* FROM map_objects o
+    JOIN maps m ON m.id = o.map_id
+    WHERE o.id = ? AND o.map_id = ? AND m.campaign_id = ?
+      AND (${isDMRole(role) ? "1 = 1" : "o.hidden = 0"})
+  `).get(Number(req.params.objectId), mapId, campaignId) as any;
+  if (!current) return res.status(404).json({ error: "Map object not found." });
+
+  if (current.trigger_state && STATES.has(current.trigger_state)) {
+    db.prepare("UPDATE map_objects SET state = ? WHERE id = ?").run(current.trigger_state, current.id);
+  }
+  if (current.reveal_object_id) {
+    db.prepare("UPDATE map_objects SET hidden = 0 WHERE id = ? AND map_id = ?")
+      .run(current.reveal_object_id, mapId);
+  }
+
+  emitChange(campaignId, mapId);
+  const message = String(current.trigger_message ?? "").trim();
+  if (message) {
+    getIo().to(room(campaignId)).emit("map-object:trigger", {
+      campaignId,
+      mapId,
+      objectId: current.id,
+      objectName: current.name,
+      message,
+      userName: user(req).display_name,
+    });
+  }
+
+  const row = db.prepare("SELECT * FROM map_objects WHERE id = ?").get(current.id) as any;
+  res.json({ object: mapObject(row, isDMRole(role)), message });
 });
 
 mapObjectsRouter.post("/:id/maps/:mapId/objects/:objectId/duplicate", (req, res) => {

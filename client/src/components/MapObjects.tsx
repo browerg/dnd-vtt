@@ -17,6 +17,10 @@ interface MapObject {
   y: number;
   size: number;
   imageUrl: string;
+  interactionLabel: string;
+  triggerMessage: string;
+  triggerState: string;
+  revealObjectId: number | null;
 }
 
 interface Props {
@@ -47,6 +51,7 @@ export default function MapObjects({ campaignId, mapId, isDM, gridSize }: Props)
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [triggerNotice, setTriggerNotice] = useState("");
   const socketRef = useRef<Socket | null>(null);
   const dragRef = useRef<{ id: number; offsetX: number; offsetY: number } | null>(null);
 
@@ -74,6 +79,11 @@ export default function MapObjects({ campaignId, mapId, isDM, gridSize }: Props)
     socket.emit("campaign:join", campaignId);
     socket.on("map-object:update", (message: { campaignId: number; mapId: number }) => {
       if (message.campaignId === campaignId && message.mapId === mapId) void load();
+    });
+    socket.on("map-object:trigger", (message: { campaignId: number; mapId: number; message: string }) => {
+      if (message.campaignId !== campaignId || message.mapId !== mapId) return;
+      setTriggerNotice(message.message);
+      window.setTimeout(() => setTriggerNotice(""), 4200);
     });
     return () => {
       socket.emit("campaign:leave", campaignId);
@@ -187,6 +197,23 @@ export default function MapObjects({ campaignId, mapId, isDM, gridSize }: Props)
     }
   };
 
+  const interactWithObject = async (object: MapObject) => {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await api<{ object: MapObject; message: string }>(
+        `/api/campaigns/${campaignId}/maps/${mapId}/objects/${object.id}/interact`,
+        { method: "POST" }
+      );
+      setViewing(result.object);
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const removeObject = async (object: MapObject) => {
     if (!confirm(`Delete ${object.name}?`)) return;
     await api(`/api/campaigns/${campaignId}/maps/${mapId}/objects/${object.id}`, {
@@ -282,6 +309,13 @@ export default function MapObjects({ campaignId, mapId, isDM, gridSize }: Props)
                   <label>Player description<textarea rows={3} value={selected.description} onChange={(e) => setSelected({ ...selected, description: e.target.value })} onBlur={() => patchObject(selected, { description: selected.description })} /></label>
                   <label>Loot<textarea rows={2} value={selected.loot} onChange={(e) => setSelected({ ...selected, loot: e.target.value })} onBlur={() => patchObject(selected, { loot: selected.loot })} /></label>
                   <label>DM notes<textarea rows={2} value={selected.dmNotes} onChange={(e) => setSelected({ ...selected, dmNotes: e.target.value })} onBlur={() => patchObject(selected, { dmNotes: selected.dmNotes })} /></label>
+                  <fieldset className="map-object-trigger-fields">
+                    <legend>Object trigger</legend>
+                    <label>Interaction button<input value={selected.interactionLabel} placeholder="Open chest" onChange={(e) => setSelected({ ...selected, interactionLabel: e.target.value })} onBlur={() => patchObject(selected, { interactionLabel: selected.interactionLabel })} /></label>
+                    <label>Announcement<textarea rows={2} value={selected.triggerMessage} placeholder="The lock snaps open..." onChange={(e) => setSelected({ ...selected, triggerMessage: e.target.value })} onBlur={() => patchObject(selected, { triggerMessage: selected.triggerMessage })} /></label>
+                    <label>Change state<select value={selected.triggerState} onChange={(e) => patchObject(selected, { triggerState: e.target.value })}><option value="">No state change</option>{STATES.map((state) => <option key={state}>{state}</option>)}</select></label>
+                    <label>Reveal hidden object<select value={selected.revealObjectId ?? ""} onChange={(e) => patchObject(selected, { revealObjectId: e.target.value ? Number(e.target.value) : null })}><option value="">Reveal nothing</option>{objects.filter((item) => item.id !== selected.id).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+                  </fieldset>
                   <label>Size<input type="range" min=".5" max="4" step=".25" value={selected.size} onChange={(e) => setSelected({ ...selected, size: Number(e.target.value) })} onPointerUp={() => patchObject(selected, { size: selected.size })} /></label>
                   <label className="map-object-check"><input type="checkbox" checked={selected.hidden} onChange={(e) => patchObject(selected, { hidden: e.target.checked })} /> Hidden from players</label>
                   <form className="stack" onSubmit={uploadImage}>
@@ -298,6 +332,7 @@ export default function MapObjects({ campaignId, mapId, isDM, gridSize }: Props)
             </div>
           )}
 
+          {triggerNotice && <div className="map-object-trigger-notice">{triggerNotice}</div>}
           {viewing && (
             <div className="map-object-modal-backdrop" onClick={() => setViewing(null)}>
               <article className="map-object-modal" onClick={(event) => event.stopPropagation()}>
@@ -306,7 +341,32 @@ export default function MapObjects({ campaignId, mapId, isDM, gridSize }: Props)
                 <span className="map-object-type">{viewing.type} · {viewing.state}</span>
                 <h2>{viewing.name}</h2>
                 <p>{viewing.description || "There is nothing obvious to learn from it yet."}</p>
-                {viewing.loot && <div className="map-object-loot"><strong>Contents</strong><p>{viewing.loot}</p></div>}
+                {viewing.interactionLabel && (
+                  <button
+                    type="button"
+                    className="map-object-interact-button"
+                    disabled={busy}
+                    onClick={() => interactWithObject(viewing)}
+                  >
+                    {busy ? "Working..." : viewing.interactionLabel}
+                  </button>
+                )}
+                {viewing.loot &&
+                  (isDM || viewing.type !== "chest" || viewing.state === "open") && (
+                    <div className="map-object-loot">
+                      <strong>Contents</strong>
+                      <p>{viewing.loot}</p>
+                    </div>
+                  )}
+                {viewing.type === "chest" &&
+                  viewing.loot &&
+                  !isDM &&
+                  viewing.state !== "open" && (
+                    <div className="map-object-loot is-locked">
+                      <strong>Contents</strong>
+                      <p>The contents are hidden until the chest is opened.</p>
+                    </div>
+                  )}
                 {isDM && viewing.dmNotes && <div className="map-object-dm-notes"><strong>DM notes</strong><p>{viewing.dmNotes}</p></div>}
               </article>
             </div>
