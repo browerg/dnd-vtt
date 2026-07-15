@@ -144,6 +144,19 @@ interface View {
   scale: number;
 }
 
+interface PreparedTokenDrag {
+  id: number;
+  name: string;
+  size: number;
+  imageUrl: string;
+  color: string;
+}
+
+interface PreparedTokenDropPreview extends PreparedTokenDrag {
+  x: number;
+  y: number;
+}
+
 export default function MapPage() {
   const { id } = useParams();
   const campaignId = Number(id);
@@ -178,6 +191,9 @@ export default function MapPage() {
   const mapIdRef = useRef<number | null>(null);
   const [pings, setPings] = useState<Ping[]>([]);
   const [view, setView] = useState<View>({ x: 0, y: 0, scale: 0.8 });
+  const [preparedTokenDropPreview, setPreparedTokenDropPreview] =
+    useState<PreparedTokenDropPreview | null>(null);
+  const [preparedTokenDropBusy, setPreparedTokenDropBusy] = useState(false);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
   const [customName, setCustomName] = useState("");
   const [customColor, setCustomColor] = useState("#b04545");
@@ -760,6 +776,72 @@ export default function MapPage() {
     socketRef.current?.emit("map:ping", { campaignId, x: p.x, y: p.y });
   };
 
+  const readPreparedTokenDrag = (event: React.DragEvent): PreparedTokenDrag | null => {
+    const raw = event.dataTransfer.getData("application/x-prepared-token");
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Number.isInteger(parsed.id) || !Number.isFinite(parsed.size)) return null;
+      return {
+        id: parsed.id,
+        name: String(parsed.name ?? "Prepared token"),
+        size: Math.min(4, Math.max(1, Number(parsed.size) || 1)),
+        imageUrl: String(parsed.imageUrl ?? ""),
+        color: String(parsed.color ?? "#a03636"),
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const onPreparedTokenDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!event.dataTransfer.types.includes("application/x-prepared-token")) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    const dragged = readPreparedTokenDrag(event);
+    if (!dragged || !map) return;
+
+    const point = toMapCoords(event.clientX, event.clientY);
+    let x = point.x;
+    let y = point.y;
+    if (map.gridOn) {
+      const half = (dragged.size * map.gridSize) / 2;
+      x = Math.round((x - half) / map.gridSize) * map.gridSize + half;
+      y = Math.round((y - half) / map.gridSize) * map.gridSize + half;
+    }
+    setPreparedTokenDropPreview({ ...dragged, x, y });
+  };
+
+  const onPreparedTokenDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+    const dragged = readPreparedTokenDrag(event);
+    if (!dragged || !map) return;
+    event.preventDefault();
+
+    const point = toMapCoords(event.clientX, event.clientY);
+    let x = point.x;
+    let y = point.y;
+    if (map.gridOn) {
+      const half = (dragged.size * map.gridSize) / 2;
+      x = Math.round((x - half) / map.gridSize) * map.gridSize + half;
+      y = Math.round((y - half) / map.gridSize) * map.gridSize + half;
+    }
+
+    setPreparedTokenDropBusy(true);
+    setError("");
+    try {
+      await api(`/api/campaigns/${campaignId}/prepared-tokens/${dragged.id}/deploy`, {
+        method: "POST",
+        body: JSON.stringify({ mapId: map.id, x, y }),
+      });
+      window.dispatchEvent(new Event("prepared-tokens:refresh"));
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setPreparedTokenDropBusy(false);
+      setPreparedTokenDropPreview(null);
+    }
+  };
+
   // ---- DM actions ----
   const uploadMap = async (e: FormEvent) => {
     e.preventDefault();
@@ -1238,6 +1320,13 @@ Choose Cancel to permanently delete it instead.`
         </div>
       )}
 
+      {preparedTokenDropPreview && (
+        <div className="prepared-token-drop-status">
+          {preparedTokenDropBusy
+            ? "Deploying token..."
+            : `Drop ${preparedTokenDropPreview.name} onto this square`}
+        </div>
+      )}
       <div className="map-layout">
         <div
           ref={viewportRef}
@@ -1248,6 +1337,13 @@ Choose Cancel to permanently delete it instead.`
           onPointerLeave={onPointerUp}
           onWheel={onWheel}
           onDoubleClick={onDoubleClick}
+          onDragOver={onPreparedTokenDragOver}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setPreparedTokenDropPreview(null);
+            }
+          }}
+          onDrop={onPreparedTokenDrop}
         >
           {!map ? (
             <div className="page-center muted">
@@ -1411,6 +1507,29 @@ Choose Cancel to permanently delete it instead.`
                   </div>
                 );
               })}
+              {preparedTokenDropPreview && (
+                <div
+                  className="prepared-token-drop-preview"
+                  style={{
+                    left:
+                      preparedTokenDropPreview.x -
+                      (preparedTokenDropPreview.size * g) / 2,
+                    top:
+                      preparedTokenDropPreview.y -
+                      (preparedTokenDropPreview.size * g) / 2,
+                    width: preparedTokenDropPreview.size * g,
+                    height: preparedTokenDropPreview.size * g,
+                    background: preparedTokenDropPreview.imageUrl
+                      ? "transparent"
+                      : preparedTokenDropPreview.color,
+                  }}
+                >
+                  {preparedTokenDropPreview.imageUrl && (
+                    <img src={preparedTokenDropPreview.imageUrl} alt="" draggable={false} />
+                  )}
+                  <span>{preparedTokenDropPreview.name}</span>
+                </div>
+              )}
               {map.fogOn && fogPath && (
                 <svg className="fog-overlay" width={imgSize.w} height={imgSize.h}>
                   <path d={fogPath} fill={isDM ? "rgba(8,6,14,0.45)" : "rgba(8,6,14,0.97)"} />

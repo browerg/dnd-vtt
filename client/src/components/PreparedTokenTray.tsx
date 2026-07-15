@@ -139,7 +139,28 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
         {tokens.length === 0 && <p className="muted small">No unused encounter tokens.</p>}
         <div className="prepared-token-list">
           {tokens.map((token) => (
-            <article className="prepared-token-card" key={token.id}>
+            <article
+              className="prepared-token-card"
+              key={token.id}
+              draggable={busy !== token.id}
+              title="Drag onto the map for exact placement"
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData(
+                  "application/x-prepared-token",
+                  JSON.stringify({
+                    id: token.id,
+                    name: token.name,
+                    size: token.size,
+                    imageUrl: token.imageUrl,
+                    color: token.color,
+                  })
+                );
+                event.dataTransfer.setData("text/plain", token.name);
+                event.currentTarget.classList.add("is-dragging");
+              }}
+              onDragEnd={(event) => event.currentTarget.classList.remove("is-dragging")}
+            >
               <div className="prepared-token-summary">
                 {token.imageUrl ? (
                   <img src={token.imageUrl} alt="" />
@@ -153,8 +174,9 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
               </div>
               <div className="prepared-token-actions">
                 <button disabled={busy === token.id} onClick={() => deploy(token)}>
-                  {busy === token.id ? "Deploying..." : "Deploy"}
+                  {busy === token.id ? "Deploying..." : "Deploy center"}
                 </button>
+                <span className="prepared-token-drag-hint">⋮⋮ Drag to map</span>
                 <button className="ghost mini" onClick={() => setEditing(token)}>Edit</button>
                 <button className="danger mini" onClick={() => remove(token)}>Delete</button>
               </div>
