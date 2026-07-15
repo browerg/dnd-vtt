@@ -12,8 +12,10 @@ import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
+import MapObjects from "../components/MapObjects";
 import YouTubeMapPlayer from "../components/YouTubeMapPlayer";
 import "./MapTokenArt.css";
+import "./MapObjects.css";
 import "./MapAudio.css";
 
 interface MapInfo {
@@ -1207,6 +1209,12 @@ export default function MapPage() {
                   ))}
                 </svg>
               )}
+              <MapObjects
+                campaignId={campaignId}
+                mapId={map.id}
+                isDM={isDM}
+                gridSize={g}
+              />
               {tokens.map((t) => {
                 const px = t.size * g;
                 const hasCutout = Boolean(t.imageUrl);

@@ -125,6 +125,24 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_maps_campaign ON maps (campaign_id);
 
+  CREATE TABLE IF NOT EXISTS map_objects (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    map_id      INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
+    type        TEXT NOT NULL DEFAULT 'custom',
+    name        TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    dm_notes    TEXT NOT NULL DEFAULT '',
+    loot        TEXT NOT NULL DEFAULT '',
+    state       TEXT NOT NULL DEFAULT 'closed',
+    hidden      INTEGER NOT NULL DEFAULT 0,
+    x           REAL NOT NULL DEFAULT 400,
+    y           REAL NOT NULL DEFAULT 300,
+    size        REAL NOT NULL DEFAULT 1,
+    image_path  TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_map_objects_map ON map_objects (map_id);
+
   CREATE TABLE IF NOT EXISTS tokens (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     map_id       INTEGER NOT NULL REFERENCES maps(id) ON DELETE CASCADE,
