@@ -146,3 +146,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.scene-director-placement-row {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px dashed rgba(220, 82, 108, .45);
+  border-radius: 10px;
+  background: rgba(220, 82, 108, .06);
+}
+
+.scene-director-placement-row button {
+  width: 100%;
+}
+
+.scene-director-placement-row span {
+  font-size: 12px;
+  text-align: center;
+}
+
+.scene-director-placement-row .placement-ready {
+  color: #9fe0b1;
+  font-weight: 700;
+}

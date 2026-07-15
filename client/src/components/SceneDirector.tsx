@@ -20,7 +20,23 @@ interface Scene {
 interface EncounterGroupOption {
   id: number;
   name: string;
-  members: { id: number; name: string }[];
+  members: {
+    id: number;
+    name: string;
+    imageUrl?: string;
+    color?: string;
+    size?: number;
+    offsetX?: number;
+    offsetY?: number;
+  }[];
+}
+
+interface ScenePlacementResult {
+  requestId: string;
+  sceneId?: number;
+  cancelled?: boolean;
+  x?: number;
+  y?: number;
 }
 
 interface Props {
@@ -36,6 +52,9 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
   const [busy, setBusy] = useState<number | "new" | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [newEncounterGroupId, setNewEncounterGroupId] = useState("");
+  const [newEncounterPlacement, setNewEncounterPlacement] = useState<{ x: number; y: number } | null>(null);
+  const placementRequestRef = useState(() => ({ current: "" }))[0];
 
   const load = useCallback(async () => {
     try {
@@ -57,6 +76,42 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
   useEffect(() => {
     if (isDM) void load();
   }, [isDM, load]);
+
+  useEffect(() => {
+    const onPlacementResult = (event: Event) => {
+      const detail = (event as CustomEvent<ScenePlacementResult>).detail;
+      if (!detail || detail.requestId !== placementRequestRef.current) return;
+      placementRequestRef.current = "";
+      setOpen(true);
+      if (detail.cancelled || !Number.isFinite(detail.x) || !Number.isFinite(detail.y)) return;
+
+      if (detail.sceneId) {
+        void api(`/api/campaigns/${campaignId}/maps/${mapId}/scenes/${detail.sceneId}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            encounterAnchorX: detail.x,
+            encounterAnchorY: detail.y,
+          }),
+        }).then(load).catch((e: any) => setError(e.message));
+      } else {
+        setNewEncounterPlacement({ x: Number(detail.x), y: Number(detail.y) });
+      }
+    };
+    window.addEventListener("scene-encounter:placement-result", onPlacementResult);
+    return () => window.removeEventListener("scene-encounter:placement-result", onPlacementResult);
+  }, [campaignId, mapId, load, placementRequestRef]);
+
+  const beginPlacement = (
+    group: EncounterGroupOption,
+    sceneId?: number
+  ) => {
+    const requestId = `scene-placement-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    placementRequestRef.current = requestId;
+    setOpen(false);
+    window.dispatchEvent(new CustomEvent("scene-encounter:placement-request", {
+      detail: { requestId, sceneId, group },
+    }));
+  };
 
   useEffect(() => {
     const socket = io();
@@ -89,12 +144,14 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
         body: JSON.stringify({
           name: data.get("name"),
           announcement: data.get("announcement"),
-          encounterGroupId: Number(data.get("encounterGroupId")) || null,
-          encounterAnchorX: Number(data.get("encounterAnchorX")) || 4,
-          encounterAnchorY: Number(data.get("encounterAnchorY")) || 4,
+          encounterGroupId: Number(newEncounterGroupId) || null,
+          encounterAnchorX: newEncounterPlacement?.x ?? 4,
+          encounterAnchorY: newEncounterPlacement?.y ?? 4,
         }),
       });
       form.reset();
+      setNewEncounterGroupId("");
+      setNewEncounterPlacement(null);
       await load();
     } catch (e: any) {
       setError(e.message);
@@ -150,21 +207,24 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
     );
     if (picked === null) return;
     const groupId = Number(picked) || null;
-    let anchorX = scene.encounterAnchorX;
-    let anchorY = scene.encounterAnchorY;
-    if (groupId) {
-      anchorX = Number(prompt("Horizontal grid coordinate", String(anchorX)) ?? anchorX);
-      anchorY = Number(prompt("Vertical grid coordinate", String(anchorY)) ?? anchorY);
-    }
+
     await api(`/api/campaigns/${campaignId}/maps/${mapId}/scenes/${scene.id}`, {
       method: "PUT",
-      body: JSON.stringify({
-        encounterGroupId: groupId,
-        encounterAnchorX: anchorX,
-        encounterAnchorY: anchorY,
-      }),
+      body: JSON.stringify({ encounterGroupId: groupId }),
     });
-    await load();
+
+    if (!groupId) {
+      await load();
+      return;
+    }
+
+    const group = encounterGroups.find((candidate) => candidate.id === groupId);
+    if (!group) {
+      setError("That prepared encounter group could not be found.");
+      await load();
+      return;
+    }
+    beginPlacement(group, scene.id);
   };
 
   const recapture = async (scene: Scene) => {
@@ -225,7 +285,13 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
               </label>
               <label>
                 Prepared encounter group
-                <select name="encounterGroupId" defaultValue="">
+                <select
+                  value={newEncounterGroupId}
+                  onChange={(event) => {
+                    setNewEncounterGroupId(event.target.value);
+                    setNewEncounterPlacement(null);
+                  }}
+                >
                   <option value="">None — use only captured map tokens</option>
                   {encounterGroups.map((group) => (
                     <option key={group.id} value={group.id}>
@@ -234,21 +300,35 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
                   ))}
                 </select>
               </label>
-              <div className="scene-director-anchor-grid">
-                <label>
-                  Group grid X
-                  <input name="encounterAnchorX" type="number" step=".5" defaultValue="4" />
-                </label>
-                <label>
-                  Group grid Y
-                  <input name="encounterAnchorY" type="number" step=".5" defaultValue="4" />
-                </label>
-              </div>
+              {newEncounterGroupId && (
+                <div className="scene-director-placement-row">
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={() => {
+                      const group = encounterGroups.find(
+                        (candidate) => candidate.id === Number(newEncounterGroupId)
+                      );
+                      if (group) beginPlacement(group);
+                    }}
+                  >
+                    {newEncounterPlacement ? "Change placement on map" : "Choose placement on map"}
+                  </button>
+                  <span className={newEncounterPlacement ? "placement-ready" : "muted"}>
+                    {newEncounterPlacement ? "✓ Placement selected" : "Click the map where the group should appear"}
+                  </span>
+                </div>
+              )}
               <label>
                 Activation announcement
                 <textarea name="announcement" rows={2} placeholder="A howl tears through the forest..." />
               </label>
-              <button disabled={busy === "new"}>
+              <button
+                disabled={
+                  busy === "new" ||
+                  (Boolean(newEncounterGroupId) && !newEncounterPlacement)
+                }
+              >
                 {busy === "new" ? "Saving..." : "Save current encounter"}
               </button>
             </form>
@@ -268,8 +348,7 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
                   </div>
                   {scene.encounterGroupName && (
                     <p className="scene-director-linked-encounter">
-                      Linked encounter: <strong>{scene.encounterGroupName}</strong> · anchor{" "}
-                      {scene.encounterAnchorX}, {scene.encounterAnchorY}
+                      Linked encounter: <strong>{scene.encounterGroupName}</strong> · placement saved
                     </p>
                   )}
                   {scene.announcement && <p className="scene-director-announcement">“{scene.announcement}”</p>}
@@ -278,6 +357,19 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
                     <button className="ghost mini" onClick={() => rename(scene)}>Rename</button>
                     <button className="ghost mini" onClick={() => editAnnouncement(scene)}>Announcement</button>
                     <button className="ghost mini" onClick={() => editEncounterGroup(scene)}>Encounter</button>
+                    {scene.encounterGroupId && (
+                      <button
+                        className="ghost mini"
+                        onClick={() => {
+                          const group = encounterGroups.find(
+                            (candidate) => candidate.id === scene.encounterGroupId
+                          );
+                          if (group) beginPlacement(group, scene.id);
+                        }}
+                      >
+                        Change placement
+                      </button>
+                    )}
                     <button className="ghost mini" onClick={() => duplicate(scene)}>Duplicate</button>
                     <button className="danger mini" onClick={() => remove(scene)}>Delete</button>
                   </div>

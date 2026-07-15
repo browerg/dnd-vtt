@@ -302,3 +302,25 @@
     animation: none;
   }
 }
+
+
+.map-viewport.scene-placement-active {
+  cursor: crosshair;
+}
+
+.map-viewport.scene-placement-active::after {
+  content: "Click to save encounter placement";
+  position: absolute;
+  z-index: 90;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 215, 105, .55);
+  border-radius: 999px;
+  background: rgba(8, 7, 12, .92);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}

@@ -176,6 +176,12 @@ interface PreparedEncounterDropPreview extends PreparedEncounterDrag {
   y: number;
 }
 
+interface SceneEncounterPlacementRequest {
+  requestId: string;
+  sceneId?: number;
+  group: PreparedEncounterDrag;
+}
+
 export default function MapPage() {
   const { id } = useParams();
   const campaignId = Number(id);
@@ -215,6 +221,8 @@ export default function MapPage() {
   const [preparedEncounterDropPreview, setPreparedEncounterDropPreview] =
     useState<PreparedEncounterDropPreview | null>(null);
   const [preparedTokenDropBusy, setPreparedTokenDropBusy] = useState(false);
+  const [sceneEncounterPlacement, setSceneEncounterPlacement] =
+    useState<SceneEncounterPlacementRequest | null>(null);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
   const [customName, setCustomName] = useState("");
   const [customColor, setCustomColor] = useState("#b04545");
@@ -630,8 +638,76 @@ export default function MapPage() {
     setFog({ cells: [] });
   };
 
+  useEffect(() => {
+    const onPlacementRequest = (event: Event) => {
+      const detail = (event as CustomEvent<SceneEncounterPlacementRequest>).detail;
+      if (!detail?.requestId || !detail.group) return;
+      setTool("move");
+      setSelectedTokenId(null);
+      setPreparedTokenDropPreview(null);
+      setSceneEncounterPlacement(detail);
+      setPreparedEncounterDropPreview({
+        ...detail.group,
+        x: (imgSize.w || (map?.gridSize ?? 70) * 8 || 560) / 2,
+        y: (imgSize.h || (map?.gridSize ?? 70) * 6 || 420) / 2,
+      });
+    };
+    window.addEventListener("scene-encounter:placement-request", onPlacementRequest);
+    return () => window.removeEventListener("scene-encounter:placement-request", onPlacementRequest);
+  }, [imgSize.h, imgSize.w, map?.gridSize]);
+
+  useEffect(() => {
+    if (!sceneEncounterPlacement) return;
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      window.dispatchEvent(new CustomEvent("scene-encounter:placement-result", {
+        detail: { requestId: sceneEncounterPlacement.requestId, sceneId: sceneEncounterPlacement.sceneId, cancelled: true },
+      }));
+      setSceneEncounterPlacement(null);
+      setPreparedEncounterDropPreview(null);
+    };
+    window.addEventListener("keydown", cancel);
+    return () => window.removeEventListener("keydown", cancel);
+  }, [sceneEncounterPlacement]);
+
+  const cancelSceneEncounterPlacement = () => {
+    if (!sceneEncounterPlacement) return;
+    window.dispatchEvent(new CustomEvent("scene-encounter:placement-result", {
+      detail: {
+        requestId: sceneEncounterPlacement.requestId,
+        sceneId: sceneEncounterPlacement.sceneId,
+        cancelled: true,
+      },
+    }));
+    setSceneEncounterPlacement(null);
+    setPreparedEncounterDropPreview(null);
+  };
+
   // ---- pointer handlers ----
   const onPointerDown = (e: React.PointerEvent) => {
+    if (sceneEncounterPlacement) {
+      if (e.button !== 0 || !map) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const point = toMapCoords(e.clientX, e.clientY);
+      let x = point.x;
+      let y = point.y;
+      if (map.gridOn) {
+        x = Math.round(x / map.gridSize) * map.gridSize;
+        y = Math.round(y / map.gridSize) * map.gridSize;
+      }
+      window.dispatchEvent(new CustomEvent("scene-encounter:placement-result", {
+        detail: {
+          requestId: sceneEncounterPlacement.requestId,
+          sceneId: sceneEncounterPlacement.sceneId,
+          x: x / map.gridSize,
+          y: y / map.gridSize,
+        },
+      }));
+      setSceneEncounterPlacement(null);
+      setPreparedEncounterDropPreview(null);
+      return;
+    }
     if (e.button !== 0) return;
     try {
       (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -692,6 +768,21 @@ export default function MapPage() {
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (sceneEncounterPlacement && map) {
+      const point = toMapCoords(e.clientX, e.clientY);
+      let x = point.x;
+      let y = point.y;
+      if (map.gridOn) {
+        x = Math.round(x / map.gridSize) * map.gridSize;
+        y = Math.round(y / map.gridSize) * map.gridSize;
+      }
+      setPreparedEncounterDropPreview({
+        ...sceneEncounterPlacement.group,
+        x,
+        y,
+      });
+      return;
+    }
     const d = dragRef.current;
     if (!d) return;
     if (d.kind === "ruler") {
@@ -1423,23 +1514,30 @@ Choose Cancel to permanently delete it instead.`
 
       {(preparedTokenDropPreview || preparedEncounterDropPreview) && (
         <div className="prepared-token-drop-status">
-          {preparedTokenDropBusy
-            ? "Deploying..."
-            : preparedEncounterDropPreview
-              ? `Drop encounter: ${preparedEncounterDropPreview.name}`
-              : `Drop ${preparedTokenDropPreview?.name} onto this square`}
+          {sceneEncounterPlacement
+            ? `Choose scene placement: ${sceneEncounterPlacement.group.name} · click to save · Esc/right-click cancels`
+            : preparedTokenDropBusy
+              ? "Deploying..."
+              : preparedEncounterDropPreview
+                ? `Drop encounter: ${preparedEncounterDropPreview.name}`
+                : `Drop ${preparedTokenDropPreview?.name} onto this square`}
         </div>
       )}
       <div className="map-layout">
         <div
           ref={viewportRef}
-          className="map-viewport"
+          className={`map-viewport${sceneEncounterPlacement ? " scene-placement-active" : ""}`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
           onWheel={onWheel}
-          onDoubleClick={onDoubleClick}
+          onDoubleClick={sceneEncounterPlacement ? undefined : onDoubleClick}
+          onContextMenu={(event) => {
+            if (!sceneEncounterPlacement) return;
+            event.preventDefault();
+            cancelSceneEncounterPlacement();
+          }}
           onDragOver={onPreparedTokenDragOver}
           onDragLeave={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
