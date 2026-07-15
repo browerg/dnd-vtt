@@ -51,6 +51,26 @@ const tokenImageUpload = multer({
   fileFilter: (_req, file, cb) => cb(null, file.mimetype in TOKEN_IMAGE_TYPES),
 });
 
+const MAP_AUDIO_TYPES: Record<string, string> = {
+  "audio/mpeg": ".mp3",
+  "audio/mp3": ".mp3",
+  "audio/ogg": ".ogg",
+  "audio/wav": ".wav",
+  "audio/x-wav": ".wav",
+  "audio/webm": ".webm",
+  "audio/mp4": ".m4a",
+};
+
+const mapAudioUpload = multer({
+  storage: multer.diskStorage({
+    destination: uploadsDir,
+    filename: (_req, file, cb) =>
+      cb(null, `map-audio-${randomBytes(12).toString("hex")}${MAP_AUDIO_TYPES[file.mimetype] ?? ".mp3"}`),
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => cb(null, file.mimetype in MAP_AUDIO_TYPES),
+});
+
 export interface TokenPayload {
   id: number;
   mapId: number;
@@ -138,6 +158,8 @@ const mapRow = (r: any) => ({
   imageUrl: r.image_path ? `/uploads/${path.basename(r.image_path)}` : "",
   isVideo: /\.(mp4|webm)$/i.test(r.image_path ?? ""),
   youtubeId: r.youtube_id ?? "",
+  audioUrl: r.music_path ? `/uploads/${path.basename(r.music_path)}` : "",
+  youtubeAudio: !!r.youtube_audio,
   gridSize: r.grid_size,
   gridOn: !!r.grid_on,
   active: !!r.active,
@@ -215,17 +237,68 @@ mapsRouter.put("/:id/maps/:mapId", (req, res) => {
   const b = req.body ?? {};
   const gridSize = Number.isInteger(b.gridSize) && b.gridSize >= 10 ? b.gridSize : map.grid_size;
   const gridOn = typeof b.gridOn === "boolean" ? (b.gridOn ? 1 : 0) : map.grid_on;
+  const youtubeAudio =
+    typeof b.youtubeAudio === "boolean" ? (b.youtubeAudio ? 1 : 0) : map.youtube_audio;
   const name = typeof b.name === "string" && b.name.trim() ? b.name.trim() : map.name;
-  db.prepare("UPDATE maps SET name = ?, grid_size = ?, grid_on = ? WHERE id = ?").run(
-    name,
-    gridSize,
-    gridOn,
-    map.id
-  );
+  db.prepare(
+    "UPDATE maps SET name = ?, grid_size = ?, grid_on = ?, youtube_audio = ? WHERE id = ?"
+  ).run(name, gridSize, gridOn, youtubeAudio, map.id);
   if (b.active === true) {
     db.prepare("UPDATE maps SET active = 0 WHERE campaign_id = ?").run(campaignId);
     db.prepare("UPDATE maps SET active = 1 WHERE id = ?").run(map.id);
   }
+  broadcastMapChange(campaignId);
+  res.json({ ok: true });
+});
+
+mapsRouter.post(
+  "/:id/maps/:mapId/music",
+  mapAudioUpload.single("audio"),
+  async (req, res) => {
+    const discard = () => req.file?.path && unlink(req.file.path).catch(() => {});
+    const campaignId = Number(req.params.id);
+    const role = memberRole(campaignId, user(req).id);
+    if (!role) {
+      await discard();
+      return res.status(404).json({ error: "Campaign not found." });
+    }
+    if (!isDMRole(role)) {
+      await discard();
+      return res.status(403).json({ error: "Only the DM can change map music." });
+    }
+    const map = db
+      .prepare("SELECT * FROM maps WHERE id = ? AND campaign_id = ?")
+      .get(Number(req.params.mapId), campaignId) as any;
+    if (!map) {
+      await discard();
+      return res.status(404).json({ error: "Map not found." });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: "Choose an audio file under 50 MB." });
+    }
+    db.prepare("UPDATE maps SET music_path = ? WHERE id = ?").run(req.file.path, map.id);
+    if (map.music_path && map.music_path !== req.file.path) {
+      await unlink(map.music_path).catch(() => {});
+    }
+    broadcastMapChange(campaignId);
+    const updated = db.prepare("SELECT * FROM maps WHERE id = ?").get(map.id) as any;
+    res.json({ map: mapRow(updated) });
+  }
+);
+
+mapsRouter.delete("/:id/maps/:mapId/music", async (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) {
+    return res.status(403).json({ error: "Only the DM can change map music." });
+  }
+  const map = db
+    .prepare("SELECT * FROM maps WHERE id = ? AND campaign_id = ?")
+    .get(Number(req.params.mapId), campaignId) as any;
+  if (!map) return res.status(404).json({ error: "Map not found." });
+  db.prepare("UPDATE maps SET music_path = '' WHERE id = ?").run(map.id);
+  if (map.music_path) await unlink(map.music_path).catch(() => {});
   broadcastMapChange(campaignId);
   res.json({ ok: true });
 });

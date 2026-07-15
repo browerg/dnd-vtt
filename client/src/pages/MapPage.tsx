@@ -12,7 +12,9 @@ import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
+import YouTubeMapPlayer from "../components/YouTubeMapPlayer";
 import "./MapTokenArt.css";
+import "./MapAudio.css";
 
 interface MapInfo {
   id: number;
@@ -21,6 +23,8 @@ interface MapInfo {
   imageUrl: string;
   isVideo: boolean;
   youtubeId: string;
+  audioUrl: string;
+  youtubeAudio: boolean;
   gridSize: number;
   gridOn: boolean;
   active: boolean;
@@ -167,6 +171,18 @@ export default function MapPage() {
   const [customColor, setCustomColor] = useState("#b04545");
   const [customImagePreview, setCustomImagePreview] = useState("");
   const [tokenArtBusy, setTokenArtBusy] = useState<number | null>(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [audioVolume, setAudioVolume] = useState(() => {
+    const saved = Number(localStorage.getItem("battle-map-volume"));
+    return Number.isFinite(saved) ? Math.min(1, Math.max(0, saved)) : 0.2;
+  });
+  const [youtubeSoundEnabled, setYoutubeSoundEnabled] = useState(false);
+  const [youtubeVolume, setYoutubeVolume] = useState(() => {
+    const saved = Number(localStorage.getItem("battle-map-youtube-volume"));
+    return Number.isFinite(saved) ? Math.min(1, Math.max(0, saved)) : 0.2;
+  });
+  const [mapAudioBusy, setMapAudioBusy] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [tool, setTool] = useState<Tool>("move");
@@ -205,6 +221,39 @@ export default function MapPage() {
     [customImagePreview]
   );
 
+
+  useEffect(() => {
+    setAudioPlaying(false);
+    setYoutubeSoundEnabled(false);
+  }, [map?.id]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = audioVolume;
+    localStorage.setItem("battle-map-volume", String(audioVolume));
+  }, [audioVolume, map?.audioUrl]);
+
+  useEffect(() => {
+    localStorage.setItem("battle-map-youtube-volume", String(youtubeVolume));
+  }, [youtubeVolume]);
+
+  const toggleMapMusic = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setError("");
+    try {
+      if (audio.paused) {
+        await audio.play();
+        setAudioPlaying(true);
+      } else {
+        audio.pause();
+        setAudioPlaying(false);
+      }
+    } catch {
+      setError("Your browser blocked audio. Click Play music again after interacting with the page.");
+    }
+  };
 
   const isDM = role === "dm" || role === "co-dm";
   const canRoll = role !== "" && role !== "spectator";
@@ -643,6 +692,51 @@ export default function MapPage() {
     form.reset();
   };
 
+  const uploadMapMusic = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!map) return;
+    const form = event.currentTarget as HTMLFormElement;
+    const file = (form.elements.namedItem("mapAudio") as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      setError("Map music must be under 50 MB.");
+      return;
+    }
+    const body = new FormData();
+    body.append("audio", file);
+    setMapAudioBusy(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/campaigns/${campaignId}/maps/${map.id}/music`,
+        { method: "POST", body }
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error ?? "Music upload failed.");
+      setMap(result.map);
+      form.reset();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setMapAudioBusy(false);
+    }
+  };
+
+  const removeMapMusic = async () => {
+    if (!map) return;
+    setMapAudioBusy(true);
+    setError("");
+    try {
+      await api(`/api/campaigns/${campaignId}/maps/${map.id}/music`, { method: "DELETE" });
+      setMap((current) => (current ? { ...current, audioUrl: "" } : current));
+      setAudioPlaying(false);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setMapAudioBusy(false);
+    }
+  };
+
   const patchMap = (body: Record<string, unknown>) =>
     map && api(`/api/campaigns/${campaignId}/maps/${map.id}`, { method: "PUT", body: JSON.stringify(body) });
 
@@ -987,6 +1081,56 @@ export default function MapPage() {
         <span className="muted zoom-label">{Math.round(view.scale * 100)}%</span>
       </header>
 
+      {map?.audioUrl && (
+        <div className="battle-map-audio-dock">
+          <audio
+            ref={audioRef}
+            src={map.audioUrl}
+            loop
+            preload="metadata"
+            onPlay={() => setAudioPlaying(true)}
+            onPause={() => setAudioPlaying(false)}
+          />
+          <button type="button" className="ghost mini" onClick={toggleMapMusic}>
+            {audioPlaying ? "Pause music" : "Play music"}
+          </button>
+          <label>
+            <span>Volume</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={audioVolume}
+              onChange={(event) => setAudioVolume(Number(event.target.value))}
+            />
+          </label>
+        </div>
+      )}
+      {map?.youtubeId && map.youtubeAudio && (
+        <div className="battle-map-youtube-audio-dock">
+          <button
+            type="button"
+            className="ghost mini"
+            onClick={() => setYoutubeSoundEnabled((enabled) => !enabled)}
+          >
+            {youtubeSoundEnabled ? "Mute YouTube" : "Enable YouTube sound"}
+          </button>
+          <label>
+            <span>Volume</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={youtubeVolume}
+              onChange={(event) => setYoutubeVolume(Number(event.target.value))}
+            />
+            <strong>{Math.round(youtubeVolume * 100)}%</strong>
+          </label>
+        </div>
+      )}
+
       <div className="map-layout">
         <div
           ref={viewportRef}
@@ -1008,14 +1152,12 @@ export default function MapPage() {
               style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
             >
               {map.youtubeId ? (
-                <div className="yt-stage" style={{ width: 1920, height: 1080 }}>
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${map.youtubeId}?autoplay=1&mute=1&loop=1&playlist=${map.youtubeId}&controls=0&rel=0&playsinline=1&modestbranding=1`}
-                    title={map.name}
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen={false}
-                  />
-                </div>
+                <YouTubeMapPlayer
+                  videoId={map.youtubeId}
+                  title={map.name}
+                  soundEnabled={map.youtubeAudio && youtubeSoundEnabled}
+                  volume={youtubeVolume}
+                />
               ) : map.isVideo ? (
                 <video
                   src={map.imageUrl}
@@ -1676,6 +1818,53 @@ export default function MapPage() {
                     )}
                     <button className="ghost">Place token</button>
                   </form>
+                </section>
+              )}
+              {map && (
+                <section className="map-audio-settings">
+                  <h4>Map audio</h4>
+                  <form className="stack" onSubmit={uploadMapMusic}>
+                    <label className="small">
+                      Looping music or ambience
+                      <input
+                        name="mapAudio"
+                        type="file"
+                        accept="audio/mpeg,audio/ogg,audio/wav,audio/webm,audio/mp4"
+                        required
+                      />
+                    </label>
+                    <button className="ghost mini" disabled={mapAudioBusy}>
+                      {mapAudioBusy ? "Uploading..." : map.audioUrl ? "Replace music" : "Upload music"}
+                    </button>
+                  </form>
+                  {map.audioUrl && (
+                    <button
+                      type="button"
+                      className="ghost mini map-audio-remove"
+                      disabled={mapAudioBusy}
+                      onClick={removeMapMusic}
+                    >
+                      Remove uploaded music
+                    </button>
+                  )}
+                  {map.youtubeId && (
+                    <label className="map-youtube-audio-toggle">
+                      <input
+                        type="checkbox"
+                        checked={map.youtubeAudio}
+                        onChange={(event) => {
+                          const youtubeAudio = event.target.checked;
+                          setMap((current) => (current ? { ...current, youtubeAudio } : current));
+                          setYoutubeSoundEnabled(false);
+                          patchMap({ youtubeAudio });
+                        }}
+                      />
+                      Use audio from this YouTube map
+                    </label>
+                  )}
+                  <p className="muted small map-audio-note">
+                    Each player must click once before their browser allows sound.
+                  </p>
                 </section>
               )}
               <section>
