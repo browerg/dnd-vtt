@@ -21,6 +21,7 @@ import "./MapObjects.css";
 import "./SceneDirector.css";
 import "./PreparedTokenTray.css";
 import "./MapAudio.css";
+import "./DMTopPanels.css";
 
 interface MapInfo {
   id: number;
@@ -221,6 +222,7 @@ export default function MapPage() {
   const [preparedEncounterDropPreview, setPreparedEncounterDropPreview] =
     useState<PreparedEncounterDropPreview | null>(null);
   const [preparedTokenDropBusy, setPreparedTokenDropBusy] = useState(false);
+  const [dmPanel, setDmPanel] = useState<"maps" | "tokens" | "audio" | null>(null);
   const [sceneEncounterPlacement, setSceneEncounterPlacement] =
     useState<SceneEncounterPlacementRequest | null>(null);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
@@ -1451,6 +1453,13 @@ Choose Cancel to permanently delete it instead.`
             </select>
           </>
         )}
+        {isDM && (
+          <div className="dm-top-panel-buttons">
+            <button type="button" className={dmPanel === "maps" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "maps" ? null : "maps")}>🗺️ Maps</button>
+            <button type="button" className={dmPanel === "tokens" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "tokens" ? null : "tokens")}>＋ Add Token</button>
+            <button type="button" className={dmPanel === "audio" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "audio" ? null : "audio")}>🔊 Audio</button>
+          </div>
+        )}
         <CampaignThemePicker
           campaignId={campaignId}
           role={role}
@@ -1461,6 +1470,240 @@ Choose Cancel to permanently delete it instead.`
         />
         <span className="muted zoom-label">{Math.round(view.scale * 100)}%</span>
       </header>
+
+      {isDM && dmPanel && (
+        <div className="dm-top-panel-backdrop" onClick={() => setDmPanel(null)}>
+          <section className="dm-top-panel" onClick={(event) => event.stopPropagation()}>
+            <div className="row-between dm-top-panel-heading">
+              <div><span className="muted small">DM setup</span><h2>{dmPanel === "maps" ? "Maps" : dmPanel === "tokens" ? "Add Tokens" : "Audio & Atmosphere"}</h2></div>
+              <button type="button" className="ghost mini" onClick={() => setDmPanel(null)}>✕</button>
+            </div>
+            {error && <div className="error">{error}</div>}
+            {dmPanel === "maps" && <div className="dm-top-panel-grid">
+              <section>
+                <h4>Maps</h4>
+                {maps.map((m) => (
+                  <div key={m.id} className="row-between sidebar-row">
+                    <button
+                      className={`map-pick${m.active ? " active" : ""}`}
+                      onClick={() =>
+                        !m.active &&
+                        api(`/api/campaigns/${campaignId}/maps/${m.id}`, {
+                          method: "PUT",
+                          body: JSON.stringify({ active: true }),
+                        })
+                      }
+                    >
+                      {m.active ? "▶ " : ""}
+                      {m.name}
+                      {m.youtubeId ? " ▶️" : m.isVideo ? " 🎞️" : ""}
+                    </button>
+                    <button
+                      className="ghost mini"
+                      title="Delete map"
+                      onClick={async () => {
+                        if (!window.confirm(`Delete "${m.name}"? Its tokens and fog go with it.`)) return;
+                        setError("");
+                        try {
+                          await api(`/api/campaigns/${campaignId}/maps/${m.id}`, { method: "DELETE" });
+                        } catch (e: any) {
+                          setError(e.message);
+                        }
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </section>
+              <section>
+                <h4>Upload map</h4>
+                <form onSubmit={uploadMap} className="stack">
+                  <input name="mapname" placeholder="Map name" />
+                  <input
+                    name="image"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
+                    required
+                  />
+                  <button className="ghost">Upload</button>
+                </form>
+                <form
+                  className="stack yt-form"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const url = (form.elements.namedItem("yturl") as HTMLInputElement).value;
+                    setError("");
+                    try {
+                      await api(`/api/campaigns/${campaignId}/maps`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                          youtubeUrl: url,
+                          name: (form.elements.namedItem("ytname") as HTMLInputElement).value,
+                        }),
+                      });
+                      form.reset();
+                    } catch (err: any) {
+                      setError(err.message);
+                    }
+                  }}
+                >
+                  <input name="ytname" placeholder="Map name" />
+                  <input name="yturl" placeholder="…or paste a YouTube link" required />
+                  <button className="ghost">Add YouTube map</button>
+                </form>
+                <p className="muted small">
+                  Heads up: YouTube maps can show ads mid-session — uploaded files never do.
+                </p>
+              </section>
+            </div>}
+            {dmPanel === "tokens" && map && <div className="dm-token-panel-grid">
+              {map && (
+                <PreparedTokenTray
+                  campaignId={campaignId}
+                  mapId={map.id}
+                  monster={monsterToPrepare}
+                  onCloseMonster={() => setMonsterToPrepare(null)}
+                />
+              )}
+              {map && (
+                <section>
+                  <h4>Monsters</h4>
+                  <input
+                    placeholder="Search monsters (SRD + custom)…"
+                    value={monsterQuery}
+                    onChange={(e) => setMonsterQuery(e.target.value)}
+                  />
+                  <Link to={`/campaigns/${campaignId}/bestiary`} className="muted small">
+                    Open bestiary — create &amp; edit monsters
+                  </Link>
+                  <div className="monster-hits">
+                    {monsterHits.map((m) => (
+                      <div key={m.id} className="row-between sidebar-row">
+                        <span className="mon-hit">
+                          {m.name}{" "}
+                          <span className="muted">
+                            {m.system === "remnant" ? `Threat ${m.threat}` : `CR ${fmtCr(m.cr)}`}
+                          </span>
+                        </span>
+                        <button className="ghost mini" onClick={() => prepareMonster(m)}>
+                          Prepare
+                        </button>
+                      </div>
+                    ))}
+                    {monsterQuery.trim() && monsterHits.length === 0 && (
+                      <p className="muted small">No monsters match.</p>
+                    )}
+                  </div>
+                </section>
+              )}
+              {map && (
+                <section>
+                  <h4>Custom actor</h4>
+                  <form onSubmit={placeCustom} className="stack custom-token-form">
+                    <div className="row-between">
+                      <input
+                        placeholder="Bandit, summon, NPC..."
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        required
+                      />
+                      <input
+                        type="color"
+                        className="color-pick"
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                        title="Fallback token color"
+                      />
+                    </div>
+                    <label className="small">
+                      Footprint
+                      <select name="tokenSize" defaultValue="1">
+                        <option value="1">1 square</option>
+                        <option value="2">2 x 2</option>
+                        <option value="3">3 x 3</option>
+                        <option value="4">4 x 4</option>
+                      </select>
+                    </label>
+                    <label className="custom-token-image-pick small">
+                      Transparent PNG or image (optional)
+                      <input
+                        name="tokenImage"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(event) => chooseCustomImage(event.target.files?.[0])}
+                      />
+                    </label>
+                    {customImagePreview && (
+                      <div className="custom-token-preview">
+                        <img src={customImagePreview} alt="New token preview" />
+                        <span>Cutout preview</span>
+                      </div>
+                    )}
+                    <button className="ghost">Place actor</button>
+                  </form>
+                </section>
+              )}
+            </div>}
+            {dmPanel === "audio" && map && <div className="dm-top-panel-grid dm-audio-panel">
+              {map && (
+                <section className="map-audio-settings">
+                  <h4>Map audio</h4>
+                  <form className="stack" onSubmit={uploadMapMusic}>
+                    <label className="small">
+                      Looping music or ambience
+                      <input
+                        name="mapAudio"
+                        type="file"
+                        accept="audio/mpeg,audio/ogg,audio/wav,audio/webm,audio/mp4"
+                        required
+                      />
+                    </label>
+                    <button className="ghost mini" disabled={mapAudioBusy}>
+                      {mapAudioBusy ? "Uploading..." : map.audioUrl ? "Replace music" : "Upload music"}
+                    </button>
+                  </form>
+                  {map.audioUrl && (
+                    <button
+                      type="button"
+                      className="ghost mini map-audio-remove"
+                      disabled={mapAudioBusy}
+                      onClick={removeMapMusic}
+                    >
+                      Remove uploaded music
+                    </button>
+                  )}
+                  {map.youtubeId && (
+                    <label className="map-youtube-audio-toggle">
+                      <input
+                        type="checkbox"
+                        checked={map.youtubeAudio}
+                        onChange={(event) => {
+                          const youtubeAudio = event.target.checked;
+                          setMap((current) => (current ? { ...current, youtubeAudio } : current));
+                          setYoutubeSoundEnabled(false);
+                          patchMap({ youtubeAudio });
+                        }}
+                      />
+                      Use audio from this YouTube map
+                    </label>
+                  )}
+                  <p className="muted small map-audio-note">
+                    Each player must click once before their browser allows sound.
+                  </p>
+                </section>
+              )}
+              <section>
+                <h4>Playback</h4>
+                {map.audioUrl && <button type="button" className="ghost" onClick={toggleMapMusic}>{audioPlaying ? "Pause uploaded audio" : "Play uploaded audio"}</button>}
+                {map.audioUrl && <label className="dm-panel-slider"><span>Uploaded volume</span><input type="range" min="0" max="1" step="0.05" value={audioVolume} onChange={(event) => setAudioVolume(Number(event.target.value))} /></label>}
+                {map.youtubeId && map.youtubeAudio && <label className="dm-panel-slider"><span>YouTube volume</span><input type="range" min="0" max="1" step="0.05" value={youtubeVolume} onChange={(event) => setYoutubeVolume(Number(event.target.value))} /></label>}
+              </section>
+            </div>}
+          </section>
+        </div>
+      )}
 
       {map?.audioUrl && (
         <div className="battle-map-audio-dock">
@@ -2188,216 +2431,6 @@ Choose Cancel to permanently delete it instead.`
           </section>
           {isDM && (
             <>
-              <section>
-                <h4>Maps</h4>
-                {maps.map((m) => (
-                  <div key={m.id} className="row-between sidebar-row">
-                    <button
-                      className={`map-pick${m.active ? " active" : ""}`}
-                      onClick={() =>
-                        !m.active &&
-                        api(`/api/campaigns/${campaignId}/maps/${m.id}`, {
-                          method: "PUT",
-                          body: JSON.stringify({ active: true }),
-                        })
-                      }
-                    >
-                      {m.active ? "▶ " : ""}
-                      {m.name}
-                      {m.youtubeId ? " ▶️" : m.isVideo ? " 🎞️" : ""}
-                    </button>
-                    <button
-                      className="ghost mini"
-                      title="Delete map"
-                      onClick={async () => {
-                        if (!window.confirm(`Delete "${m.name}"? Its tokens and fog go with it.`)) return;
-                        setError("");
-                        try {
-                          await api(`/api/campaigns/${campaignId}/maps/${m.id}`, { method: "DELETE" });
-                        } catch (e: any) {
-                          setError(e.message);
-                        }
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </section>
-              {map && (
-                <PreparedTokenTray
-                  campaignId={campaignId}
-                  mapId={map.id}
-                  monster={monsterToPrepare}
-                  onCloseMonster={() => setMonsterToPrepare(null)}
-                />
-              )}
-              {map && (
-                <section>
-                  <h4>Monsters</h4>
-                  <input
-                    placeholder="Search monsters (SRD + custom)…"
-                    value={monsterQuery}
-                    onChange={(e) => setMonsterQuery(e.target.value)}
-                  />
-                  <Link to={`/campaigns/${campaignId}/bestiary`} className="muted small">
-                    Open bestiary — create &amp; edit monsters
-                  </Link>
-                  <div className="monster-hits">
-                    {monsterHits.map((m) => (
-                      <div key={m.id} className="row-between sidebar-row">
-                        <span className="mon-hit">
-                          {m.name}{" "}
-                          <span className="muted">
-                            {m.system === "remnant" ? `Threat ${m.threat}` : `CR ${fmtCr(m.cr)}`}
-                          </span>
-                        </span>
-                        <button className="ghost mini" onClick={() => prepareMonster(m)}>
-                          Prepare
-                        </button>
-                      </div>
-                    ))}
-                    {monsterQuery.trim() && monsterHits.length === 0 && (
-                      <p className="muted small">No monsters match.</p>
-                    )}
-                  </div>
-                </section>
-              )}
-              {map && (
-                <section>
-                  <h4>Custom token</h4>
-                  <form onSubmit={placeCustom} className="stack custom-token-form">
-                    <div className="row-between">
-                      <input
-                        placeholder="Dragon, chest, door..."
-                        value={customName}
-                        onChange={(e) => setCustomName(e.target.value)}
-                        required
-                      />
-                      <input
-                        type="color"
-                        className="color-pick"
-                        value={customColor}
-                        onChange={(e) => setCustomColor(e.target.value)}
-                        title="Fallback token color"
-                      />
-                    </div>
-                    <label className="small">
-                      Footprint
-                      <select name="tokenSize" defaultValue="1">
-                        <option value="1">1 square</option>
-                        <option value="2">2 x 2</option>
-                        <option value="3">3 x 3</option>
-                        <option value="4">4 x 4</option>
-                      </select>
-                    </label>
-                    <label className="custom-token-image-pick small">
-                      Transparent PNG or image (optional)
-                      <input
-                        name="tokenImage"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        onChange={(event) => chooseCustomImage(event.target.files?.[0])}
-                      />
-                    </label>
-                    {customImagePreview && (
-                      <div className="custom-token-preview">
-                        <img src={customImagePreview} alt="New token preview" />
-                        <span>Cutout preview</span>
-                      </div>
-                    )}
-                    <button className="ghost">Place token</button>
-                  </form>
-                </section>
-              )}
-              {map && (
-                <section className="map-audio-settings">
-                  <h4>Map audio</h4>
-                  <form className="stack" onSubmit={uploadMapMusic}>
-                    <label className="small">
-                      Looping music or ambience
-                      <input
-                        name="mapAudio"
-                        type="file"
-                        accept="audio/mpeg,audio/ogg,audio/wav,audio/webm,audio/mp4"
-                        required
-                      />
-                    </label>
-                    <button className="ghost mini" disabled={mapAudioBusy}>
-                      {mapAudioBusy ? "Uploading..." : map.audioUrl ? "Replace music" : "Upload music"}
-                    </button>
-                  </form>
-                  {map.audioUrl && (
-                    <button
-                      type="button"
-                      className="ghost mini map-audio-remove"
-                      disabled={mapAudioBusy}
-                      onClick={removeMapMusic}
-                    >
-                      Remove uploaded music
-                    </button>
-                  )}
-                  {map.youtubeId && (
-                    <label className="map-youtube-audio-toggle">
-                      <input
-                        type="checkbox"
-                        checked={map.youtubeAudio}
-                        onChange={(event) => {
-                          const youtubeAudio = event.target.checked;
-                          setMap((current) => (current ? { ...current, youtubeAudio } : current));
-                          setYoutubeSoundEnabled(false);
-                          patchMap({ youtubeAudio });
-                        }}
-                      />
-                      Use audio from this YouTube map
-                    </label>
-                  )}
-                  <p className="muted small map-audio-note">
-                    Each player must click once before their browser allows sound.
-                  </p>
-                </section>
-              )}
-              <section>
-                <h4>Upload map</h4>
-                <form onSubmit={uploadMap} className="stack">
-                  <input name="mapname" placeholder="Map name" />
-                  <input
-                    name="image"
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
-                    required
-                  />
-                  <button className="ghost">Upload</button>
-                </form>
-                <form
-                  className="stack yt-form"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const form = e.target as HTMLFormElement;
-                    const url = (form.elements.namedItem("yturl") as HTMLInputElement).value;
-                    setError("");
-                    try {
-                      await api(`/api/campaigns/${campaignId}/maps`, {
-                        method: "POST",
-                        body: JSON.stringify({
-                          youtubeUrl: url,
-                          name: (form.elements.namedItem("ytname") as HTMLInputElement).value,
-                        }),
-                      });
-                      form.reset();
-                    } catch (err: any) {
-                      setError(err.message);
-                    }
-                  }}
-                >
-                  <input name="ytname" placeholder="Map name" />
-                  <input name="yturl" placeholder="…or paste a YouTube link" required />
-                  <button className="ghost">Add YouTube map</button>
-                </form>
-                <p className="muted small">
-                  Heads up: YouTube maps can show ads mid-session — uploaded files never do.
-                </p>
-              </section>
             </>
           )}
           <p className="muted map-hint">Drag to pan · scroll to zoom · double-click to ping</p>
