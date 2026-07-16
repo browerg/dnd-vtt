@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 
 export type ThemeId =
   | "huntsman-network"
@@ -111,7 +111,7 @@ export const THEMES: ThemeDefinition[] = [
     name: "Minimal Dark",
     system: "dnd5e",
     description: "Quiet neutral surfaces with reduced texture and distraction.",
-    brand: "TABLETOP",
+    brand: "VIVID REALMS",
     glyph: "\u25CF",
     preview: ["#0c0d10", "#e4e5e8", "#6e8ba4"],
   },
@@ -186,3 +186,4 @@ export function useCampaignTheme(args: {
     compatible,
   };
 }
+

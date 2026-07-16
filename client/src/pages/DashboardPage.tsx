@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+﻿import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, type CampaignSummary } from "../api";
 import { useAuth } from "../App";
@@ -95,7 +95,7 @@ export default function DashboardPage() {
             <span />
           </span>
           <span>
-            <strong>TABLETOP</strong>
+            <strong>VIVID REALMS</strong>
             <small>CAMPAIGN DIRECTORY</small>
           </span>
         </Link>
@@ -404,3 +404,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

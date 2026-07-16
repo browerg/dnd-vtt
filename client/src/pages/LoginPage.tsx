@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent } from "react";
+﻿import { useEffect, useId, useState, type FormEvent } from "react";
 import { api, type User } from "../api";
 import { useAuth } from "../App";
 import "./LoginPage.css";
@@ -91,7 +91,7 @@ export default function LoginPage() {
               <span />
             </span>
             <div>
-              <strong>TABLETOP</strong>
+              <strong>VIVID REALMS</strong>
               <small>CAMPAIGN GATEWAY</small>
             </div>
           </div>
@@ -300,3 +300,4 @@ export default function LoginPage() {
     </main>
   );
 }
+
