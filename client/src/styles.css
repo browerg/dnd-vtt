@@ -1470,6 +1470,188 @@ select:focus { outline: none; border-color: var(--accent); }
 .dashboard-grid.editing .react-resizable-handle { opacity: 0.7; }
 .dashboard-grid.editing .panel:hover .react-resizable-handle { opacity: 1; }
 
+
+/* Dashboard panel interaction upgrade */
+.dashboard-grid.editing {
+  touch-action: none;
+}
+
+.dashboard-grid.editing .panel-head {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dashboard-grid .react-grid-item.react-draggable-dragging,
+.dashboard-grid .react-grid-item.resizing {
+  z-index: 50;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .48);
+}
+
+.dashboard-grid .react-grid-item.react-draggable-dragging *,
+.dashboard-grid .react-grid-item.resizing * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: inherit;
+}
+
+.dashboard-grid.editing .react-grid-item {
+  transition: none;
+}
+
+.dashboard-grid.editing .react-grid-item:not(.react-draggable-dragging):not(.resizing) {
+  transition: box-shadow .12s ease, outline-color .12s ease;
+}
+
+/* Large edge and corner targets — all eight resize directions. */
+.dashboard-grid.editing .react-resizable-handle {
+  display: block;
+  position: absolute;
+  z-index: 12;
+  opacity: .45;
+  background-image: none;
+  filter: none;
+}
+
+.dashboard-grid.editing .react-resizable-handle:hover,
+.dashboard-grid.editing .react-grid-item.resizing .react-resizable-handle {
+  opacity: 1;
+}
+
+.dashboard-grid.editing .react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  border-color: var(--theme-accent, var(--accent));
+  opacity: .8;
+}
+
+.dashboard-grid.editing .react-resizable-handle-n,
+.dashboard-grid.editing .react-resizable-handle-s {
+  left: 14px;
+  right: 14px;
+  width: auto;
+  height: 10px;
+  margin: 0;
+  cursor: ns-resize;
+}
+
+.dashboard-grid.editing .react-resizable-handle-n { top: -4px; }
+.dashboard-grid.editing .react-resizable-handle-s { bottom: -4px; }
+
+.dashboard-grid.editing .react-resizable-handle-n::after,
+.dashboard-grid.editing .react-resizable-handle-s::after {
+  left: 35%;
+  right: 35%;
+  height: 2px;
+  border-top: 2px solid var(--theme-accent, var(--accent));
+}
+
+.dashboard-grid.editing .react-resizable-handle-n::after { top: 4px; }
+.dashboard-grid.editing .react-resizable-handle-s::after { bottom: 4px; }
+
+.dashboard-grid.editing .react-resizable-handle-e,
+.dashboard-grid.editing .react-resizable-handle-w {
+  top: 14px;
+  bottom: 14px;
+  width: 10px;
+  height: auto;
+  margin: 0;
+  cursor: ew-resize;
+}
+
+.dashboard-grid.editing .react-resizable-handle-e { right: -4px; }
+.dashboard-grid.editing .react-resizable-handle-w { left: -4px; }
+
+.dashboard-grid.editing .react-resizable-handle-e::after,
+.dashboard-grid.editing .react-resizable-handle-w::after {
+  top: 35%;
+  bottom: 35%;
+  width: 2px;
+  border-left: 2px solid var(--theme-accent, var(--accent));
+}
+
+.dashboard-grid.editing .react-resizable-handle-e::after { right: 4px; }
+.dashboard-grid.editing .react-resizable-handle-w::after { left: 4px; }
+
+.dashboard-grid.editing .react-resizable-handle-ne,
+.dashboard-grid.editing .react-resizable-handle-nw,
+.dashboard-grid.editing .react-resizable-handle-se,
+.dashboard-grid.editing .react-resizable-handle-sw {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.dashboard-grid.editing .react-resizable-handle-ne {
+  top: -4px; right: -4px; cursor: nesw-resize;
+}
+.dashboard-grid.editing .react-resizable-handle-nw {
+  top: -4px; left: -4px; cursor: nwse-resize;
+}
+.dashboard-grid.editing .react-resizable-handle-se {
+  right: -4px; bottom: -4px; cursor: nwse-resize;
+}
+.dashboard-grid.editing .react-resizable-handle-sw {
+  left: -4px; bottom: -4px; cursor: nesw-resize;
+}
+
+.dashboard-grid.editing .react-resizable-handle-ne::after,
+.dashboard-grid.editing .react-resizable-handle-nw::after,
+.dashboard-grid.editing .react-resizable-handle-se::after,
+.dashboard-grid.editing .react-resizable-handle-sw::after {
+  width: 8px;
+  height: 8px;
+  border-style: solid;
+}
+
+.dashboard-grid.editing .react-resizable-handle-ne::after {
+  top: 4px; right: 4px; border-width: 2px 2px 0 0;
+}
+.dashboard-grid.editing .react-resizable-handle-nw::after {
+  top: 4px; left: 4px; border-width: 2px 0 0 2px;
+}
+.dashboard-grid.editing .react-resizable-handle-se::after {
+  right: 4px; bottom: 4px; border-width: 0 2px 2px 0;
+}
+.dashboard-grid.editing .react-resizable-handle-sw::after {
+  left: 4px; bottom: 4px; border-width: 0 0 2px 2px;
+}
+
+/* Clear, reliable remove control that cannot start a drag. */
+.panel-remove {
+  min-width: 2rem;
+  min-height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  position: relative;
+  z-index: 20;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.panel-remove-label {
+  display: none;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.dashboard-grid.editing .panel-remove:hover,
+.dashboard-grid.editing .panel-remove:focus-visible {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+}
+
+@media (min-width: 900px) {
+  .dashboard-grid.editing .panel-remove:hover .panel-remove-label,
+  .dashboard-grid.editing .panel-remove:focus-visible .panel-remove-label {
+    display: inline;
+  }
+}
+
 /* Add-panel dropdown in the topbar */
 .add-panel-wrap { position: relative; }
 .add-panel-menu {
@@ -1671,3 +1853,103 @@ select:focus { outline: none; border-color: var(--accent); }
 .announce-toast.kind-combat { border-color: #c0392b; }
 .announce-toast.kind-alert { border-color: #e0a021; }
 .announce-toast.kind-quest { border-color: var(--gold, #c9a24b); }
+
+
+/* Active map-tool clarity */
+.map-active-tool {
+  min-width: 10.5rem;
+  display: grid;
+  gap: .08rem;
+  padding: .38rem .65rem;
+  border: 1px solid color-mix(in srgb, var(--theme-accent, var(--accent)) 55%, transparent);
+  border-radius: var(--theme-radius, var(--radius-sm));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-accent, var(--accent)) 12%, transparent), transparent 68%),
+    color-mix(in srgb, var(--theme-panel, var(--bg-raised)) 94%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 8%, transparent),
+              0 8px 22px rgba(0,0,0,.22);
+}
+
+.map-active-tool-kicker {
+  color: var(--theme-muted, var(--muted));
+  font-size: .55rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.map-active-tool strong {
+  display: flex;
+  align-items: center;
+  gap: .38rem;
+  color: var(--theme-accent, var(--accent));
+  font-family: var(--font-display);
+  font-size: .78rem;
+  letter-spacing: .05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.map-active-tool-hint {
+  max-width: 18rem;
+  overflow: hidden;
+  color: var(--theme-muted, var(--muted));
+  font-size: .58rem;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-tool,
+.seg-btn.active-tool,
+button[aria-pressed="true"] {
+  position: relative;
+  border-color: var(--theme-accent, var(--accent)) !important;
+  color: var(--theme-accent, var(--accent)) !important;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-accent, var(--accent)) 18%, transparent), transparent) !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 18%, transparent),
+    0 0 14px color-mix(in srgb, var(--theme-glow, var(--accent)) 60%, transparent);
+}
+
+.active-tool::after,
+.seg-btn.active-tool::after,
+button[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--theme-accent, var(--accent));
+  box-shadow: 0 0 8px var(--theme-accent, var(--accent));
+}
+
+.map-viewport.map-tool-move { cursor: grab; }
+.map-viewport.map-tool-move:active { cursor: grabbing; }
+.map-viewport.map-tool-ruler,
+.map-viewport.map-tool-draw { cursor: crosshair; }
+.map-viewport.map-tool-erase { cursor: cell; }
+.map-viewport.map-tool-reveal { cursor: zoom-in; }
+.map-viewport.map-tool-hide { cursor: zoom-out; }
+
+.map-viewport[data-active-tool="draw"],
+.map-viewport[data-active-tool="erase"],
+.map-viewport[data-active-tool="reveal"],
+.map-viewport[data-active-tool="hide"],
+.map-viewport[data-active-tool="ruler"] {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--theme-accent, var(--accent)) 38%, transparent);
+}
+
+@media (max-width: 1100px) {
+  .map-active-tool { min-width: 0; padding: .32rem .5rem; }
+  .map-active-tool-hint { display: none; }
+}
+
+@media (max-width: 760px) {
+  .map-active-tool-kicker { display: none; }
+  .map-active-tool strong { font-size: .68rem; }
+}

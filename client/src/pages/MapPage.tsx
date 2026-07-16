@@ -65,6 +65,15 @@ interface CombatState {
 
 type Tool = "move" | "reveal" | "hide" | "ruler" | "draw" | "erase";
 
+const MAP_TOOL_META: Record<Tool, { label: string; icon: string; shortcut: string; hint: string }> = {
+  move: { label: "Move", icon: "✥", shortcut: "M", hint: "Pan the map or move tokens" },
+  ruler: { label: "Ruler", icon: "📏", shortcut: "R", hint: "Drag to measure distance" },
+  draw: { label: "Draw", icon: "✏️", shortcut: "D", hint: "Sketch directly on the map" },
+  erase: { label: "Erase", icon: "⌫", shortcut: "E", hint: "Click or drag over drawings" },
+  reveal: { label: "Reveal", icon: "◌", shortcut: "V", hint: "Paint away fog of war" },
+  hide: { label: "Hide", icon: "●", shortcut: "H", hint: "Paint fog of war back in" },
+};
+
 interface RulerLine {
   x1: number;
   y1: number;
@@ -251,6 +260,46 @@ export default function MapPage() {
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [tool, setTool] = useState<Tool>("move");
+
+  useEffect(() => {
+    const onToolKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable=true]")) return;
+
+      if (event.key === "Escape") {
+        setTool("move");
+        setRuler(null);
+        setDrawing(null);
+        dragRef.current = null;
+        return;
+      }
+
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+      const key = event.key.toLowerCase();
+      const shortcuts: Partial<Record<string, Tool>> = {
+        m: "move",
+        r: "ruler",
+        d: "draw",
+        e: "erase",
+        v: "reveal",
+        h: "hide",
+      };
+
+      const nextTool = shortcuts[key];
+      if (!nextTool) return;
+
+      const viewerIsDM = role === "dm" || role === "co-dm";
+      if ((nextTool === "reveal" || nextTool === "hide") && !viewerIsDM) return;
+      if ((nextTool === "draw" || nextTool === "erase") && role === "spectator") return;
+
+      event.preventDefault();
+      setTool(nextTool);
+    };
+
+    window.addEventListener("keydown", onToolKey);
+    return () => window.removeEventListener("keydown", onToolKey);
+  }, [role]);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [combat, setCombat] = useState<CombatState>({ active: false, round: 0, turn: 0, combatants: [] });
   const [combatantPick, setCombatantPick] = useState("");
@@ -1350,9 +1399,23 @@ Choose Cancel to permanently delete it instead.`
         />
         <span className="spacer" />
         {map && (
+          <div className="map-active-tool" role="status" aria-live="polite">
+            <span className="map-active-tool-kicker">Active tool</span>
+            <strong>
+              <span aria-hidden="true">{MAP_TOOL_META[tool].icon}</span>
+              {MAP_TOOL_META[tool].label}
+            </strong>
+            <span className="map-active-tool-hint">
+              {MAP_TOOL_META[tool].hint}
+              {tool !== "move" && " · Esc returns to Move"}
+            </span>
+          </div>
+        )}
+        {map && (
           <button
             className={tool === "ruler" ? "ghost mini active-tool" : "ghost mini"}
-            title="Measure distance — drag across the map"
+            title="Ruler (R) — drag across the map"
+            aria-pressed={tool === "ruler"}
             onClick={() => setTool(tool === "ruler" ? "move" : "ruler")}
           >
             📏 Ruler
@@ -1362,7 +1425,8 @@ Choose Cancel to permanently delete it instead.`
           <>
             <button
               className={tool === "draw" ? "ghost mini active-tool" : "ghost mini"}
-              title="Sketch on the map — everyone sees it"
+              title="Draw (D) — everyone sees it"
+              aria-pressed={tool === "draw"}
               onClick={() => setTool(tool === "draw" ? "move" : "draw")}
             >
               ✏️ Draw
@@ -1378,7 +1442,8 @@ Choose Cancel to permanently delete it instead.`
                 />
                 <button
                   className={tool === "erase" ? "ghost mini active-tool" : "ghost mini"}
-                  title="Erase a drawing — click or drag over it"
+                  title="Erase (E) — click or drag over a drawing"
+                  aria-pressed={tool === "erase"}
                   onClick={() => setTool(tool === "erase" ? "draw" : "erase")}
                 >
                   Erase
@@ -1410,7 +1475,9 @@ Choose Cancel to permanently delete it instead.`
                 {(["move", "reveal", "hide"] as Tool[]).map((t) => (
                   <button
                     key={t}
-                    className={tool === t ? "seg-btn active" : "seg-btn"}
+                    className={tool === t ? "seg-btn active active-tool" : "seg-btn"}
+                    title={`${MAP_TOOL_META[t].label} (${MAP_TOOL_META[t].shortcut}) — ${MAP_TOOL_META[t].hint}`}
+                    aria-pressed={tool === t}
                     onClick={() => setTool(t)}
                   >
                     {t === "move" ? "Move" : t === "reveal" ? "Reveal" : "Hide"}
@@ -1775,7 +1842,8 @@ Choose Cancel to permanently delete it instead.`
       <div className="map-layout">
         <div
           ref={viewportRef}
-          className={`map-viewport${sceneEncounterPlacement ? " scene-placement-active" : ""}`}
+          className={`map-viewport map-tool-${tool}${sceneEncounterPlacement ? " scene-placement-active" : ""}`}
+          data-active-tool={tool}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
