@@ -293,3 +293,74 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Make selected-token details feel like a distinct card */
+.encounter-sidebar .token-art-panel,
+.encounter-sidebar .statblock {
+  position: relative;
+  padding: 14px;
+  border: 1px solid rgba(231, 203, 117, 0.34);
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(26, 29, 39, 0.98),
+      rgba(13, 16, 25, 0.98)
+    );
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.encounter-sidebar .token-art-panel::before,
+.encounter-sidebar .statblock::before {
+  content: "SELECTED TOKEN";
+  display: block;
+  margin-bottom: 10px;
+  color: var(--theme-accent, #d6b45f);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.encounter-sidebar .token-art-panel h4,
+.encounter-sidebar .statblock h4 {
+  margin: 0;
+  color: var(--theme-text, #f5f5f5);
+}
+
+.encounter-sidebar .token-art-panel + .statblock {
+  margin-top: -1px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.encounter-sidebar .token-art-panel:has(+ .statblock) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.encounter-sidebar .token-art-panel:last-of-type,
+.encounter-sidebar .statblock:last-of-type {
+  margin-bottom: 8px;
+}
+
+.encounter-sidebar .token-art-preview {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background-color: rgba(5, 7, 12, 0.72);
+}
+
+.encounter-sidebar .token-art-tip {
+  margin-bottom: 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Clearly separate selected-token details from Initiative */
+.encounter-sidebar .token-art-panel + section,
+.encounter-sidebar .statblock + section {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(231, 203, 117, 0.22);
+}

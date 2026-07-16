@@ -17,7 +17,7 @@ export default function RollDock({ rolls, defaultOpen = false }: Props) {
   });
   const [unread, setUnread] = useState(0);
   const [toast, setToast] = useState<RollPayload | null>(null);
-  const prevLen = useRef(rolls.length);
+  const latestRollId = useRef<number | null>(rolls.at(-1)?.id ?? null);
   const toastTimer = useRef<number | undefined>(undefined);
   // Navigating to a page fetches the whole roll history at once; that initial
   // hydration shouldn't fire a toast or bump the unread count. Only rolls that
@@ -25,17 +25,21 @@ export default function RollDock({ rolls, defaultOpen = false }: Props) {
   const mountedAt = useRef(Date.now());
 
   useEffect(() => {
-    if (rolls.length > prevLen.current) {
-      const isHydration = Date.now() - mountedAt.current < 1200;
-      const latest = rolls[rolls.length - 1];
-      if (!open && !isHydration) {
-        setUnread((n) => n + (rolls.length - prevLen.current));
-        setToast(latest);
-        window.clearTimeout(toastTimer.current);
-        toastTimer.current = window.setTimeout(() => setToast(null), 4200);
-      }
+    const latest = rolls.at(-1);
+    if (!latest) return;
+
+    const previousId = latestRollId.current;
+    const isNewRoll = previousId !== null && latest.id !== previousId;
+    const isHydration = Date.now() - mountedAt.current < 1200;
+
+    if (isNewRoll && !open && !isHydration) {
+      setUnread((count) => count + 1);
+      setToast(latest);
+      window.clearTimeout(toastTimer.current);
+      toastTimer.current = window.setTimeout(() => setToast(null), 4200);
     }
-    prevLen.current = rolls.length;
+
+    latestRollId.current = latest.id;
   }, [rolls, open]);
 
   const toggle = () => {
@@ -86,3 +90,5 @@ export default function RollDock({ rolls, defaultOpen = false }: Props) {
     </div>
   );
 }
+
+
