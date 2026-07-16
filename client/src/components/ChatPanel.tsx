@@ -24,12 +24,15 @@ export default function ChatPanel({ messages, members, myId, canChat, onSend }: 
   const [target, setTarget] = useState(0);
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const chatLogRef = useRef<HTMLDivElement>(null);
 
   const shown = messages.filter((m) => m.channel === tab);
   const others = members.filter((m) => m.id !== myId);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "nearest" });
+    const log = chatLogRef.current;
+    if (!log) return;
+    log.scrollTop = log.scrollHeight;
   }, [shown.length, tab]);
 
   const send = async (e: FormEvent) => {
@@ -53,7 +56,7 @@ export default function ChatPanel({ messages, members, myId, canChat, onSend }: 
           </button>
         ))}
       </div>
-      <div className="chat-log">
+      <div className="chat-log" ref={chatLogRef}>
         {shown.length === 0 && <p className="muted">Nothing here yet.</p>}
         {shown.map((m) => (
           <div key={m.id} className="chat-msg">

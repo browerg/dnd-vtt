@@ -1953,3 +1953,77 @@ button[aria-pressed="true"]::after {
   .map-active-tool-kicker { display: none; }
   .map-active-tool strong { font-size: .68rem; }
 }
+
+
+/* Anchored dashboard chat composer */
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chat-panel .chat-tabs {
+  flex: 0 0 auto;
+}
+
+.chat-panel .chat-log {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-bottom: .75rem;
+}
+
+.chat-panel .chat-compose {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .5rem;
+  padding-top: .65rem;
+  padding-bottom: .1rem;
+  border-top: 1px solid var(--theme-line, var(--border));
+  background:
+    linear-gradient(to bottom, transparent, var(--theme-panel, var(--bg-raised)) 22%);
+}
+
+.chat-panel .chat-compose select {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.chat-panel .chat-compose input {
+  min-width: 0;
+  width: 100%;
+}
+
+.chat-panel > .error {
+  flex: 0 0 auto;
+  margin-top: .35rem;
+}
+
+.panel-chat .panel-body {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel-chat .panel-body > .chat-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .chat-panel .chat-compose {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-panel .chat-compose button {
+    width: 100%;
+  }
+}
