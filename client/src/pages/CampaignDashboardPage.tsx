@@ -321,8 +321,11 @@ export default function CampaignDashboardPage() {
         isDraggable={editing}
         isResizable={editing}
         draggableHandle=".panel-drag"
+        draggableCancel="button, a, input, textarea, select, option, [data-no-drag]"
+        resizeHandles={["s", "w", "e", "n", "sw", "nw", "se", "ne"]}
         compactType={null}
-        preventCollision
+        preventCollision={false}
+        allowOverlap
         onLayoutChange={onLayoutChange}
       >
         {layout.map((item) => {
@@ -336,8 +339,24 @@ export default function CampaignDashboardPage() {
                   {isRemnant ? REMNANT_PANEL_TITLES[item.i] ?? def.title : def.title}
                 </span>
                 {editing && (
-                  <button className="panel-remove" title="Remove panel" onClick={() => removePanel(item.i)}>
-                    ✕
+                  <button
+                    type="button"
+                    className="panel-remove"
+                    title="Remove this panel"
+                    aria-label={`Remove ${isRemnant ? REMNANT_PANEL_TITLES[item.i] ?? def.title : def.title} panel`}
+                    data-no-drag
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      removePanel(item.i);
+                    }}
+                  >
+                    <span aria-hidden="true">✕</span>
+                    <span className="panel-remove-label">Remove</span>
                   </button>
                 )}
               </div>
