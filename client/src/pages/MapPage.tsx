@@ -96,11 +96,56 @@ interface Token {
   maxHp: number | null;
   aura: number | null;
   auraMax: number | null;
+  auraColor: string;
   portraitUrl: string;
   imageUrl: string;
   imageScale: number;
   conditions: string[];
 }
+
+// vivid-aura-color-system
+const playAuraBreakSound = () => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const context = new AudioContextClass();
+    const now = context.currentTime;
+    const master = context.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(0.34, now + 0.015);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.72);
+    master.connect(context.destination);
+
+    const crack = context.createOscillator();
+    const crackGain = context.createGain();
+    crack.type = "sawtooth";
+    crack.frequency.setValueAtTime(920, now);
+    crack.frequency.exponentialRampToValueAtTime(95, now + 0.48);
+    crackGain.gain.setValueAtTime(0.8, now);
+    crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
+    crack.connect(crackGain);
+    crackGain.connect(master);
+
+    const impact = context.createOscillator();
+    const impactGain = context.createGain();
+    impact.type = "sine";
+    impact.frequency.setValueAtTime(155, now);
+    impact.frequency.exponentialRampToValueAtTime(48, now + 0.68);
+    impactGain.gain.setValueAtTime(0.65, now);
+    impactGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+    impact.connect(impactGain);
+    impactGain.connect(master);
+
+    crack.start(now);
+    impact.start(now);
+    crack.stop(now + 0.55);
+    impact.stop(now + 0.72);
+    window.setTimeout(() => context.close().catch(() => {}), 900);
+  } catch {
+    // Audio is enhancement-only; Aura visuals continue normally.
+  }
+};
 
 interface MonsterHit {
   id: number;
@@ -366,6 +411,7 @@ export default function MapPage() {
     }
 
     if (newlyBrokenAuraIds.length > 0) {
+      playAuraBreakSound();
       setBrokenAuraTokenIds((previous) => new Set([...previous, ...newlyBrokenAuraIds]));
       const brokenNames = tokens
         .filter((token) => newlyBrokenAuraIds.includes(token.id))
@@ -1312,6 +1358,83 @@ Choose Cancel to permanently delete it instead.`
       body: JSON.stringify({ hp }),
     }).catch((e: any) => setError(e.message));
 
+
+  const setTokenAura = async (
+    token: Token,
+    aura: number,
+    auraMax: number,
+    auraColor: string
+  ) => {
+    if (!map) return;
+    try {
+      const result = await api<{ token: Token }>(
+        `/api/campaigns/${campaignId}/maps/${map.id}/tokens/${token.id}/aura`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ aura, auraMax, auraColor }),
+        }
+      );
+      setTokens((previous) =>
+        previous.map((item) => (item.id === token.id ? result.token : item))
+      );
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const enemyAuraEditor = (token: Token) => {
+    const currentMax = token.auraMax ?? 0;
+    const current = token.aura ?? 0;
+    const color = token.auraColor || token.color || "#78e1ff";
+
+    return (
+      <div className="enemy-aura-editor">
+        <span className="small muted">Aura</span>
+        <button
+          type="button"
+          className="ghost mini"
+          disabled={current <= 0}
+          onClick={() => setTokenAura(token, Math.max(0, current - 1), currentMax, color)}
+        >
+          −
+        </button>
+        <input
+          aria-label="Enemy current Aura"
+          type="number"
+          min="0"
+          value={current}
+          onChange={(event) =>
+            setTokenAura(token, Number(event.target.value) || 0, currentMax, color)
+          }
+        />
+        <span>/</span>
+        <input
+          aria-label="Enemy maximum Aura"
+          type="number"
+          min="0"
+          value={currentMax}
+          onChange={(event) => {
+            const nextMax = Number(event.target.value) || 0;
+            setTokenAura(token, Math.min(current, nextMax), nextMax, color);
+          }}
+        />
+        <button
+          type="button"
+          className="ghost mini"
+          disabled={currentMax <= 0 || current >= currentMax}
+          onClick={() => setTokenAura(token, Math.min(currentMax, current + 1), currentMax, color)}
+        >
+          +
+        </button>
+        <input
+          aria-label="Enemy Aura color"
+          type="color"
+          value={color}
+          onChange={(event) => setTokenAura(token, current, currentMax, event.target.value)}
+        />
+      </div>
+    );
+  };
   const toggleTokenCondition = (token: Token, cond: string) =>
     map &&
     api(`/api/campaigns/${campaignId}/maps/${map.id}/tokens/${token.id}/conditions`, {
@@ -1957,6 +2080,10 @@ Choose Cancel to permanently delete it instead.`
                       enteringTokenIds.has(t.id) ? " grimm-entering" : ""
                     }`}
                     style={{
+                      ...({
+                        "--token-aura-color": t.auraColor || t.color || "#78e1ff",
+                        "--token-aura-soft": `${t.auraColor || t.color || "#78e1ff"}99`,
+                      } as React.CSSProperties),
                       left: t.x - px / 2,
                       top: t.y - px / 2,
                       width: px,
@@ -2256,6 +2383,7 @@ Choose Cancel to permanently delete it instead.`
                     </span>
                     {hpEditor(selectedToken)}
                   </div>
+                  {enemyAuraEditor(selectedToken)}
                   <div className="row-between statline">
                     <span>
                       Ferocity <strong>d{statblock.ferocity}</strong>

@@ -166,6 +166,15 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
         {/* vitals */}
         <div className="vitals">
           {pool("Aura", d.aura, auraMax, (v) => update({ aura: v }), "aura-pool")}
+          <label className="vital aura-color-control" title="Aura color used on map tokens">
+            <span className="vital-label">Aura Color</span>
+            <input
+              type="color"
+              value={d.auraColor || "#78e1ff"}
+              disabled={ro}
+              onChange={(e) => update({ auraColor: e.target.value })}
+            />
+          </label>
           {pool("HP", d.hp, hpMax, (v) => update({ hp: v }), "hp-pool")}
           <div className="vital">
             <span className="vital-label">Defense</span>

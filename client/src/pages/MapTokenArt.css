@@ -377,3 +377,51 @@
     display: none;
   }
 }
+
+
+/* vivid-aura-color-system */
+.token-aura-shell {
+  border-color: color-mix(in srgb, var(--token-aura-color, #78e1ff) 78%, white);
+  box-shadow:
+    0 0 8px var(--token-aura-soft, rgba(120, 225, 255, .65)),
+    0 0 18px color-mix(in srgb, var(--token-aura-color, #78e1ff) 42%, transparent),
+    inset 0 0 12px rgba(255, 255, 255, .18);
+}
+
+.token-aura-break-ring {
+  border-color: color-mix(in srgb, var(--token-aura-color, #78e1ff) 78%, white);
+  box-shadow:
+    0 0 18px var(--token-aura-color, #78e1ff),
+    0 0 46px rgba(255, 255, 255, .72);
+}
+
+.aura-color-control {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: .3rem;
+}
+
+.aura-color-control input[type="color"] {
+  width: 3rem;
+  height: 2rem;
+  padding: 2px;
+}
+
+.enemy-aura-editor {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  flex-wrap: wrap;
+  margin: .35rem 0 .55rem;
+}
+
+.enemy-aura-editor input[type="number"] {
+  width: 4.2rem;
+}
+
+.enemy-aura-editor input[type="color"] {
+  width: 2.5rem;
+  height: 1.8rem;
+  padding: 1px;
+}

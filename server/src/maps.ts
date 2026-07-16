@@ -86,6 +86,7 @@ export interface TokenPayload {
   maxHp: number | null;
   aura: number | null;
   auraMax: number | null;
+  auraColor: string;
   portraitUrl: string;
   imageUrl: string;
   imageScale: number;
@@ -100,8 +101,9 @@ const TOKEN_COLS = `
   c.user_id AS owner_id,
   COALESCE(json_extract(c.data, '$.hp'), t.hp) AS hp,
   COALESCE(json_extract(c.data, '$.maxHp'), t.max_hp) AS max_hp,
-  json_extract(c.data, '$.aura') AS aura,
-  json_extract(c.data, '$.auraMax') AS aura_max,
+  COALESCE(json_extract(c.data, '$.aura'), t.aura) AS aura,
+  COALESCE(json_extract(c.data, '$.auraMax'), t.aura_max) AS aura_max,
+  COALESCE(json_extract(c.data, '$.auraColor'), t.aura_color, t.color, '#78e1ff') AS aura_color,
   c.portrait_path AS portrait_path,
   COALESCE(json_extract(c.data, '$.conditions'), t.conditions) AS conditions`;
 const TOKEN_SELECT = `SELECT ${TOKEN_COLS}
@@ -122,6 +124,7 @@ const toToken = (r: any): TokenPayload => ({
   maxHp: r.max_hp,
   aura: r.aura ?? null,
   auraMax: r.aura_max ?? null,
+  auraColor: /^#[0-9a-fA-F]{6}$/.test(r.aura_color ?? "") ? r.aura_color : "#78e1ff",
   portraitUrl: r.portrait_path ? `/uploads/${path.basename(r.portrait_path)}` : "",
   imageUrl: r.image_path ? `/uploads/${path.basename(r.image_path)}` : "",
   imageScale: Number.isFinite(r.image_scale) ? r.image_scale : 1,
@@ -558,6 +561,47 @@ mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/hp", (req, res) => {
     Number.isFinite(maxHp as number) ? Math.max(1, Math.round(maxHp as number)) : null,
     token.id
   );
+  const updated = getToken(token.id)!;
+  getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
+  res.json({ token: updated });
+});
+
+
+/* vivid-aura-color-system: enemy and custom token Aura */
+mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/aura", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM edits enemy Aura." });
+
+  const token = getToken(Number(req.params.tokenId));
+  if (!token || token.campaignId !== campaignId) {
+    return res.status(404).json({ error: "Token not found." });
+  }
+  if (token.characterId) {
+    return res.status(400).json({ error: "Character Aura lives on the character sheet." });
+  }
+
+  const aura = Number(req.body?.aura);
+  const auraMax = Number(req.body?.auraMax);
+  const auraColor = /^#[0-9a-fA-F]{6}$/.test(req.body?.auraColor ?? "")
+    ? req.body.auraColor
+    : token.auraColor;
+
+  if (!Number.isFinite(aura) || !Number.isFinite(auraMax)) {
+    return res.status(400).json({ error: "Aura and maximum Aura must be numbers." });
+  }
+
+  const cleanMax = Math.max(0, Math.round(auraMax));
+  const cleanAura = Math.max(0, Math.min(cleanMax, Math.round(aura)));
+
+  db.prepare("UPDATE tokens SET aura = ?, aura_max = ?, aura_color = ? WHERE id = ?").run(
+    cleanAura,
+    cleanMax,
+    auraColor,
+    token.id
+  );
+
   const updated = getToken(token.id)!;
   getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
   res.json({ token: updated });

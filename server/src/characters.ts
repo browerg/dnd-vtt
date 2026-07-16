@@ -65,6 +65,7 @@ function remnantDefaultData() {
     armor: "none",
     aura: 45,
     auraMax: 45,
+    auraColor: "#78e1ff",
     hp: 14,
     maxHp: 14,
     weaponName: "",

@@ -168,6 +168,7 @@ export interface RemnantData {
   // current pools; maxes are computed but mirrored here so map tokens can read them
   aura: number;
   auraMax: number;
+  auraColor: string;
   hp: number;
   maxHp: number;
   weaponName: string;
