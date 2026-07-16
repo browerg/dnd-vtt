@@ -78,6 +78,12 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
   }, [isDM, load]);
 
   useEffect(() => {
+    const openDirector = () => setOpen(true);
+    window.addEventListener("dm-tools:open-scene-director", openDirector);
+    return () => window.removeEventListener("dm-tools:open-scene-director", openDirector);
+  }, []);
+
+  useEffect(() => {
     const onPlacementResult = (event: Event) => {
       const detail = (event as CustomEvent<ScenePlacementResult>).detail;
       if (!detail || detail.requestId !== placementRequestRef.current) return;
@@ -254,12 +260,6 @@ export default function SceneDirector({ campaignId, mapId, isDM }: Props) {
 
   return createPortal(
     <>
-      {isDM && (
-        <button className="scene-director-button" type="button" onClick={() => setOpen(true)}>
-          ◈ Scene Director
-        </button>
-      )}
-
       {open && isDM && (
         <div className="scene-director-backdrop" onClick={() => setOpen(false)}>
           <section className="scene-director-panel" onClick={(event) => event.stopPropagation()}>

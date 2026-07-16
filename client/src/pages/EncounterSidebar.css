@@ -221,3 +221,75 @@
     min-height: 42px;
   }
 }
+
+
+/* Sidebar DM tools */
+.sidebar-dm-tools {
+  display: grid;
+  gap: .65rem;
+}
+
+.sidebar-dm-tools-grid {
+  display: grid;
+  gap: .45rem;
+}
+
+.sidebar-dm-tool {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: .6rem;
+  width: 100%;
+  padding: .65rem .7rem;
+  text-align: left;
+  border: 1px solid var(--theme-border, var(--border));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .025);
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    background .15s ease;
+}
+
+.sidebar-dm-tool:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, .05);
+}
+
+.sidebar-dm-tool.scene:hover {
+  border-color: rgba(184, 72, 96, .72);
+}
+
+.sidebar-dm-tool.object:hover {
+  border-color: rgba(231, 203, 117, .72);
+}
+
+.sidebar-dm-tool > span:first-child {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .06);
+  font-size: 1rem;
+}
+
+.sidebar-dm-tool > span:last-child {
+  display: grid;
+  gap: .1rem;
+  min-width: 0;
+}
+
+.sidebar-dm-tool strong {
+  font-size: .8rem;
+}
+
+.sidebar-dm-tool small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .65rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

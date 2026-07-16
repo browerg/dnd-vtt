@@ -74,6 +74,16 @@ export default function MapObjects({ campaignId, mapId, isDM, gridSize }: Props)
   }, [load]);
 
   useEffect(() => {
+    const openAddObject = () => {
+      if (!isDM) return;
+      setAdding(true);
+      setSelected(null);
+    };
+    window.addEventListener("dm-tools:add-map-object", openAddObject);
+    return () => window.removeEventListener("dm-tools:add-map-object", openAddObject);
+  }, [isDM]);
+
+  useEffect(() => {
     const socket = io();
     socketRef.current = socket;
     socket.emit("campaign:join", campaignId);
@@ -267,19 +277,6 @@ export default function MapObjects({ campaignId, mapId, isDM, gridSize }: Props)
 
       {createPortal(
         <>
-          {isDM && (
-            <button
-              type="button"
-              className="map-object-add-button"
-              onClick={() => {
-                setAdding(true);
-                setSelected(null);
-              }}
-            >
-              + Map object
-            </button>
-          )}
-
           {(adding || selected) && isDM && (
             <div className="map-object-editor" onPointerDown={(event) => event.stopPropagation()}>
               <div className="row-between">

@@ -1330,7 +1330,7 @@ Choose Cancel to permanently delete it instead.`
   }
 
   return (
-    <div className="shell map-shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
+    <div className={`shell map-shell campaign-themed${sidebarCollapsed ? " sidebar-is-collapsed" : ""}`} data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
       {combatEffectNotice && (
         <div className="rwby-combat-effect-notice" role="status">
@@ -2527,6 +2527,36 @@ Choose Cancel to permanently delete it instead.`
             )}
           </section>
 
+          {isDM && map && (
+            <section className="sidebar-dm-tools">
+              <h4>DM Tools</h4>
+              <div className="sidebar-dm-tools-grid">
+                <button
+                  type="button"
+                  className="sidebar-dm-tool scene"
+                  onClick={() => window.dispatchEvent(new Event("dm-tools:open-scene-director"))}
+                >
+                  <span aria-hidden="true">◈</span>
+                  <span>
+                    <strong>Scene Director</strong>
+                    <small>Save and activate encounters</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="sidebar-dm-tool object"
+                  onClick={() => window.dispatchEvent(new Event("dm-tools:add-map-object"))}
+                >
+                  <span aria-hidden="true">＋</span>
+                  <span>
+                    <strong>Map Object</strong>
+                    <small>Add doors, chests, clues, and more</small>
+                  </span>
+                </button>
+              </div>
+            </section>
+          )}
+
           <section className="encounter-summary">
             <h4>Encounter</h4>
             <div className="encounter-summary-grid">
@@ -2562,3 +2592,4 @@ Choose Cancel to permanently delete it instead.`
     </div>
   );
 }
+
