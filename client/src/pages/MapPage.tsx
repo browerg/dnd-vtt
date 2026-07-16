@@ -22,6 +22,8 @@ import "./SceneDirector.css";
 import "./PreparedTokenTray.css";
 import "./MapAudio.css";
 import "./DMTopPanels.css";
+import "./EncounterSidebar.css";
+import "./DMMapDock.css";
 
 interface MapInfo {
   id: number;
@@ -223,6 +225,10 @@ export default function MapPage() {
     useState<PreparedEncounterDropPreview | null>(null);
   const [preparedTokenDropBusy, setPreparedTokenDropBusy] = useState(false);
   const [dmPanel, setDmPanel] = useState<"maps" | "tokens" | "audio" | null>(null);
+  const [sidebarRosterTab, setSidebarRosterTab] = useState<"characters" | "map">("characters");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem("encounter-sidebar-collapsed") === "1"
+  );
   const [sceneEncounterPlacement, setSceneEncounterPlacement] =
     useState<SceneEncounterPlacementRequest | null>(null);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
@@ -1697,8 +1703,8 @@ Choose Cancel to permanently delete it instead.`
               <section>
                 <h4>Playback</h4>
                 {map.audioUrl && <button type="button" className="ghost" onClick={toggleMapMusic}>{audioPlaying ? "Pause uploaded audio" : "Play uploaded audio"}</button>}
-                {map.audioUrl && <label className="dm-panel-slider"><span>Uploaded volume</span><input type="range" min="0" max="1" step="0.05" value={audioVolume} onChange={(event) => setAudioVolume(Number(event.target.value))} /></label>}
-                {map.youtubeId && map.youtubeAudio && <label className="dm-panel-slider"><span>YouTube volume</span><input type="range" min="0" max="1" step="0.05" value={youtubeVolume} onChange={(event) => setYoutubeVolume(Number(event.target.value))} /></label>}
+                {map.audioUrl && <label className="dm-panel-slider"><span>Uploaded volume</span><input type="range" min="0" max="1" step="0.01" value={audioVolume} onChange={(event) => setAudioVolume(Number(event.target.value))} /></label>}
+                {map.youtubeId && map.youtubeAudio && <label className="dm-panel-slider"><span>YouTube volume</span><input type="range" min="0" max="1" step="0.01" value={youtubeVolume} onChange={(event) => setYoutubeVolume(Number(event.target.value))} /></label>}
               </section>
             </div>}
           </section>
@@ -1724,7 +1730,7 @@ Choose Cancel to permanently delete it instead.`
               type="range"
               min="0"
               max="1"
-              step="0.05"
+              step="0.01"
               value={audioVolume}
               onChange={(event) => setAudioVolume(Number(event.target.value))}
             />
@@ -1746,7 +1752,7 @@ Choose Cancel to permanently delete it instead.`
               type="range"
               min="0"
               max="1"
-              step="0.05"
+              step="0.01"
               value={youtubeVolume}
               onChange={(event) => setYoutubeVolume(Number(event.target.value))}
             />
@@ -2031,7 +2037,23 @@ Choose Cancel to permanently delete it instead.`
           )}
         </div>
 
-        <aside className="map-sidebar">
+        <aside className={`map-sidebar encounter-sidebar${sidebarCollapsed ? " encounter-sidebar-collapsed" : ""}`}>
+          <button
+            type="button"
+            className="encounter-sidebar-toggle"
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() =>
+              setSidebarCollapsed((collapsed) => {
+                const next = !collapsed;
+                localStorage.setItem("encounter-sidebar-collapsed", next ? "1" : "0");
+                return next;
+              })
+            }
+          >
+            {sidebarCollapsed ? "‹" : "›"}
+          </button>
+          <div className="encounter-sidebar-content">
           {error && <div className="error">{error}</div>}
           {selectedToken && (isDM || canMove(selectedToken)) && (
             <section className="token-art-panel">
@@ -2385,55 +2407,154 @@ Choose Cancel to permanently delete it instead.`
               </div>
             )}
           </section>
-          <section>
-            <h4>Characters</h4>
-            {characters
-              // Don't leak secret NPC names to players — only the DM (or a
-              // shared, player-controllable NPC) shows in the list.
-              .filter((c) => !c.isNpc || isDM || c.playerControllable)
-              .map((c) => {
-                const onMap = tokens.some((t) => t.characterId === c.id);
-                const mine = c.ownerId === user?.id;
-                return (
-                  <div key={c.id} className="row-between sidebar-row">
-                    <span className={onMap ? "" : "muted"}>
-                      {c.name}
-                      {c.isNpc && <span className="badge npc-badge">NPC</span>}
-                    </span>
-                    {map && (isDM || mine) && !onMap && (
-                      <button className="ghost mini" onClick={() => placeCharacter(c.id)}>
-                        Place
+          <section className="encounter-roster">
+            <div className="encounter-roster-tabs" role="tablist" aria-label="Encounter roster">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={sidebarRosterTab === "characters"}
+                className={sidebarRosterTab === "characters" ? "active" : ""}
+                onClick={() => setSidebarRosterTab("characters")}
+              >
+                Characters
+                <span>{characters.filter((c) => !c.isNpc || isDM || c.playerControllable).length}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={sidebarRosterTab === "map"}
+                className={sidebarRosterTab === "map" ? "active" : ""}
+                onClick={() => setSidebarRosterTab("map")}
+              >
+                On Map
+                <span>{tokens.length}</span>
+              </button>
+            </div>
+
+            {sidebarRosterTab === "characters" ? (
+              <div className="encounter-roster-list">
+                {characters
+                  // Don't leak secret NPC names to players — only the DM (or a
+                  // shared, player-controllable NPC) shows in the list.
+                  .filter((c) => !c.isNpc || isDM || c.playerControllable)
+                  .map((c) => {
+                    const token = tokens.find((t) => t.characterId === c.id);
+                    const onMap = Boolean(token);
+                    const mine = c.ownerId === user?.id;
+                    return (
+                      <div key={c.id} className="encounter-roster-row">
+                        <button
+                          type="button"
+                          className="encounter-roster-main"
+                          disabled={!token}
+                          onClick={() => token && setSelectedTokenId(token.id)}
+                        >
+                          <span className={onMap ? "encounter-roster-name" : "encounter-roster-name muted"}>
+                            {c.name}
+                            {c.isNpc && <span className="badge npc-badge">NPC</span>}
+                          </span>
+                          <span className="encounter-roster-meta">
+                            {token
+                              ? [
+                                  token.hp != null && token.maxHp != null ? `${token.hp}/${token.maxHp} HP` : "On map",
+                                  token.conditions.length ? `⚠ ${token.conditions.length}` : "",
+                                ].filter(Boolean).join(" · ")
+                              : "Not deployed"}
+                          </span>
+                        </button>
+                        <span className="encounter-roster-actions">
+                          <Link
+                            to={`/campaigns/${campaignId}/characters/${c.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="ghost mini encounter-sheet-link"
+                            title={`Open ${c.name}'s character sheet in a new tab`}
+                          >
+                            Sheet
+                          </Link>
+                          {map && (isDM || mine) && !onMap && (
+                            <button className="ghost mini" onClick={() => placeCharacter(c.id)}>
+                              Place
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            ) : (
+              <div className="encounter-roster-list">
+                {tokens.map((t) => (
+                  <div
+                    key={t.id}
+                    className={`encounter-roster-row${selectedTokenId === t.id ? " selected" : ""}`}
+                  >
+                    <button
+                      type="button"
+                      className="encounter-roster-main"
+                      onClick={() => setSelectedTokenId(t.id)}
+                      title={`Select ${t.name}`}
+                    >
+                      <span className="encounter-roster-token-line">
+                        {t.imageUrl ? (
+                          <img className="token-list-thumb" src={t.imageUrl} alt="" />
+                        ) : (
+                          <span className="swatch" style={{ background: t.color }} />
+                        )}
+                        <span className="encounter-roster-name">{t.name}</span>
+                      </span>
+                      <span className="encounter-roster-meta">
+                        {[
+                          t.hp != null && t.maxHp != null ? `${t.hp}/${t.maxHp} HP` : "",
+                          t.aura != null && t.auraMax != null ? `${t.aura}/${t.auraMax} Aura` : "",
+                          t.conditions.length ? `⚠ ${t.conditions.length}` : "",
+                        ].filter(Boolean).join(" · ") || "Map token"}
+                      </span>
+                    </button>
+                    {(isDM || canMove(t)) && (
+                      <button
+                        className="ghost mini encounter-roster-remove"
+                        title={`Remove ${t.name} from map`}
+                        onClick={() => removeToken(t.id)}
+                      >
+                        ✕
                       </button>
                     )}
                   </div>
-                );
-              })}
-          </section>
-          <section>
-            <h4>Tokens on map</h4>
-            {tokens.map((t) => (
-              <div key={t.id} className="row-between sidebar-row">
-                <span>
-                  {t.imageUrl ? (
-                    <img className="token-list-thumb" src={t.imageUrl} alt="" />
-                  ) : (
-                    <span className="swatch" style={{ background: t.color }} />
-                  )}
-                  {t.name}
-                </span>
-                {(isDM || canMove(t)) && (
-                  <button className="ghost mini" onClick={() => removeToken(t.id)}>
-                    ✕
-                  </button>
-                )}
+                ))}
+                {tokens.length === 0 && <p className="muted small">No tokens deployed.</p>}
               </div>
-            ))}
+            )}
+          </section>
+
+          <section className="encounter-summary">
+            <h4>Encounter</h4>
+            <div className="encounter-summary-grid">
+              <span><strong>{tokens.length}</strong> deployed</span>
+              <span><strong>{combat.combatants.length}</strong> in initiative</span>
+              <span>
+                <strong>{tokens.filter((t) => t.conditions.length > 0).length}</strong> conditioned
+              </span>
+              <span>
+                <strong>{tokens.filter((t) => t.hp != null && t.hp <= 0).length}</strong> down
+              </span>
+            </div>
+            {selectedToken && (
+              <button
+                type="button"
+                className="ghost mini encounter-selected-jump"
+                onClick={() => setSidebarRosterTab("map")}
+              >
+                Selected: {selectedToken.name}
+              </button>
+            )}
           </section>
           {isDM && (
             <>
             </>
           )}
           <p className="muted map-hint">Drag to pan · scroll to zoom · double-click to ping</p>
+          </div>
         </aside>
       </div>
       {canRoll && <DiceDock onRoll={doRoll} system={system} />}

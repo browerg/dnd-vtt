@@ -1,0 +1,231 @@
+/*
+ * DM quick-action dock
+ * Keeps Scene Director and Map Object together and follows sidebar width.
+ */
+.scene-director-button,
+.map-object-add-button {
+  right: 274px;
+  min-width: 142px;
+  transition:
+    right .18s ease,
+    transform .15s ease,
+    box-shadow .15s ease;
+}
+
+.scene-director-button {
+  bottom: 70px;
+}
+
+.map-object-add-button {
+  bottom: 20px;
+}
+
+.scene-director-button:hover,
+.map-object-add-button:hover {
+  transform: translateY(-1px);
+}
+
+.map-shell:has(.encounter-sidebar-collapsed) .scene-director-button,
+.map-shell:has(.encounter-sidebar-collapsed) .map-object-add-button {
+  right: 50px;
+}
+
+/*
+ * Compact YouTube control:
+ * small status strip at rest, full controls on hover or keyboard focus.
+ */
+.battle-map-youtube-audio-dock {
+  position: fixed;
+  left: 220px;
+  bottom: 18px;
+  z-index: 82;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  max-width: min(390px, calc(100vw - 90px));
+  min-height: 38px;
+  padding: 6px 8px;
+  overflow: hidden;
+  border: 1px solid rgba(184, 72, 96, .42);
+  border-radius: 999px;
+  background: rgba(12, 12, 19, .94);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .42);
+  backdrop-filter: blur(9px);
+  transition:
+    max-width .2s ease,
+    padding .2s ease,
+    border-radius .2s ease,
+    background .2s ease;
+}
+
+.battle-map-youtube-audio-dock::before {
+  content: "YouTube";
+  flex: 0 0 auto;
+  padding-left: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.battle-map-youtube-audio-dock > button:first-of-type {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.battle-map-youtube-audio-dock label,
+.battle-map-youtube-audio-dock > button:not(:first-of-type) {
+  max-width: 0;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transition:
+    max-width .2s ease,
+    opacity .15s ease,
+    padding .2s ease;
+}
+
+.battle-map-youtube-audio-dock:hover,
+.battle-map-youtube-audio-dock:focus-within {
+  max-width: min(520px, calc(100vw - 36px));
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(12, 12, 19, .985);
+}
+
+.battle-map-youtube-audio-dock:hover label,
+.battle-map-youtube-audio-dock:focus-within label {
+  max-width: 245px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.battle-map-youtube-audio-dock:hover > button:not(:first-of-type),
+.battle-map-youtube-audio-dock:focus-within > button:not(:first-of-type) {
+  max-width: 130px;
+  padding-left: .55rem;
+  padding-right: .55rem;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.battle-map-youtube-audio-dock label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.battle-map-youtube-audio-dock input[type="range"] {
+  width: 140px;
+  min-width: 90px;
+}
+
+.battle-map-youtube-audio-dock strong {
+  min-width: 34px;
+  text-align: right;
+}
+
+@media (max-width: 850px) {
+  .scene-director-button,
+  .map-object-add-button,
+  .map-shell:has(.encounter-sidebar-collapsed) .scene-director-button,
+  .map-shell:has(.encounter-sidebar-collapsed) .map-object-add-button {
+    right: 14px;
+    min-width: 0;
+    padding: 9px 12px;
+  }
+
+  .scene-director-button {
+    bottom: 72px;
+  }
+
+  .map-object-add-button {
+    bottom: 22px;
+  }
+
+  .battle-map-youtube-audio-dock {
+    left: 150px;
+    bottom: 12px;
+    max-width: calc(100vw - 90px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-director-button,
+  .map-object-add-button,
+  .battle-map-youtube-audio-dock,
+  .battle-map-youtube-audio-dock label,
+  .battle-map-youtube-audio-dock > button {
+    transition: none;
+  }
+}
+
+
+
+
+
+
+.battle-map-youtube-audio-dock input[type="range"] {
+  appearance: none;
+  width: 140px;
+  height: 6px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.battle-map-youtube-audio-dock input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #d6b45f;
+  cursor: pointer;
+}
+
+.battle-map-youtube-audio-dock input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #d6b45f;
+  cursor: pointer;
+}
+
+.battle-map-youtube-audio-dock input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Move the collapsed dice button upward only while YouTube controls are expanded */
+.dice-dock:not(.open) {
+  transition: bottom 0.22s ease, transform 0.22s ease;
+}
+
+.map-shell:has(.battle-map-youtube-audio-dock:hover) .dice-dock:not(.open),
+.map-shell:has(.battle-map-youtube-audio-dock:focus-within) .dice-dock:not(.open) {
+  bottom: 82px;
+  transform: translateY(-6px);
+}
+
+@media (max-width: 850px) {
+  .map-shell:has(.battle-map-youtube-audio-dock:hover) .dice-dock:not(.open),
+  .map-shell:has(.battle-map-youtube-audio-dock:focus-within) .dice-dock:not(.open) {
+    bottom: 78px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dice-dock:not(.open) {
+    transition: none;
+  }
+}
+

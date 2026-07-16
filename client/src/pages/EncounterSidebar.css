@@ -1,0 +1,223 @@
+.encounter-roster {
+  display: grid;
+  gap: .7rem;
+}
+
+.encounter-roster-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--theme-border, var(--border));
+  background: var(--theme-well, var(--bg-well));
+}
+
+.encounter-roster-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-width: 0;
+  padding: .5rem .45rem;
+  color: var(--muted);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.encounter-roster-tabs button.active {
+  color: var(--theme-text, var(--text));
+  background: color-mix(in srgb, var(--theme-accent, #cfa64f), transparent 84%);
+  box-shadow: inset 0 -2px 0 var(--theme-accent, #cfa64f);
+}
+
+.encounter-roster-tabs button span {
+  min-width: 1.25rem;
+  padding: .08rem .3rem;
+  border-radius: 999px;
+  font-size: .68rem;
+  line-height: 1.2;
+  background: rgba(255, 255, 255, .07);
+}
+
+.encounter-roster-list {
+  display: grid;
+  gap: 3px;
+}
+
+.encounter-roster-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .35rem;
+  min-width: 0;
+  padding: .22rem .2rem .22rem .4rem;
+  border-left: 2px solid transparent;
+  background: rgba(255, 255, 255, .015);
+}
+
+.encounter-roster-row:hover,
+.encounter-roster-row.selected {
+  border-left-color: var(--theme-accent, #cfa64f);
+  background: color-mix(in srgb, var(--theme-accent, #cfa64f), transparent 92%);
+}
+
+.encounter-roster-main {
+  display: grid;
+  gap: .1rem;
+  min-width: 0;
+  padding: .32rem 0;
+  color: inherit;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.encounter-roster-main:disabled {
+  cursor: default;
+}
+
+.encounter-roster-token-line {
+  display: flex;
+  align-items: center;
+  gap: .42rem;
+  min-width: 0;
+}
+
+.encounter-roster-name {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  min-width: 0;
+  overflow: hidden;
+  font-size: .84rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.encounter-roster-meta {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.encounter-roster-remove {
+  opacity: .68;
+}
+
+.encounter-roster-row:hover .encounter-roster-remove {
+  opacity: 1;
+}
+
+.encounter-summary {
+  padding-top: .1rem;
+}
+
+.encounter-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .38rem;
+}
+
+.encounter-summary-grid span {
+  display: grid;
+  gap: .05rem;
+  padding: .5rem;
+  color: var(--muted);
+  font-size: .67rem;
+  border: 1px solid color-mix(in srgb, var(--theme-border, var(--border)), transparent 30%);
+  background: rgba(255, 255, 255, .018);
+}
+
+.encounter-summary-grid strong {
+  color: var(--theme-text, var(--text));
+  font-size: 1rem;
+}
+
+.encounter-selected-jump {
+  width: 100%;
+  margin-top: .5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* Collapsible encounter sidebar */
+.encounter-sidebar {
+  position: relative;
+  flex: 0 0 262px;
+  width: 262px;
+  min-width: 0;
+  transition: flex-basis .18s ease, width .18s ease, padding .18s ease;
+}
+
+.encounter-sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.encounter-sidebar-toggle {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  align-self: flex-start;
+  width: 28px;
+  height: 32px;
+  margin: -4px 0 4px -9px;
+  padding: 0;
+  color: var(--theme-text, var(--text));
+  border: 1px solid var(--theme-border, var(--border));
+  background: var(--theme-panel, var(--bg-raised));
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+}
+
+.encounter-sidebar-collapsed {
+  flex-basis: 38px;
+  width: 38px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow: hidden;
+}
+
+.encounter-sidebar-collapsed .encounter-sidebar-content {
+  display: none;
+}
+
+.encounter-sidebar-collapsed .encounter-sidebar-toggle {
+  position: sticky;
+  width: 28px;
+  margin: 0;
+}
+
+.encounter-roster-actions {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+
+.encounter-sheet-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .encounter-sidebar,
+  .encounter-sidebar-collapsed {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .encounter-sidebar-collapsed {
+    min-height: 42px;
+  }
+}
