@@ -475,6 +475,147 @@
 .campaign-themed[data-theme="minimal-dark"] .card,
 .campaign-themed[data-theme="minimal-dark"] .panel { box-shadow: 0 8px 24px rgba(0,0,0,.28); }
 
+
+/* Expanded fantasy themes */
+.campaign-themed[data-theme="royal-parchment"] {
+  --theme-page: #c8b487; --theme-deep: #8f734b; --theme-panel: #ead9ae; --theme-well: #d4bf91;
+  --theme-border: #6f4a2d; --theme-accent: #5b321f; --theme-accent-2: #9d2933; --theme-danger: #8d251f;
+  --theme-text: #2a1b12; --theme-muted: #6b513d; --theme-line: rgba(91,50,31,.28); --theme-glow: rgba(157,41,51,.13);
+  --theme-radius: 2px;
+  --theme-texture:
+    radial-gradient(circle at 12% 10%, rgba(255,255,255,.22), transparent 34%),
+    repeating-linear-gradient(0deg, rgba(70,45,25,.025) 0 1px, transparent 1px 6px);
+}
+.campaign-themed[data-theme="royal-parchment"]::after { opacity: .14; mix-blend-mode: multiply; }
+.campaign-themed[data-theme="royal-parchment"] :is(.card,.panel,.dock-body,.encounter-sidebar-content,.modal-card,.theme-picker-popover) {
+  border: 1px solid #6f4a2d;
+  background:
+    linear-gradient(rgba(255,255,255,.08), rgba(255,255,255,0)),
+    #ead9ae;
+  box-shadow: 0 7px 18px rgba(66,39,20,.22), inset 0 0 0 3px rgba(111,74,45,.08);
+}
+.campaign-themed[data-theme="royal-parchment"] :is(button,.ghost.link,input,textarea,select) {
+  border-color: rgba(91,50,31,.38);
+}
+.campaign-themed[data-theme="royal-parchment"] button.primary {
+  color: #fff0d2;
+  background: linear-gradient(#a43b45, #7f2029);
+  border-color: #5d1720;
+}
+.campaign-themed[data-theme="royal-parchment"] :is(h1,h2,h3,h4,.campaign-theme-brand) {
+  text-shadow: 0 1px rgba(255,255,255,.35);
+}
+
+.campaign-themed[data-theme="verdant-sanctuary"] {
+  --theme-page: #0d1b12; --theme-deep: #07100a; --theme-panel: #183222; --theme-well: #102319;
+  --theme-border: #426449; --theme-accent: #a6cf7f; --theme-accent-2: #d0b464; --theme-danger: #c95a55;
+  --theme-text: #edf6e9; --theme-muted: #a8c0a7; --theme-line: rgba(166,207,127,.24); --theme-glow: rgba(112,190,118,.18);
+  --theme-radius: 15px;
+  --theme-texture:
+    radial-gradient(ellipse at 12% 5%, rgba(123,195,117,.13), transparent 36%),
+    radial-gradient(ellipse at 88% 95%, rgba(208,180,100,.09), transparent 40%),
+    repeating-linear-gradient(115deg, rgba(174,218,142,.022) 0 2px, transparent 2px 22px);
+}
+.campaign-themed[data-theme="verdant-sanctuary"] :is(.card,.panel,.dock-body,.encounter-sidebar-content,.modal-card,.theme-picker-popover) {
+  border-color: #426449;
+  background:
+    radial-gradient(circle at 100% 0, rgba(166,207,127,.08), transparent 34%),
+    linear-gradient(145deg, #1a3625, #12281b);
+  box-shadow: 0 10px 28px rgba(0,0,0,.35), inset 0 1px rgba(230,255,220,.04);
+}
+.campaign-themed[data-theme="verdant-sanctuary"] :is(.card,.panel,.dock-body)::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: 5px;
+  border: 1px solid rgba(166,207,127,.08);
+  border-radius: inherit;
+}
+.campaign-themed[data-theme="verdant-sanctuary"] button.primary {
+  background: linear-gradient(135deg, #4f8555, #2f603d);
+  border-color: #81aa68;
+}
+.campaign-themed[data-theme="verdant-sanctuary"] .campaign-theme-crest {
+  border-radius: 50% 38% 50% 38%;
+}
+
+.campaign-themed[data-theme="frostbound-citadel"] {
+  --theme-page: #0b1620; --theme-deep: #050c12; --theme-panel: #172a38; --theme-well: #0d1e2a;
+  --theme-border: #52758b; --theme-accent: #d7eef6; --theme-accent-2: #72b8dc; --theme-danger: #d46b78;
+  --theme-text: #f2fbff; --theme-muted: #a9c3d1; --theme-line: rgba(188,219,234,.24); --theme-glow: rgba(114,184,220,.21);
+  --theme-radius: 7px;
+  --theme-texture:
+    linear-gradient(135deg, rgba(215,238,246,.035) 25%, transparent 25% 75%, rgba(114,184,220,.035) 75%),
+    radial-gradient(circle at 50% -15%, rgba(188,219,234,.17), transparent 45%);
+}
+.campaign-themed[data-theme="frostbound-citadel"] :is(.card,.panel,.dock-body,.encounter-sidebar-content,.modal-card,.theme-picker-popover) {
+  border-color: rgba(188,219,234,.34);
+  background:
+    linear-gradient(145deg, rgba(38,67,84,.92), rgba(15,34,47,.95));
+  box-shadow: 0 12px 30px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.08);
+  backdrop-filter: blur(12px);
+}
+.campaign-themed[data-theme="frostbound-citadel"] button.primary {
+  color: #07131d;
+  background: linear-gradient(#d9f0f8, #8bc5df);
+  border-color: #d8f4ff;
+}
+.campaign-themed[data-theme="frostbound-citadel"] :is(input,textarea,select) {
+  background: rgba(7,20,30,.74);
+}
+
+.campaign-themed[data-theme="emberforge"] {
+  --theme-page: #130d0a; --theme-deep: #080504; --theme-panel: #271a14; --theme-well: #180f0c;
+  --theme-border: #644132; --theme-accent: #e2974a; --theme-accent-2: #b95032; --theme-danger: #e0543b;
+  --theme-text: #f4e4d4; --theme-muted: #bda08a; --theme-line: rgba(226,151,74,.25); --theme-glow: rgba(226,91,50,.2);
+  --theme-radius: 3px;
+  --theme-texture:
+    radial-gradient(circle at 20% 100%, rgba(226,91,50,.13), transparent 35%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 2px, transparent 2px 38px);
+}
+.campaign-themed[data-theme="emberforge"] :is(.card,.panel,.dock-body,.encounter-sidebar-content,.modal-card,.theme-picker-popover) {
+  border: 1px solid #694332;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,.025), transparent 38%),
+    #271a14;
+  box-shadow: 0 9px 24px rgba(0,0,0,.45), inset 0 0 0 1px rgba(230,151,74,.045);
+}
+.campaign-themed[data-theme="emberforge"] :is(.card,.panel,.dock-body) {
+  clip-path: polygon(0 5px, 5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px));
+}
+.campaign-themed[data-theme="emberforge"] button.primary {
+  color: #1a0b05;
+  background: linear-gradient(#f2a24e, #b94c2c);
+  border-color: #f0a453;
+  box-shadow: 0 0 18px rgba(226,91,50,.2);
+}
+
+.campaign-themed[data-theme="dreamveil"] {
+  --theme-page: #0e0b21; --theme-deep: #070513; --theme-panel: #1d1739; --theme-well: #12102b;
+  --theme-border: #574987; --theme-accent: #c29af8; --theme-accent-2: #64d5df; --theme-danger: #ef6e9f;
+  --theme-text: #f4efff; --theme-muted: #b5a9d1; --theme-line: rgba(100,213,223,.22); --theme-glow: rgba(194,154,248,.22);
+  --theme-radius: 18px;
+  --theme-texture:
+    radial-gradient(circle at 15% 12%, rgba(194,154,248,.16), transparent 30%),
+    radial-gradient(circle at 88% 6%, rgba(100,213,223,.14), transparent 28%),
+    radial-gradient(circle at 50% 110%, rgba(238,102,164,.11), transparent 42%);
+}
+.campaign-themed[data-theme="dreamveil"] :is(.card,.panel,.dock-body,.encounter-sidebar-content,.modal-card,.theme-picker-popover) {
+  border-color: rgba(194,154,248,.34);
+  background:
+    linear-gradient(145deg, rgba(38,28,72,.9), rgba(20,16,48,.94));
+  box-shadow: 0 15px 38px rgba(5,3,17,.46), inset 0 1px rgba(255,255,255,.055);
+  backdrop-filter: blur(14px);
+}
+.campaign-themed[data-theme="dreamveil"] button.primary {
+  color: #130a25;
+  background: linear-gradient(135deg, #c09bf5, #65d6df);
+  border-color: #d7bbff;
+}
+.campaign-themed[data-theme="dreamveil"] .campaign-theme-crest {
+  box-shadow: 0 0 24px rgba(194,154,248,.3);
+}
+
 /* Angular interface treatments */
 .campaign-themed:is([data-theme="huntsman-network"], [data-theme="atlas-command"], [data-theme="shade-academy"]) button,
 .campaign-themed:is([data-theme="huntsman-network"], [data-theme="atlas-command"], [data-theme="shade-academy"]) .ghost.link,

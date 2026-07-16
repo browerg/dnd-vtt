@@ -10,14 +10,19 @@ export type ThemeId =
   | "ancient-parchment"
   | "arcane-observatory"
   | "dungeon-stone"
-  | "minimal-dark";
+  | "minimal-dark"
+  | "royal-parchment"
+  | "verdant-sanctuary"
+  | "frostbound-citadel"
+  | "emberforge"
+  | "dreamveil";
 
 export type ThemeOverride = "campaign" | ThemeId;
 
 export interface ThemeDefinition {
   id: ThemeId;
   name: string;
-  system: "remnant" | "dnd5e";
+  system: "remnant" | "dnd5e" | "both";
   description: string;
   brand: string;
   glyph: string;
@@ -115,6 +120,51 @@ export const THEMES: ThemeDefinition[] = [
     glyph: "\u25CF",
     preview: ["#0c0d10", "#e4e5e8", "#6e8ba4"],
   },
+  {
+    id: "royal-parchment",
+    name: "Royal Parchment",
+    system: "both",
+    description: "Layered paper panels, inked borders, wax-red accents and gilded fantasy ornament.",
+    brand: "VIVID REALMS // ROYAL CHRONICLE",
+    glyph: "\u2748",
+    preview: ["#d8c79f", "#5b321f", "#9d2933"],
+  },
+  {
+    id: "verdant-sanctuary",
+    name: "Verdant Sanctuary",
+    system: "both",
+    description: "Living wood, emerald leaves, moss-soft surfaces and warm botanical magic.",
+    brand: "VIVID REALMS // VERDANT SANCTUARY",
+    glyph: "\u2767",
+    preview: ["#102015", "#86b96b", "#c7a95c"],
+  },
+  {
+    id: "frostbound-citadel",
+    name: "Frostbound Citadel",
+    system: "both",
+    description: "Pale stone, frozen glass, silver framing and cold blue spell-light.",
+    brand: "VIVID REALMS // FROSTBOUND CITADEL",
+    glyph: "\u2744",
+    preview: ["#0d1822", "#bcdbea", "#5e90ba"],
+  },
+  {
+    id: "emberforge",
+    name: "Emberforge",
+    system: "both",
+    description: "Blackened iron, bronze hardware and glowing seams of forge-fire.",
+    brand: "VIVID REALMS // EMBERFORGE",
+    glyph: "\u2725",
+    preview: ["#17100d", "#d7823b", "#8b3f2d"],
+  },
+  {
+    id: "dreamveil",
+    name: "Dreamveil",
+    system: "both",
+    description: "Velvet midnight, luminous violet glass and drifting dreamlike color.",
+    brand: "VIVID REALMS // DREAMVEIL",
+    glyph: "\u2736",
+    preview: ["#100d24", "#b185f4", "#59d2df"],
+  },
 ];
 
 export const THEME_BY_ID = Object.fromEntries(THEMES.map((theme) => [theme.id, theme])) as Record<
@@ -122,8 +172,10 @@ export const THEME_BY_ID = Object.fromEntries(THEMES.map((theme) => [theme.id, t
   ThemeDefinition
 >;
 
-export const themesForSystem = (system?: string) =>
-  THEMES.filter((theme) => theme.system === (system === "dnd5e" ? "dnd5e" : "remnant"));
+export const themesForSystem = (system?: string) => {
+  const target = system === "dnd5e" ? "dnd5e" : "remnant";
+  return THEMES.filter((theme) => theme.system === target || theme.system === "both");
+};
 
 export const defaultThemeForSystem = (system?: string): ThemeId =>
   system === "dnd5e" ? "academy-after-dark" : "huntsman-network";
@@ -131,7 +183,8 @@ export const defaultThemeForSystem = (system?: string): ThemeId =>
 export const normalizeCampaignTheme = (theme: string | undefined, system?: string): ThemeId => {
   const candidate = theme as ThemeId;
   const match = THEME_BY_ID[candidate];
-  return match && match.system === (system === "dnd5e" ? "dnd5e" : "remnant")
+  const target = system === "dnd5e" ? "dnd5e" : "remnant";
+  return match && (match.system === target || match.system === "both")
     ? candidate
     : defaultThemeForSystem(system);
 };
