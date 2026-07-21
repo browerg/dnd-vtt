@@ -89,6 +89,7 @@ function remnantDefaultData() {
       maintainedRounds: 0,
     },
     dust: {},
+    dustVials: [],
     conditions: [],
     lien: 0,
     inventory: [],
@@ -291,6 +292,38 @@ charactersRouter.put("/:id/characters/:charId", (req, res) => {
     });
   res.json({ ok: true });
 });
+
+const DUST_EFFECTS = new Set([
+  "fire", "water", "lightning", "wind", "steam", "gravity",
+  "combustion", "ice", "rock", "hardlight", "lava", "custom",
+]);
+
+// Cosmetic only: broadcast a short-lived elemental flourish on every open map.
+charactersRouter.post("/:id/characters/:charId/dust-effect", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+
+  const row = getCharacter(Number(req.params.charId), campaignId);
+  if (!row) return res.status(404).json({ error: "Character not found." });
+  if (!canEditCharacter(row, user(req).id, role)) {
+    return res.status(403).json({ error: "Only the character's player or the DM can use their Dust." });
+  }
+
+  const effect = String(req.body?.effect ?? "").toLowerCase();
+  if (!DUST_EFFECTS.has(effect)) {
+    return res.status(400).json({ error: "Unknown Dust effect." });
+  }
+
+  getIo().to(`campaign:${campaignId}`).emit("dust:effect", {
+    campaignId,
+    characterId: row.id,
+    effect,
+    at: Date.now(),
+  });
+  res.json({ ok: true });
+});
+
 
 // DM toggles whether players may drive an NPC (view + edit + roll as it).
 charactersRouter.post("/:id/characters/:charId/npc-control", (req, res) => {

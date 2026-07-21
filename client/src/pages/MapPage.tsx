@@ -300,8 +300,15 @@ export default function MapPage() {
   const [map, setMap] = useState<MapInfo | null>(null);
   const [maps, setMaps] = useState<MapInfo[]>([]);
   const [tokens, setTokens] = useState<Token[]>([]);
+  const tokensRef = useRef<Token[]>([]);
+  tokensRef.current = tokens;
   const [enteringTokenIds, setEnteringTokenIds] = useState<Set<number>>(new Set());
   const [brokenAuraTokenIds, setBrokenAuraTokenIds] = useState<Set<number>>(new Set());
+  // vivid-dust-token-effects
+  const [dustTokenEffects, setDustTokenEffects] = useState<
+    Record<number, { effect: string; nonce: number }>
+  >({});
+  const dustEffectTimers = useRef<Record<number, number>>({});
   const [combatEffectNotice, setCombatEffectNotice] = useState("");
   const combatEffectReadyRef = useRef(false);
   const previousTokenIdsRef = useRef<Set<number>>(new Set());
@@ -662,6 +669,35 @@ export default function MapPage() {
       if (m.campaignId === campaignId) setTokens((prev) => prev.filter((t) => t.id !== m.tokenId));
     });
     socket.on("character:update", () => loadAll());
+    socket.on(
+      "dust:effect",
+      (message: { campaignId: number; characterId: number; effect: string; at: number }) => {
+        if (message.campaignId !== campaignId) return;
+        const token = tokensRef.current.find(
+          (candidate) => candidate.characterId === message.characterId
+        );
+        if (!token) return;
+
+        window.clearTimeout(dustEffectTimers.current[token.id]);
+        setDustTokenEffects((previous) => ({
+          ...previous,
+          [token.id]: { effect: message.effect, nonce: message.at || Date.now() },
+        }));
+        setCombatEffectNotice(
+          `${token.name} channels ${message.effect === "hardlight" ? "Hard-Light" : message.effect} Dust`
+        );
+
+        dustEffectTimers.current[token.id] = window.setTimeout(() => {
+          setDustTokenEffects((previous) => {
+            const next = { ...previous };
+            delete next[token.id];
+            return next;
+          });
+          delete dustEffectTimers.current[token.id];
+        }, 2800);
+        window.setTimeout(() => setCombatEffectNotice(""), 3000);
+      }
+    );
     socket.on("combat:update", (m: { campaignId: number; state: CombatState }) => {
       if (m.campaignId === campaignId) setCombat(m.state);
     });
@@ -706,6 +742,8 @@ export default function MapPage() {
       }
     );
     return () => {
+      Object.values(dustEffectTimers.current).forEach((timer) => window.clearTimeout(timer));
+      dustEffectTimers.current = {};
       socket.disconnect();
       socketRef.current = null;
     };
@@ -2132,7 +2170,7 @@ Choose Cancel to permanently delete it instead.`
                     }${brokenAuraTokenIds.has(t.id) ? " aura-breaking" : ""}${enteringTokenIds.has(t.id) ? " grimm-entering" : ""}${isFinalFlare(t) ? " token-final-flare" : ""}${(
                       (t.hp != null && t.hp <= 0 && !isRwbyCharacterToken(t)) ||
                       isResolvedDowned(t)
-                    ) ? " token-downed" : ""}${isCriticalDowned(t) ? " token-critical-downed" : ""}`}
+                    ) ? " token-downed" : ""}${isCriticalDowned(t) ? " token-critical-downed" : ""}${dustTokenEffects[t.id] ? ` dust-channeling dust-${dustTokenEffects[t.id].effect}` : ""}`}
                     style={{
                       ...({
                         "--token-aura-color": t.auraColor || t.color || "#78e1ff",
@@ -2152,6 +2190,21 @@ Choose Cancel to permanently delete it instead.`
                   >
                     {t.auraMax != null && t.aura != null && t.aura > 0 && (
                       <span className="token-aura-shell" aria-hidden="true" />
+                    )}
+                    {dustTokenEffects[t.id] && (
+                      <span
+                        key={dustTokenEffects[t.id].nonce}
+                        className={`token-dust-fx token-dust-${dustTokenEffects[t.id].effect}`}
+                        aria-hidden="true"
+                      >
+                        <span className="dust-fx-core" />
+                        <span className="dust-fx-ring" />
+                        <span className="dust-fx-particles">
+                          {Array.from({ length: 10 }, (_, particle) => (
+                            <i key={particle} style={{ "--dust-particle": particle } as React.CSSProperties} />
+                          ))}
+                        </span>
+                      </span>
                     )}
                     {brokenAuraTokenIds.has(t.id) && (
                       <span className="token-aura-break-ring" aria-hidden="true" />

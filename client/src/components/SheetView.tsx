@@ -158,6 +158,14 @@ export default function SheetView({ campaignId, characterId }: Props) {
     });
   };
 
+
+  // vivid-dust-token-effects
+  const triggerDustEffect = async (effect: string) => {
+    await api(`/api/campaigns/${campaignId}/characters/${characterId}/dust-effect`, {
+      method: "POST",
+      body: JSON.stringify({ effect }),
+    });
+  };
   if (error) return <div className="page-center error">{error}</div>;
   if (!character) return <div className="page-center muted">Loading…</div>;
   const isRemnant = (character.data as unknown as RemnantData).system === "remnant";
@@ -242,6 +250,7 @@ export default function SheetView({ campaignId, characterId }: Props) {
           update={update}
           roll={roll}
           onUpload={(file) => uploadItemImage(campaignId, characterId, file)}
+          onDustEffect={triggerDustEffect}
         />
       ) : (
         <main className="content sheet">

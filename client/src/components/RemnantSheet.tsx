@@ -4,6 +4,7 @@ import {
   ARMOR_TYPES,
   DIE_SIZES,
   DUST_TYPES,
+  DUST_VIAL_CAPACITY,
   RANGE_BANDS,
   RANKS,
   REMNANT_ATTRIBUTES,
@@ -21,6 +22,7 @@ import {
   semblanceCost,
   trainingBonus,
   type RemnantAttrKey,
+  type DustVial,
   type RemnantData,
 } from "../remnant";
 import InventoryEditor from "./InventoryEditor";
@@ -36,6 +38,7 @@ interface Props {
     mode?: "normal" | "edge" | "setback"
   ) => void;
   onUpload?: (file: File) => Promise<string>;
+  onDustEffect?: (effect: string) => void;
 }
 
 const num = (v: string, fallback = 0) => {
@@ -43,7 +46,7 @@ const num = (v: string, fallback = 0) => {
   return Number.isNaN(n) ? fallback : n;
 };
 
-export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Props) {
+export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDustEffect }: Props) {
   const tb = trainingBonus(d.rank);
   const auraMax = auraMaxFor(d);
   const hpMax = hpMaxFor(d);
@@ -70,6 +73,26 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
 
   const attrDie = (k: RemnantAttrKey) => d.attributes[k];
 
+
+  // vivid-dust-vial-system
+  const legacyDustVials: DustVial[] = Object.entries(d.dust ?? {}).flatMap(([type, rawCharges]) => {
+    const count = Math.max(0, Number(rawCharges) || 0);
+    const vials: DustVial[] = [];
+    for (let remaining = count, index = 0; remaining > 0; remaining -= 3, index += 1) {
+      vials.push({
+        id: `legacy-${type}-${index}`,
+        type,
+        charges: Math.min(3, remaining),
+      });
+    }
+    return vials;
+  });
+  const dustVials: DustVial[] = d.dustVials ?? legacyDustVials;
+  const saveDustVials = (nextVials: DustVial[]) =>
+    update({ dustVials: nextVials, dust: {} });
+  const dustTypeFor = (key: string) => DUST_TYPES.find((type) => type.key === key);
+  const newDustVialId = () =>
+    `dust-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const pool = (label: string, value: number, max: number, onChange: (v: number) => void, cls: string) => (
     <div className={`vital pool ${cls}`}>
       <span className="vital-label">{label}</span>
@@ -794,40 +817,259 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
               ))}
             </div>
           </section>
-
           {/* dust */}
-          <section className="card">
-            <h3>Dust — charges</h3>
-            <div className="dust-grid">
-              {DUST_TYPES.map((t) => {
-                const charges = d.dust[t.key] ?? 0;
-                return (
-                  <div key={t.key} className={`dust-box${charges > 0 ? " has-dust" : ""}`}>
-                    <span className="dust-name" title={t.note}>
-                      {t.name}
-                    </span>
-                    <div className="slot-controls">
-                      <button
-                        className="ghost mini"
-                        disabled={ro || charges === 0}
-                        onClick={() => update({ dust: { ...d.dust, [t.key]: charges - 1 } })}
-                      >
-                        use
-                      </button>
-                      <span>{charges}</span>
-                      <button
-                        className="ghost mini"
-                        disabled={ro}
-                        onClick={() => update({ dust: { ...d.dust, [t.key]: charges + 1 } })}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+          <section className="card stack dust-system-card">
+            <div className="row-between dust-heading">
+              <div>
+                <h3>Dust Vials</h3>
+                <p className="muted small">
+                  Each vial holds {DUST_VIAL_CAPACITY} charges. Spend, refill, mix, loot, or craft them.
+                </p>
+              </div>
+              {!ro && (
+                <button
+                  type="button"
+                  className="primary mini"
+                  onClick={() =>
+                    saveDustVials([
+                      ...dustVials,
+                      {
+                        id: newDustVialId(),
+                        type: "fire",
+                        charges: DUST_VIAL_CAPACITY,
+                      },
+                    ])
+                  }
+                >
+                  + Add vial
+                </button>
+              )}
             </div>
-            <p className="muted small">A vial holds 3 charges. Dust doesn't replenish on rests — buy, loot, or craft it.</p>
+
+            {dustVials.length === 0 ? (
+              <div className="dust-empty-state">
+                <strong>No Dust vials carried.</strong>
+                <span className="muted small">Add a vial when Dust is bought, crafted, or recovered.</span>
+              </div>
+            ) : (
+              <div className="dust-vial-list">
+                {dustVials.map((vial, vialIndex) => {
+                  const type = dustTypeFor(vial.type);
+                  const displayName =
+                    vial.type === "custom" ? vial.customName || "Custom Dust" : type?.name || vial.type;
+                  const combatEffect =
+                    vial.type === "custom"
+                      ? vial.customCombatEffect || "Describe the custom combat effect."
+                      : type?.combatEffect || "";
+                  const environmentalUse =
+                    vial.type === "custom"
+                      ? vial.customEnvironmentalUse || "Describe the environmental use."
+                      : type?.environmentalUse || "";
+
+                  return (
+                    <article
+                      key={vial.id}
+                      className={`dust-vial dust-${vial.type} ${vial.charges === 0 ? "empty" : ""}`}
+                    >
+                      <div className="dust-vial-top">
+                        <div className="dust-vial-identity">
+                          <span className="dust-crystal" aria-hidden="true" />
+                          <div>
+                            <strong>{displayName}</strong>
+                            <span>
+                              {vial.type === "custom"
+                                ? "Custom / Mixed"
+                                : `${type?.tier ?? "Dust"} · ${type?.components ?? ""}`}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="dust-charge-track" aria-label={`${vial.charges} of 3 charges`}>
+                          {[1, 2, 3].map((slot) => (
+                            <button
+                              type="button"
+                              key={slot}
+                              className={slot <= vial.charges ? "dust-charge filled" : "dust-charge"}
+                              disabled={ro}
+                              onClick={() =>
+                                saveDustVials(
+                                  dustVials.map((entry, index) =>
+                                    index === vialIndex
+                                      ? { ...entry, charges: slot <= vial.charges ? slot - 1 : slot }
+                                      : entry
+                                  )
+                                )
+                              }
+                            />
+                          ))}
+                          <span>{vial.charges}/{DUST_VIAL_CAPACITY}</span>
+                        </div>
+                      </div>
+
+                      <div className="dust-vial-controls">
+                        <select
+                          value={vial.type}
+                          disabled={ro}
+                          onChange={(event) =>
+                            saveDustVials(
+                              dustVials.map((entry, index) =>
+                                index === vialIndex
+                                  ? {
+                                      ...entry,
+                                      type: event.target.value,
+                                      customName: event.target.value === "custom" ? entry.customName ?? "" : undefined,
+                                      customCombatEffect: event.target.value === "custom" ? entry.customCombatEffect ?? "" : undefined,
+                                      customEnvironmentalUse: event.target.value === "custom" ? entry.customEnvironmentalUse ?? "" : undefined,
+                                    }
+                                  : entry
+                              )
+                            )
+                          }
+                        >
+                          <optgroup label="Primary">
+                            {DUST_TYPES.filter((entry) => entry.tier === "Primary").map((entry) => (
+                              <option key={entry.key} value={entry.key}>{entry.name}</option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Combined Tier 1">
+                            {DUST_TYPES.filter((entry) => entry.tier === "Combined Tier 1").map((entry) => (
+                              <option key={entry.key} value={entry.key}>{entry.name}</option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Combined Tier 2">
+                            {DUST_TYPES.filter((entry) => entry.tier === "Combined Tier 2").map((entry) => (
+                              <option key={entry.key} value={entry.key}>{entry.name}</option>
+                            ))}
+                          </optgroup>
+                          <option value="custom">Custom / Mixed Dust</option>
+                        </select>
+
+                        <button
+                          type="button"
+                          className="primary mini dust-use-button"
+                          disabled={ro || vial.charges <= 0}
+                          onClick={() => {
+                            saveDustVials(
+                              dustVials.map((entry, index) =>
+                                index === vialIndex ? { ...entry, charges: Math.max(0, entry.charges - 1) } : entry
+                              )
+                            );
+                                                        onDustEffect?.(vial.type);
+                            roll(
+                              remnantCheckFormula(
+                                attrDie("aura"),
+                                d.trainedSkills.includes("dust-channeling") ? tb : 0
+                              ),
+                              `${name}: ${displayName} Dust Channeling`,
+                              "normal"
+                            );
+                          }}
+                        >
+                          Use charge & roll
+                        </button>
+
+                        {!ro && (
+                          <>
+                            <button
+                              type="button"
+                              className="ghost mini"
+                              disabled={vial.charges === DUST_VIAL_CAPACITY}
+                              onClick={() =>
+                                saveDustVials(
+                                  dustVials.map((entry, index) =>
+                                    index === vialIndex ? { ...entry, charges: DUST_VIAL_CAPACITY } : entry
+                                  )
+                                )
+                              }
+                            >
+                              Refill
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost mini danger"
+                              onClick={() => saveDustVials(dustVials.filter((_, index) => index !== vialIndex))}
+                            >
+                              Remove
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      {vial.type === "custom" && (
+                        <div className="dust-custom-fields">
+                          <input
+                            value={vial.customName ?? ""}
+                            disabled={ro}
+                            placeholder="Custom or mixed Dust name"
+                            onChange={(event) =>
+                              saveDustVials(
+                                dustVials.map((entry, index) =>
+                                  index === vialIndex ? { ...entry, customName: event.target.value } : entry
+                                )
+                              )
+                            }
+                          />
+                          <textarea
+                            rows={2}
+                            value={vial.customCombatEffect ?? ""}
+                            disabled={ro}
+                            placeholder="Combat effect"
+                            onChange={(event) =>
+                              saveDustVials(
+                                dustVials.map((entry, index) =>
+                                  index === vialIndex ? { ...entry, customCombatEffect: event.target.value } : entry
+                                )
+                              )
+                            }
+                          />
+                          <textarea
+                            rows={2}
+                            value={vial.customEnvironmentalUse ?? ""}
+                            disabled={ro}
+                            placeholder="Environmental use"
+                            onChange={(event) =>
+                              saveDustVials(
+                                dustVials.map((entry, index) =>
+                                  index === vialIndex ? { ...entry, customEnvironmentalUse: event.target.value } : entry
+                                )
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+
+                      <details className="dust-rules">
+                        <summary>Effects & uses</summary>
+                        <div className="dust-rule-grid">
+                          <div>
+                            <span>Combat Effect</span>
+                            <p>{combatEffect}</p>
+                            {type?.condition && <span className="dust-condition-chip">{type.condition}</span>}
+                          </div>
+                          <div>
+                            <span>Environmental Use</span>
+                            <p>{environmentalUse}</p>
+                          </div>
+                        </div>
+                      </details>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            <details className="dust-reference">
+              <summary>Dust combinations reference</summary>
+              <div className="dust-reference-grid">
+                {DUST_TYPES.map((type) => (
+                  <div key={type.key} className={`dust-reference-entry dust-${type.key}`}>
+                    <strong>{type.name}</strong>
+                    <span>{type.components}</span>
+                    <p>{type.combatEffect}</p>
+                  </div>
+                ))}
+              </div>
+            </details>
           </section>
 
           {/* inventory */}

@@ -94,18 +94,42 @@ export const REMNANT_CONDITIONS = [
   "Critically Downed",
 ];
 
-export const DUST_TYPES: { key: string; name: string; note: string }[] = [
-  { key: "fire", name: "Fire", note: "Burning" },
-  { key: "water", name: "Water", note: "Drenched" },
-  { key: "lightning", name: "Lightning", note: "Shocked" },
-  { key: "wind", name: "Wind", note: "Knockback" },
-  { key: "steam", name: "Steam", note: "Fire + Water" },
-  { key: "gravity", name: "Gravity", note: "Fire + Lightning" },
-  { key: "combustion", name: "Combustion", note: "Fire + Wind" },
-  { key: "ice", name: "Ice", note: "Water + Wind" },
-  { key: "rock", name: "Rock", note: "Lightning + Water" },
-  { key: "hardlight", name: "Hard-Light", note: "All four primaries" },
-  { key: "lava", name: "Lava", note: "Fire + Rock" },
+export type DustTier = "Primary" | "Combined Tier 1" | "Combined Tier 2" | "Custom";
+
+export interface DustType {
+  key: string;
+  name: string;
+  element: string;
+  components: string;
+  combatEffect: string;
+  environmentalUse: string;
+  condition?: string;
+  tier: DustTier;
+}
+
+export interface DustVial {
+  id: string;
+  type: string;
+  customName?: string;
+  customCombatEffect?: string;
+  customEnvironmentalUse?: string;
+  charges: number;
+}
+
+export const DUST_VIAL_CAPACITY = 3;
+
+export const DUST_TYPES: DustType[] = [
+  { key: "fire", name: "Fire", element: "Heat / Flame", components: "Primary", combatEffect: "Burning — 1d6 damage at the start of the target's next 2 turns.", environmentalUse: "Ignite terrain, melt obstacles, fire barriers.", condition: "Burning", tier: "Primary" },
+  { key: "water", name: "Water", element: "Liquid / Flow", components: "Primary", combatEffect: "Drenched — Setback on Fire resistance; chains with Lightning.", environmentalUse: "Extinguish fires, create slick terrain, push targets.", condition: "Drenched", tier: "Primary" },
+  { key: "lightning", name: "Lightning", element: "Electricity", components: "Primary", combatEffect: "Shocked — Setback on the target's next attack roll.", environmentalUse: "Power machinery, chain through Drenched targets, short-circuit technology.", condition: "Shocked", tier: "Primary" },
+  { key: "wind", name: "Wind", element: "Air / Force", components: "Primary", combatEffect: "Knockback — push the target one range band away.", environmentalUse: "Create updrafts, redirect projectiles, clear smoke.", tier: "Primary" },
+  { key: "steam", name: "Steam", element: "Vapor", components: "Fire + Water", combatEffect: "Obscured cloud — Setback on all attacks inside for 2 turns.", environmentalUse: "Fill enclosed spaces and obscure areas.", tier: "Combined Tier 1" },
+  { key: "gravity", name: "Gravity", element: "Gravity / Force", components: "Fire + Lightning", combatEffect: "Grounded or Launched — pin in place or launch one range band up.", environmentalUse: "Crush objects, redirect falling, alter trajectories.", tier: "Combined Tier 1" },
+  { key: "combustion", name: "Combustion", element: "Explosive Force", components: "Fire + Wind", combatEffect: "Explosion — Fire damage die to the target and all enemies at Close range; knock them back one band.", environmentalUse: "Demolish barriers and trigger chain reactions.", tier: "Combined Tier 1" },
+  { key: "ice", name: "Ice", element: "Cold / Solid", components: "Water + Wind", combatEffect: "Frozen — target loses Movement next turn; Ice terrain remains.", environmentalUse: "Create barriers, freeze water, slow pursuit.", condition: "Frozen", tier: "Combined Tier 1" },
+  { key: "rock", name: "Rock", element: "Stone / Earth", components: "Lightning + Water", combatEffect: "Staggered — target cannot use a Bonus Action next turn.", environmentalUse: "Create cover, collapse terrain, block passages.", condition: "Staggered", tier: "Combined Tier 1" },
+  { key: "hardlight", name: "Hard-Light", element: "Solid Light", components: "All four primaries", combatEffect: "Shield — absorb one full attack for a target, or create an environmental barrier.", environmentalUse: "Construct bridges, walls, and temporary cover.", tier: "Combined Tier 1" },
+  { key: "lava", name: "Lava", element: "Molten Stone", components: "Fire + Rock", combatEffect: "Scorched — immediate Fire damage die and Lava terrain dealing Fire damage.", environmentalUse: "Destroy cover, create impassable terrain, melt fortifications.", tier: "Combined Tier 2" },
 ];
 
 export const SEMBLANCE_TYPES = [
@@ -191,6 +215,7 @@ export interface RemnantData {
     maintainedRounds?: number;
   };
   dust: Record<string, number>; // charges by type key
+  dustVials?: DustVial[];
   conditions: string[];
   lien: number;
   inventory: InventoryItem[];

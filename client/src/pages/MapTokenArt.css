@@ -657,3 +657,191 @@
     animation: none !important;
   }
 }
+
+
+/* vivid-dust-token-effects */
+.token-dust-fx {
+  --dust-fx-color: #ffffff;
+  --dust-fx-color-2: #ffffff;
+  position: absolute;
+  inset: -38%;
+  z-index: 7;
+  pointer-events: none;
+  overflow: visible;
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--dust-fx-color) 72%, transparent));
+}
+
+.token-dust-fx > span,
+.token-dust-fx i {
+  position: absolute;
+  pointer-events: none;
+}
+
+.dust-fx-core {
+  inset: 27%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, white 76%, var(--dust-fx-color)), color-mix(in srgb, var(--dust-fx-color) 32%, transparent) 44%, transparent 72%);
+  mix-blend-mode: screen;
+  animation: dust-core-flash 1.05s ease-out both;
+}
+
+.dust-fx-ring {
+  inset: 29%;
+  border: max(2px, .04em) solid var(--dust-fx-color);
+  border-radius: 50%;
+  box-shadow: 0 0 14px var(--dust-fx-color), inset 0 0 12px var(--dust-fx-color-2);
+  animation: dust-ring-burst 1.25s cubic-bezier(.15,.7,.2,1) both;
+}
+
+.dust-fx-particles {
+  inset: 0;
+}
+
+.dust-fx-particles i {
+  --angle: calc(var(--dust-particle) * 36deg);
+  left: 50%;
+  top: 50%;
+  width: 7%;
+  height: 18%;
+  border-radius: 999px;
+  background: linear-gradient(to top, transparent, var(--dust-fx-color-2), white);
+  transform-origin: 50% 180%;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-22%);
+  animation: dust-particle-burst 1.35s cubic-bezier(.12,.72,.2,1) both;
+  animation-delay: calc(var(--dust-particle) * 18ms);
+}
+
+/* Primary Dust */
+.token-dust-fire { --dust-fx-color:#ff5a1f; --dust-fx-color-2:#ffd35a; }
+.token-dust-fire .dust-fx-core { border-radius: 45% 55% 38% 62%; animation-name: dust-fire-core; }
+.token-dust-fire .dust-fx-particles i { clip-path: polygon(50% 0,100% 100%,50% 78%,0 100%); }
+
+.token-dust-water { --dust-fx-color:#32aaff; --dust-fx-color-2:#b7f1ff; }
+.token-dust-water .dust-fx-ring { border-style: double; animation-name: dust-water-ring; }
+.token-dust-water .dust-fx-particles i { width:8%;height:8%;border-radius:50% 50% 60% 40%; }
+
+.token-dust-lightning { --dust-fx-color:#ffe84a; --dust-fx-color-2:#fffbd1; }
+.token-dust-lightning .dust-fx-ring { border-radius:42% 58% 38% 62%; animation-name:dust-lightning-ring; }
+.token-dust-lightning .dust-fx-particles i { width:5%;height:27%;clip-path:polygon(46% 0,100% 0,62% 42%,100% 42%,20% 100%,38% 57%,0 57%); }
+
+.token-dust-wind { --dust-fx-color:#8fffe0; --dust-fx-color-2:#ffffff; }
+.token-dust-wind .dust-fx-ring { border-width:3px;border-left-color:transparent;border-right-color:transparent;animation-name:dust-wind-spin; }
+.token-dust-wind .dust-fx-particles i { height:4%;width:24%; }
+
+/* Tier 1 combinations */
+.token-dust-steam { --dust-fx-color:#dcecff; --dust-fx-color-2:#8cc9e8; }
+.token-dust-steam .dust-fx-core { filter:blur(5px);animation-name:dust-steam-cloud; }
+.token-dust-steam .dust-fx-particles i { width:14%;height:14%;border-radius:50%;filter:blur(2px); }
+
+.token-dust-gravity { --dust-fx-color:#a96bff; --dust-fx-color-2:#ff7cf1; }
+.token-dust-gravity .dust-fx-ring { border-radius:36% 64% 54% 46%;animation-name:dust-gravity-warp; }
+.token-dust-gravity .dust-fx-particles i { width:8%;height:8%;border-radius:50%;box-shadow:0 0 12px var(--dust-fx-color); }
+
+.token-dust-combustion { --dust-fx-color:#ff3c19; --dust-fx-color-2:#ffd24e; }
+.token-dust-combustion .dust-fx-ring { border-width:5px;animation-name:dust-combustion-wave; }
+.token-dust-combustion .dust-fx-particles i { clip-path:polygon(50% 0,65% 36%,100% 50%,65% 64%,50% 100%,35% 64%,0 50%,35% 36%); }
+
+.token-dust-ice { --dust-fx-color:#8fe9ff; --dust-fx-color-2:#ffffff; }
+.token-dust-ice .dust-fx-ring { border-radius:8%;transform:rotate(45deg);animation-name:dust-ice-crystal; }
+.token-dust-ice .dust-fx-particles i { clip-path:polygon(50% 0,65% 35%,100% 50%,65% 65%,50% 100%,35% 65%,0 50%,35% 35%); }
+
+.token-dust-rock { --dust-fx-color:#b9824f; --dust-fx-color-2:#e6c096; }
+.token-dust-rock .dust-fx-ring { border-radius:38% 62% 45% 55%;border-style:dashed;animation-name:dust-rock-impact; }
+.token-dust-rock .dust-fx-particles i { width:13%;height:10%;border-radius:20%; }
+
+.token-dust-hardlight { --dust-fx-color:#f3eaff; --dust-fx-color-2:#64f4ff; }
+.token-dust-hardlight .dust-fx-ring { border-radius:12%;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);animation-name:dust-hardlight-shield; }
+.token-dust-hardlight .dust-fx-core { clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); }
+
+/* Tier 2 */
+.token-dust-lava { --dust-fx-color:#ff381f; --dust-fx-color-2:#ffb12e; }
+.token-dust-lava .dust-fx-core { border-radius:34% 66% 58% 42%;animation-name:dust-lava-rise; }
+.token-dust-lava .dust-fx-particles i { width:11%;height:11%;border-radius:50%;box-shadow:0 0 8px var(--dust-fx-color-2); }
+
+/* Custom/mixed */
+.token-dust-custom { --dust-fx-color:var(--token-aura-color,#d96cff); --dust-fx-color-2:#ffffff; }
+.token-dust-custom .dust-fx-ring { border-style:dashed;animation-name:dust-custom-prism; }
+
+@keyframes dust-core-flash {
+  0% { opacity:0;transform:scale(.15); }
+  18% { opacity:1;transform:scale(1.2); }
+  100% { opacity:0;transform:scale(1.55); }
+}
+@keyframes dust-ring-burst {
+  0% { opacity:0;transform:scale(.18); }
+  22% { opacity:1; }
+  100% { opacity:0;transform:scale(2.25); }
+}
+@keyframes dust-particle-burst {
+  0% { opacity:0;transform:translate(-50%,-50%) rotate(var(--angle)) translateY(-12%) scale(.2); }
+  18% { opacity:1; }
+  100% { opacity:0;transform:translate(-50%,-50%) rotate(var(--angle)) translateY(-235%) scale(.75); }
+}
+@keyframes dust-fire-core {
+  0% { opacity:0;transform:scale(.1) rotate(-10deg); }
+  25% { opacity:1;transform:scale(1.25) rotate(8deg); }
+  100% { opacity:0;transform:scale(1.7) translateY(-20%) rotate(-5deg); }
+}
+@keyframes dust-water-ring {
+  0% { opacity:0;transform:scale(.25); }
+  35% { opacity:1;transform:scale(1.05) skewX(-8deg); }
+  100% { opacity:0;transform:scale(2.1) skewX(8deg); }
+}
+@keyframes dust-lightning-ring {
+  0%,100% { opacity:0;transform:scale(.5) rotate(0); }
+  12%,34%,56% { opacity:1;transform:scale(1.15) rotate(12deg); }
+  22%,45%,70% { opacity:.3;transform:scale(.9) rotate(-10deg); }
+}
+@keyframes dust-wind-spin {
+  0% { opacity:0;transform:scale(.35) rotate(0); }
+  30% { opacity:1; }
+  100% { opacity:0;transform:scale(2.1) rotate(420deg); }
+}
+@keyframes dust-steam-cloud {
+  0% { opacity:0;transform:scale(.3); }
+  35% { opacity:.85;transform:scale(1.15); }
+  100% { opacity:0;transform:scale(2) translateY(-28%); }
+}
+@keyframes dust-gravity-warp {
+  0% { opacity:0;transform:scale(1.8) rotate(0); }
+  35% { opacity:1;transform:scale(.72) rotate(100deg); }
+  100% { opacity:0;transform:scale(1.45) rotate(250deg); }
+}
+@keyframes dust-combustion-wave {
+  0% { opacity:0;transform:scale(.08); }
+  12% { opacity:1;transform:scale(.45); }
+  100% { opacity:0;transform:scale(2.8);border-width:1px; }
+}
+@keyframes dust-ice-crystal {
+  0% { opacity:0;transform:scale(.15) rotate(45deg); }
+  35% { opacity:1;transform:scale(1.05) rotate(45deg); }
+  100% { opacity:0;transform:scale(1.65) rotate(90deg); }
+}
+@keyframes dust-rock-impact {
+  0% { opacity:0;transform:scale(1.8) rotate(0); }
+  32% { opacity:1;transform:scale(.82) rotate(35deg); }
+  100% { opacity:0;transform:scale(1.35) rotate(80deg); }
+}
+@keyframes dust-hardlight-shield {
+  0% { opacity:0;transform:scale(.25) rotate(-12deg); }
+  30%,65% { opacity:1;transform:scale(1.05) rotate(0); }
+  100% { opacity:0;transform:scale(1.45) rotate(8deg); }
+}
+@keyframes dust-lava-rise {
+  0% { opacity:0;transform:scale(.25) translateY(35%); }
+  30% { opacity:1;transform:scale(1.15) translateY(0); }
+  100% { opacity:0;transform:scale(1.7) translateY(-35%); }
+}
+@keyframes dust-custom-prism {
+  0% { opacity:0;transform:scale(.2) rotate(0);filter:hue-rotate(0deg); }
+  35% { opacity:1;transform:scale(1.1) rotate(90deg); }
+  100% { opacity:0;transform:scale(2) rotate(260deg);filter:hue-rotate(260deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token-dust-fx,
+  .token-dust-fx * {
+    animation-duration: .25s !important;
+    animation-iteration-count: 1 !important;
+  }
+}
