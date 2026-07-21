@@ -1,6 +1,7 @@
 import { Router, type Request } from "express";
 import multer from "multer";
 import { randomBytes } from "node:crypto";
+import { existsSync } from "node:fs";
 import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { db, uploadsDir } from "./db.js";
@@ -403,6 +404,8 @@ mapsRouter.post("/:id/maps/:mapId/tokens", (req, res) => {
   let color = /^#[0-9a-fA-F]{6}$/.test(b.color ?? "") ? b.color : "#c9a24b";
   let hp: number | null = null;
   let maxHp: number | null = null;
+  let imagePath = "";
+  let imageScale = 1;
 
   if (characterId) {
     const c = db
@@ -434,6 +437,14 @@ mapsRouter.post("/:id/maps/:mapId/tokens", (req, res) => {
       String(d.size ?? "medium").toLowerCase()
     ] ?? 1;
     color = /^#[0-9a-fA-F]{6}$/.test(b.color ?? "") ? b.color : "#a03636";
+    const libraryImageUrl = String(d.tokenImageUrl ?? "");
+    const libraryImagePath = libraryImageUrl
+      ? path.join(uploadsDir, path.basename(libraryImageUrl))
+      : "";
+    imagePath = libraryImagePath && existsSync(libraryImagePath) ? libraryImagePath : "";
+    imageScale = Number.isFinite(Number(d.tokenScale))
+      ? Math.min(2.5, Math.max(0.5, Number(d.tokenScale)))
+      : 1;
   }
   if (!name) return res.status(400).json({ error: "The token needs a name." });
 
@@ -441,10 +452,16 @@ mapsRouter.post("/:id/maps/:mapId/tokens", (req, res) => {
   const y = Number.isFinite(b.y) ? b.y : map.grid_size * 1.5;
   const info = db
     .prepare(
-      `INSERT INTO tokens (map_id, character_id, monster_id, name, color, x, y, size, hp, max_hp)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO tokens (
+         map_id, character_id, monster_id, name, color, x, y, size, hp, max_hp,
+         image_path, image_scale
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run(map.id, characterId, monsterId, name, color, x, y, size, hp, maxHp);
+    .run(
+      map.id, characterId, monsterId, name, color, x, y, size, hp, maxHp,
+      imagePath, imageScale
+    );
   const token = getToken(Number(info.lastInsertRowid))!;
   getIo().to(`campaign:${campaignId}`).emit("token:create", { campaignId, token });
   res.json({ token });

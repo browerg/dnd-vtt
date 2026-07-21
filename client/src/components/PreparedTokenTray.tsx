@@ -7,6 +7,9 @@ export interface MonsterPreparation {
   name: string;
   hp: number;
   size: string;
+  imageUrl?: string;
+  imageScale?: number;
+  imageMode?: string;
 }
 
 interface PreparedToken {
@@ -393,13 +396,46 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
               </label>
               <label>
                 Artwork scale
-                <input name="imageScale" type="number" min=".5" max="2.5" step=".05" defaultValue="1" />
+                <input
+                  name="displayImageScale"
+                  type="number"
+                  min=".5"
+                  max="2.5"
+                  step=".05"
+                  defaultValue={monster.imageScale ?? 1}
+                  onChange={(event) => {
+                    const hidden = event.currentTarget.form?.elements.namedItem("imageScale") as HTMLInputElement | null;
+                    if (hidden) hidden.value = event.currentTarget.value;
+                  }}
+                />
               </label>
             </div>
+            {monster.imageUrl && (
+              <div className="prepared-token-summary">
+                <img
+                  src={monster.imageUrl}
+                  alt={`${monster.name} token artwork`}
+                  style={{
+                    objectFit: monster.imageMode === "cover" ? "cover" : "contain",
+                    transform: `scale(${monster.imageScale ?? 1})`,
+                  }}
+                />
+                <span>
+                  <strong>Saved dictionary artwork</strong>
+                  <small>This PNG will carry into the prepared token automatically.</small>
+                </span>
+              </div>
+            )}
             <label>
-              PNG, JPG, or WebP artwork
+              Replace saved artwork (optional)
               <input name="image" type="file" accept="image/png,image/jpeg,image/webp" />
             </label>
+            <input
+              name="imageScale"
+              type="hidden"
+              value={monster.imageScale ?? 1}
+              readOnly
+            />
             <p className="muted small">
               This saves the monster off-map. Deploy it from the right sidebar when the encounter begins.
             </p>

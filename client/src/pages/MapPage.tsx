@@ -212,6 +212,9 @@ interface MonsterHit {
   ac: number;
   threat?: number;
   armor?: number;
+  tokenImageUrl?: string;
+  tokenScale?: number;
+  tokenMode?: string;
 }
 
 interface MonsterDetail {
@@ -1435,6 +1438,9 @@ Choose Cancel to permanently delete it instead.`
       name: monster.name,
       hp: monster.hp,
       size: monster.size,
+      imageUrl: monster.tokenImageUrl ?? "",
+      imageScale: monster.tokenScale ?? 1,
+      imageMode: monster.tokenMode ?? "contain",
     });
 
   const rollDice = (formula: string, label: string) =>
