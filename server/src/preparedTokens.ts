@@ -55,7 +55,14 @@ function canRemoveImage(imagePath: string, excludePreparedId?: number) {
   const preparedUse = excludePreparedId
     ? db.prepare("SELECT 1 FROM prepared_tokens WHERE image_path = ? AND id <> ? LIMIT 1").get(imagePath, excludePreparedId)
     : db.prepare("SELECT 1 FROM prepared_tokens WHERE image_path = ? LIMIT 1").get(imagePath);
-  return !tokenUse && !preparedUse;
+  const imageUrl = `/uploads/${path.basename(imagePath)}`;
+  const monsterUse = db.prepare(`
+    SELECT 1 FROM monsters
+    WHERE json_extract(data, '$.tokenImageUrl') = ?
+       OR json_extract(data, '$.portraitUrl') = ?
+    LIMIT 1
+  `).get(imageUrl, imageUrl);
+  return !tokenUse && !preparedUse && !monsterUse;
 }
 
 export const preparedTokensRouter = Router();

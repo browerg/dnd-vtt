@@ -141,6 +141,20 @@ function parseConditions(raw: unknown): string[] {
   }
 }
 
+function canRemoveStoredImage(imagePath: string) {
+  if (!imagePath) return false;
+  const tokenUse = db.prepare("SELECT 1 FROM tokens WHERE image_path = ? LIMIT 1").get(imagePath);
+  const preparedUse = db.prepare("SELECT 1 FROM prepared_tokens WHERE image_path = ? LIMIT 1").get(imagePath);
+  const imageUrl = `/uploads/${path.basename(imagePath)}`;
+  const monsterUse = db.prepare(`
+    SELECT 1 FROM monsters
+    WHERE json_extract(data, '$.tokenImageUrl') = ?
+       OR json_extract(data, '$.portraitUrl') = ?
+    LIMIT 1
+  `).get(imageUrl, imageUrl);
+  return !tokenUse && !preparedUse && !monsterUse;
+}
+
 export const getToken = (tokenId: number): (TokenPayload & { campaignId: number }) | null => {
   const r = db
     .prepare(
@@ -381,7 +395,11 @@ mapsRouter.delete("/:id/maps/:mapId", async (req, res) => {
   db.prepare("DELETE FROM maps WHERE id = ?").run(map.id);
   if (map.image_path) await unlink(map.image_path).catch(() => {});
   await Promise.all(
-    tokenImages.map((row) => row.image_path && unlink(row.image_path).catch(() => {}))
+    tokenImages.map((row) =>
+      row.image_path && canRemoveStoredImage(row.image_path)
+        ? unlink(row.image_path).catch(() => {})
+        : Promise.resolve()
+    )
   );
   broadcastMapChange(campaignId);
   res.json({ ok: true });
@@ -528,7 +546,11 @@ mapsRouter.post(
 
     const previous = db.prepare("SELECT image_path FROM tokens WHERE id = ?").get(token.id) as any;
     db.prepare("UPDATE tokens SET image_path = ? WHERE id = ?").run(req.file.path, token.id);
-    if (previous?.image_path && previous.image_path !== req.file.path) {
+    if (
+      previous?.image_path &&
+      previous.image_path !== req.file.path &&
+      canRemoveStoredImage(previous.image_path)
+    ) {
       await unlink(previous.image_path).catch(() => {});
     }
 
@@ -553,7 +575,9 @@ mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId/image", async (req, res) => 
 
   const previous = db.prepare("SELECT image_path FROM tokens WHERE id = ?").get(token.id) as any;
   db.prepare("UPDATE tokens SET image_path = '' WHERE id = ?").run(token.id);
-  if (previous?.image_path) await unlink(previous.image_path).catch(() => {});
+  if (previous?.image_path && canRemoveStoredImage(previous.image_path)) {
+    await unlink(previous.image_path).catch(() => {});
+  }
 
   const updated = getToken(token.id)!;
   getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
@@ -657,14 +681,8 @@ mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId", async (req, res) => {
   }
   const imageRow = db.prepare("SELECT image_path FROM tokens WHERE id = ?").get(token.id) as any;
   db.prepare("DELETE FROM tokens WHERE id = ?").run(token.id);
-  if (imageRow?.image_path) {
-    const stillPrepared = db
-      .prepare("SELECT 1 FROM prepared_tokens WHERE image_path = ? LIMIT 1")
-      .get(imageRow.image_path);
-    const stillUsedByToken = db
-      .prepare("SELECT 1 FROM tokens WHERE image_path = ? LIMIT 1")
-      .get(imageRow.image_path);
-    if (!stillPrepared && !stillUsedByToken) await unlink(imageRow.image_path).catch(() => {});
+  if (imageRow?.image_path && canRemoveStoredImage(imageRow.image_path)) {
+    await unlink(imageRow.image_path).catch(() => {});
   }
   getIo().to(`campaign:${campaignId}`).emit("token:delete", { campaignId, tokenId: token.id });
   res.json({ ok: true });
