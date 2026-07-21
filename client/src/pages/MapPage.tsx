@@ -104,6 +104,42 @@ interface Token {
 }
 
 // vivid-aura-color-system
+// vivid-condition-visuals
+const CONDITION_VISUALS: Record<string, { icon: string; group: string }> = {
+  "Aura Broken": { icon: "A", group: "defense" },
+  Burning: { icon: "F", group: "damage" },
+  Frozen: { icon: "I", group: "control" },
+  Shocked: { icon: "L", group: "damage" },
+  Drenched: { icon: "W", group: "impairment" },
+  Disoriented: { icon: "?", group: "impairment" },
+  Disarmed: { icon: "D", group: "control" },
+  Slowed: { icon: "S", group: "control" },
+  Staggered: { icon: "!", group: "control" },
+  Grappled: { icon: "G", group: "control" },
+  Poisoned: { icon: "P", group: "damage" },
+  Terrified: { icon: "T", group: "impairment" },
+  Despairing: { icon: "H", group: "impairment" },
+  Prone: { icon: "↓", group: "control" },
+  "Weapon Jam": { icon: "J", group: "impairment" },
+  Blinded: { icon: "B", group: "impairment" },
+  Charmed: { icon: "C", group: "impairment" },
+  Deafened: { icon: "E", group: "impairment" },
+  Frightened: { icon: "F", group: "impairment" },
+  Incapacitated: { icon: "X", group: "control" },
+  Invisible: { icon: "V", group: "defense" },
+  Paralyzed: { icon: "Z", group: "control" },
+  Petrified: { icon: "R", group: "control" },
+  Restrained: { icon: "R", group: "control" },
+  Stunned: { icon: "!", group: "control" },
+  Unconscious: { icon: "U", group: "control" },
+};
+
+const conditionVisual = (condition: string) =>
+  CONDITION_VISUALS[condition] ?? {
+    icon: condition.slice(0, 1).toUpperCase(),
+    group: "impairment",
+  };
+
 const playAuraBreakSound = () => {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -146,6 +182,23 @@ const playAuraBreakSound = () => {
     // Audio is enhancement-only; Aura visuals continue normally.
   }
 };
+
+
+// vivid-final-flare-state
+const isRwbyCharacterToken = (token: Token) =>
+  token.characterId != null && token.auraMax != null;
+
+const isResolvedDowned = (token: Token) =>
+  token.conditions.includes("Downed") || token.conditions.includes("Critically Downed");
+
+const isCriticalDowned = (token: Token) =>
+  token.conditions.includes("Critically Downed");
+
+const isFinalFlare = (token: Token) =>
+  isRwbyCharacterToken(token) &&
+  token.hp != null &&
+  token.hp <= 0 &&
+  !isResolvedDowned(token);
 
 interface MonsterHit {
   id: number;
@@ -2076,9 +2129,10 @@ Choose Cancel to permanently delete it instead.`
                       t.aura / Math.max(1, t.auraMax) <= 0.25
                         ? " aura-critical"
                         : ""
-                    }${brokenAuraTokenIds.has(t.id) ? " aura-breaking" : ""}${
-                      enteringTokenIds.has(t.id) ? " grimm-entering" : ""
-                    }`}
+                    }${brokenAuraTokenIds.has(t.id) ? " aura-breaking" : ""}${enteringTokenIds.has(t.id) ? " grimm-entering" : ""}${isFinalFlare(t) ? " token-final-flare" : ""}${(
+                      (t.hp != null && t.hp <= 0 && !isRwbyCharacterToken(t)) ||
+                      isResolvedDowned(t)
+                    ) ? " token-downed" : ""}${isCriticalDowned(t) ? " token-critical-downed" : ""}`}
                     style={{
                       ...({
                         "--token-aura-color": t.auraColor || t.color || "#78e1ff",
@@ -2125,8 +2179,43 @@ Choose Cancel to permanently delete it instead.`
                       </span>
                     )}
                     {t.conditions.length > 0 && (
-                      <span className="token-cond" title={t.conditions.join(", ")}>
-                        {t.conditions.length}
+                      <span className="token-condition-stack" title={t.conditions.join(", ")}>
+                        {t.conditions.slice(0, 4).map((condition) => {
+                          const visual = conditionVisual(condition);
+                          return (
+                            <span
+                              key={condition}
+                              className={`token-condition-icon condition-${visual.group}`}
+                              aria-label={condition}
+                            >
+                              {visual.icon}
+                            </span>
+                          );
+                        })}
+                        {t.conditions.length > 4 && (
+                          <span className="token-condition-more">+{t.conditions.length - 4}</span>
+                        )}
+                      </span>
+                    )}
+                    {isFinalFlare(t) && (
+                      <>
+                        <span className="token-final-flare-burst" aria-hidden="true" />
+                        <span className="token-final-flare-label" aria-label="Final Flare">
+                          FINAL FLARE
+                        </span>
+                      </>
+                    )}
+                    {isResolvedDowned(t) && (
+                      <span
+                        className={isCriticalDowned(t) ? "token-down-label critical" : "token-down-label"}
+                        aria-label={isCriticalDowned(t) ? "Critically Downed" : "Downed"}
+                      >
+                        {isCriticalDowned(t) ? "CRITICAL" : "DOWN"}
+                      </span>
+                    )}
+                    {!isRwbyCharacterToken(t) && t.hp != null && t.hp <= 0 && (
+                      <span className="token-down-label" aria-label="Downed">
+                        DOWN
                       </span>
                     )}
                     <span className="token-name">{t.name}</span>
@@ -2512,7 +2601,13 @@ Choose Cancel to permanently delete it instead.`
                     {tok && tok.hp != null && tok.maxHp != null && (
                       <span className={`small init-hp${tok.hp <= 0 ? " dead" : ""}`}>
                         {" "}
-                        {tok.hp}/{tok.maxHp}
+                        {tok.hp <= 0
+                          ? isFinalFlare(tok)
+                            ? "FINAL FLARE"
+                            : isCriticalDowned(tok)
+                              ? "CRITICAL"
+                              : "DOWN"
+                          : `${tok.hp}/${tok.maxHp}`}
                       </span>
                     )}
                     {tok && tok.conditions.length > 0 && (
@@ -2652,7 +2747,15 @@ Choose Cancel to permanently delete it instead.`
                           <span className="encounter-roster-meta">
                             {token
                               ? [
-                                  token.hp != null && token.maxHp != null ? `${token.hp}/${token.maxHp} HP` : "On map",
+                                  token.hp != null && token.maxHp != null
+                                    ? token.hp <= 0
+                                      ? isFinalFlare(token)
+                                        ? "FINAL FLARE"
+                                        : isCriticalDowned(token)
+                                          ? "CRITICALLY DOWNED"
+                                          : "DOWN"
+                                      : `${token.hp}/${token.maxHp} HP`
+                                    : "On map",
                                   token.conditions.length ? `⚠ ${token.conditions.length}` : "",
                                 ].filter(Boolean).join(" · ")
                               : "Not deployed"}
@@ -2701,7 +2804,15 @@ Choose Cancel to permanently delete it instead.`
                       </span>
                       <span className="encounter-roster-meta">
                         {[
-                          t.hp != null && t.maxHp != null ? `${t.hp}/${t.maxHp} HP` : "",
+                          t.hp != null && t.maxHp != null
+                            ? t.hp <= 0
+                              ? isFinalFlare(t)
+                                ? "FINAL FLARE"
+                                : isCriticalDowned(t)
+                                  ? "CRITICALLY DOWNED"
+                                  : "DOWN"
+                              : `${t.hp}/${t.maxHp} HP`
+                            : "",
                           t.aura != null && t.auraMax != null ? `${t.aura}/${t.auraMax} Aura` : "",
                           t.conditions.length ? `⚠ ${t.conditions.length}` : "",
                         ].filter(Boolean).join(" · ") || "Map token"}

@@ -90,6 +90,8 @@ export const REMNANT_CONDITIONS = [
   "Despairing",
   "Prone",
   "Weapon Jam",
+  "Downed",
+  "Critically Downed",
 ];
 
 export const DUST_TYPES: { key: string; name: string; note: string }[] = [

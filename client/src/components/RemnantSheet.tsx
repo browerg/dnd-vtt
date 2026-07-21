@@ -205,15 +205,85 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
           </button>
         </div>
         {d.aura === 0 && <div className="aura-broken-banner">⚠ AURA BROKEN — shield down, Semblance locked</div>}
-        {d.hp === 0 && (
-          <div className="final-flare-banner">
-            🔥 FINAL FLARE — one full turn, can't be downed, then Grit check DC 14
-            <button
-              className="ghost mini"
-              onClick={() => roll(remnantCheckFormula(attrDie("grit")), `${name}: Final Flare (Grit, DC 14)`)}
-            >
-              Roll it
-            </button>
+        {d.hp === 0 &&
+          !d.conditions.includes("Downed") &&
+          !d.conditions.includes("Critically Downed") && (
+            <div className="final-flare-banner">
+              <div>
+                🔥 <strong>FINAL FLARE</strong> — one full turn, can't be downed, then make a Grit check DC 14
+              </div>
+              <div className="final-flare-actions">
+                <button
+                  className="ghost mini"
+                  disabled={ro}
+                  onClick={() =>
+                    roll(remnantCheckFormula(attrDie("grit")), `${name}: Final Flare (Grit, DC 14)`)
+                  }
+                >
+                  Roll Grit
+                </button>
+                <button
+                  className="ghost mini"
+                  disabled={ro}
+                  title="Full success"
+                  onClick={() =>
+                    update({
+                      hp: 1,
+                      conditions: d.conditions.filter(
+                        (condition) => condition !== "Downed" && condition !== "Critically Downed"
+                      ),
+                    })
+                  }
+                >
+                  Stand at 1 HP
+                </button>
+                <button
+                  className="ghost mini"
+                  disabled={ro}
+                  title="Partial success"
+                  onClick={() =>
+                    update({
+                      conditions: [
+                        ...d.conditions.filter(
+                          (condition) =>
+                            condition !== "Downed" && condition !== "Critically Downed"
+                        ),
+                        "Downed",
+                      ],
+                    })
+                  }
+                >
+                  Downed
+                </button>
+                <button
+                  className="ghost mini danger"
+                  disabled={ro}
+                  title="Failure"
+                  onClick={() =>
+                    update({
+                      conditions: [
+                        ...d.conditions.filter(
+                          (condition) =>
+                            condition !== "Downed" && condition !== "Critically Downed"
+                        ),
+                        "Critically Downed",
+                      ],
+                    })
+                  }
+                >
+                  Critically Downed
+                </button>
+              </div>
+            </div>
+          )}
+        {d.hp === 0 && d.conditions.includes("Downed") && (
+          <div className="downed-state-banner">
+            DOWNED — stable, unable to act until helped or recovered
+          </div>
+        )}
+        {d.hp === 0 && d.conditions.includes("Critically Downed") && (
+          <div className="critical-downed-state-banner">
+            CRITICALLY DOWNED — immediate aid required
           </div>
         )}
       </section>
