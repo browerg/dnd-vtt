@@ -59,6 +59,7 @@ function remnantDefaultData() {
     teamRole: "",
     teammates: ["", "", ""],
     archetype: "Bladesman",
+    mainAttribute: "brawn",
     rank: "Initiate",
     attributes: { brawn: 6, finesse: 6, resolve: 6, wit: 6, aura: 6, grit: 6 },
     trainedSkills: [],

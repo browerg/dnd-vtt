@@ -142,10 +142,19 @@ export default function SheetView({ campaignId, characterId }: Props) {
     return () => window.clearTimeout(t);
   }, [spellQuery]);
 
-  const roll = async (formula: string, label: string) => {
+  const roll = async (
+    formula: string,
+    label: string,
+    modeOverride?: "normal" | "edge" | "setback"
+  ) => {
     await api(`/api/campaigns/${campaignId}/rolls`, {
       method: "POST",
-      body: JSON.stringify({ formula, label, mode: rollMode, visibility: "public" }),
+      body: JSON.stringify({
+        formula,
+        label,
+        mode: modeOverride ?? rollMode,
+        visibility: "public",
+      }),
     });
   };
 

@@ -2027,3 +2027,57 @@ button[aria-pressed="true"]::after {
     width: 100%;
   }
 }
+
+
+/* vivid-weapon-roll-controls */
+.weapon-roll-panel {
+  display: grid;
+  gap: .45rem;
+  padding: .55rem;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-well) 72%, transparent);
+}
+
+.weapon-roll-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+  font-size: .78rem;
+}
+
+.weapon-roll-heading strong {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.weapon-attack-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .35rem;
+}
+
+.weapon-attack-modes .weapon-mode {
+  width: 100%;
+}
+
+.weapon-attack-modes .weapon-mode.edge {
+  border-color: color-mix(in srgb, var(--online) 62%, var(--border));
+}
+
+.weapon-attack-modes .weapon-mode.setback {
+  border-color: color-mix(in srgb, var(--danger) 62%, var(--border));
+}
+
+.weapon-damage-roll {
+  width: 100%;
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--border));
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .weapon-attack-modes {
+    grid-template-columns: 1fr;
+  }
+}

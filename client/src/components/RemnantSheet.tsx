@@ -30,7 +30,11 @@ interface Props {
   d: RemnantData;
   ro: boolean; // read-only
   update: (patch: Partial<RemnantData>, name?: string) => void;
-  roll: (formula: string, label: string) => void;
+  roll: (
+    formula: string,
+    label: string,
+    mode?: "normal" | "edge" | "setback"
+  ) => void;
   onUpload?: (file: File) => Promise<string>;
 }
 
@@ -137,6 +141,23 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
             <select value={d.archetype} disabled={ro} onChange={(e) => update({ archetype: e.target.value })}>
               {ARCHETYPES.map((a) => (
                 <option key={a}>{a}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Main Attribute
+            <select
+              value={d.mainAttribute || "brawn"}
+              disabled={ro}
+              onChange={(e) =>
+                update({ mainAttribute: e.target.value as RemnantAttrKey })
+              }
+              title="This character-level attribute die is added to weapon damage"
+            >
+              {REMNANT_ATTRIBUTES.map(({ key, name: attrName }) => (
+                <option key={key} value={key}>
+                  {attrName} (d{d.attributes[key]})
+                </option>
               ))}
             </select>
           </label>
@@ -389,6 +410,13 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
                 onChange={(e) => update({ weaponName: e.target.value })}
               />
             </div>
+                        <p className="muted small weapon-main-attribute-note">
+              Damage adds your selected Main Attribute:{" "}
+              <strong>
+                {REMNANT_ATTRIBUTES.find((attribute) => attribute.key === (d.mainAttribute || "brawn"))?.name}
+                {" "}d{attrDie(d.mainAttribute || "brawn")}
+              </strong>
+            </p>
             {d.weaponForms.map((form, i) => (
               <div key={i} className={`trait-row weapon-form${d.activeForm === i ? " active-form" : ""}`}>
                 <div className="row-between">
@@ -474,30 +502,81 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
                     })
                   }
                 />
-                <div className="row-between">
-                  <button
-                    className="ghost mini"
-                    onClick={() => {
-                      const die = d.archetype === "Brawler" ? attrDie("brawn") : attrDie("finesse");
-                      roll(
-                        remnantCheckFormula(die, tb),
-                        `${name}: ${form.type || `Form ${i === 0 ? "A" : "B"}`} attack`
-                      );
-                    }}
-                  >
-                    Attack (2d10+d{d.archetype === "Brawler" ? attrDie("brawn") : attrDie("finesse")}+{tb})
-                  </button>
-                  <button
-                    className="ghost mini"
-                    onClick={() =>
-                      roll(
-                        form.styleDie ? `1d${form.damage}+1d${form.styleDie}` : `1d${form.damage}`,
-                        `${name}: ${form.type || `Form ${i === 0 ? "A" : "B"}`} damage`
-                      )
-                    }
-                  >
-                    Damage (d{form.damage}{form.styleDie ? ` + d${form.styleDie}` : ""})
-                  </button>
+                <div className="weapon-roll-panel">
+                  {(() => {
+                    // vivid-weapon-roll-controls
+                    const attackAttrKey: RemnantAttrKey =
+                      d.archetype === "Brawler" ? "brawn" : "finesse";
+                    const attackAttrDie = attrDie(attackAttrKey);
+                    const mainAttrKey: RemnantAttrKey = d.mainAttribute || "brawn";
+                    const mainAttrDie = attrDie(mainAttrKey);
+                    const mainAttrName =
+                      REMNANT_ATTRIBUTES.find((attribute) => attribute.key === mainAttrKey)?.name ??
+                      "Main Attribute";
+                    const formName = form.type || `Form ${i === 0 ? "A" : "B"}`;
+                    const attackFormula = remnantCheckFormula(attackAttrDie, tb);
+                    const damageFormula = [
+                      `1d${form.damage}`,
+                      form.styleDie ? `1d${form.styleDie}` : "",
+                      `1d${mainAttrDie}`,
+                    ]
+                      .filter(Boolean)
+                      .join("+");
+
+                    return (
+                      <>
+                        <div className="weapon-roll-heading">
+                          <span>
+                            Attack <strong>{attackFormula}</strong>
+                          </span>
+                          <span className="muted">
+                            {attackAttrKey === "brawn" ? "Brawn" : "Finesse"}
+                          </span>
+                        </div>
+                        <div className="weapon-attack-modes" role="group" aria-label={`${formName} attack mode`}>
+                          <button
+                            type="button"
+                            className="ghost mini weapon-mode normal"
+                            onClick={() =>
+                              roll(attackFormula, `${name}: ${formName} attack`, "normal")
+                            }
+                          >
+                            Normal
+                          </button>
+                          <button
+                            type="button"
+                            className="ghost mini weapon-mode edge"
+                            onClick={() =>
+                              roll(attackFormula, `${name}: ${formName} attack`, "edge")
+                            }
+                          >
+                            Edge
+                          </button>
+                          <button
+                            type="button"
+                            className="ghost mini weapon-mode setback"
+                            onClick={() =>
+                              roll(attackFormula, `${name}: ${formName} attack`, "setback")
+                            }
+                          >
+                            Setback
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          className="ghost mini weapon-damage-roll"
+                          title="Weapon die + optional style die + main attribute die"
+                          onClick={() =>
+                            roll(damageFormula, `${name}: ${formName} damage`, "normal")
+                          }
+                        >
+                          Damage ({`d${form.damage}`}
+                          {form.styleDie ? ` + d${form.styleDie}` : ""}
+                          {` + d${mainAttrDie}`} {mainAttrName})
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

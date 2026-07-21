@@ -163,6 +163,7 @@ export interface RemnantData {
   teamRole: string;
   teammates: string[];
   archetype: string;
+  mainAttribute: RemnantAttrKey;
   rank: Rank;
   attributes: Record<RemnantAttrKey, number>;
   trainedSkills: string[];
