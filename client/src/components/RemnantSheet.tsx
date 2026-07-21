@@ -93,6 +93,34 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
   const dustTypeFor = (key: string) => DUST_TYPES.find((type) => type.key === key);
   const newDustVialId = () =>
     `dust-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  // vivid-collapsible-sheet-shell
+  // vivid-collapsible-overview
+  // vivid-collapsible-summary-fix-v2
+  const sheetStorageKey = (section: string) => `vivid-remnant-sheet:${section}`;
+  const sheetSectionOpen = (section: string, fallback: boolean) => {
+    try {
+      const stored = window.localStorage.getItem(sheetStorageKey(section));
+      return stored === null ? fallback : stored === "1";
+    } catch {
+      return fallback;
+    }
+  };
+  const rememberSheetSection = (section: string, open: boolean) => {
+    try {
+      window.localStorage.setItem(sheetStorageKey(section), open ? "1" : "0");
+    } catch {
+      // Local storage is convenience-only.
+    }
+  };
+  const setAllSheetSections = (open: boolean, source: HTMLElement) => {
+    const root = source.closest(".remnant-sheet-shell");
+    root?.querySelectorAll<HTMLDetailsElement>("details.collapsible-sheet-section").forEach((section) => {
+      section.open = open;
+      const key = section.dataset.sheetSection;
+      if (key) rememberSheetSection(key, open);
+    });
+  };
   const pool = (label: string, value: number, max: number, onChange: (v: number) => void, cls: string) => (
     <div className={`vital pool ${cls}`}>
       <span className="vital-label">{label}</span>
@@ -121,9 +149,35 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
   );
 
   return (
-    <main className="content sheet">
+    <main className="content sheet remnant-sheet-shell">
       {/* identity */}
-      <section className="card sheet-header">
+      <details
+        className="card sheet-header collapsible-sheet-section collapsible-sheet-overview"
+        data-sheet-section="overview"
+        open={sheetSectionOpen("overview", true)}
+        onToggle={(event) => rememberSheetSection("overview", event.currentTarget.open)}
+      >
+        <summary className="sheet-section-summary sheet-overview-summary">
+          <span className="sheet-section-chevron" aria-hidden="true">›</span>
+          <span className="sheet-section-title">
+            <strong>{name || "Character Overview"}</strong>
+            <small>
+              {d.rank} · {d.archetype}
+              {d.teamName ? ` · Team ${d.teamName}` : ""}
+            </small>
+          </span>
+          <span className="sheet-overview-vitals" aria-label="Current Aura and HP">
+            <span
+              className={d.aura <= Math.max(1, auraMax * 0.25) ? "overview-vital aura low" : "overview-vital aura"}
+            >
+              Aura {d.aura}/{auraMax}
+            </span>
+            <span className={d.hp <= Math.max(1, hpMax * 0.25) ? "overview-vital hp low" : "overview-vital hp"}>
+              HP {d.hp}/{hpMax}
+            </span>
+            <span className="overview-vital defense">DEF {dr}</span>
+          </span>
+        </summary>
         <div className="field-grid">
           <label>
             Name
@@ -329,14 +383,48 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
           <div className="critical-downed-state-banner">
             CRITICALLY DOWNED — immediate aid required
           </div>
-        )}
-      </section>
+        )}      </details>
+
+      <nav className="sheet-section-toolbar" aria-label="Character sheet sections">
+        <div>
+          <span className="sheet-section-toolbar-kicker">Character sheet</span>
+          <strong>Open only what you need</strong>
+        </div>
+        <span className="spacer" />
+        <button
+          type="button"
+          className="ghost mini"
+          onClick={(event) => setAllSheetSections(true, event.currentTarget)}
+        >
+          Expand all
+        </button>
+        <button
+          type="button"
+          className="ghost mini"
+          onClick={(event) => setAllSheetSections(false, event.currentTarget)}
+        >
+          Collapse all
+        </button>
+      </nav>
 
       <div className="columns">
         <div className="column">
           {/* attributes */}
-          <section className="card">
-            <h3>Attributes</h3>
+          <details
+              className="card collapsible-sheet-section"
+              data-sheet-section="attributes"
+              open={sheetSectionOpen("attributes", true)}
+              onToggle={(event) => rememberSheetSection("attributes", event.currentTarget.open)}
+            >
+            
+            <summary className="sheet-section-summary">
+              <span className="sheet-section-chevron" aria-hidden="true">›</span>
+              <span className="sheet-section-title">
+                <strong>Attributes</strong>
+                <small>Core dice and attribute checks</small>
+              </span>
+              <span className="sheet-summary-badge">6 dice</span>
+            </summary>
             <div className="ability-grid">
               {REMNANT_ATTRIBUTES.map(({ key, name: attrName, blurb }) => (
                 <div key={key} className="ability-box">
@@ -366,11 +454,24 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 </div>
               ))}
             </div>
-          </section>
+          </details>
 
           {/* skills */}
-          <section className="card">
-            <h3>Skills</h3>
+          <details
+              className="card collapsible-sheet-section"
+              data-sheet-section="skills"
+              open={sheetSectionOpen("skills", true)}
+              onToggle={(event) => rememberSheetSection("skills", event.currentTarget.open)}
+            >
+            
+            <summary className="sheet-section-summary">
+              <span className="sheet-section-chevron" aria-hidden="true">›</span>
+              <span className="sheet-section-title">
+                <strong>Skills</strong>
+                <small>Training and quick checks</small>
+              </span>
+              <span className="sheet-summary-badge">{d.trainedSkills.length} trained</span>
+            </summary>
             <ul className="skill-list">
               {REMNANT_SKILLS.map(({ key, name: skillName, attr }) => {
                 const trained = d.trainedSkills.includes(key);
@@ -400,11 +501,26 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 );
               })}
             </ul>
-          </section>
+          </details>
 
           {/* conditions */}
-          <section className="card">
-            <h3>Conditions</h3>
+          <details
+              className="card collapsible-sheet-section"
+              data-sheet-section="conditions"
+              open={sheetSectionOpen("conditions", true)}
+              onToggle={(event) => rememberSheetSection("conditions", event.currentTarget.open)}
+            >
+            
+            <summary className="sheet-section-summary">
+              <span className="sheet-section-chevron" aria-hidden="true">›</span>
+              <span className="sheet-section-title">
+                <strong>Conditions</strong>
+                <small>Current status and combat states</small>
+              </span>
+              <span className={d.conditions.length ? "sheet-summary-badge alert" : "sheet-summary-badge"}>
+                {d.conditions.length || "Clear"}
+              </span>
+            </summary>
             <div className="condition-chips">
               {REMNANT_CONDITIONS.map((c) => (
                 <button
@@ -417,14 +533,27 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 </button>
               ))}
             </div>
-          </section>
+          </details>
         </div>
 
         <div className="column">
           {/* weapon */}
-          <section className="card stack">
+          <details
+              className="card stack collapsible-sheet-section"
+              data-sheet-section="weapon"
+              open={sheetSectionOpen("weapon", true)}
+              onToggle={(event) => rememberSheetSection("weapon", event.currentTarget.open)}
+            >
+            <summary className="sheet-section-summary">
+              <span className="sheet-section-chevron" aria-hidden="true">›</span>
+              <span className="sheet-section-title">
+                <strong>Weapon</strong>
+                <small>Forms, attacks, and damage</small>
+              </span>
+              <span className="sheet-summary-badge">{d.weaponName || "Unnamed"}</span>
+            </summary>
             <div className="row-between">
-              <h3>Weapon</h3>
+            
               <input
                 className="weapon-name"
                 placeholder="Weapon name"
@@ -603,12 +732,27 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 </div>
               </div>
             ))}
-          </section>
+          </details>
 
           {/* semblance */}
-          <section className="card stack">
+          <details
+              className="card stack collapsible-sheet-section"
+              data-sheet-section="semblance"
+              open={sheetSectionOpen("semblance", false)}
+              onToggle={(event) => rememberSheetSection("semblance", event.currentTarget.open)}
+            >
+            <summary className="sheet-section-summary">
+              <span className="sheet-section-chevron" aria-hidden="true">›</span>
+              <span className="sheet-section-title">
+                <strong>Semblance</strong>
+                <small>Power, cost, and sustained upkeep</small>
+              </span>
+              <span className={d.semblance.active ? "sheet-summary-badge active" : "sheet-summary-badge"}>
+                {d.semblance.active ? "Active" : d.semblance.name || "Unset"}
+              </span>
+            </summary>
             <div className="row-between">
-              <h3>Semblance</h3>
+            
               <label className="prof-toggle">
                 <input
                   type="checkbox"
@@ -816,12 +960,27 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 </button>
               ))}
             </div>
-          </section>
+          </details>
           {/* dust */}
-          <section className="card stack dust-system-card">
+          <details
+              className="card stack dust-system-card collapsible-sheet-section"
+              data-sheet-section="dust"
+              open={sheetSectionOpen("dust", false)}
+              onToggle={(event) => rememberSheetSection("dust", event.currentTarget.open)}
+            >
+            <summary className="sheet-section-summary">
+              <span className="sheet-section-chevron" aria-hidden="true">›</span>
+              <span className="sheet-section-title">
+                <strong>Dust Vials</strong>
+                <small>Charges, combinations, and effects</small>
+              </span>
+              <span className="sheet-summary-badge">
+                {dustVials.reduce((total, vial) => total + vial.charges, 0)} charges
+              </span>
+            </summary>
             <div className="row-between dust-heading">
               <div>
-                <h3>Dust Vials</h3>
+            
                 <p className="muted small">
                   Each vial holds {DUST_VIAL_CAPACITY} charges. Spend, refill, mix, loot, or craft them.
                 </p>
@@ -1070,11 +1229,24 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 ))}
               </div>
             </details>
-          </section>
+          </details>
 
           {/* inventory */}
-          <section className="card stack">
-            <h3>Inventory</h3>
+          <details
+              className="card stack collapsible-sheet-section"
+              data-sheet-section="inventory"
+              open={sheetSectionOpen("inventory", false)}
+              onToggle={(event) => rememberSheetSection("inventory", event.currentTarget.open)}
+            >
+            
+            <summary className="sheet-section-summary">
+              <span className="sheet-section-chevron" aria-hidden="true">›</span>
+              <span className="sheet-section-title">
+                <strong>Inventory</strong>
+                <small>Equipment, items, and Lien</small>
+              </span>
+              <span className="sheet-summary-badge">{d.inventory.length} items</span>
+            </summary>
             <InventoryEditor
               items={d.inventory}
               money={d.lien}
@@ -1084,11 +1256,24 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
               onMoney={(n) => update({ lien: n })}
               onUpload={onUpload}
             />
-          </section>
+          </details>
 
           {/* background & notes */}
-          <section className="card stack">
-            <h3>Background</h3>
+          <details
+              className="card stack collapsible-sheet-section"
+              data-sheet-section="background"
+              open={sheetSectionOpen("background", false)}
+              onToggle={(event) => rememberSheetSection("background", event.currentTarget.open)}
+            >
+            
+            <summary className="sheet-section-summary">
+              <span className="sheet-section-chevron" aria-hidden="true">›</span>
+              <span className="sheet-section-title">
+                <strong>Background & Notes</strong>
+                <small>Motivation, history, and personal details</small>
+              </span>
+              
+            </summary>
             <div className="field-grid">
               <label>
                 Bond / motivation
@@ -1111,7 +1296,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
               Backstory & notes
               <textarea rows={4} value={d.backstory} disabled={ro} onChange={(e) => update({ backstory: e.target.value })} />
             </label>
-          </section>
+          </details>
         </div>
       </div>
     </main>
