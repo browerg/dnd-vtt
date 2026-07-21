@@ -54,6 +54,7 @@ interface Combatant {
   tokenId: number | null;
   name: string;
   initiative: number;
+  tieBreaker: number;
 }
 
 interface CombatState {
@@ -2638,19 +2639,64 @@ Choose Cancel to permanently delete it instead.`
           )}
           <section>
             <h4>{combat.active ? `Combat — round ${combat.round}` : "Initiative"}</h4>
+            <div className="initiative-rule-card">
+              <span className="initiative-rule-icon" aria-hidden="true">↕</span>
+              <span>
+                <strong>Turn order</strong>
+                <small>
+                  Highest roll first · ties use {system === "remnant" ? "Finesse/Ferocity die" : "Dexterity"} · exact ties act simultaneously
+                </small>
+              </span>
+            </div>
             {combat.combatants.map((c, i) => {
               const tok = tokens.find((t) => t.id === c.tokenId);
+              const previous = combat.combatants[i - 1];
+              const next = combat.combatants[i + 1];
+              const tiedWithPrevious =
+                previous &&
+                previous.initiative === c.initiative &&
+                previous.tieBreaker === c.tieBreaker;
+              const tiedWithNext =
+                next &&
+                next.initiative === c.initiative &&
+                next.tieBreaker === c.tieBreaker;
+              const simultaneous = Boolean(tiedWithPrevious || tiedWithNext);
+              const position =
+                tiedWithPrevious
+                  ? combat.combatants.findIndex(
+                      (entry) =>
+                        entry.initiative === c.initiative &&
+                        entry.tieBreaker === c.tieBreaker
+                    ) + 1
+                  : i + 1;
+
               return (
                 <div
                   key={c.id}
-                  className={`row-between sidebar-row${combat.active && i === combat.turn ? " current-row" : ""}${
+                  className={`row-between sidebar-row initiative-order-row${combat.active && i === combat.turn ? " current-row" : ""}${
                     tok ? " clickable" : ""
-                  }`}
+                  }${simultaneous ? " simultaneous-tie" : ""}`}
+                  style={{ "--initiative-order": i } as React.CSSProperties}
                   onClick={() => tok && setSelectedTokenId(tok.id)}
                 >
+                  <span className="initiative-position" aria-label={`Initiative position ${position}`}>
+                    {position}
+                  </span>
                   <span className="init-name">
                     {combat.active && i === combat.turn ? "▶ " : ""}
                     {c.name}
+                    <span className="initiative-tiebreak-label">
+                      {c.tieBreaker > 0
+                        ? system === "remnant"
+                          ? `d${c.tieBreaker} tie-break`
+                          : `DEX ${c.tieBreaker} tie-break`
+                        : "manual"}
+                    </span>
+                    {simultaneous && (
+                      <span className="initiative-simultaneous-badge">
+                        Simultaneous
+                      </span>
+                    )}
                     {tok && tok.hp != null && tok.maxHp != null && (
                       <span className={`small init-hp${tok.hp <= 0 ? " dead" : ""}`}>
                         {" "}
@@ -2671,14 +2717,16 @@ Choose Cancel to permanently delete it instead.`
                     )}
                   </span>
                   <span className="init-badge">
-                    {c.initiative}
+                    <strong>{c.initiative}</strong>
                     {isDM && (
                       <button
                         className="ghost mini"
                         title="Remove"
                         onClick={(e) => {
                           e.stopPropagation();
-                          api(`/api/campaigns/${campaignId}/combat/combatants/${c.id}`, { method: "DELETE" });
+                          api(`/api/campaigns/${campaignId}/combat/combatants/${c.id}`, {
+                            method: "DELETE",
+                          });
                         }}
                       >
                         ✕

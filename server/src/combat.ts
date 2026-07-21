@@ -9,11 +9,13 @@ import { getIo } from "./realtime.js";
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 
+// vivid-initiative-tiebreaker
 export interface Combatant {
   id: number;
   tokenId: number | null;
   name: string;
   initiative: number;
+  tieBreaker: number;
 }
 
 export interface CombatState {
@@ -30,11 +32,17 @@ export function combatState(campaignId: number): CombatState {
   const combatants = (
     db
       .prepare(
-        `SELECT id, token_id, name, initiative FROM combatants
-         WHERE campaign_id = ? ORDER BY initiative DESC, id ASC`
+        `SELECT id, token_id, name, initiative, initiative_tiebreak FROM combatants
+         WHERE campaign_id = ? ORDER BY initiative DESC, initiative_tiebreak DESC, id ASC`
       )
       .all(campaignId) as any[]
-  ).map((r) => ({ id: r.id, tokenId: r.token_id, name: r.name, initiative: r.initiative }));
+  ).map((r) => ({
+    id: r.id,
+    tokenId: r.token_id,
+    name: r.name,
+    initiative: r.initiative,
+    tieBreaker: r.initiative_tiebreak ?? 0,
+  }));
   return {
     active: c.combat_round > 0,
     round: c.combat_round,
@@ -84,6 +92,7 @@ combatRouter.post("/:id/combat/combatants", (req, res) => {
 
   // Default initiative formula per system; refined below from the token.
   let formula = system === "remnant" ? "2d10" : "1d20";
+  let tieBreaker = 0;
 
   if (tokenId) {
     const t = db
@@ -102,9 +111,13 @@ combatRouter.post("/:id/combat/combatants", (req, res) => {
     if (!t) return res.status(404).json({ error: "Token not found." });
     name = name || t.name;
     if (system === "remnant") {
-      const die = t.finesse ?? t.ferocity;
-      if (die) formula = `2d10+1d${die}`;
+      const die = Number(t.finesse ?? t.ferocity ?? 0);
+      if (die) {
+        formula = `2d10+1d${die}`;
+        tieBreaker = die;
+      }
     } else if (t.dex != null) {
+      tieBreaker = Number(t.dex) || 0;
       const dexMod = Math.floor((t.dex - 10) / 2);
       formula = dexMod === 0 ? "1d20" : dexMod > 0 ? `1d20+${dexMod}` : `1d20${dexMod}`;
     }
@@ -124,12 +137,9 @@ combatRouter.post("/:id/combat/combatants", (req, res) => {
     }
   }
 
-  db.prepare("INSERT INTO combatants (campaign_id, token_id, name, initiative) VALUES (?, ?, ?, ?)").run(
-    campaignId,
-    tokenId,
-    name,
-    initiative
-  );
+  db.prepare(
+    "INSERT INTO combatants (campaign_id, token_id, name, initiative, initiative_tiebreak) VALUES (?, ?, ?, ?, ?)"
+  ).run(campaignId, tokenId, name, initiative, tieBreaker);
   broadcast(campaignId);
   res.json({ state: combatState(campaignId) });
 });
