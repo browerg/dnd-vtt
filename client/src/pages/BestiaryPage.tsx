@@ -4,7 +4,9 @@ import CampaignThemePicker from "../components/CampaignThemePicker";
 import { useCampaignTheme, type ThemeId } from "../theme";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api } from "../api";
+import { api, uploadImage } from "../api";
+import { RemnantMonsterEditor, RemnantMonsterStatblock } from "../components/RemnantMonsterLibrary";
+// vivid-monster-library-completion-v1
 import CampaignDocks from "../components/CampaignDocks";
 
 interface Hit {
@@ -114,25 +116,67 @@ const BLANK: Draft = {
 interface GrimmDraft {
   id: number | null;
   name: string;
+  subtitle: string;
   size: string;
   type: string;
+  category: string;
+  tags: string[];
   threat: number;
   ferocity: number;
   armor: number;
   hitPoints: number;
+  aura: number;
+  defense: number;
+  movement: number;
+  initiativeAttribute: string;
+  mainAttribute: string;
+  attributes: Record<string, number>;
+  trainedSkills: string[];
+  resistances: string[];
+  immunities: string[];
+  vulnerabilities: string[];
+  conditionImmunities: string[];
+  description: string;
+  gmNotes: string;
+  tokenImageUrl: string;
+  portraitUrl: string;
+  tokenScale: number;
+  tokenMode: string;
   traits: Ability[];
+  actions: any[];
 }
 
 const BLANK_GRIMM: GrimmDraft = {
   id: null,
   name: "",
+  subtitle: "",
   size: "Medium",
   type: "Creature of Grimm",
+  category: "Grimm",
+  tags: [],
   threat: 1,
   ferocity: 6,
   armor: 0,
   hitPoints: 20,
+  aura: 0,
+  defense: 8,
+  movement: 30,
+  initiativeAttribute: "finesse",
+  mainAttribute: "ferocity",
+  attributes: { brawn: 6, finesse: 6, resolve: 6, wit: 6, aura: 4, grit: 6 },
+  trainedSkills: [],
+  resistances: [],
+  immunities: [],
+  vulnerabilities: [],
+  conditionImmunities: [],
+  description: "",
+  gmNotes: "",
+  tokenImageUrl: "",
+  portraitUrl: "",
+  tokenScale: 1,
+  tokenMode: "contain",
   traits: [],
+  actions: [],
 };
 
 const fmtCr = (cr: number) => ({ 0.125: "1/8", 0.25: "1/4", 0.5: "1/2" }[cr] ?? `${cr}`);
@@ -171,16 +215,39 @@ function detailToDraft(d: Detail): Draft {
 }
 
 function detailToGrimmDraft(d: Detail): GrimmDraft {
+  const source = d as any;
   return {
+    ...BLANK_GRIMM,
     id: d.id,
     name: d.name,
+    subtitle: source.subtitle ?? "",
     size: d.size,
     type: d.type,
+    category: source.category ?? "Grimm",
+    tags: source.tags ?? [],
     threat: d.threat ?? 1,
     ferocity: d.ferocity ?? 6,
     armor: d.armor ?? 0,
     hitPoints: d.hit_points,
+    aura: source.aura ?? 0,
+    defense: source.defense ?? 8,
+    movement: source.movement ?? 30,
+    initiativeAttribute: source.initiativeAttribute ?? "finesse",
+    mainAttribute: source.mainAttribute ?? "ferocity",
+    attributes: source.attributes ?? BLANK_GRIMM.attributes,
+    trainedSkills: source.trainedSkills ?? [],
+    resistances: source.resistances ?? [],
+    immunities: source.immunities ?? [],
+    vulnerabilities: source.vulnerabilities ?? [],
+    conditionImmunities: source.conditionImmunities ?? [],
+    description: source.description ?? "",
+    gmNotes: source.gmNotes ?? "",
+    tokenImageUrl: source.tokenImageUrl ?? "",
+    portraitUrl: source.portraitUrl ?? "",
+    tokenScale: source.tokenScale ?? 1,
+    tokenMode: source.tokenMode ?? "contain",
     traits: (d.traits ?? []).map((t) => ({ name: t.name, desc: t.desc })),
+    actions: source.actions ?? [],
   };
 }
 
@@ -301,6 +368,21 @@ export default function BestiaryPage() {
   const set = (patch: Partial<Draft>) => setDraft((d) => (d ? { ...d, ...patch } : d));
   const setG = (patch: Partial<GrimmDraft>) => setGrimmDraft((d) => (d ? { ...d, ...patch } : d));
 
+  const prepareMonster = async (monsterId: number) => {
+    setError("");
+    setNotice("");
+    try {
+      const fd = new FormData();
+      fd.append("monsterId", String(monsterId));
+      const res = await fetch("/api/campaigns/" + campaignId + "/prepared-tokens", { method: "POST", body: fd });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? "Could not prepare monster token.");
+      setNotice("Monster added to the prepared token tray.");
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
   return (
     <div className="shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
       <header className="topbar campaign-topbar">
@@ -403,21 +485,8 @@ export default function BestiaryPage() {
               </div>
               {detail.system === "remnant" ? (
                 <>
-                  <p className="muted small">
-                    {detail.size} {detail.type} · Threat {detail.threat}
-                  </p>
-                  <p>
-                    Ferocity <strong>d{detail.ferocity}</strong> · Armor <strong>{detail.armor}</strong> · HP{" "}
-                    <strong>{detail.hit_points}</strong>
-                  </p>
-                  <p className="muted small">
-                    Attack 2d10+1d{detail.ferocity} vs Defense · Damage 1d{detail.ferocity} · No Aura
-                  </p>
-                  {(detail.traits ?? []).map((t) => (
-                    <p key={t.name} className="small">
-                      <strong>{t.name}.</strong> <span className="muted">{t.desc}</span>
-                    </p>
-                  ))}
+                  <RemnantMonsterStatblock monster={detail} />
+                  {isDM && <button className="primary" onClick={() => prepareMonster(detail.id)}>Prepare token</button>}
                 </>
               ) : (
                 <>
@@ -673,117 +742,13 @@ export default function BestiaryPage() {
           )}
 
           {grimmDraft && (
-            <section className="card stack">
-              <h3>{grimmDraft.id ? `Edit: ${grimmDraft.name}` : "New Grimm"}</h3>
-              <div className="field-grid">
-                <label>
-                  Name
-                  <input value={grimmDraft.name} onChange={(e) => setG({ name: e.target.value })} />
-                </label>
-                <label>
-                  Size
-                  <select value={grimmDraft.size} onChange={(e) => setG({ size: e.target.value })}>
-                    {["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"].map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Type
-                  <input value={grimmDraft.type} onChange={(e) => setG({ type: e.target.value })} />
-                </label>
-              </div>
-              <div className="field-grid">
-                <label>
-                  Threat (1–5)
-                  <input
-                    type="number"
-                    min={1}
-                    max={5}
-                    value={grimmDraft.threat}
-                    onChange={(e) => setG({ threat: Number(e.target.value) })}
-                  />
-                </label>
-                <label>
-                  Ferocity
-                  <select value={grimmDraft.ferocity} onChange={(e) => setG({ ferocity: Number(e.target.value) })}>
-                    {[4, 6, 8, 10, 12].map((d) => (
-                      <option key={d} value={d}>
-                        d{d}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Armor
-                  <input
-                    type="number"
-                    min={0}
-                    value={grimmDraft.armor}
-                    onChange={(e) => setG({ armor: Number(e.target.value) })}
-                  />
-                </label>
-                <label>
-                  HP
-                  <input
-                    type="number"
-                    min={1}
-                    value={grimmDraft.hitPoints}
-                    onChange={(e) => setG({ hitPoints: Number(e.target.value) })}
-                  />
-                </label>
-              </div>
-
-              <h4>Traits</h4>
-              {grimmDraft.traits.map((t, i) => (
-                <div key={i} className="stack trait-row">
-                  <div className="row-between">
-                    <input
-                      placeholder="Trait name — e.g. Pack Tactics"
-                      value={t.name}
-                      onChange={(e) =>
-                        setG({
-                          traits: grimmDraft.traits.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
-                        })
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="ghost mini"
-                      onClick={() => setG({ traits: grimmDraft.traits.filter((_, j) => j !== i) })}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <textarea
-                    rows={2}
-                    placeholder="What it does"
-                    value={t.desc}
-                    onChange={(e) =>
-                      setG({
-                        traits: grimmDraft.traits.map((x, j) => (j === i ? { ...x, desc: e.target.value } : x)),
-                      })
-                    }
-                  />
-                </div>
-              ))}
-              <button
-                type="button"
-                className="ghost mini"
-                onClick={() => setG({ traits: [...grimmDraft.traits, { name: "", desc: "" }] })}
-              >
-                + Add trait
-              </button>
-
-              <div className="row-between">
-                <button className="primary" onClick={save}>
-                  {grimmDraft.id ? "Save changes" : "Create Grimm"}
-                </button>
-                <button className="ghost" onClick={() => setGrimmDraft(null)}>
-                  Cancel
-                </button>
-              </div>
-            </section>
+            <RemnantMonsterEditor
+              draft={grimmDraft}
+              setDraft={setG}
+              onSave={save}
+              onCancel={() => setGrimmDraft(null)}
+              uploadImage={uploadImage}
+            />
           )}
 
           {!detail && !draft && !grimmDraft && (

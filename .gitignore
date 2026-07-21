@@ -6,3 +6,5 @@ server/data/*.db
 server/data/*.db-*
 server/data/uploads/
 *.tsbuildinfo
+
+.vivid-backups/

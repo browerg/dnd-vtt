@@ -12,6 +12,8 @@ const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 const SIZES = ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"];
 const ABILITY_KEYS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 const FEROCITY_DICE = [4, 6, 8, 10, 12];
+const REMNANT_ATTRS = ["brawn", "finesse", "resolve", "wit", "aura", "grit"];
+// vivid-monster-library-completion-v1
 
 const num = (v: unknown, fallback: number, min: number, max: number) => {
   const n = Number(v);
@@ -61,22 +63,60 @@ function sanitizeStatblock(b: any): { data: Record<string, unknown>; cr: number;
 // HP and freeform traits. Threat doubles as the cr sort column.
 function sanitizeGrimm(b: any): { data: Record<string, unknown>; cr: number; name: string } | string {
   const name = String(b?.name ?? "").trim();
-  if (!name) return "The Grimm needs a name.";
-  const threat = num(b.threat, 1, 1, 5);
+  if (!name) return "The monster needs a name.";
+  const threat = num(b.threat, 1, 1, 10);
+  const stringList = (value: unknown) => Array.isArray(value)
+    ? value.map((entry) => String(entry).trim()).filter(Boolean).slice(0, 50)
+    : [];
+  const attributes: Record<string, number> = {};
+  for (const key of REMNANT_ATTRS) attributes[key] = FEROCITY_DICE.includes(Number(b?.attributes?.[key])) ? Number(b.attributes[key]) : 6;
+  const actions = Array.isArray(b.actions) ? b.actions.map((action: any) => ({
+    name: String(action?.name ?? "").trim(),
+    desc: String(action?.desc ?? "").trim(),
+    kind: String(action?.kind ?? "Attack").trim(),
+    attribute: String(action?.attribute ?? "ferocity").trim(),
+    rollMode: ["normal", "edge", "setback"].includes(action?.rollMode) ? action.rollMode : "normal",
+    damageDice: String(action?.damageDice ?? "").trim(),
+    damageBonus: num(action?.damageBonus, 0, -100, 100),
+    range: String(action?.range ?? "").trim(),
+    targets: String(action?.targets ?? "").trim(),
+    auraCost: num(action?.auraCost, 0, 0, 999),
+    maxUses: num(action?.maxUses, 0, 0, 999),
+    recharge: String(action?.recharge ?? "").trim(),
+  })).filter((action: any) => action.name).slice(0, 50) : [];
   const data: Record<string, unknown> = {
     system: "remnant",
     name,
+    subtitle: String(b.subtitle ?? "").trim(),
     threat,
     ferocity: FEROCITY_DICE.includes(Number(b.ferocity)) ? Number(b.ferocity) : 6,
-    armor: num(b.armor, 0, 0, 12),
-    hit_points: num(b.hitPoints, 10, 1, 500),
+    armor: num(b.armor, 0, 0, 30),
+    hit_points: num(b.hitPoints, 10, 1, 5000),
+    aura: num(b.aura, 0, 0, 5000),
+    defense: num(b.defense, 8, 1, 100),
+    movement: num(b.movement, 30, 0, 1000),
     size: SIZES.includes(b.size) ? b.size : "Medium",
     type: String(b.type ?? "").trim() || "Creature of Grimm",
+    category: String(b.category ?? "").trim() || "Grimm",
+    tags: stringList(b.tags),
+    initiativeAttribute: REMNANT_ATTRS.includes(b.initiativeAttribute) ? b.initiativeAttribute : "finesse",
+    mainAttribute: b.mainAttribute === "ferocity" || REMNANT_ATTRS.includes(b.mainAttribute) ? b.mainAttribute : "ferocity",
+    attributes,
+    trainedSkills: stringList(b.trainedSkills),
+    resistances: stringList(b.resistances),
+    immunities: stringList(b.immunities),
+    vulnerabilities: stringList(b.vulnerabilities),
+    conditionImmunities: stringList(b.conditionImmunities),
+    description: String(b.description ?? "").trim(),
+    gmNotes: String(b.gmNotes ?? "").trim(),
+    tokenImageUrl: /^\/uploads\/[A-Za-z0-9._-]+$/.test(String(b.tokenImageUrl ?? "")) ? String(b.tokenImageUrl) : "",
+    portraitUrl: /^\/uploads\/[A-Za-z0-9._-]+$/.test(String(b.portraitUrl ?? "")) ? String(b.portraitUrl) : "",
+    tokenScale: num(b.tokenScale, 1, 0.5, 2.5),
+    tokenMode: b.tokenMode === "cover" ? "cover" : "contain",
     traits: Array.isArray(b.traits)
-      ? b.traits
-          .map((t: any) => ({ name: String(t?.name ?? "").trim(), desc: String(t?.desc ?? "").trim() }))
-          .filter((t: any) => t.name)
+      ? b.traits.map((t: any) => ({ name: String(t?.name ?? "").trim(), desc: String(t?.desc ?? "").trim() })).filter((t: any) => t.name).slice(0, 50)
       : [],
+    actions,
   };
   return { data, cr: threat, name };
 }
@@ -136,6 +176,10 @@ monstersRouter.get("/", (req, res) => {
         threat: d.threat,
         armor: d.armor,
         ferocity: d.ferocity,
+        category: d.category,
+        tags: d.tags,
+        tokenImageUrl: d.tokenImageUrl,
+        portraitUrl: d.portraitUrl,
       };
     }),
   });

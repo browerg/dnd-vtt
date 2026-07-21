@@ -1,6 +1,7 @@
 import { Router, type Request } from "express";
 import multer from "multer";
 import { randomBytes } from "node:crypto";
+import fs from "node:fs";
 import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { db, uploadsDir } from "./db.js";
@@ -10,6 +11,7 @@ import { getIo } from "./realtime.js";
 import { getToken } from "./maps.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
+// vivid-monster-library-completion-v1
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 
 const IMAGE_TYPES: Record<string, string> = {
@@ -119,6 +121,10 @@ preparedTokensRouter.post("/:id/prepared-tokens", upload.single("image"), async 
     ? Math.min(2.5, Math.max(0.5, imageScaleInput))
     : 1;
   const quantity = Math.min(20, Math.max(1, Math.round(Number(req.body.quantity) || 1)));
+  const libraryImagePath = monsterData.tokenImageUrl
+    ? path.join(uploadsDir, path.basename(String(monsterData.tokenImageUrl)))
+    : "";
+  const preparedImagePath = req.file?.path ?? (libraryImagePath && fs.existsSync(libraryImagePath) ? libraryImagePath : "");
 
   const insert = db.prepare(`
     INSERT INTO prepared_tokens
@@ -133,7 +139,7 @@ preparedTokensRouter.post("/:id/prepared-tokens", upload.single("image"), async 
       const numberedName = quantity > 1 ? `${name} ${i + 1}` : name;
       const result = insert.run(
         campaignId, monsterId, numberedName, color, size, hp, maxHp,
-        req.file?.path ?? "", imageScale
+        preparedImagePath, Number(monsterData.tokenScale ?? imageScale)
       );
       ids.push(Number(result.lastInsertRowid));
     }
