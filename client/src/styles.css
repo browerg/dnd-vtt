@@ -2479,3 +2479,1427 @@ button[aria-pressed="true"]::after {
     animation: none;
   }
 }
+
+
+/* vivid-combat-dashboard */
+.remnant-combat-dashboard {
+  display: grid;
+  gap: .7rem;
+  padding: .8rem;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background:
+    linear-gradient(125deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 52%),
+    var(--panel);
+}
+
+.combat-dashboard-heading,
+.combat-dashboard-footer,
+.combat-active-weapon,
+.combat-active-weapon-actions,
+.combat-dashboard-jumps,
+.combat-condition-summary,
+.combat-condition-summary > div {
+  display: flex;
+  align-items: center;
+}
+
+.combat-dashboard-heading,
+.combat-dashboard-footer,
+.combat-active-weapon {
+  justify-content: space-between;
+  gap: .7rem;
+}
+
+.combat-dashboard-heading > div,
+.combat-active-weapon-title {
+  display: grid;
+  min-width: 0;
+}
+
+.combat-dashboard-kicker,
+.combat-active-weapon-title > span,
+.combat-condition-summary > span {
+  color: var(--muted);
+  font-size: .65rem;
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.combat-dashboard-state {
+  padding: .26rem .5rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 44%, var(--border));
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: .7rem;
+  font-weight: 850;
+}
+
+.combat-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: .55rem;
+}
+
+.combat-quick-pool,
+.combat-stat-card,
+.combat-stat-button {
+  min-width: 0;
+  padding: .58rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--bg-well) 82%, transparent);
+}
+
+.combat-quick-pool {
+  position: relative;
+  display: grid;
+  gap: .35rem;
+  overflow: hidden;
+}
+
+.combat-quick-pool > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.combat-quick-pool span,
+.combat-stat-card span,
+.combat-stat-button span {
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 750;
+}
+
+.combat-quick-pool strong {
+  font-size: 1.05rem;
+}
+
+.combat-quick-pool strong small {
+  color: var(--muted);
+  font-size: .66rem;
+}
+
+.combat-quick-controls {
+  display: flex;
+  gap: .3rem;
+}
+
+.combat-pool-track {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.combat-pool-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+}
+
+.combat-quick-pool.aura { color: var(--aura, var(--accent)); }
+.combat-quick-pool.hp { color: #ff7c8d; }
+
+.combat-quick-pool.warning {
+  box-shadow: inset 0 0 0 1px currentColor, 0 0 12px color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.combat-stat-card,
+.combat-stat-button {
+  display: grid;
+  align-content: center;
+  gap: .12rem;
+  text-align: left;
+}
+
+.combat-stat-card strong,
+.combat-stat-button strong {
+  overflow: hidden;
+  font-size: .92rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combat-stat-card small {
+  color: var(--muted);
+  font-size: .66rem;
+}
+
+.combat-stat-button {
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
+}
+
+.combat-stat-button:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.combat-active-weapon {
+  padding: .62rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.combat-active-weapon-title strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combat-active-weapon-title small {
+  color: var(--muted);
+  font-size: .68rem;
+}
+
+.combat-active-weapon-actions,
+.combat-dashboard-jumps,
+.combat-condition-summary > div {
+  gap: .35rem;
+  flex-wrap: wrap;
+}
+
+.combat-condition-summary {
+  min-width: 0;
+  gap: .5rem;
+}
+
+.combat-condition-summary .clear {
+  color: #8ae3b0;
+  font-size: .75rem;
+}
+
+.combat-condition-chip {
+  padding: .2rem .38rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 42%, var(--border));
+  border-radius: 999px;
+  color: #ffb0ba;
+  font-size: .64rem;
+  font-weight: 800;
+}
+
+@media (max-width: 980px) {
+  .combat-dashboard-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .combat-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .combat-dashboard-heading,
+  .combat-dashboard-footer,
+  .combat-active-weapon {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .combat-active-weapon-actions,
+  .combat-dashboard-jumps {
+    width: 100%;
+  }
+
+  .combat-active-weapon-actions button,
+  .combat-dashboard-jumps button {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* vivid-weapon-card-redesign */
+details[data-sheet-section="weapon"] {
+  --weapon-accent: var(--accent);
+}
+
+details[data-sheet-section="weapon"] > .sheet-section-summary {
+  background:
+    linear-gradient(110deg, color-mix(in srgb, var(--weapon-accent) 13%, transparent), transparent 62%);
+}
+
+details[data-sheet-section="weapon"] > .row-between {
+  display: grid;
+  grid-template-columns: minmax(9rem, auto) minmax(12rem, 1fr);
+  align-items: end;
+  gap: .65rem;
+  padding: .68rem;
+  border: 1px solid color-mix(in srgb, var(--weapon-accent) 24%, var(--border));
+  border-radius: 10px;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--weapon-accent) 7%, transparent), transparent 55%),
+    color-mix(in srgb, var(--bg-well) 80%, transparent);
+}
+
+details[data-sheet-section="weapon"] > .row-between > h3 {
+  display: none;
+}
+
+details[data-sheet-section="weapon"] .weapon-name {
+  width: 100%;
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 850;
+  letter-spacing: .02em;
+}
+
+details[data-sheet-section="weapon"] .weapon-main-attribute-note {
+  margin: 0 .15rem .2rem;
+  padding: .5rem .65rem;
+  border-left: 3px solid color-mix(in srgb, var(--weapon-accent) 65%, transparent);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--weapon-accent) 6%, transparent);
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form {
+  position: relative;
+  display: grid;
+  gap: .62rem;
+  padding: .78rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--weapon-accent) 5%, transparent), transparent 52%),
+    color-mix(in srgb, var(--bg-well) 84%, transparent);
+  overflow: hidden;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: color-mix(in srgb, var(--weapon-accent) 42%, transparent);
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form.active-form {
+  border-color: color-mix(in srgb, var(--weapon-accent) 60%, var(--border));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--weapon-accent) 16%, transparent),
+    0 8px 22px color-mix(in srgb, var(--weapon-accent) 10%, transparent);
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form.active-form::before {
+  width: 5px;
+  background: var(--weapon-accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--weapon-accent) 65%, transparent);
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:first-child {
+  min-height: 2rem;
+  padding-bottom: .45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--weapon-accent) 18%, var(--border));
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:first-child strong {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  font-size: .8rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2) {
+  display: grid;
+  grid-template-columns: minmax(10rem, 2fr) repeat(3, minmax(5.4rem, .75fr));
+  gap: .45rem;
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2)::before {
+  content: "Weapon type";
+  grid-column: 1;
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2)::after {
+  content: "Range      Damage      Style";
+  grid-column: 2 / -1;
+  white-space: pre;
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2)::before,
+details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2)::after {
+  align-self: end;
+  color: var(--muted);
+  font-size: .61rem;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2) > * {
+  grid-row: 2;
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > input[placeholder="Special / effect"] {
+  min-height: 2.4rem;
+  padding-left: .7rem;
+  border-style: dashed;
+}
+
+details[data-sheet-section="weapon"] .trait-row.weapon-form > input[placeholder="Special / effect"]::placeholder {
+  color: color-mix(in srgb, var(--muted) 88%, transparent);
+}
+
+details[data-sheet-section="weapon"] .weapon-roll-panel {
+  display: grid;
+  gap: .55rem;
+  margin-top: .1rem;
+  padding: .62rem;
+  border: 1px solid color-mix(in srgb, var(--weapon-accent) 22%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--panel) 68%, transparent);
+}
+
+details[data-sheet-section="weapon"] .weapon-roll-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .55rem;
+  padding-bottom: .45rem;
+  border-bottom: 1px solid var(--border);
+}
+
+details[data-sheet-section="weapon"] .weapon-roll-heading > span:first-child {
+  color: var(--text);
+  font-size: .76rem;
+}
+
+details[data-sheet-section="weapon"] .weapon-roll-heading strong {
+  color: var(--weapon-accent);
+}
+
+details[data-sheet-section="weapon"] .weapon-roll-panel button {
+  min-height: 2.1rem;
+}
+
+details[data-sheet-section="weapon"] .weapon-roll-panel .primary,
+details[data-sheet-section="weapon"] .weapon-roll-panel button:not(.ghost) {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--weapon-accent) 16%, transparent);
+}
+
+details[data-sheet-section="weapon"] .badge.src-custom {
+  margin-left: .15rem;
+  border-color: color-mix(in srgb, var(--weapon-accent) 54%, var(--border));
+  color: var(--weapon-accent);
+  background: color-mix(in srgb, var(--weapon-accent) 10%, transparent);
+}
+
+@media (min-width: 1100px) {
+  details[data-sheet-section="weapon"] {
+    grid-column: 1 / -1;
+  }
+
+  details[data-sheet-section="weapon"] > .weapon-main-attribute-note,
+  details[data-sheet-section="weapon"] > .row-between {
+    grid-column: 1 / -1;
+  }
+
+  details[data-sheet-section="weapon"][open] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .72rem;
+  }
+
+  details[data-sheet-section="weapon"] > .sheet-section-summary {
+    grid-column: 1 / -1;
+  }
+
+  details[data-sheet-section="weapon"] > .trait-row.weapon-form {
+    margin-left: .8rem;
+    margin-right: .8rem;
+  }
+
+  details[data-sheet-section="weapon"] > .trait-row.weapon-form:nth-last-of-type(1) {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  details[data-sheet-section="weapon"] > .row-between {
+    grid-template-columns: 1fr;
+  }
+
+  details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2)::before,
+  details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2)::after {
+    display: none;
+  }
+
+  details[data-sheet-section="weapon"] .trait-row.weapon-form > .row-between:nth-child(2) > * {
+    grid-row: auto;
+  }
+
+  details[data-sheet-section="weapon"] .weapon-roll-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details[data-sheet-section="weapon"] .trait-row.weapon-form {
+    transition: none;
+  }
+}
+
+
+/* vivid-conditions-tray-redesign-v2 */
+details[data-sheet-section="conditions"] {
+  --condition-accent: #ffb15c;
+}
+
+details[data-sheet-section="conditions"] > .sheet-section-summary {
+  background:
+    linear-gradient(110deg, color-mix(in srgb, var(--condition-accent) 10%, transparent), transparent 60%);
+}
+
+.conditions-tray {
+  display: grid;
+  gap: .72rem;
+}
+
+.conditions-active-panel,
+.conditions-library {
+  display: grid;
+  gap: .62rem;
+  padding: .72rem;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--bg-well) 82%, transparent);
+}
+
+.conditions-active-panel {
+  border-color: color-mix(in srgb, var(--condition-accent) 28%, var(--border));
+  background:
+    linear-gradient(125deg, color-mix(in srgb, var(--condition-accent) 6%, transparent), transparent 58%),
+    color-mix(in srgb, var(--bg-well) 82%, transparent);
+}
+
+.conditions-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.conditions-panel-heading > div {
+  display: grid;
+  min-width: 0;
+}
+
+.conditions-kicker {
+  color: var(--muted);
+  font-size: .62rem;
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.conditions-panel-heading strong {
+  font-size: .84rem;
+}
+
+.conditions-count {
+  padding: .2rem .42rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: .64rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.conditions-clear-state {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  min-height: 4.2rem;
+  padding: .68rem;
+  border: 1px dashed color-mix(in srgb, #65d69b 45%, var(--border));
+  border-radius: 9px;
+  color: #86e6af;
+  background: color-mix(in srgb, #65d69b 5%, transparent);
+}
+
+.conditions-clear-state > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 900;
+}
+
+.conditions-clear-state > div {
+  display: grid;
+}
+
+.conditions-clear-state small {
+  color: var(--muted);
+}
+
+.active-condition-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .48rem;
+}
+
+.active-condition-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .52rem;
+  min-height: 3.2rem;
+  padding: .56rem;
+  border: 1px solid color-mix(in srgb, var(--condition-accent) 42%, var(--border));
+  border-radius: 9px;
+  color: inherit;
+  text-align: left;
+  background: color-mix(in srgb, var(--condition-accent) 7%, transparent);
+}
+
+.active-condition-card:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--condition-accent) 75%, var(--border));
+  transform: translateY(-1px);
+}
+
+.active-condition-card.downed {
+  --condition-accent: #f0b25b;
+}
+
+.active-condition-card.critical {
+  --condition-accent: #ff5f72;
+  box-shadow: 0 0 14px color-mix(in srgb, #ff5f72 13%, transparent);
+}
+
+.active-condition-icon {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+  color: var(--condition-accent);
+  font-weight: 900;
+}
+
+.active-condition-card > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+}
+
+.active-condition-card strong {
+  overflow: hidden;
+  font-size: .75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-condition-card small {
+  color: var(--muted);
+  font-size: .61rem;
+}
+
+.active-condition-remove {
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.condition-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .42rem;
+}
+
+.condition-tray-chip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .38rem;
+  min-width: 0;
+  min-height: 2.35rem;
+  padding: .42rem .48rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: inherit;
+  text-align: left;
+  background: color-mix(in srgb, var(--panel) 65%, transparent);
+}
+
+.condition-tray-chip:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--condition-accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--condition-accent) 7%, transparent);
+}
+
+.condition-tray-chip.active {
+  border-color: color-mix(in srgb, var(--condition-accent) 65%, var(--border));
+  background: color-mix(in srgb, var(--condition-accent) 12%, transparent);
+}
+
+.condition-tray-chip.downed {
+  --condition-accent: #f0b25b;
+}
+
+.condition-tray-chip.critical {
+  --condition-accent: #ff5f72;
+}
+
+.condition-chip-dot {
+  width: .52rem;
+  height: .52rem;
+  border: 1px solid color-mix(in srgb, var(--condition-accent) 62%, var(--border));
+  border-radius: 50%;
+}
+
+.condition-tray-chip.active .condition-chip-dot {
+  background: var(--condition-accent);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--condition-accent) 55%, transparent);
+}
+
+.condition-tray-chip > span:nth-child(2) {
+  overflow: hidden;
+  font-size: .7rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.condition-tray-chip small {
+  color: var(--muted);
+  font-size: .58rem;
+  font-weight: 750;
+}
+
+@media (min-width: 1050px) {
+  .conditions-tray {
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.35fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .active-condition-list,
+  .condition-chip-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .conditions-panel-heading {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .active-condition-card {
+    transition: none;
+  }
+}
+
+
+/* vivid-semblance-dust-polish */
+details[data-sheet-section="semblance"] {
+  --semblance-accent: var(--aura, var(--accent));
+}
+
+details[data-sheet-section="semblance"] > .sheet-section-summary {
+  background:
+    linear-gradient(110deg, color-mix(in srgb, var(--semblance-accent) 13%, transparent), transparent 62%);
+}
+
+details[data-sheet-section="semblance"][open] {
+  border-color: color-mix(in srgb, var(--semblance-accent) 38%, var(--border));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--semblance-accent) 8%, transparent);
+}
+
+details[data-sheet-section="semblance"] > input[placeholder="Semblance name"] {
+  min-height: 2.8rem;
+  padding: .6rem .75rem;
+  border-color: color-mix(in srgb, var(--semblance-accent) 32%, var(--border));
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: .02em;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--semblance-accent) 8%, transparent), transparent 58%),
+    var(--bg-well);
+}
+
+details[data-sheet-section="semblance"] > .row-between:first-of-type {
+  min-height: 2.3rem;
+  padding: .5rem .6rem;
+  border: 1px solid color-mix(in srgb, var(--semblance-accent) 22%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--semblance-accent) 5%, transparent);
+}
+
+details[data-sheet-section="semblance"] > .row-between:nth-of-type(2) {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .45rem;
+}
+
+details[data-sheet-section="semblance"] > textarea {
+  min-height: 6rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+details[data-sheet-section="semblance"] > input[placeholder^="Limitation"] {
+  border-left: 3px solid #ff9d68;
+  background: color-mix(in srgb, #ff9d68 5%, var(--bg-well));
+}
+
+details[data-sheet-section="semblance"] .semblance-cost-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+  padding: .72rem;
+  border: 1px solid color-mix(in srgb, var(--semblance-accent) 34%, var(--border));
+  border-radius: 10px;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--semblance-accent) 9%, transparent), transparent 60%),
+    color-mix(in srgb, var(--bg-well) 82%, transparent);
+}
+
+details[data-sheet-section="semblance"] .semblance-cost-row .muted strong {
+  color: var(--semblance-accent);
+  font-size: 1rem;
+}
+
+details[data-sheet-section="semblance"] .semblance-cost-row .primary {
+  min-height: 2.4rem;
+  padding-inline: .9rem;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--semblance-accent) 18%, transparent);
+}
+
+details[data-sheet-section="semblance"] .semblance-sustained-panel {
+  position: relative;
+  overflow: hidden;
+  padding: .78rem;
+  border: 1px solid color-mix(in srgb, var(--semblance-accent) 58%, var(--border));
+  border-radius: 11px;
+  background:
+    linear-gradient(125deg, color-mix(in srgb, var(--semblance-accent) 14%, transparent), transparent 62%),
+    color-mix(in srgb, var(--panel) 82%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--semblance-accent) 12%, transparent),
+    0 0 20px color-mix(in srgb, var(--semblance-accent) 11%, transparent);
+}
+
+details[data-sheet-section="semblance"] .semblance-sustained-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--semblance-accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--semblance-accent) 65%, transparent);
+}
+
+details[data-sheet-section="semblance"] .semblance-sustained-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .65rem;
+}
+
+details[data-sheet-section="semblance"] .semblance-active-pip {
+  width: .8rem;
+  height: .8rem;
+  border-radius: 50%;
+  background: var(--semblance-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--semblance-accent) 75%, transparent);
+}
+
+details[data-sheet-section="semblance"] .semblance-sustained-status > span:nth-child(2) {
+  display: grid;
+}
+
+details[data-sheet-section="semblance"] .semblance-sustained-status small {
+  color: var(--muted);
+}
+
+details[data-sheet-section="semblance"] .semblance-upkeep {
+  padding: .28rem .5rem;
+  border: 1px solid color-mix(in srgb, var(--semblance-accent) 48%, var(--border));
+  border-radius: 999px;
+  color: var(--semblance-accent);
+  font-size: .68rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+details[data-sheet-section="semblance"] .semblance-sustained-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .4rem;
+  margin-top: .65rem;
+  padding-top: .6rem;
+  border-top: 1px solid color-mix(in srgb, var(--semblance-accent) 20%, var(--border));
+}
+
+details[data-sheet-section="semblance"] > .condition-chips {
+  padding: .65rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-well) 78%, transparent);
+}
+
+details[data-sheet-section="semblance"] > .condition-chips::before {
+  content: "Semblance Upgrades";
+  display: block;
+  width: 100%;
+  margin-bottom: .45rem;
+  color: var(--muted);
+  font-size: .63rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+details[data-sheet-section="dust"] {
+  --dust-accent: #f0c66a;
+}
+
+details[data-sheet-section="dust"] > .sheet-section-summary {
+  background:
+    linear-gradient(110deg, color-mix(in srgb, var(--dust-accent) 11%, transparent), transparent 62%);
+}
+
+details[data-sheet-section="dust"] .dust-heading {
+  padding: .68rem;
+  border: 1px solid color-mix(in srgb, var(--dust-accent) 25%, var(--border));
+  border-radius: 10px;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--dust-accent) 6%, transparent), transparent 58%),
+    color-mix(in srgb, var(--bg-well) 80%, transparent);
+}
+
+details[data-sheet-section="dust"] .dust-vial-list {
+  display: grid;
+  gap: .7rem;
+}
+
+details[data-sheet-section="dust"] .dust-vial {
+  position: relative;
+  overflow: hidden;
+  padding: .78rem;
+  border-width: 1px;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, currentColor 7%, transparent), transparent 48%),
+    color-mix(in srgb, var(--bg-well) 84%, transparent);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .14);
+}
+
+details[data-sheet-section="dust"] .dust-vial::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: currentColor;
+  opacity: .8;
+}
+
+details[data-sheet-section="dust"] .dust-vial.empty {
+  opacity: .68;
+  filter: saturate(.7);
+}
+
+details[data-sheet-section="dust"] .dust-vial-top {
+  padding-bottom: .58rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 18%, var(--border));
+}
+
+details[data-sheet-section="dust"] .dust-vial-identity {
+  min-width: 0;
+}
+
+details[data-sheet-section="dust"] .dust-vial-identity strong {
+  font-size: .9rem;
+}
+
+details[data-sheet-section="dust"] .dust-vial-identity span {
+  color: var(--muted);
+  font-size: .65rem;
+}
+
+details[data-sheet-section="dust"] .dust-crystal {
+  width: 1.85rem;
+  height: 2.2rem;
+  filter: drop-shadow(0 0 7px currentColor);
+}
+
+details[data-sheet-section="dust"] .dust-charge-track {
+  padding: .35rem .45rem;
+  border: 1px solid color-mix(in srgb, currentColor 28%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+}
+
+details[data-sheet-section="dust"] .dust-charge {
+  width: .85rem;
+  height: .85rem;
+  border-width: 1px;
+  transform: rotate(45deg);
+}
+
+details[data-sheet-section="dust"] .dust-charge.filled {
+  box-shadow: 0 0 8px currentColor;
+}
+
+details[data-sheet-section="dust"] .dust-vial-controls {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) auto auto auto;
+  gap: .4rem;
+  align-items: center;
+}
+
+details[data-sheet-section="dust"] .dust-vial-controls button {
+  min-height: 2.15rem;
+}
+
+details[data-sheet-section="dust"] .dust-vial-effects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .48rem;
+}
+
+details[data-sheet-section="dust"] .dust-vial-effects > * {
+  min-width: 0;
+  padding: .58rem;
+  border: 1px solid color-mix(in srgb, currentColor 18%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+}
+
+details[data-sheet-section="dust"] .dust-reference {
+  border: 1px solid color-mix(in srgb, var(--dust-accent) 24%, var(--border));
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+details[data-sheet-section="dust"] .dust-reference > summary {
+  padding: .62rem .7rem;
+  color: var(--dust-accent);
+  font-size: .75rem;
+  font-weight: 850;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--dust-accent) 6%, transparent);
+}
+
+@media (min-width: 1080px) {
+  details[data-sheet-section="dust"] .dust-vial-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  details[data-sheet-section="dust"] .dust-reference {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  details[data-sheet-section="semblance"] > .row-between:nth-of-type(2),
+  details[data-sheet-section="dust"] .dust-vial-effects {
+    grid-template-columns: 1fr;
+  }
+
+  details[data-sheet-section="semblance"] .semblance-cost-row,
+  details[data-sheet-section="semblance"] .semblance-sustained-status,
+  details[data-sheet-section="semblance"] .semblance-sustained-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  details[data-sheet-section="semblance"] .semblance-sustained-status {
+    display: flex;
+  }
+
+  details[data-sheet-section="dust"] .dust-vial-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  details[data-sheet-section="dust"] .dust-vial-controls select {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details[data-sheet-section="semblance"] .semblance-active-pip {
+    box-shadow: none;
+  }
+}
+
+
+/* vivid-semblance-limitation-width-fix */
+details[data-sheet-section="semblance"] > input[placeholder^="Limitation"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.7rem;
+  box-sizing: border-box;
+  padding: .62rem .75rem;
+  margin: 0;
+}
+
+
+/* vivid-semblance-upgrade-selection-fix */
+details[data-sheet-section="semblance"] > .condition-chips .chip {
+  position: relative;
+  min-height: 2.15rem;
+  padding: .42rem .7rem .42rem 1.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  color: var(--muted);
+  font-weight: 750;
+  transition:
+    border-color .16s ease,
+    background .16s ease,
+    color .16s ease,
+    box-shadow .16s ease,
+    transform .16s ease;
+}
+
+details[data-sheet-section="semblance"] > .condition-chips .chip::before {
+  content: "";
+  position: absolute;
+  left: .58rem;
+  top: 50%;
+  width: .58rem;
+  height: .58rem;
+  border: 1px solid color-mix(in srgb, var(--semblance-accent) 48%, var(--border));
+  border-radius: 3px;
+  transform: translateY(-50%);
+  background: transparent;
+}
+
+details[data-sheet-section="semblance"] > .condition-chips .chip:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--semblance-accent) 55%, var(--border));
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+details[data-sheet-section="semblance"] > .condition-chips .chip.active {
+  border-color: color-mix(in srgb, var(--semblance-accent) 82%, var(--border));
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--semblance-accent) 22%, transparent),
+      color-mix(in srgb, var(--semblance-accent) 8%, transparent)
+    );
+  color: var(--text);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--semblance-accent) 22%, transparent),
+    0 0 14px color-mix(in srgb, var(--semblance-accent) 24%, transparent);
+}
+
+details[data-sheet-section="semblance"] > .condition-chips .chip.active::before {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  border-color: var(--semblance-accent);
+  background: var(--semblance-accent);
+  color: #111;
+  font-size: .48rem;
+  font-weight: 950;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--semblance-accent) 68%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details[data-sheet-section="semblance"] > .condition-chips .chip {
+    transition: none;
+  }
+}
+
+
+/* vivid-functional-semblance-upgrades */
+.semblance-upgrade-effects {
+  display: grid;
+  gap: .55rem;
+  padding: .68rem;
+  border: 1px solid color-mix(in srgb, var(--semblance-accent) 30%, var(--border));
+  border-radius: 10px;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--semblance-accent) 7%, transparent), transparent 60%),
+    color-mix(in srgb, var(--bg-well) 80%, transparent);
+}
+
+.semblance-effective-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .42rem;
+}
+
+.semblance-effective-stats > span {
+  display: grid;
+  min-width: 0;
+  padding: .48rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+}
+
+.semblance-effective-stats small {
+  color: var(--muted);
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.semblance-effective-stats strong {
+  overflow: hidden;
+  color: var(--semblance-accent);
+  font-size: .74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.semblance-check-actions {
+  display: flex;
+  gap: .4rem;
+  flex-wrap: wrap;
+}
+
+.semblance-awakening-note {
+  display: grid;
+  padding: .52rem .62rem;
+  border-left: 3px solid var(--semblance-accent);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--semblance-accent) 8%, transparent);
+}
+
+.semblance-awakening-note span {
+  color: var(--muted);
+  font-size: .66rem;
+}
+
+details[data-sheet-section="semblance"] > .condition-chips .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.semblance-upgrade-rank {
+  display: inline-grid;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  place-items: center;
+  margin-left: .18rem;
+  border: 1px solid color-mix(in srgb, var(--semblance-accent) 70%, var(--border));
+  border-radius: 999px;
+  color: var(--semblance-accent);
+  font-size: .58rem;
+  line-height: 1;
+  background: color-mix(in srgb, var(--semblance-accent) 12%, transparent);
+}
+
+@media (max-width: 760px) {
+  .semblance-effective-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .semblance-check-actions button {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* vivid-inventory-background-polish */
+details[data-sheet-section="inventory"],
+details[data-sheet-section="background"] {
+  --section-polish-accent: var(--accent);
+}
+
+details[data-sheet-section="inventory"] > .sheet-section-summary,
+details[data-sheet-section="background"] > .sheet-section-summary {
+  background:
+    linear-gradient(
+      110deg,
+      color-mix(in srgb, var(--section-polish-accent) 9%, transparent),
+      transparent 62%
+    );
+}
+
+details[data-sheet-section="inventory"][open],
+details[data-sheet-section="background"][open] {
+  border-color: color-mix(in srgb, var(--section-polish-accent) 30%, var(--border));
+}
+
+details[data-sheet-section="inventory"] > :not(summary),
+details[data-sheet-section="background"] > :not(summary) {
+  min-width: 0;
+}
+
+/* Inventory editor shell */
+details[data-sheet-section="inventory"] > div {
+  border-radius: 11px;
+}
+
+details[data-sheet-section="inventory"] input,
+details[data-sheet-section="inventory"] select,
+details[data-sheet-section="inventory"] textarea {
+  min-width: 0;
+}
+
+details[data-sheet-section="inventory"] label {
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .025em;
+}
+
+details[data-sheet-section="inventory"] button {
+  min-height: 2.15rem;
+}
+
+details[data-sheet-section="inventory"] table,
+details[data-sheet-section="inventory"] .inventory-list,
+details[data-sheet-section="inventory"] .item-list {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 .4rem;
+}
+
+details[data-sheet-section="inventory"] table tr,
+details[data-sheet-section="inventory"] .inventory-item,
+details[data-sheet-section="inventory"] .item-row {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--bg-well) 82%, transparent);
+}
+
+details[data-sheet-section="inventory"] table td,
+details[data-sheet-section="inventory"] table th {
+  padding: .5rem;
+}
+
+details[data-sheet-section="inventory"] .money-row,
+details[data-sheet-section="inventory"] [class*="money"],
+details[data-sheet-section="inventory"] [class*="lien"] {
+  padding: .62rem;
+  border: 1px solid color-mix(in srgb, #f0c66a 30%, var(--border));
+  border-radius: 9px;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, #f0c66a 7%, transparent), transparent 65%),
+    color-mix(in srgb, var(--bg-well) 82%, transparent);
+}
+
+/* Background section */
+details[data-sheet-section="background"] {
+  --section-polish-accent: #c29cff;
+}
+
+details[data-sheet-section="background"] > .field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .55rem;
+  padding: .7rem;
+  border: 1px solid color-mix(in srgb, var(--section-polish-accent) 24%, var(--border));
+  border-radius: 11px;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--section-polish-accent) 6%, transparent), transparent 60%),
+    color-mix(in srgb, var(--bg-well) 80%, transparent);
+}
+
+details[data-sheet-section="background"] > .field-grid label {
+  display: grid;
+  gap: .32rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: .66rem;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+details[data-sheet-section="background"] > .field-grid input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 2.55rem;
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 650;
+  text-transform: none;
+}
+
+details[data-sheet-section="background"] > label {
+  display: grid;
+  gap: .35rem;
+  padding: .7rem;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  color: var(--muted);
+  font-size: .66rem;
+  font-weight: 850;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--bg-well) 80%, transparent);
+}
+
+details[data-sheet-section="background"] > label textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  resize: vertical;
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-transform: none;
+}
+
+details[data-sheet-section="background"] > label:first-of-type {
+  border-left: 3px solid #79b7ff;
+}
+
+details[data-sheet-section="background"] > label:last-of-type {
+  border-left: 3px solid var(--section-polish-accent);
+}
+
+details[data-sheet-section="background"] > label:first-of-type textarea {
+  min-height: 5.2rem;
+}
+
+details[data-sheet-section="background"] > label:last-of-type textarea {
+  min-height: 9rem;
+}
+
+@media (max-width: 820px) {
+  details[data-sheet-section="background"] > .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  details[data-sheet-section="inventory"] table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  details[data-sheet-section="inventory"] button {
+    width: 100%;
+  }
+
+  details[data-sheet-section="background"] > .field-grid,
+  details[data-sheet-section="background"] > label {
+    padding: .58rem;
+  }
+}

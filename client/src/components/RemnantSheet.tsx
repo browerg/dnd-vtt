@@ -71,6 +71,18 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
   const toggleIn = (list: string[], key: string) =>
     list.includes(key) ? list.filter((k) => k !== key) : [...list, key];
 
+  const cycleSemblanceUpgrade = (upgrade: string) => {
+    const count = d.semblance.upgrades.filter((entry) => entry === upgrade).length;
+    const without = d.semblance.upgrades.filter((entry) => entry !== upgrade);
+    const nextCount = count >= 2 ? 0 : count + 1;
+    update({
+      semblance: {
+        ...d.semblance,
+        upgrades: [...without, ...Array(nextCount).fill(upgrade)],
+      },
+    });
+  };
+
   const attrDie = (k: RemnantAttrKey) => d.attributes[k];
 
 
@@ -95,6 +107,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
     `dust-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   // vivid-collapsible-sheet-shell
+  // vivid-semblance-dust-polish
   // vivid-collapsible-overview
   // vivid-collapsible-summary-fix-v2
   const sheetStorageKey = (section: string) => `vivid-remnant-sheet:${section}`;
@@ -120,6 +133,21 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
       const key = section.dataset.sheetSection;
       if (key) rememberSheetSection(key, open);
     });
+  };
+
+  // vivid-combat-dashboard
+  // vivid-weapon-card-redesign
+  const openSheetSection = (section: string, source: HTMLElement) => {
+    const root = source.closest(".remnant-sheet-shell");
+    const target = root?.querySelector<HTMLDetailsElement>(
+      `details[data-sheet-section="${section}"]`
+    );
+    if (!target) return;
+    target.open = true;
+    rememberSheetSection(section, true);
+    window.requestAnimationFrame(() =>
+      target.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
   };
   const pool = (label: string, value: number, max: number, onChange: (v: number) => void, cls: string) => (
     <div className={`vital pool ${cls}`}>
@@ -385,6 +413,168 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
           </div>
         )}      </details>
 
+
+      <section className="card remnant-combat-dashboard" aria-label="Combat dashboard">
+        <div className="combat-dashboard-heading">
+          <div>
+            <span className="combat-dashboard-kicker">Combat Dashboard</span>
+            <strong>{d.weaponName || "Ready for combat"}</strong>
+          </div>
+          <span className="combat-dashboard-state">
+            {d.hp <= 0
+              ? d.conditions.includes("Critically Downed")
+                ? "Critically Downed"
+                : d.conditions.includes("Downed")
+                  ? "Downed"
+                  : "Final Flare"
+              : d.aura <= 0
+                ? "Aura Broken"
+                : "Combat Ready"}
+          </span>
+        </div>
+
+        <div className="combat-dashboard-grid">
+          <div className={d.aura <= Math.max(1, auraMax * 0.25) ? "combat-quick-pool aura warning" : "combat-quick-pool aura"}>
+            <div>
+              <span>Aura</span>
+              <strong>{d.aura}<small>/{auraMax}</small></strong>
+            </div>
+            <div className="combat-quick-controls">
+              <button type="button" className="ghost mini" disabled={ro || d.aura <= 0} onClick={() => update({ aura: Math.max(0, d.aura - 1) })}>−</button>
+              <button type="button" className="ghost mini" disabled={ro || d.aura >= auraMax} onClick={() => update({ aura: Math.min(auraMax, d.aura + 1) })}>+</button>
+            </div>
+            <span className="combat-pool-track"><i style={{ width: `${Math.min(100, (d.aura / Math.max(1, auraMax)) * 100)}%` }} /></span>
+          </div>
+
+          <div className={d.hp <= Math.max(1, hpMax * 0.25) ? "combat-quick-pool hp warning" : "combat-quick-pool hp"}>
+            <div>
+              <span>HP</span>
+              <strong>{d.hp}<small>/{hpMax}</small></strong>
+            </div>
+            <div className="combat-quick-controls">
+              <button type="button" className="ghost mini" disabled={ro || d.hp <= 0} onClick={() => update({ hp: Math.max(0, d.hp - 1) })}>−</button>
+              <button type="button" className="ghost mini" disabled={ro || d.hp >= hpMax} onClick={() => update({ hp: Math.min(hpMax, d.hp + 1) })}>+</button>
+            </div>
+            <span className="combat-pool-track"><i style={{ width: `${Math.min(100, (d.hp / Math.max(1, hpMax)) * 100)}%` }} /></span>
+          </div>
+
+          <button
+            type="button"
+            className="combat-stat-button"
+            onClick={() => roll(remnantCheckFormula(attrDie("finesse")), `${name}: Initiative`)}
+          >
+            <span>Initiative</span>
+            <strong>2d10+d{attrDie("finesse")}</strong>
+          </button>
+
+          <div className="combat-stat-card">
+            <span>Defense</span>
+            <strong>{dr}</strong>
+            <small>{ARMOR_TYPES.find((armor) => armor.key === d.armor)?.name ?? "No armor"}</small>
+          </div>
+
+          <div className="combat-stat-card">
+            <span>Main Attribute</span>
+            <strong>
+              {REMNANT_ATTRIBUTES.find((attribute) => attribute.key === (d.mainAttribute || "brawn"))?.name}
+            </strong>
+            <small>d{attrDie(d.mainAttribute || "brawn")}</small>
+          </div>
+        </div>
+
+        {(() => {
+          const form = d.weaponForms[d.activeForm] ?? d.weaponForms[0];
+          const formIndex = d.weaponForms[d.activeForm] ? d.activeForm : 0;
+          const attackAttrKey: RemnantAttrKey =
+            d.archetype === "Brawler" ? "brawn" : "finesse";
+          const attackFormula = remnantCheckFormula(attrDie(attackAttrKey), tb);
+          const damageFormula = form
+            ? [
+                `1d${form.damage}`,
+                form.styleDie ? `1d${form.styleDie}` : "",
+                `1d${attrDie(d.mainAttribute || "brawn")}`,
+              ].filter(Boolean).join("+")
+            : "";
+
+          return (
+            <div className="combat-active-weapon">
+              <div className="combat-active-weapon-title">
+                <span>Active Weapon Form</span>
+                <strong>
+                  {form?.type || `Form ${formIndex === 0 ? "A" : "B"}`}
+                </strong>
+                <small>{form?.range || "Close"} range</small>
+              </div>
+              <div className="combat-active-weapon-actions">
+                <button
+                  type="button"
+                  className="primary mini"
+                  disabled={!form}
+                  onClick={() =>
+                    roll(
+                      attackFormula,
+                      `${name}: ${form?.type || "Weapon"} Attack`,
+                      "normal"
+                    )
+                  }
+                >
+                  Attack
+                </button>
+                <button
+                  type="button"
+                  className="ghost mini"
+                  disabled={!form || !damageFormula}
+                  onClick={() =>
+                    roll(
+                      damageFormula,
+                      `${name}: ${form?.type || "Weapon"} Damage`,
+                      "normal"
+                    )
+                  }
+                >
+                  Damage
+                </button>
+                {d.weaponForms.length > 1 && !ro && (
+                  <button
+                    type="button"
+                    className="ghost mini"
+                    onClick={() =>
+                      update({
+                        activeForm: (formIndex + 1) % d.weaponForms.length,
+                      })
+                    }
+                  >
+                    Transform
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        <div className="combat-dashboard-footer">
+          <div className="combat-condition-summary">
+            <span>Conditions</span>
+            {d.conditions.length === 0 ? (
+              <strong className="clear">Clear</strong>
+            ) : (
+              <div>
+                {d.conditions.slice(0, 3).map((condition) => (
+                  <span key={condition} className="combat-condition-chip">{condition}</span>
+                ))}
+                {d.conditions.length > 3 && <span className="combat-condition-chip">+{d.conditions.length - 3}</span>}
+              </div>
+            )}
+          </div>
+          <div className="combat-dashboard-jumps">
+            <button type="button" className="ghost mini" onClick={(event) => openSheetSection("weapon", event.currentTarget)}>Weapon</button>
+            <button type="button" className="ghost mini" onClick={(event) => openSheetSection("conditions", event.currentTarget)}>Conditions</button>
+            <button type="button" className="ghost mini" onClick={(event) => openSheetSection("semblance", event.currentTarget)}>Semblance</button>
+            <button type="button" className="ghost mini" onClick={(event) => openSheetSection("dust", event.currentTarget)}>Dust</button>
+          </div>
+        </div>
+      </section>
+
       <nav className="sheet-section-toolbar" aria-label="Character sheet sections">
         <div>
           <span className="sheet-section-toolbar-kicker">Character sheet</span>
@@ -521,17 +711,126 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 {d.conditions.length || "Clear"}
               </span>
             </summary>
-            <div className="condition-chips">
-              {REMNANT_CONDITIONS.map((c) => (
-                <button
-                  key={c}
-                  className={d.conditions.includes(c) ? "chip active" : "chip"}
-                  disabled={ro}
-                  onClick={() => update({ conditions: toggleIn(d.conditions, c) })}
-                >
-                  {c}
-                </button>
-              ))}
+                        {/* vivid-conditions-tray-redesign-v2 */}
+            <div className="conditions-tray">
+              <div className="conditions-active-panel">
+                <div className="conditions-panel-heading">
+                  <div>
+                    <span className="conditions-kicker">Current Status</span>
+                    <strong>
+                      {d.conditions.length === 0
+                        ? "No active conditions"
+                        : `${d.conditions.length} active condition${d.conditions.length === 1 ? "" : "s"}`}
+                    </strong>
+                  </div>
+                  {d.conditions.length > 0 && (
+                    <button
+                      type="button"
+                      className="ghost mini"
+                      disabled={ro}
+                      onClick={() => update({ conditions: [] })}
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+
+                {d.conditions.length === 0 ? (
+                  <div className="conditions-clear-state">
+                    <span aria-hidden="true">✓</span>
+                    <div>
+                      <strong>Clear</strong>
+                      <small>No effects are currently applied.</small>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="active-condition-list">
+                    {d.conditions.map((condition) => {
+                      const isDowned = condition === "Downed";
+                      const isCritical = condition === "Critically Downed";
+                      return (
+                        <button
+                          type="button"
+                          key={condition}
+                          className={
+                            isCritical
+                              ? "active-condition-card critical"
+                              : isDowned
+                                ? "active-condition-card downed"
+                                : "active-condition-card"
+                          }
+                          disabled={ro}
+                          title={ro ? condition : `Remove ${condition}`}
+                          onClick={() =>
+                            update({
+                              conditions: d.conditions.filter((item) => item !== condition),
+                            })
+                          }
+                        >
+                          <span className="active-condition-icon" aria-hidden="true">
+                            {isCritical ? "!" : isDowned ? "↓" : "◆"}
+                          </span>
+                          <span>
+                            <strong>{condition}</strong>
+                            <small>{ro ? "Active" : "Click to remove"}</small>
+                          </span>
+                          {!ro && <span className="active-condition-remove">×</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="conditions-library">
+                <div className="conditions-panel-heading">
+                  <div>
+                    <span className="conditions-kicker">Condition Library</span>
+                    <strong>Add an effect</strong>
+                  </div>
+                  <span className="conditions-count">
+                    {REMNANT_CONDITIONS.length - d.conditions.length} available
+                  </span>
+                </div>
+
+                <div className="condition-chip-grid">
+                  {REMNANT_CONDITIONS.map((condition) => {
+                    const active = d.conditions.includes(condition);
+                    const isDowned = condition === "Downed";
+                    const isCritical = condition === "Critically Downed";
+                    return (
+                      <button
+                        type="button"
+                        key={condition}
+                        className={
+                          active
+                            ? isCritical
+                              ? "condition-tray-chip active critical"
+                              : isDowned
+                                ? "condition-tray-chip active downed"
+                                : "condition-tray-chip active"
+                            : isCritical
+                              ? "condition-tray-chip critical"
+                              : isDowned
+                                ? "condition-tray-chip downed"
+                                : "condition-tray-chip"
+                        }
+                        disabled={ro}
+                        aria-pressed={active}
+                        onClick={() =>
+                          update({
+                            conditions: toggleIn(d.conditions, condition),
+                          })
+                        }
+                      >
+                        <span className="condition-chip-dot" aria-hidden="true" />
+                        <span>{condition}</span>
+                        <small>{active ? "Active" : "Add"}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </details>
         </div>
@@ -875,7 +1174,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                       {(d.semblance.maintainedRounds ?? 0) === 1 ? "round" : "rounds"}
                     </small>
                   </span>
-                  <span className="semblance-upkeep">−2 Aura / round</span>
+                  <span className="semblance-upkeep">−{cost.upkeep} Aura / round</span>
                 </div>
                 {!ro && (
                   <div className="semblance-sustained-actions">
@@ -884,7 +1183,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                       className="primary mini"
                       disabled={d.aura <= 0}
                       onClick={() => {
-                        const nextAura = Math.max(0, d.aura - 2);
+                        const nextAura = Math.max(0, d.aura - cost.upkeep);
                         update({
                           aura: nextAura,
                           semblance: {
@@ -895,12 +1194,12 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                         });
                       }}
                       title={
-                        d.aura <= 2
+                        d.aura <= cost.upkeep
                           ? "Pay upkeep; Aura will break and the Semblance will end"
-                          : "Pay this round's 2 Aura upkeep"
+                          : "Pay this round's Aura upkeep"
                       }
                     >
-                      Maintain this round (−2)
+                      Maintain this round (−{cost.upkeep})
                     </button>
                     <button
                       type="button"
@@ -946,19 +1245,90 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                   )}
                 </div>
               )}
-            <div className="condition-chips">
-              {SEMBLANCE_UPGRADES.map((u) => (
+                        <div className="semblance-upgrade-effects">
+              <div className="semblance-effective-stats">
+                <span>
+                  <small>Effective Intensity</small>
+                  <strong>{cost.effectiveIntensity}</strong>
+                </span>
+                <span>
+                  <small>Effective Scope</small>
+                  <strong>{cost.effectiveScope}</strong>
+                </span>
+                <span>
+                  <small>Sustained Upkeep</small>
+                  <strong>{cost.upkeep} Aura/round</strong>
+                </span>
+                <span>
+                  <small>Concentration</small>
+                  <strong>Resolve DC {cost.concentrationDc}</strong>
+                </span>
+              </div>
+              <div className="semblance-check-actions">
                 <button
-                  key={u}
-                  className={d.semblance.upgrades.includes(u) ? "chip active" : "chip"}
-                  disabled={ro}
+                  type="button"
+                  className={cost.precisionEdge ? "primary mini" : "ghost mini"}
                   onClick={() =>
-                    update({ semblance: { ...d.semblance, upgrades: toggleIn(d.semblance.upgrades, u) } })
+                    roll(
+                      remnantCheckFormula(
+                        attrDie("aura"),
+                        d.trainedSkills.includes("semblance-control") ? tb : 0
+                      ),
+                      `${name}: Contested Semblance activation`,
+                      cost.precisionEdge ? "edge" : "normal"
+                    )
                   }
                 >
-                  {u}
+                  Contested Activation{cost.precisionEdge ? " · Edge" : ""}
                 </button>
-              ))}
+                <button
+                  type="button"
+                  className="ghost mini"
+                  onClick={() =>
+                    roll(
+                      remnantCheckFormula(attrDie("resolve")),
+                      `${name}: Sustain concentration (DC ${cost.concentrationDc})`
+                    )
+                  }
+                >
+                  Concentration · DC {cost.concentrationDc}
+                </button>
+              </div>
+              {cost.awakening && (
+                <div className="semblance-awakening-note">
+                  <strong>Awakening active</strong>
+                  <span>Apply the custom GM-approved upgrade described in the Semblance effect.</span>
+                </div>
+              )}
+            </div>
+
+<div className="condition-chips">
+              {SEMBLANCE_UPGRADES.map((upgrade) => {
+                const count = cost.upgradeCounts[upgrade] ?? 0;
+                const descriptions: Record<string, string> = {
+                  Efficiency: "Reduce activation cost by 2 Aura per rank, minimum 2.",
+                  Reach: "Increase effective Scope by one tier per rank.",
+                  Power: "Increase effective Intensity by one tier per rank.",
+                  Precision: "Gain Edge on contested activation rolls.",
+                  Endurance: "Reduce sustained upkeep by 1 Aura per round per rank.",
+                  Resilience: "Reduce concentration check DC from 11 to 8.",
+                  Awakening: "Custom GM-approved Semblance growth.",
+                };
+                return (
+                  <button
+                    type="button"
+                    key={upgrade}
+                    className={count > 0 ? "chip active" : "chip"}
+                    disabled={ro}
+                    title={`${descriptions[upgrade]} Click to cycle 0 → 1 → 2 → 0.`}
+                    aria-pressed={count > 0}
+                    onClick={() => cycleSemblanceUpgrade(upgrade)}
+                  >
+                    <span>{upgrade}</span>
+                    {count > 0 && <strong className="semblance-upgrade-rank">×{count}</strong>}
+                  </button>
+                );
+              })}
             </div>
           </details>
           {/* dust */}

@@ -242,12 +242,89 @@ export const hpMaxFor = (d: RemnantData) =>
 export const defenseRating = (d: RemnantData) =>
   8 + d.attributes.finesse + (ARMOR_TYPES.find((a) => a.key === d.armor)?.bonus ?? 0);
 
-export const semblanceCost = (d: RemnantData): { activation: number; note: string } => {
-  const base = SEMBLANCE_INTENSITIES.find((i) => i.key === d.semblance.intensity)?.cost ?? 4;
-  const mult = SEMBLANCE_SCOPES.find((s) => s.key === d.semblance.scope)?.mult ?? 1;
-  const dur = SEMBLANCE_DURATIONS.find((x) => x.key === d.semblance.duration);
-  const activation = Math.round(base * mult) + (dur?.add ?? 0);
-  return { activation, note: dur?.key === "Sustained" ? " (+2/rd sustained)" : "" };
+// vivid-functional-semblance-upgrades
+export interface SemblanceCostResult {
+  activation: number;
+  note: string;
+  upkeep: number;
+  effectiveScope: string;
+  effectiveIntensity: string;
+  precisionEdge: boolean;
+  concentrationDc: number;
+  awakening: boolean;
+  upgradeCounts: Record<string, number>;
+}
+
+export const semblanceUpgradeCount = (d: RemnantData, upgrade: string) =>
+  d.semblance.upgrades.filter((entry) => entry === upgrade).length;
+
+export const semblanceCost = (d: RemnantData): SemblanceCostResult => {
+  const upgradeCounts = Object.fromEntries(
+    SEMBLANCE_UPGRADES.map((upgrade) => [upgrade, semblanceUpgradeCount(d, upgrade)])
+  ) as Record<string, number>;
+
+  const baseIntensityIndex = Math.max(
+    0,
+    SEMBLANCE_INTENSITIES.findIndex((entry) => entry.key === d.semblance.intensity)
+  );
+  const effectiveIntensityIndex = Math.min(
+    SEMBLANCE_INTENSITIES.length - 1,
+    baseIntensityIndex + upgradeCounts.Power
+  );
+  const effectiveIntensity = SEMBLANCE_INTENSITIES[effectiveIntensityIndex];
+
+  const baseScopeIndex = Math.max(
+    0,
+    SEMBLANCE_SCOPES.findIndex((entry) => entry.key === d.semblance.scope)
+  );
+  const effectiveScopeIndex = Math.min(
+    SEMBLANCE_SCOPES.length - 1,
+    baseScopeIndex + upgradeCounts.Reach
+  );
+  const effectiveScope = SEMBLANCE_SCOPES[effectiveScopeIndex];
+
+  const duration = SEMBLANCE_DURATIONS.find(
+    (entry) => entry.key === d.semblance.duration
+  );
+  const rawActivation =
+    Math.round(effectiveIntensity.cost * effectiveScope.mult) +
+    (duration?.add ?? 0);
+  const activation = Math.max(2, rawActivation - upgradeCounts.Efficiency * 2);
+  const upkeep =
+    duration?.key === "Sustained"
+      ? Math.max(0, 2 - upgradeCounts.Endurance)
+      : 0;
+
+  const changes = [
+    effectiveIntensity.key !== d.semblance.intensity
+      ? `Power → ${effectiveIntensity.key}`
+      : "",
+    effectiveScope.key !== d.semblance.scope
+      ? `Reach → ${effectiveScope.key}`
+      : "",
+    upgradeCounts.Efficiency
+      ? `Efficiency −${upgradeCounts.Efficiency * 2}`
+      : "",
+  ].filter(Boolean);
+
+  const note =
+    duration?.key === "Sustained"
+      ? ` (+${upkeep}/rd sustained)${changes.length ? ` · ${changes.join(" · ")}` : ""}`
+      : changes.length
+        ? ` (${changes.join(" · ")})`
+        : "";
+
+  return {
+    activation,
+    note,
+    upkeep,
+    effectiveScope: effectiveScope.key,
+    effectiveIntensity: effectiveIntensity.key,
+    precisionEdge: upgradeCounts.Precision > 0,
+    concentrationDc: upgradeCounts.Resilience > 0 ? 8 : 11,
+    awakening: upgradeCounts.Awakening > 0,
+    upgradeCounts,
+  };
 };
 
 // 2d10 + attribute die (+ training bonus when trained)
