@@ -85,6 +85,8 @@ function remnantDefaultData() {
       limitation: "",
       description: "",
       upgrades: [],
+      active: false,
+      maintainedRounds: 0,
     },
     dust: {},
     conditions: [],

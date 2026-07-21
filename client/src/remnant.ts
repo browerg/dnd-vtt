@@ -187,6 +187,8 @@ export interface RemnantData {
     limitation: string;
     description: string;
     upgrades: string[];
+    active?: boolean;
+    maintainedRounds?: number;
   };
   dust: Record<string, number>; // charges by type key
   conditions: string[];

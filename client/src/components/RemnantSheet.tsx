@@ -637,22 +637,148 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload }: Pr
               disabled={ro}
               onChange={(e) => update({ semblance: { ...d.semblance, limitation: e.target.value } })}
             />
-            <div className="row-between">
+            <div className="semblance-cost-row">
               <span className="muted small">
                 Cost: <strong>{cost.activation} Aura</strong>
                 {cost.note}
               </span>
-              {!ro && (
+
+              {/* vivid-sustained-semblance */}
+              {!ro && d.semblance.duration !== "Sustained" && (
                 <button
                   className="primary"
-                  disabled={d.aura < cost.activation}
-                  onClick={() => update({ aura: Math.max(0, d.aura - cost.activation) })}
-                  title={d.aura < cost.activation ? "Not enough Aura" : "Spend Aura and activate"}
+                  disabled={d.aura === 0 || d.aura < cost.activation}
+                  onClick={() =>
+                    update({
+                      aura: Math.max(0, d.aura - cost.activation),
+                      semblance: {
+                        ...d.semblance,
+                        active: false,
+                        maintainedRounds: 0,
+                      },
+                    })
+                  }
+                  title={
+                    d.aura === 0
+                      ? "Aura Broken — Semblance locked"
+                      : d.aura < cost.activation
+                        ? "Not enough Aura"
+                        : "Spend Aura and activate"
+                  }
                 >
                   ✨ Activate (−{cost.activation})
                 </button>
               )}
+
+              {d.semblance.duration === "Sustained" && !d.semblance.active && !ro && (
+                <button
+                  className="primary"
+                  disabled={d.aura === 0 || d.aura < cost.activation}
+                  onClick={() =>
+                    update({
+                      aura: Math.max(0, d.aura - cost.activation),
+                      semblance: {
+                        ...d.semblance,
+                        active: true,
+                        maintainedRounds: 0,
+                      },
+                    })
+                  }
+                  title={
+                    d.aura === 0
+                      ? "Aura Broken — Semblance locked"
+                      : d.aura < cost.activation
+                        ? "Not enough Aura"
+                        : "Spend Aura and begin sustaining"
+                  }
+                >
+                  ✨ Activate & Sustain (−{cost.activation})
+                </button>
+              )}
             </div>
+
+            {d.semblance.duration === "Sustained" && d.semblance.active && d.aura > 0 && (
+              <div className="semblance-sustained-panel">
+                <div className="semblance-sustained-status">
+                  <span className="semblance-active-pip" aria-hidden="true" />
+                  <span>
+                    <strong>{d.semblance.name || "Semblance"} is active</strong>
+                    <small>
+                      Maintained {d.semblance.maintainedRounds ?? 0}{" "}
+                      {(d.semblance.maintainedRounds ?? 0) === 1 ? "round" : "rounds"}
+                    </small>
+                  </span>
+                  <span className="semblance-upkeep">−2 Aura / round</span>
+                </div>
+                {!ro && (
+                  <div className="semblance-sustained-actions">
+                    <button
+                      type="button"
+                      className="primary mini"
+                      disabled={d.aura <= 0}
+                      onClick={() => {
+                        const nextAura = Math.max(0, d.aura - 2);
+                        update({
+                          aura: nextAura,
+                          semblance: {
+                            ...d.semblance,
+                            active: nextAura > 0,
+                            maintainedRounds: (d.semblance.maintainedRounds ?? 0) + 1,
+                          },
+                        });
+                      }}
+                      title={
+                        d.aura <= 2
+                          ? "Pay upkeep; Aura will break and the Semblance will end"
+                          : "Pay this round's 2 Aura upkeep"
+                      }
+                    >
+                      Maintain this round (−2)
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost mini"
+                      onClick={() =>
+                        update({
+                          semblance: {
+                            ...d.semblance,
+                            active: false,
+                            maintainedRounds: 0,
+                          },
+                        })
+                      }
+                    >
+                      End Semblance
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {d.semblance.duration === "Sustained" &&
+              d.semblance.active &&
+              d.aura <= 0 && (
+                <div className="semblance-ended-banner">
+                  Aura Broken — sustained Semblance has ended.
+                  {!ro && (
+                    <button
+                      type="button"
+                      className="ghost mini"
+                      onClick={() =>
+                        update({
+                          semblance: {
+                            ...d.semblance,
+                            active: false,
+                            maintainedRounds: 0,
+                          },
+                        })
+                      }
+                    >
+                      Clear active state
+                    </button>
+                  )}
+                </div>
+              )}
             <div className="condition-chips">
               {SEMBLANCE_UPGRADES.map((u) => (
                 <button
