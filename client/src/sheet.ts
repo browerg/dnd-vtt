@@ -105,6 +105,7 @@ export interface Character {
   updatedAt: string;
   isNpc?: boolean;
   playerControllable?: boolean;
+  assignedPlayerIds?: number[];
 }
 
 export interface CharacterSummary {
@@ -118,6 +119,7 @@ export interface CharacterSummary {
   maxHp: number;
   isNpc?: boolean;
   playerControllable?: boolean;
+  assignedPlayerIds?: number[];
 }
 
 export const abilityMod = (score: number) => Math.floor((score - 10) / 2);

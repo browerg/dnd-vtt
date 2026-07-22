@@ -251,6 +251,14 @@ db.exec(`
     PRIMARY KEY (campaign_id, user_id)
   );
 
+  CREATE TABLE IF NOT EXISTS npc_character_controllers (
+    character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    assigned_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (character_id, user_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_npc_character_controllers_user
+    ON npc_character_controllers (user_id, character_id);
   CREATE TABLE IF NOT EXISTS dashboard_layouts (
     campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -360,6 +368,17 @@ for (const ddl of [
   }
 }
 
+// Convert the previous all-players NPC toggle into explicit assignments once.
+db.exec(`
+  INSERT OR IGNORE INTO npc_character_controllers (character_id, user_id)
+  SELECT c.id, m.user_id
+  FROM characters c
+  JOIN campaign_members m ON m.campaign_id = c.campaign_id
+  WHERE c.is_npc = 1
+    AND c.player_controllable = 1
+    AND m.role = 'player'
+`);
+console.log("migrated shared NPC control assignments");
 // Seed the SRD spell list on first boot (319 spells, CC-BY-4.0 via Open5e).
 const spellCount = (db.prepare("SELECT COUNT(*) AS n FROM spells").get() as any).n;
 if (spellCount === 0) {

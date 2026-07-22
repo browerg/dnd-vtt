@@ -3986,3 +3986,44 @@ details[data-sheet-section="background"] > label:last-of-type textarea {
     display: none;
   }
 }
+/* vivid-specific-npc-control-v2 */
+.npc-assignment-area {
+  display: grid;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.npc-assignment-heading {
+  gap: 1rem;
+}
+
+.npc-assignment-heading > span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.npc-player-assignment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.npc-player-assignment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 0.55rem;
+  background: rgba(8, 12, 20, 0.46);
+  cursor: pointer;
+}
+
+.npc-player-assignment:has(input:checked) {
+  border-color: color-mix(in srgb, var(--accent, #d8b35f) 68%, transparent);
+  background: color-mix(in srgb, var(--accent, #d8b35f) 12%, rgba(8, 12, 20, 0.6));
+}
+
+.npc-player-assignment input {
+  margin: 0;
+}

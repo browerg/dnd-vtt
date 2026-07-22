@@ -149,17 +149,25 @@ interface CharacterRow {
 
 const portraitUrl = (p: string) => (p ? `/uploads/${path.basename(p)}` : "");
 
-// Who may VIEW a full sheet: its owner, any DM, or a player-controllable NPC
-// (shared with the table). Everyone else's sheet stays private.
-const canViewCharacter = (row: CharacterRow, userId: number, role: string) =>
-  row.user_id === userId || isDMRole(role) || (!!row.is_npc && !!row.player_controllable);
+const assignedPlayerIds = (characterId: number): number[] =>
+  (db.prepare(
+    "SELECT user_id FROM npc_character_controllers WHERE character_id = ? ORDER BY user_id"
+  ).all(characterId) as { user_id: number }[]).map((row) => row.user_id);
 
-// Who may edit a sheet: its owner, any DM, or — for a player-controllable NPC —
-// any non-spectator member.
+const playerControlsNpc = (characterId: number, userId: number) =>
+  !!db.prepare(
+    "SELECT 1 FROM npc_character_controllers WHERE character_id = ? AND user_id = ?"
+  ).get(characterId, userId);
+
+const canViewCharacter = (row: CharacterRow, userId: number, role: string) =>
+  row.user_id === userId ||
+  isDMRole(role) ||
+  (!!row.is_npc && role !== "spectator" && playerControlsNpc(row.id, userId));
+
 const canEditCharacter = (row: CharacterRow, userId: number, role: string) =>
   row.user_id === userId ||
   isDMRole(role) ||
-  (!!row.is_npc && !!row.player_controllable && role !== "spectator");
+  (!!row.is_npc && role !== "spectator" && playerControlsNpc(row.id, userId));
 
 function toPayload(row: CharacterRow) {
   return {
@@ -173,6 +181,7 @@ function toPayload(row: CharacterRow) {
     updatedAt: row.updated_at,
     isNpc: !!row.is_npc,
     playerControllable: !!row.player_controllable,
+    assignedPlayerIds: row.is_npc ? assignedPlayerIds(row.id) : [],
   };
 }
 
@@ -223,6 +232,7 @@ charactersRouter.get("/:id/characters", (req, res) => {
         auraMax: d.system === "remnant" ? d.auraMax : undefined,
         isNpc: p.isNpc,
         playerControllable: p.playerControllable,
+        assignedPlayerIds: p.assignedPlayerIds,
       };
     }),
   });
@@ -325,19 +335,60 @@ charactersRouter.post("/:id/characters/:charId/dust-effect", (req, res) => {
 });
 
 
-// DM toggles whether players may drive an NPC (view + edit + roll as it).
+// DM assigns exact campaign players who may view, edit, roll as, and control an NPC.
 charactersRouter.post("/:id/characters/:charId/npc-control", (req, res) => {
   const campaignId = Number(req.params.id);
   const role = memberRole(campaignId, user(req).id);
   if (!role) return res.status(404).json({ error: "Campaign not found." });
   if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can change NPC control." });
+
   const row = getCharacter(Number(req.params.charId), campaignId);
   if (!row) return res.status(404).json({ error: "Character not found." });
-  if (!row.is_npc) return res.status(400).json({ error: "Only NPCs can be player-controllable." });
-  const on = Boolean(req.body?.playerControllable);
-  db.prepare("UPDATE characters SET player_controllable = ? WHERE id = ?").run(on ? 1 : 0, row.id);
+  if (!row.is_npc) return res.status(400).json({ error: "Only NPCs can be assigned to players." });
+
+  const playerIds = Array.isArray(req.body?.playerIds)
+    ? [...new Set<number>(
+        req.body.playerIds
+          .map((value: unknown) => Number(value))
+          .filter((value: number) => Number.isInteger(value))
+      )]
+    : [];
+
+  const validRows = playerIds.length
+    ? db.prepare(`
+        SELECT user_id
+        FROM campaign_members
+        WHERE campaign_id = ?
+          AND role = 'player'
+          AND user_id IN (${playerIds.map(() => "?").join(",")})
+      `).all(campaignId, ...playerIds) as { user_id: number }[]
+    : [];
+
+  const validIds = validRows.map((member) => member.user_id);
+
+  db.exec("BEGIN");
+  try {
+    db.prepare("DELETE FROM npc_character_controllers WHERE character_id = ?").run(row.id);
+    const insert = db.prepare(
+      "INSERT INTO npc_character_controllers (character_id, user_id) VALUES (?, ?)"
+    );
+    for (const playerId of validIds) insert.run(row.id, playerId);
+
+    db.prepare("UPDATE characters SET player_controllable = ? WHERE id = ?")
+      .run(validIds.length ? 1 : 0, row.id);
+
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
   broadcastCharacter(campaignId, row.id, user(req).id);
-  res.json({ ok: true, playerControllable: on });
+  res.json({
+    ok: true,
+    playerControllable: validIds.length > 0,
+    assignedPlayerIds: validIds,
+  });
 });
 
 // Portrait upload/replace — shows on the sheet, the hub roster, and map tokens.

@@ -3,82 +3,119 @@ import { api } from "../api";
 import SheetView from "./SheetView";
 import type { PanelCtx } from "../dashboard/panels";
 
-// The DM's NPC roster as tabs across the top — click one to run it (its full
-// sheet, with click-to-roll). The DM can add NPCs and hand any of them to the
-// players; players only see the NPCs they're allowed to drive.
 export default function NPCPanel({ ctx }: { ctx: PanelCtx }) {
-  const { campaignId, isDM, characters } = ctx;
-  const npcs = characters.filter((c) => c.isNpc && (isDM || c.playerControllable));
+  const { campaignId, isDM, characters, members, myId } = ctx;
+  const npcs = characters.filter(
+    (character) =>
+      character.isNpc &&
+      (isDM || character.assignedPlayerIds?.includes(myId))
+  );
+  const players = members.filter((member) => member.role === "player");
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [assigning, setAssigning] = useState(false);
 
-  // Fall back to the first NPC if nothing valid is selected.
-  const activeId = selectedId && npcs.some((n) => n.id === selectedId) ? selectedId : npcs[0]?.id ?? null;
-  const active = npcs.find((n) => n.id === activeId);
+  const activeId =
+    selectedId && npcs.some((npc) => npc.id === selectedId)
+      ? selectedId
+      : npcs[0]?.id ?? null;
+  const active = npcs.find((npc) => npc.id === activeId);
 
   const createNpc = async () => {
     const name = newName.trim();
     if (!name) return;
     setBusy(true);
     try {
-      const r = await api<{ id: number }>(`/api/campaigns/${campaignId}/characters`, {
-        method: "POST",
-        body: JSON.stringify({ name, isNpc: true }),
-      });
+      const response = await api<{ id: number }>(
+        `/api/campaigns/${campaignId}/characters`,
+        {
+          method: "POST",
+          body: JSON.stringify({ name, isNpc: true }),
+        }
+      );
       setNewName("");
-      setSelectedId(r.id);
+      setSelectedId(response.id);
     } finally {
       setBusy(false);
     }
   };
 
-  const toggleControl = async (id: number, on: boolean) => {
-    await api(`/api/campaigns/${campaignId}/characters/${id}/npc-control`, {
-      method: "POST",
-      body: JSON.stringify({ playerControllable: on }),
-    }).catch(() => {});
-    // ctx.characters refreshes via the character:update broadcast.
+  const assignPlayer = async (playerId: number, assigned: boolean) => {
+    if (!active) return;
+
+    const current = active.assignedPlayerIds ?? [];
+    const playerIds = assigned
+      ? [...new Set([...current, playerId])]
+      : current.filter((id) => id !== playerId);
+
+    setAssigning(true);
+    try {
+      await api(
+        `/api/campaigns/${campaignId}/characters/${active.id}/npc-control`,
+        {
+          method: "POST",
+          body: JSON.stringify({ playerIds }),
+        }
+      );
+    } finally {
+      setAssigning(false);
+    }
   };
 
   const deleteNpc = async (id: number, name: string) => {
-    if (!window.confirm(`Delete NPC “${name}”? This removes its sheet for good.`)) return;
-    setSelectedId(null); // let it fall back to the first remaining NPC
-    await api(`/api/campaigns/${campaignId}/characters/${id}`, { method: "DELETE" }).catch(() => {});
-    // ctx.characters refreshes via the character:delete broadcast.
+    if (!window.confirm(`Delete NPC â€œ${name}â€? This removes its sheet for good.`)) return;
+    setSelectedId(null);
+    await api(`/api/campaigns/${campaignId}/characters/${id}`, {
+      method: "DELETE",
+    }).catch(() => {});
   };
 
   return (
     <div className="npc-panel">
       <div className="npc-tabs">
-        {npcs.map((n) => (
+        {npcs.map((npc) => (
           <button
-            key={n.id}
-            className={`npc-tab${n.id === activeId ? " active" : ""}`}
-            onClick={() => setSelectedId(n.id)}
-            title={n.name}
+            key={npc.id}
+            className={`npc-tab${npc.id === activeId ? " active" : ""}`}
+            onClick={() => setSelectedId(npc.id)}
+            title={npc.name}
           >
-            {n.portraitUrl ? (
-              <img className="npc-tab-face" src={n.portraitUrl} alt="" />
+            {npc.portraitUrl ? (
+              <img className="npc-tab-face" src={npc.portraitUrl} alt="" />
             ) : (
-              <span className="npc-tab-face npc-tab-initial">{n.name[0]?.toUpperCase() ?? "?"}</span>
+              <span className="npc-tab-face npc-tab-initial">
+                {npc.name[0]?.toUpperCase() ?? "?"}
+              </span>
             )}
-            <span className="npc-tab-name">{n.name}</span>
-            {n.playerControllable && <span className="npc-tab-flag" title="Players can control">👤</span>}
+            <span className="npc-tab-name">{npc.name}</span>
+            {!!npc.assignedPlayerIds?.length && (
+              <span
+                className="npc-tab-flag"
+                title={`Assigned to ${npc.assignedPlayerIds.length} player${npc.assignedPlayerIds.length === 1 ? "" : "s"}`}
+              >
+                ðŸ‘¤{npc.assignedPlayerIds.length}
+              </span>
+            )}
           </button>
         ))}
+
         {isDM && (
           <span className="npc-new">
             <input
-              placeholder="New NPC…"
+              placeholder="New NPCâ€¦"
               value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") createNpc();
+              onChange={(event) => setNewName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") createNpc();
               }}
             />
-            <button className="ghost mini" disabled={busy || !newName.trim()} onClick={createNpc}>
+            <button
+              className="ghost mini"
+              disabled={busy || !newName.trim()}
+              onClick={createNpc}
+            >
               + NPC
             </button>
           </span>
@@ -86,26 +123,63 @@ export default function NPCPanel({ ctx }: { ctx: PanelCtx }) {
       </div>
 
       {isDM && active && (
-        <div className="npc-actions row-between">
-          <label className="npc-control-toggle muted small">
-            <input
-              type="checkbox"
-              checked={!!active.playerControllable}
-              onChange={(e) => toggleControl(active.id, e.target.checked)}
-            />
-            Players can control {active.name}
-          </label>
-          <button className="ghost mini npc-delete" onClick={() => deleteNpc(active.id, active.name)}>
-            Delete NPC
-          </button>
+        <div className="npc-actions npc-assignment-area">
+          <div className="npc-assignment-heading row-between">
+            <span>
+              <strong>Player control</strong>
+              <span className="muted small">
+                Choose exactly who can use {active.name}.
+              </span>
+            </span>
+            <button
+              className="ghost mini npc-delete"
+              onClick={() => deleteNpc(active.id, active.name)}
+            >
+              Delete NPC
+            </button>
+          </div>
+
+          <div className="npc-player-assignment-list">
+            {players.length === 0 && (
+              <span className="muted small">
+                No players have joined this campaign yet.
+              </span>
+            )}
+
+            {players.map((player) => {
+              const checked =
+                active.assignedPlayerIds?.includes(player.id) ?? false;
+
+              return (
+                <label key={player.id} className="npc-player-assignment">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={assigning}
+                    onChange={(event) =>
+                      assignPlayer(player.id, event.target.checked)
+                    }
+                  />
+                  <span>{player.display_name}</span>
+                  {checked && <span className="badge">Assigned</span>}
+                </label>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {activeId ? (
-        <SheetView key={activeId} campaignId={campaignId} characterId={activeId} />
+        <SheetView
+          key={activeId}
+          campaignId={campaignId}
+          characterId={activeId}
+        />
       ) : (
         <p className="muted npc-empty">
-          {isDM ? "No NPCs yet — name one above and hit “+ NPC”." : "No NPCs have been handed to you yet."}
+          {isDM
+            ? "No NPCs yet â€” name one above and hit â€œ+ NPCâ€."
+            : "No NPCs have been assigned to you yet."}
         </p>
       )}
     </div>
