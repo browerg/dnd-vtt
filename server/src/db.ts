@@ -259,6 +259,13 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_npc_character_controllers_user
     ON npc_character_controllers (user_id, character_id);
+  CREATE TABLE IF NOT EXISTS dm_guide_status (
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    completed   INTEGER NOT NULL DEFAULT 0,
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (campaign_id, user_id)
+  );
   CREATE TABLE IF NOT EXISTS dashboard_layouts (
     campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

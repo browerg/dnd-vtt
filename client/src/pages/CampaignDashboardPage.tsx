@@ -14,6 +14,7 @@ import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
+import DMGuide from "../components/DMGuide";
 import { PANEL_BY_ID, availablePanels, type PanelCtx } from "../dashboard/panels";
 import {
   GRID_COLS,
@@ -270,6 +271,7 @@ export default function CampaignDashboardPage() {
   return (
     <div className="shell dashboard-shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
+      {isDM && <DMGuide campaignId={campaignId} system={system} />}
       <header className="topbar campaign-topbar">
         <Link to="/" className="ghost link campaign-back-link" title="Back to campaigns">{"\u2190"}</Link>
         <CampaignThemeBrand

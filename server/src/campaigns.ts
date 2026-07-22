@@ -161,6 +161,39 @@ campaignsRouter.put("/:id", (req, res) => {
   res.json({ ok: true });
 });
 
+campaignsRouter.get("/:id/dm-guide-status", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (role !== "dm" && role !== "co-dm") {
+    return res.status(403).json({ error: "The DM guide is only available to campaign DMs." });
+  }
+
+  const row = db.prepare(
+    "SELECT completed FROM dm_guide_status WHERE campaign_id = ? AND user_id = ?"
+  ).get(campaignId, user(req).id) as { completed: number } | undefined;
+
+  res.json({ completed: !!row?.completed });
+});
+
+campaignsRouter.put("/:id/dm-guide-status", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (role !== "dm" && role !== "co-dm") {
+    return res.status(403).json({ error: "The DM guide is only available to campaign DMs." });
+  }
+
+  const completed = Boolean(req.body?.completed);
+  db.prepare(`
+    INSERT INTO dm_guide_status (campaign_id, user_id, completed, updated_at)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(campaign_id, user_id)
+    DO UPDATE SET completed = excluded.completed, updated_at = datetime('now')
+  `).run(campaignId, user(req).id, completed ? 1 : 0);
+
+  res.json({ ok: true, completed });
+});
 campaignsRouter.get("/:id/dashboard-layout", (req, res) => {
   const campaignId = Number(req.params.id);
   const role = memberRole(campaignId, user(req).id);
