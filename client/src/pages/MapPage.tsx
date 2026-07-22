@@ -1618,7 +1618,21 @@ Choose Cancel to permanently delete it instead.`
           themeId={themeView.themeId}
           pageLabel={map?.name || (system === "remnant" ? "Tactical map" : "Battle map")}
         />
+        <span className="current-page-indicator" aria-current="page">
+          <span className="current-page-indicator-dot" />
+          {system === "remnant" ? "Tactical Map" : "Battle Map"}
+        </span>
         <span className="spacer" />
+        <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-nav-link">
+          Dashboard
+        </Link>
+        <Link
+          to={`/campaigns/${campaignId}/map`}
+          className="ghost link campaign-nav-link campaign-nav-link-active"
+          aria-current="page"
+        >
+          {system === "remnant" ? "Tactical Map" : "Battle Map"}
+        </Link>
         {map && (
           <div className="map-active-tool" role="status" aria-live="polite">
             <span className="map-active-tool-kicker">Active tool</span>

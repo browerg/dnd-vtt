@@ -18,9 +18,11 @@ import { PANEL_BY_ID, availablePanels, type PanelCtx } from "../dashboard/panels
 import {
   GRID_COLS,
   clearLayout,
+  clearServerLayout,
   defaultLayout,
-  loadLayout,
+  loadServerLayout,
   saveLayout,
+  saveServerLayout,
   type GridItem,
 } from "../dashboard/layouts";
 
@@ -166,13 +168,30 @@ export default function CampaignDashboardPage() {
   useEffect(() => {
     if (initialized.current || !detail || !user) return;
     initialized.current = true;
-    setLayout(loadLayout(campaignId, user.id) ?? defaultLayout(detail.yourRole));
+
+    let cancelled = false;
+    loadServerLayout(campaignId, user.id)
+      .then((saved) => {
+        if (!cancelled) setLayout(saved ?? defaultLayout(detail.yourRole));
+      })
+      .catch(() => {
+        if (!cancelled) setLayout(defaultLayout(detail.yourRole));
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [detail, user, campaignId]);
 
   const persistLayout = useCallback(
     (next: GridItem[]) => {
       setLayout(next);
-      if (user) saveLayout(campaignId, user.id, next);
+      if (user) {
+        saveLayout(campaignId, user.id, next);
+        saveServerLayout(campaignId, next).catch(() => {
+          // Local storage remains a temporary fallback if the server is unavailable.
+        });
+      }
     },
     [campaignId, user]
   );
@@ -197,6 +216,7 @@ export default function CampaignDashboardPage() {
   const resetLayout = () => {
     if (!user || !detail) return;
     clearLayout(campaignId, user.id);
+    clearServerLayout(campaignId).catch(() => {});
     setLayout(defaultLayout(detail.yourRole));
   };
 

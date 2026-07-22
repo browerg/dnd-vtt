@@ -394,7 +394,21 @@ export default function BestiaryPage() {
           themeId={themeView.themeId}
           pageLabel={system === "remnant" ? "Grimm archive" : "Bestiary"}
         />
+        <span className="current-page-indicator" aria-current="page">
+          <span className="current-page-indicator-dot" />
+          {system === "remnant" ? "Grimm Archive" : "Bestiary"}
+        </span>
         <span className="spacer" />
+        <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-nav-link">
+          Dashboard
+        </Link>
+        <Link
+          to={`/campaigns/${campaignId}/bestiary`}
+          className="ghost link campaign-nav-link campaign-nav-link-active"
+          aria-current="page"
+        >
+          {system === "remnant" ? "Grimm Archive" : "Bestiary"}
+        </Link>
         {isDM && (
           <button
             className="primary"

@@ -78,7 +78,7 @@ campaignsRouter.get("/:id", (req, res) => {
   if (!role) return res.status(404).json({ error: "Campaign not found." });
   const campaign = db
     .prepare(
-      `SELECT id, name, description, system, theme, chapter, session_number, house_rules, announcement, created_at
+      `SELECT id, name, description, system, theme, chapter, session_number, house_rules, announcement, notes_url, created_at
        FROM campaigns WHERE id = ?`
     )
     .get(id);
@@ -129,14 +129,14 @@ campaignsRouter.put("/:id", (req, res) => {
   const b = req.body ?? {};
   const current = db
     .prepare(
-      "SELECT name, description, system, theme, chapter, session_number, house_rules, announcement FROM campaigns WHERE id = ?"
+      "SELECT name, description, system, theme, chapter, session_number, house_rules, announcement, notes_url FROM campaigns WHERE id = ?"
     )
     .get(id) as any;
   const str = (v: unknown, fallback: string) => (typeof v === "string" ? v : fallback);
   const nextTheme = validTheme(b.theme, current.system) ? b.theme : current.theme || defaultTheme(current.system);
   db.prepare(
     `UPDATE campaigns SET name = ?, description = ?, chapter = ?, session_number = ?,
-     house_rules = ?, announcement = ?, theme = ? WHERE id = ?`
+     house_rules = ?, announcement = ?, notes_url = ?, theme = ? WHERE id = ?`
   ).run(
     str(b.name, current.name).trim() || current.name,
     str(b.description, current.description),
@@ -144,6 +144,16 @@ campaignsRouter.put("/:id", (req, res) => {
     Number.isInteger(b.sessionNumber) ? b.sessionNumber : current.session_number,
     str(b.houseRules, current.house_rules),
     str(b.announcement, current.announcement),
+    (() => {
+      const candidate = str(b.notesUrl, current.notes_url).trim();
+      if (!candidate) return "";
+      try {
+        const url = new URL(candidate);
+        return url.protocol === "https:" ? url.toString() : current.notes_url;
+      } catch {
+        return current.notes_url;
+      }
+    })(),
     nextTheme,
     id
   );
@@ -151,6 +161,68 @@ campaignsRouter.put("/:id", (req, res) => {
   res.json({ ok: true });
 });
 
+campaignsRouter.get("/:id/dashboard-layout", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+
+  const row = db.prepare(
+    "SELECT layout FROM dashboard_layouts WHERE campaign_id = ? AND user_id = ?"
+  ).get(campaignId, user(req).id) as { layout: string } | undefined;
+
+  if (!row) return res.json({ layout: null });
+
+  try {
+    const layout = JSON.parse(row.layout);
+    res.json({ layout: Array.isArray(layout) ? layout : null });
+  } catch {
+    res.json({ layout: null });
+  }
+});
+
+campaignsRouter.put("/:id/dashboard-layout", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+
+  const layout = req.body?.layout;
+  if (!Array.isArray(layout) || layout.length > 30) {
+    return res.status(400).json({ error: "Invalid dashboard layout." });
+  }
+
+  const clean = layout
+    .map((item: any) => ({
+      i: String(item?.i ?? "").slice(0, 40),
+      x: Number(item?.x) || 0,
+      y: Number(item?.y) || 0,
+      w: Math.max(1, Number(item?.w) || 1),
+      h: Math.max(1, Number(item?.h) || 1),
+      ...(Number.isFinite(Number(item?.minW)) ? { minW: Math.max(1, Number(item.minW)) } : {}),
+      ...(Number.isFinite(Number(item?.minH)) ? { minH: Math.max(1, Number(item.minH)) } : {}),
+    }))
+    .filter((item: any) => item.i);
+
+  db.prepare(`
+    INSERT INTO dashboard_layouts (campaign_id, user_id, layout, updated_at)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(campaign_id, user_id)
+    DO UPDATE SET layout = excluded.layout, updated_at = datetime('now')
+  `).run(campaignId, user(req).id, JSON.stringify(clean));
+
+  res.json({ ok: true });
+});
+
+campaignsRouter.delete("/:id/dashboard-layout", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+
+  db.prepare(
+    "DELETE FROM dashboard_layouts WHERE campaign_id = ? AND user_id = ?"
+  ).run(campaignId, user(req).id);
+
+  res.json({ ok: true });
+});
 campaignsRouter.post("/:id/invites", (req, res) => {
   const id = Number(req.params.id);
   const role = memberRole(id, user(req).id);

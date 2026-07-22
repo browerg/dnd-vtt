@@ -1,3 +1,5 @@
+import { api } from "../api";
+
 // Grid layout model + per-user, per-campaign persistence for the dashboard.
 // Free drag/resize on a 12-column grid; each item's `i` is a panel id.
 
@@ -66,4 +68,45 @@ export function clearLayout(campaignId: number, userId: number): void {
   } catch {
     /* ignore */
   }
+}
+export async function loadServerLayout(
+  campaignId: number,
+  userId: number
+): Promise<GridItem[] | null> {
+  try {
+    const response = await api<{ layout: GridItem[] | null }>(
+      `/api/campaigns/${campaignId}/dashboard-layout`
+    );
+
+    if (Array.isArray(response.layout) && response.layout.length) {
+      saveLayout(campaignId, userId, response.layout);
+      return response.layout;
+    }
+
+    const local = loadLayout(campaignId, userId);
+    if (local) {
+      await saveServerLayout(campaignId, local);
+      return local;
+    }
+
+    return null;
+  } catch {
+    return loadLayout(campaignId, userId);
+  }
+}
+
+export async function saveServerLayout(
+  campaignId: number,
+  layout: GridItem[]
+): Promise<void> {
+  await api(`/api/campaigns/${campaignId}/dashboard-layout`, {
+    method: "PUT",
+    body: JSON.stringify({ layout }),
+  });
+}
+
+export async function clearServerLayout(campaignId: number): Promise<void> {
+  await api(`/api/campaigns/${campaignId}/dashboard-layout`, {
+    method: "DELETE",
+  });
 }

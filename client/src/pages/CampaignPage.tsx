@@ -26,6 +26,7 @@ interface CampaignDetail {
     session_number: number;
     house_rules: string;
     announcement: string;
+    notes_url: string;
     theme: string;
     created_at: string;
   };
@@ -133,6 +134,7 @@ export default function CampaignPage() {
         sessionNumber: c.session_number,
         houseRules: c.house_rules,
         announcement: c.announcement,
+        notesUrl: c.notes_url,
       }),
     });
     setEditingHub(false);
@@ -207,10 +209,20 @@ export default function CampaignPage() {
           chapter={detail.campaign.chapter}
           sessionNumber={detail.campaign.session_number}
           themeId={themeView.themeId}
-          pageLabel={detail.campaign.system === "remnant" ? "Campaign control" : "Campaign hub"}
+          pageLabel="Dashboard"
         />
+        <span className="current-page-indicator" aria-current="page">
+          <span className="current-page-indicator-dot" />
+          Dashboard
+        </span>
         <span className="spacer" />
-        <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-nav-link">Dashboard</Link>
+        <Link
+          to={`/campaigns/${campaignId}`}
+          className="ghost link campaign-nav-link campaign-nav-link-active"
+          aria-current="page"
+        >
+          Dashboard
+        </Link>
         <Link to={`/campaigns/${campaignId}/map`} className="ghost link campaign-nav-link">
           {detail.campaign.system === "remnant" ? "Tactical map" : "Battle map"}
         </Link>
@@ -243,6 +255,16 @@ export default function CampaignPage() {
             {!editingHub ? (
               <>
                 <p className="muted">{detail.campaign.description || "No description yet."}</p>
+                {detail.campaign.notes_url && (
+                  <a
+                    className="primary link"
+                    href={detail.campaign.notes_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    ðŸ“„ Open Campaign Notes
+                  </a>
+                )}
                 {detail.campaign.house_rules && (
                   <details className="house-rules">
                     <summary>House rules</summary>
@@ -291,6 +313,15 @@ export default function CampaignPage() {
                     />
                   </label>
                 </div>
+                <label>
+                  Google Drive or Google Docs notes link
+                  <input
+                    type="url"
+                    placeholder="https://docs.google.com/..."
+                    value={detail.campaign.notes_url}
+                    onChange={(e) => patchCampaign({ notes_url: e.target.value })}
+                  />
+                </label>
                 <label>
                   House rules
                   <textarea

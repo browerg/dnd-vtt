@@ -251,6 +251,13 @@ db.exec(`
     PRIMARY KEY (campaign_id, user_id)
   );
 
+  CREATE TABLE IF NOT EXISTS dashboard_layouts (
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    layout      TEXT NOT NULL DEFAULT '[]',
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (campaign_id, user_id)
+  );
   CREATE TABLE IF NOT EXISTS rolls (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -310,6 +317,7 @@ for (const ddl of [
   "ALTER TABLE campaigns ADD COLUMN session_number INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE campaigns ADD COLUMN house_rules TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE campaigns ADD COLUMN announcement TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaigns ADD COLUMN notes_url TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE campaigns ADD COLUMN combat_round INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE campaigns ADD COLUMN combat_turn INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE combatants ADD COLUMN initiative_tiebreak INTEGER NOT NULL DEFAULT 0",
