@@ -6,7 +6,8 @@ import type { RollDetail } from "./api";
 
 const SUPPORTED_SIDES = new Set([2, 4, 6, 8, 10, 12, 20, 100]);
 const MAX_ANIMATED_DICE = 20;
-const LINGER_MS = 1800;
+const LINGER_MS = 700;
+const ANIMATION_TIMEOUT_MS = 6000;
 const CRITICAL_EVENT = "tabletop:critical-roll";
 
 type CriticalRollKind = "nat20" | "nat1";
@@ -47,6 +48,27 @@ function ensureBox(): Promise<void> {
     ready = box.initialize();
   }
   return ready;
+}
+
+export function preloadDice(): Promise<void> {
+  return ensureBox();
+}
+
+export async function animateRollAt(
+  detail: RollDetail,
+  serverStartAt: number | undefined,
+  serverClockOffsetMs: number,
+  theme?: string,
+  meta: RollAnimationMeta = {}
+): Promise<void> {
+  if (serverStartAt && Number.isFinite(serverStartAt)) {
+    const localStartAt = serverStartAt - serverClockOffsetMs;
+    const waitMs = localStartAt - Date.now();
+    if (waitMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+  }
+  return animateRoll(detail, theme, meta);
 }
 
 export function notationFor(detail: RollDetail): string | null {
@@ -181,7 +203,7 @@ async function drain(): Promise<void> {
         await Promise.race([
           box!.roll(entry.notation),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("animation timeout")), 15000)
+            setTimeout(() => reject(new Error("animation timeout")), ANIMATION_TIMEOUT_MS)
           ),
         ]);
 

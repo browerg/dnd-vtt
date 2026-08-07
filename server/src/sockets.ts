@@ -26,6 +26,10 @@ export function setupSockets(io: Server) {
       broadcastPresence(io, Number(campaignId));
     });
 
+    socket.on("time:sync", (ack: unknown) => {
+      if (typeof ack === "function") (ack as (serverNow: number) => void)(Date.now());
+    });
+
     socket.on("token:move", (msg: { campaignId: number; tokenId: number; x: number; y: number }) => {
       const campaignId = Number(msg?.campaignId);
       const moved = moveToken(user, campaignId, Number(msg?.tokenId), Number(msg?.x), Number(msg?.y));

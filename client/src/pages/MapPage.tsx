@@ -6,7 +6,7 @@ import { Link, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
 import { api, type RollPayload } from "../api";
 import { useAuth } from "../App";
-import { animateRoll } from "../dice3d";
+import { animateRollAt, preloadDice } from "../dice3d";
 import { CONDITIONS, type CharacterSummary } from "../sheet";
 import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
@@ -325,6 +325,7 @@ export default function MapPage() {
   const [campaignChapter, setCampaignChapter] = useState("");
   const [campaignSession, setCampaignSession] = useState(0);
   const [rolls, setRolls] = useState<RollPayload[]>([]);
+  const serverClockOffsetRef = useRef(0);
   const [ruler, setRuler] = useState<RulerLine | null>(null);
   const [remoteRulers, setRemoteRulers] = useState<Record<string, RulerLine>>({});
   const rulerTimers = useRef<Record<string, number>>({});
@@ -653,9 +654,19 @@ export default function MapPage() {
   }, [selectedToken?.monsterId]);
 
   useEffect(() => {
+    void preloadDice().catch((error) => console.warn("dice preload failed", error));
+
     const socket = io();
     socketRef.current = socket;
-    socket.on("connect", () => socket.emit("campaign:join", campaignId));
+    socket.on("connect", () => {
+      socket.emit("campaign:join", campaignId);
+      const sentAt = Date.now();
+      socket.emit("time:sync", (serverNow: number) => {
+        const receivedAt = Date.now();
+        const midpoint = sentAt + (receivedAt - sentAt) / 2;
+        serverClockOffsetRef.current = serverNow - midpoint;
+      });
+    });
     socket.on("map:update", (m: { campaignId: number }) => {
       if (m.campaignId === campaignId) loadAll();
     });
@@ -718,8 +729,16 @@ export default function MapPage() {
     );
     socket.on("roll", async (roll: RollPayload) => {
       if (roll.campaignId !== campaignId) return;
-      // Same pipeline as the hub: let the 3D dice settle before the number lands.
-      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme, { userName: roll.userName, label: roll.label });
+      // Hold the feed result until the synchronized 3D roll has landed.
+      if (roll.detail) {
+        await animateRollAt(
+          roll.detail,
+          roll.animateAt,
+          serverClockOffsetRef.current,
+          roll.diceTheme,
+          { userName: roll.userName, label: roll.label }
+        );
+      }
       setRolls((prev) => [...prev.slice(-99), roll]);
     });
     socket.on("map:ping", (m: { campaignId: number; x: number; y: number; userName: string }) => {

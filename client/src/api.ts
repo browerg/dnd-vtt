@@ -57,6 +57,7 @@ export interface RollPayload {
   total: number | null;
   createdAt: string;
   diceTheme?: string; // roller's 3D dice colorset
+  animateAt?: number; // server clock time when every client should start the 3D roll
 }
 
 export interface ChatMessage {

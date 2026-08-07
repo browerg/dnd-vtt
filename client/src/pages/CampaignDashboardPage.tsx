@@ -8,7 +8,7 @@ import GridLayout, { WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { api, type ChatMessage, type Member, type RollPayload } from "../api";
-import { animateRoll } from "../dice3d";
+import { animateRollAt, preloadDice } from "../dice3d";
 import type { CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
@@ -88,6 +88,7 @@ export default function CampaignDashboardPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [codexRefresh, setCodexRefresh] = useState(0);
   const [error, setError] = useState("");
+  const serverClockOffsetRef = useRef(0);
 
   const [layout, setLayout] = useState<GridItem[]>([]);
   const [editing, setEditing] = useState(false);
@@ -117,14 +118,32 @@ export default function CampaignDashboardPage() {
   }, [campaignId, loadCharacters, loadDetail]);
 
   useEffect(() => {
+    void preloadDice().catch((error) => console.warn("dice preload failed", error));
+
     const socket: Socket = io();
-    socket.on("connect", () => socket.emit("campaign:join", campaignId));
+    socket.on("connect", () => {
+      socket.emit("campaign:join", campaignId);
+      const sentAt = Date.now();
+      socket.emit("time:sync", (serverNow: number) => {
+        const receivedAt = Date.now();
+        const midpoint = sentAt + (receivedAt - sentAt) / 2;
+        serverClockOffsetRef.current = serverNow - midpoint;
+      });
+    });
     socket.on("presence", (p: { campaignId: number; onlineUserIds: number[] }) => {
       if (p.campaignId === campaignId) setOnline(new Set(p.onlineUserIds));
     });
     socket.on("roll", async (roll: RollPayload) => {
       if (roll.campaignId !== campaignId) return;
-      if (roll.detail) await animateRoll(roll.detail, roll.diceTheme, { userName: roll.userName, label: roll.label });
+      if (roll.detail) {
+        await animateRollAt(
+          roll.detail,
+          roll.animateAt,
+          serverClockOffsetRef.current,
+          roll.diceTheme,
+          { userName: roll.userName, label: roll.label }
+        );
+      }
       setRolls((prev) => [...prev.slice(-99), roll]);
     });
     socket.on("character:update", (msg: { campaignId: number }) => {

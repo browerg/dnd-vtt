@@ -20,6 +20,7 @@ export interface RollPayload {
   total: number | null;
   createdAt: string;
   diceTheme?: string; // roller's 3D dice colorset — everyone sees their dice
+  animateAt?: number; // server clock time when connected clients should start the animation
 }
 
 // What a given viewer is allowed to see of a roll. Returns null if nothing.
@@ -90,6 +91,7 @@ export function performRoll(
     total: detail.kept.total,
     createdAt: new Date().toISOString(),
     diceTheme,
+    animateAt: Date.now() + 1200,
   };
   broadcastRoll(payload);
   return payload;
@@ -144,6 +146,7 @@ rollsRouter.post("/:id/rolls", (req, res) => {
       total,
       createdAt: new Date().toISOString(),
       diceTheme: user(req).diceTheme ?? "",
+      animateAt: Date.now() + 1200,
     };
     broadcastRoll(payload);
     return res.json({ roll: viewOf(payload, user(req).id, isDMRole(role)) });
