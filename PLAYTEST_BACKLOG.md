@@ -5,7 +5,7 @@ This document tracks confirmed rules, bugs, usability problems, feature requests
 ## Status key
 
 - `[ ]` Not started
-- `[~]` In progress
+- `[~]` In progress / partially implemented
 - `[x]` Completed
 - `[?]` Needs clarification or design decision
 
@@ -15,31 +15,23 @@ This document tracks confirmed rules, bugs, usability problems, feature requests
 
 ## Weapon attributes
 
-- [ ] Add a Main Attribute selector to the character sheet.
-- The selected Main Attribute applies to **weapon damage only**.
-- It must not affect weapon attack rolls.
-- It must not affect skill rolls.
-- The attribute bonus is added on top of the weapon's existing damage formula.
-
-Example:
-
-```text
-Weapon damage: 2d8+6
-Main Attribute bonus: +3
-Final damage: 2d8+9
-```
+- [x] Add a Main Attribute selector to the character sheet.
+- [x] Apply the selected Main Attribute to **weapon damage only**.
+- [x] Do not apply it to weapon attack rolls.
+- [x] Do not apply it to skill rolls.
+- [x] Add the attribute bonus on top of the weapon's existing damage formula.
 
 ## Rank bonuses
 
-- Rank bonuses such as `+2` apply to appropriate skills.
-- Rank bonuses must not automatically be added to weapon rolls.
+- [x] Rank bonuses apply to appropriate skills.
+- [x] Rank bonuses are not automatically added to weapon rolls.
 
 ## Dust allocation
 
-- Every character begins with 3 Dust vials.
-- A Dust Mage receives 2 additional Dust vials.
-- Ranking up grants 2 additional Dust vials.
-- Each Dust vial contains 3 charges.
+- [x] Every character begins with 3 Dust vials.
+- [x] A Dust Mage receives 2 additional Dust vials.
+- [x] Ranking up grants 2 additional Dust vials.
+- [x] Each Dust vial contains 3 charges.
 
 ---
 
@@ -47,48 +39,35 @@ Final damage: 2d8+9
 
 ## Active map-tool indicator
 
-- [ ] Clearly identify the currently selected map tool.
-- Supported tool states should include:
-  - Grab / Move
-  - Ruler
-  - Draw
-  - Erase
-  - Reveal
-  - Hide
-- The selected toolbar button needs a strong active appearance.
-- Add an optional persistent label such as:
-
-```text
-ACTIVE TOOL: RULER
-```
-
-- Change the map cursor where appropriate for the selected tool.
-- Make it difficult for a player to accidentally draw or move the map because they forgot which tool was active.
+- [~] Clearly identify the currently selected map tool.
+- [ ] Add an optional persistent `ACTIVE TOOL` label.
+- [~] Improve map cursors for selected tools.
+- [~] Reduce accidental draw/move actions caused by unclear tool state.
 
 ## Panel movement and resizing
 
-- [ ] Stop text and interface elements from highlighting while panels are being moved or resized.
-- [ ] Add resize handles to all sides and corners.
-- [ ] Fix inconsistent panel movement and resizing.
-- [ ] Prevent unwanted snapping to other panels.
-- [ ] Allow panels to be positioned freely against the background.
-- [ ] Make panel deletion easier and more reliable.
-- [ ] Review whether optional snapping should exist as a toggle rather than always being active.
+- [~] Reduce text/interface highlighting while panels move or resize.
+- [~] Improve resize handles and resizing behavior.
+- [~] Improve panel movement consistency.
+- [~] Reduce unwanted snapping.
+- [x] Persist dashboard panel layouts on the server.
+- [~] Continue panel deletion/usability polish.
+- [ ] Decide whether snapping should be optional.
 
 ## Chat panel
 
-- [ ] Keep the chat input anchored to the bottom of the panel.
-- [ ] Keep the message history independently scrollable.
-- [ ] Prevent the input box from moving out of view when the panel is resized.
+- [x] Keep chat input anchored to the bottom.
+- [x] Keep message history independently scrollable.
+- [x] Prevent the input from moving out of view while resizing.
 
 ## Browser compatibility
 
-- [ ] Investigate Firefox-specific layout and interaction problems.
-- [ ] Check pointer capture during token dragging.
-- [ ] Check custom range sliders.
-- [ ] Check fixed and floating panels inside transformed containers.
-- [ ] Check hover-only controls.
-- [ ] Check use of `:has()` and other browser-sensitive CSS.
+- [ ] Firefox compatibility pass.
+- [ ] Pointer capture testing during token dragging.
+- [ ] Custom range slider testing.
+- [ ] Floating/fixed panel testing inside transforms.
+- [ ] Hover-only control testing.
+- [ ] Browser-sensitive CSS review.
 
 ---
 
@@ -96,43 +75,29 @@ ACTIVE TOOL: RULER
 
 ## Collapsible sections
 
-- [ ] Make every major character-sheet section collapsible.
-- [ ] Save each user's collapsed-section preferences.
-
-Sections should include:
-
-- Basic information
-- Attributes
-- Skills
-- Weapons
-- Aura
-- Semblance
-- Dust
-- Inventory
-- Conditions
-- Notes
-- Biography and backstory
+- [x] Make major character-sheet sections collapsible.
+- [x] Save collapsed-section preferences.
 
 ## Main attribute
 
-- [ ] Add a Main Attribute selector.
-- [ ] Automatically include the selected attribute in weapon damage.
-- [ ] Display the applied attribute beside the final damage formula.
-- [ ] Consider allowing individual weapons to override the character's default damage attribute.
+- [x] Add a Main Attribute selector.
+- [x] Include the selected attribute in weapon damage.
+- [x] Display the applied attribute in weapon-damage calculations.
+- [?] Decide whether individual weapons can override the default Main Attribute.
 
 ## Weapons
 
-- [ ] Add Normal, Edge, and Setback controls directly beside each weapon.
-- [ ] Make the currently selected roll mode visually obvious.
-- [ ] Keep attack and damage calculations separate.
-- [ ] Prevent rank bonuses from being added automatically to weapons.
-- [ ] Show a preview of the final damage formula before rolling.
+- [x] Add Normal, Edge, and Setback controls.
+- [x] Make selected roll mode visually clear.
+- [x] Keep attack and damage calculations separate.
+- [x] Prevent rank bonuses from being automatically added to weapons.
+- [x] Show the resulting weapon damage calculation.
 
 ## Sustained Semblance
 
-- [ ] Add a button that subtracts 2 Aura for sustaining a Semblance.
-- [ ] Add confirmation or undo protection against accidental clicks.
-- [ ] Record the Aura change in the combat log.
+- [x] Add the 2 Aura sustain control.
+- [~] Continue accidental-click protection where useful.
+- [~] Continue improving combat-log coverage for Aura changes.
 
 ---
 
@@ -140,29 +105,26 @@ Sections should include:
 
 ## Character Aura
 
-- [ ] Add an Aura color field to the character sheet.
-- [ ] Use the selected Aura color for:
-  - Aura bars
-  - Token effects
-  - Aura damage
-  - Aura break
-  - Character-sheet accents where appropriate
+- [x] Add Aura color.
+- [x] Use Aura color in Aura UI/effects.
+- [x] Support Aura bars and token presentation.
+- [x] Support Aura damage and Aura-break behavior.
 
 ## Enemy Aura
 
-- [ ] Allow enemies and custom monsters to have Aura.
-- [ ] Support current Aura and maximum Aura separately.
-- [ ] Show enemy Aura in the selected-token inspector.
-- [ ] Allow the DM to hide exact enemy Aura values from players.
+- [x] Allow enemies/custom monsters to have Aura.
+- [x] Support current and maximum Aura.
+- [x] Show enemy Aura in tactical/map interfaces where applicable.
+- [~] Continue refining how much exact enemy Aura information players see.
 
 ## Aura break
 
-- [ ] Add a glass-breaking sound when Aura reaches zero.
-- [ ] Add an Aura-shatter visual effect.
-- [ ] Use the character's selected Aura color in the effect.
-- [ ] Apply an Aura Broken state.
-- [ ] Add the break to the combat log.
-- [ ] Avoid replaying the effect repeatedly while Aura remains at zero.
+- [x] Add Aura-break sound.
+- [x] Add Aura-shatter visual effect.
+- [x] Use Aura color in the effect.
+- [x] Apply Aura Broken state.
+- [~] Continue improving combat-log coverage.
+- [x] Avoid replaying the break repeatedly while Aura remains at zero.
 
 ---
 
@@ -170,37 +132,20 @@ Sections should include:
 
 ## Dust inventory and charges
 
-- [ ] Build a clear Dust-vial tracker.
-- [ ] Each vial contains 3 charges.
-- [ ] Allow individual charges to be consumed or restored.
-- [ ] Allow an entire vial to be refilled.
-- [ ] Allow vials to be added or removed.
-- [ ] Allow each vial to have a Dust type.
-- [ ] Allow custom or mixed Dust types.
-
-Suggested display:
-
-```text
-Fire Dust
-Vial 1: ● ● ●
-Vial 2: ● ● ○
-Vial 3: ○ ○ ○
-```
+- [x] Build a Dust-vial tracker.
+- [x] Each vial contains 3 charges.
+- [x] Consume/restore charges.
+- [x] Refill vials.
+- [x] Manage vials through the character system.
+- [x] Assign Dust types.
+- [x] Support implemented Remnant Dust rules and allocation.
 
 ## Dust effects
 
-- [ ] Add visual and audio effects for Dust abilities.
-- [ ] Initial Dust types may include:
-  - Fire
-  - Ice
-  - Lightning
-  - Wind
-  - Earth
-  - Gravity
-  - Hard-Light
-  - Water
-- [ ] Add Dust combination rules after reference images and rules are supplied.
-- [ ] Avoid hard-coding combinations until the full rules are reviewed.
+- [x] Add Dust-related token effects.
+- [~] Continue expanding audio/visual presentation.
+- [ ] Add additional Dust combinations after rules review.
+- [x] Avoid unsupported hard-coded combinations.
 
 ---
 
@@ -208,124 +153,145 @@ Vial 3: ○ ○ ○
 
 ## Condition styling
 
-- [ ] Give conditions distinct text colors, badges, or icons.
-- [ ] Do not rely on color alone for accessibility.
-- [ ] Show condition styling in:
-  - Selected-token details
-  - Token overlays
-  - Initiative
-  - Combat logs
-  - Character sheets
+- [x] Add distinct condition visuals/icons.
+- [x] Avoid relying on color alone.
+- [x] Show conditions on tactical-map tokens and selected-token interfaces.
+- [~] Continue standardizing condition presentation across initiative, logs, and sheets.
 
-Suggested visual identities:
+## Down state / Final Flare
 
-- Burning: red or orange
-- Frozen: pale blue
-- Broken: crimson or fractured
-- Stunned: yellow
-- Poisoned: green
-- Down: dark red
-- Restrained: purple
-- Blinded: grey
-
-## Down state
-
-- [ ] Add a Down condition or combat state.
-- [ ] Add a visual token overlay.
-- [ ] Clearly display Down in the sidebar.
-- [ ] Optionally dim or desaturate the token.
-- [ ] Announce the state in the combat log.
-- [ ] Allow recovery or removal through DM controls.
+- [x] Add Downed and Critically Downed states.
+- [x] Add token presentation for downed/final-flare states.
+- [x] Display downed state in encounter/tactical interfaces.
+- [x] Support RWBY Final Flare behavior around zero HP.
+- [~] Continue improving combat-log announcements.
+- [x] Allow DM-controlled recovery/removal through the condition system.
 
 ---
 
-# Milestone 6: Monster Library
+# Milestone 6: Monster Library / Grimm Archive
 
-- [ ] Expand the existing monster dictionary into a reusable Monster Library.
-- [ ] Allow creation of custom monsters.
-- [ ] Allow transparent PNG uploads.
-- [ ] Support HP and Aura.
-- [ ] Support attributes and skills.
-- [ ] Support attacks and damage formulas.
-- [ ] Support conditions, immunities, and resistances.
-- [ ] Support Dust abilities.
-- [ ] Support Semblance-like abilities.
-- [ ] Allow monsters to be duplicated.
-- [ ] Allow saved monsters to be edited.
-- [ ] Allow monsters to be deployed directly onto a map.
-- [ ] Allow monsters to be reused across campaigns.
-- [ ] Support private DM monsters and optionally shared monsters.
+- [x] Expand into a reusable Monster Library / Grimm Archive.
+- [x] Add Remnant/Grimm library content.
+- [x] Support artwork/token images and preserve art when preparing/deploying tokens.
+- [x] Support HP and combat statistics.
+- [x] Support attributes/skills and Remnant-specific monster data.
+- [x] Support attacks/damage/action data.
+- [x] Prepare and deploy monsters onto maps.
+- [x] Reuse prepared monsters/encounters.
+- [x] Add prepared-token tray and visual encounter formations.
+- [~] Continue expanding custom-monster editing/duplication.
+- [~] Continue expanding custom resistances/immunities/Dust/Semblance-like data.
 
 ---
 
 # Milestone 7: Campaign Notes
 
-## Note permissions
+## Campaign notes and external documents
 
-- [ ] Allow notes to be private to their author.
-- [ ] Allow notes to be shared with the whole party.
-- [ ] Allow DM-only notes.
-- [ ] Allow notes to be shared with selected players.
+- [x] Add campaign notes support.
+- [x] Add Google Drive / Google Docs link support.
+- [x] Persist campaign document links.
+- [x] Add navigation to campaign notes/resources.
+- [~] Continue expanding note visibility/permission options.
 
 ## Built-in notes
 
-- [ ] Add headings, lists, bold text, links, and tables.
-- [ ] Add automatic saving.
-- [ ] Add search.
-- [ ] Add folders, tags, or categories.
-- [ ] Allow linking notes to:
-  - Characters
-  - NPCs
-  - Maps
-  - Sessions
-  - Quests
-  - Items
+- [~] Built-in notes exist; richer editing remains future work.
+- [ ] Rich formatting.
+- [~] Continue autosave/persistence improvements.
+- [ ] Search.
+- [ ] Folders/tags/categories.
+- [ ] Rich linking to characters/NPCs/maps/sessions/quests/items.
 
 ## Google Docs approach
 
-For very large documents, such as a 69-page campaign document, players should continue using Google Docs initially.
-
-### Phase 1
-
-- [ ] Allow a Google Docs link to be saved in the campaign.
-- [ ] Add a title and description.
-- [ ] Add private, party, selected-player, and DM-only permissions.
-- [ ] Open the document in a new tab.
-
-### Phase 2
-
-- [ ] Add a built-in rich-text editor for smaller notes.
-
-### Phase 3
-
-- [ ] Investigate Google Drive integration.
-- [ ] Investigate importing or previewing Google Docs.
-- [ ] Avoid attempting to recreate the entire Google Docs editing experience.
+- [x] Save external Google Docs / Drive links.
+- [x] Open campaign resources externally.
+- [~] Continue expanding metadata/permission controls.
+- [ ] Consider deeper Drive integration only if useful.
+- [ ] Consider import/preview.
+- [x] Do not attempt to recreate Google Docs.
 
 ---
 
 # Milestone 8: Roll and Notification Improvements
 
-- [x] Fix roll notifications after the roll history reaches its maximum retained length.
-- [ ] Confirm notifications work for all weapon attack and damage buttons.
-- [ ] Confirm notifications work for Normal, Edge, and Setback rolls.
-- [ ] Confirm private and blind roll visibility is correct.
-- [ ] Test roll notifications in Firefox.
-- [ ] Add clearer labels for attack rolls versus damage rolls.
+- [x] Fix roll notifications after retained-history rollover.
+- [x] Add weapon attack and damage roll integration.
+- [x] Support Normal, Edge, and Setback.
+- [x] Preserve private/blind visibility rules.
+- [x] Add initiative tie-breakers and clearer turn order.
+- [x] Synchronize multiplayer 3D dice animation start times.
+- [x] Preload DiceBox to reduce first-roll delay.
+- [x] Keep roll text hidden until dice land.
+- [x] Reduce stalled-animation timeout from 15 seconds to 6 seconds.
+- [~] Continue real-world remote multiplayer testing.
+- [ ] Test rolls/3D dice in Firefox.
+
+---
+
+# Milestone 9: DM Tools, Permissions, and Campaign Flow
+
+- [x] Scene Director in collapsible DM sidebar.
+- [x] Map Object controls in collapsible DM sidebar.
+- [x] Collapsible encounter/map sidebar.
+- [x] Prepared token and encounter tools.
+- [x] Exact drag placement and visual encounter formations.
+- [x] Player-specific NPC control assignments.
+- [x] DM/co-DM retain NPC access.
+- [x] Server-persisted dashboard layouts.
+- [x] Navigation improvements.
+- [x] First-time DM onboarding tour.
+- [x] DM Guide / guide library.
+
+---
+
+# Milestone 10: Discord Session Integration
+
+## Session notifications
+
+- [ ] Add optional Discord webhook URL to launcher settings.
+- [ ] Add Test Discord Connection / Send Test Message.
+- [ ] Wait for a valid Cloudflare public URL before notifying Discord.
+- [ ] Automatically announce when hosting successfully starts.
+- [ ] Prevent duplicate session-live notifications.
+- [ ] Do not block hosting if Discord delivery fails.
+
+## Join session link
+
+- [ ] Include the current public VTT URL.
+- [ ] Present a clear Join Game / Join Session action.
+- [ ] Use the newly generated quick-tunnel URL each session.
+- [ ] Never reuse a stale URL.
+
+## Initial scope
+
+- [ ] Discord webhook only.
+- [ ] No bot commands yet.
+- [ ] No Discord account linking yet.
+- [ ] No role sync yet.
+- [ ] No VTT/Discord chat sync yet.
 
 ---
 
 # Recently Completed
 
-- [x] Move Scene Director into the collapsible DM sidebar.
-- [x] Move Map Object controls into the collapsible DM sidebar.
-- [x] Remove those controls from the open map area.
-- [x] Add a collapsible map sidebar.
-- [x] Add character-sheet links from the sidebar.
-- [x] Add prepared token and encounter tools.
-- [x] Add exact drag placement.
-- [x] Add visual encounter formations.
-- [x] Fix roll notifications when the retained roll list remains the same length.
+- [x] Main Attribute weapon-damage support.
+- [x] Weapon Normal / Edge / Setback controls.
+- [x] Sustained Semblance Aura support.
+- [x] Collapsible character-sheet overhaul.
+- [x] Dust vial/charge rules and elemental token effects.
+- [x] Aura colors, break visuals, and sound.
+- [x] Downed / Critically Downed / Final Flare flow.
+- [x] Initiative tie-breakers and turn-order display.
+- [x] Remnant Grimm / Monster Library expansion.
+- [x] Prepared token tray and encounter formations.
+- [x] Campaign Notes / Google Drive links.
+- [x] Persistent dashboard layouts and navigation polish.
+- [x] Per-player NPC control assignments.
+- [x] DM onboarding tour and guide library.
+- [x] Multiplayer dice animation synchronization.
 
 ---
 
@@ -333,39 +299,33 @@ For very large documents, such as a 69-page campaign document, players should co
 
 ## Immediate
 
-1. Active map-tool indicator
-2. Panel movement and resizing fixes
-3. Chat input anchoring
-4. Weapon Normal, Edge, and Setback controls
-5. Main Attribute damage support
-6. Enemy Aura
-7. Sustained Semblance Aura button
-8. Collapsible character-sheet sections
+1. Remote multiplayer test of synchronized dice.
+2. Discord session-live webhook notification.
+3. Discord Join Game / Join Session link.
+4. Remaining map-tool indicator polish.
+5. Remaining panel movement/resizing polish.
 
 ## Next
 
-1. Dust vial and charge tracking
-2. Aura colors
-3. Aura break audio and visual effects
-4. Condition colors
-5. Down state
-6. Custom Monster Library
+1. Firefox/browser compatibility pass.
+2. Richer built-in campaign notes.
+3. Additional custom-monster editing.
+4. Additional Dust combinations/effects after rules review.
+5. More combat-log polish.
 
 ## Later
 
-1. Built-in campaign notes
-2. Google Docs links and permissions
-3. Google Drive integration
-4. Dust combinations
-5. Expanded Dust animations
+1. Deeper Google Drive integration if needed.
+2. More advanced Discord integration after webhook notifications are stable.
+3. Optional Discord account linking/bot commands/role sync/chat.
 
 ---
 
 # Open Design Questions
 
-- [ ] Should panel snapping be removed completely or made optional?
-- [ ] Should individual weapons be able to override the character's Main Attribute?
-- [ ] Should enemy Aura values be exact, approximate, or hidden from players?
-- [ ] Which Dust types and combinations are officially supported?
-- [ ] Should Aura automatically regenerate, or remain completely manual?
-- [ ] Should the Down state trigger automatically at zero HP?
+- [ ] Should panel snapping be removed or optional?
+- [ ] Should individual weapons override the default Main Attribute?
+- [ ] Should enemy Aura values be exact, approximate, or hidden?
+- [ ] Which additional Dust combinations should be supported?
+- [ ] Should Aura automatically regenerate or remain manual?
+- [ ] Should any downed-state transitions beyond Final Flare trigger automatically?
