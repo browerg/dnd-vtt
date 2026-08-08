@@ -336,6 +336,39 @@ button.ghost:hover, .ghost.link:hover { color: var(--text); border-color: var(--
 .formula-input { flex: 1; font-size: 1.05rem; font-family: Consolas, "Cascadia Mono", monospace; }
 .roll-btn { font-size: 1.05rem; padding: 0.6rem 1.5rem; }
 
+/* DicePanel compact-width spacing fix */
+.dice-panel > .row-between {
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* Inputs have an intrinsic minimum width in flex rows unless we explicitly
+   allow them to shrink. This keeps Roll inside the dice card. */
+.dice-panel > .row-between > .formula-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Share the remaining width evenly across Normal / Edge / Setback instead of
+   letting the visibility dropdown squeeze the final tab out of view. */
+.dice-panel > .row-between > .seg {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.dice-panel > .row-between > .seg .seg-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+  white-space: nowrap;
+}
+.dice-panel > .row-between > select {
+  flex: 0 1 7rem;
+  width: 7rem;
+  min-width: 6.5rem;
+}
+
+
 .seg { display: flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-well); }
 .seg-btn {
   background: transparent;
