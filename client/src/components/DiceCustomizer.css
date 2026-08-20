@@ -1,0 +1,488 @@
+.dice-customizer-card {
+  overflow: hidden;
+}
+
+.dice-customizer-heading,
+.dice-preset-heading,
+.dice-style-heading,
+.dice-control-section-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dice-customizer-heading {
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1px solid rgba(207, 166, 79, 0.14);
+}
+
+.dice-customizer-heading h3,
+.dice-preset-heading h4,
+.dice-style-heading h4,
+.dice-control-section-title h4 {
+  margin-bottom: 0.25rem;
+}
+
+.dice-customizer-heading p,
+.dice-preset-heading p,
+.dice-style-heading p {
+  margin: 0;
+}
+
+.dice-customizer-live,
+.dice-preset-count,
+.dice-preset-equipped,
+.dice-style-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.dice-customizer-live {
+  margin-top: 0.1rem;
+  border: 1px solid rgba(99, 200, 130, 0.45);
+  color: var(--online);
+  background: rgba(99, 200, 130, 0.08);
+}
+
+.dice-customizer-preview {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 310px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 50% 48%, rgba(207, 166, 79, 0.14), transparent 29%),
+    radial-gradient(circle at 50% 58%, rgba(0, 0, 0, 0.2), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 56%),
+    var(--bg-well);
+  box-shadow: inset 0 0 46px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.dice-customizer-preview:hover {
+  border-color: var(--border-gold);
+}
+
+.dice-customizer-preview.dragging {
+  cursor: grabbing;
+  border-color: var(--accent);
+}
+
+.dice-customizer-canvas,
+.dice-customizer-canvas canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.dice-customizer-canvas {
+  pointer-events: none;
+}
+
+.dice-customizer-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.dice-customizer-inspect,
+.dice-customizer-auto {
+  position: absolute;
+  bottom: 0.55rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+.dice-customizer-inspect {
+  right: 0.65rem;
+}
+
+.dice-customizer-auto {
+  left: 0.65rem;
+}
+
+.dice-customizer-types {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0.8rem 0 1.05rem;
+}
+
+.dice-customizer-types .die-btn {
+  min-width: 0;
+}
+
+.dice-customizer-types .die-btn.selected {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(207, 166, 79, 0.09);
+  box-shadow: 0 0 12px rgba(207, 166, 79, 0.14);
+}
+
+.dice-style-heading {
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.dice-style-badge {
+  border: 1px solid var(--border-gold);
+  color: var(--accent);
+  background: rgba(207, 166, 79, 0.07);
+}
+
+.dice-style-recipes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.dice-style-recipe {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.65rem;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-well);
+}
+
+.dice-style-recipe:hover {
+  border-color: var(--border-gold);
+  background: rgba(207, 166, 79, 0.045);
+}
+
+.dice-style-recipe > span:last-child {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.dice-style-recipe strong,
+.dice-style-recipe small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dice-style-recipe strong {
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+.dice-style-recipe small {
+  color: var(--muted);
+  font-size: 0.67rem;
+}
+
+.dice-style-recipe-swatches {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.dice-style-recipe-swatches i {
+  width: 18px;
+  height: 26px;
+  margin-left: -5px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.dice-style-recipe-swatches i:first-child {
+  margin-left: 0;
+}
+
+.dice-control-section {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(207, 166, 79, 0.11);
+}
+
+.dice-control-section-title {
+  align-items: baseline;
+  margin-bottom: 0.55rem;
+}
+
+.dice-control-section-title > span {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.dice-customizer-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.dice-customizer-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-well);
+}
+
+.dice-customizer-field.disabled {
+  opacity: 0.52;
+}
+
+.dice-customizer-field > span {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.dice-customizer-field strong {
+  font-size: 0.82rem;
+}
+
+.dice-customizer-field small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dice-customizer-field input[type="color"] {
+  width: 44px;
+  height: 34px;
+  flex: 0 0 auto;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dice-customizer-select-field select {
+  min-width: 125px;
+  max-width: 160px;
+}
+
+.dice-customizer-range {
+  align-items: center;
+}
+
+.dice-customizer-range input[type="range"] {
+  width: min(190px, 48%);
+  min-width: 110px;
+}
+
+.dice-customizer-actions,
+.dice-preset-save-actions,
+.dice-preset-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dice-customizer-actions {
+  justify-content: flex-end;
+  margin-top: 0.85rem;
+}
+
+.dice-customizer-message {
+  margin: 0.75rem 0 0;
+}
+
+.dice-preset-divider {
+  height: 1px;
+  margin: 1.25rem 0 1rem;
+  background: rgba(207, 166, 79, 0.14);
+}
+
+.dice-preset-count {
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: var(--bg-well);
+}
+
+.dice-preset-save-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+  margin: 0.85rem 0;
+}
+
+.dice-preset-name-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.dice-preset-name-field > span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dice-preset-name-field input {
+  width: 100%;
+}
+
+.dice-preset-loading {
+  margin: 0.8rem 0 0;
+}
+
+.dice-preset-empty {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.dice-preset-empty strong {
+  color: var(--text);
+}
+
+.dice-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.dice-preset-card {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-well);
+}
+
+.dice-preset-card.editing {
+  border-color: var(--border-gold);
+}
+
+.dice-preset-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.dice-preset-card-top > div {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.dice-preset-card-top strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dice-preset-card-top > div > span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: capitalize;
+}
+
+.dice-preset-equipped {
+  border: 1px solid rgba(99, 200, 130, 0.36);
+  color: var(--online);
+  background: rgba(99, 200, 130, 0.07);
+}
+
+.dice-preset-swatches {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dice-preset-swatch {
+  width: 30px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.dice-preset-pattern-label {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dice-preset-card-actions {
+  flex-wrap: wrap;
+}
+
+.dice-preset-card-actions button {
+  flex: 1 1 auto;
+}
+
+.dice-preset-delete {
+  color: var(--danger, #e07b7b);
+}
+
+@media (max-width: 860px) {
+  .dice-style-recipes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .dice-customizer-preview {
+    height: 260px;
+  }
+
+  .dice-customizer-types {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dice-style-recipes,
+  .dice-customizer-controls,
+  .dice-preset-grid,
+  .dice-preset-save-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dice-preset-save-actions {
+    justify-content: flex-end;
+  }
+
+  .dice-control-section-title {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .dice-customizer-select-field select {
+    min-width: 115px;
+  }
+}

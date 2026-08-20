@@ -31,6 +31,62 @@ export const DICE_THEMES = new Set([
   "dragons",
 ]);
 
+// Custom V1 dice settings ride in the existing dice_theme field so the
+// current per-user persistence and multiplayer roll payload need no schema
+// changes. Keep this strict: two hex colors plus one supported finish.
+const CUSTOM_DICE_THEME_V1 =
+  /^custom:v1:#[0-9a-f]{6}:#[0-9a-f]{6}:(matte|glossy|metallic)$/i;
+const CUSTOM_DICE_HEX = /^#[0-9a-f]{6}$/i;
+const CUSTOM_DICE_THEME_V2_PATTERNS = new Set([
+  "none",
+  "marble",
+  "cloudy_2",
+  "glitter",
+  "stars",
+  "stainedglass",
+  "ice",
+  "water",
+  "astral",
+  "dragon",
+  "fire",
+  "speckles",
+]);
+
+const isCustomDiceTheme = (theme: string) => {
+  if (CUSTOM_DICE_THEME_V1.test(theme)) return true;
+
+  const parts = theme.split(":");
+  if (parts.length !== 10 || parts[0] !== "custom" || parts[1] !== "v2") return false;
+  const [base, text, edge, outline, finish, pattern, strengthRaw, scaleRaw] = parts.slice(2);
+  if (!CUSTOM_DICE_HEX.test(base) || !CUSTOM_DICE_HEX.test(text) || !CUSTOM_DICE_HEX.test(edge)) {
+    return false;
+  }
+  if (outline !== "none" && !CUSTOM_DICE_HEX.test(outline)) return false;
+  if (!new Set(["matte", "glossy", "metallic"]).has(finish)) return false;
+  if (!CUSTOM_DICE_THEME_V2_PATTERNS.has(pattern)) return false;
+
+  const strength = Number(strengthRaw);
+  const scale = Number(scaleRaw);
+  if (!Number.isInteger(strength) || strength < 25 || strength > 100 || strength % 5 !== 0) {
+    return false;
+  }
+  if (!Number.isInteger(scale) || scale < 50 || scale > 250 || scale % 10 !== 0) {
+    return false;
+  }
+  return true;
+};
+
+const isValidDiceTheme = (theme: string) =>
+  theme === "" || DICE_THEMES.has(theme) || isCustomDiceTheme(theme);
+
+const presentDicePreset = (row: any) => ({
+  id: Number(row.id),
+  name: String(row.name),
+  theme: String(row.theme),
+  createdAt: String(row.createdAt),
+  updatedAt: String(row.updatedAt),
+});
+
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
   const hash = scryptSync(password, salt, 64).toString("hex");
@@ -137,19 +193,123 @@ authRouter.get("/me", (req, res) => {
   res.json({ user: getSessionUser(req) });
 });
 
-// Pick your dice — the theme rides along on every roll you make.
+// Pick your dice ΓÇö the theme rides along on every roll you make.
 authRouter.put("/me/dice", (req, res) => {
   const user = getSessionUser(req);
   if (!user) return res.status(401).json({ error: "Not logged in" });
   const theme = String(req.body?.theme ?? "");
-  if (theme !== "" && !DICE_THEMES.has(theme)) {
-    return res.status(400).json({ error: "That dice set doesn't exist." });
+  if (!isValidDiceTheme(theme)) {
+    return res.status(400).json({ error: "That dice appearance isn't valid." });
   }
   db.prepare("UPDATE users SET dice_theme = ? WHERE id = ?").run(theme, user.id);
   res.json({ ok: true, diceTheme: theme });
 });
 
-// Edit your account identity — name, avatar, pronouns, bio. Account-space only;
+// Up to five named dice appearances per account. The active appearance remains
+// users.dice_theme; these rows are only the player's personal preset shelf.
+authRouter.get("/me/dice-presets", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  const rows = db
+    .prepare(
+      `SELECT id, name, theme, created_at AS createdAt, updated_at AS updatedAt
+       FROM dice_presets
+       WHERE user_id = ?
+       ORDER BY id ASC`
+    )
+    .all(user.id) as any[];
+  res.json({ presets: rows.map(presentDicePreset) });
+});
+
+authRouter.post("/me/dice-presets", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  const name = String(req.body?.name ?? "").trim();
+  const theme = String(req.body?.theme ?? "");
+  if (!name) return res.status(400).json({ error: "Give this dice preset a name." });
+  if (name.length > 24) return res.status(400).json({ error: "Dice names can be up to 24 characters." });
+  if (!theme || !isValidDiceTheme(theme)) {
+    return res.status(400).json({ error: "That dice appearance isn't valid." });
+  }
+  const count = Number(
+    (db.prepare("SELECT COUNT(*) AS n FROM dice_presets WHERE user_id = ?").get(user.id) as any).n
+  );
+  if (count >= 5) return res.status(409).json({ error: "My Dice is full. You can keep up to 5 presets." });
+
+  try {
+    const info = db
+      .prepare("INSERT INTO dice_presets (user_id, name, theme) VALUES (?, ?, ?)")
+      .run(user.id, name, theme);
+    const row = db
+      .prepare(
+        `SELECT id, name, theme, created_at AS createdAt, updated_at AS updatedAt
+         FROM dice_presets WHERE id = ? AND user_id = ?`
+      )
+      .get(Number(info.lastInsertRowid), user.id);
+    res.json({ preset: presentDicePreset(row) });
+  } catch (e: any) {
+    if (String(e?.message).includes("UNIQUE")) {
+      return res.status(409).json({ error: "You already have a dice preset with that name." });
+    }
+    throw e;
+  }
+});
+
+authRouter.put("/me/dice-presets/:presetId", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  const presetId = Number(req.params.presetId);
+  const name = String(req.body?.name ?? "").trim();
+  const theme = String(req.body?.theme ?? "");
+  if (!Number.isInteger(presetId) || presetId <= 0) {
+    return res.status(400).json({ error: "Invalid dice preset." });
+  }
+  if (!name) return res.status(400).json({ error: "Give this dice preset a name." });
+  if (name.length > 24) return res.status(400).json({ error: "Dice names can be up to 24 characters." });
+  if (!theme || !isValidDiceTheme(theme)) {
+    return res.status(400).json({ error: "That dice appearance isn't valid." });
+  }
+
+  try {
+    const info = db
+      .prepare(
+        `UPDATE dice_presets
+         SET name = ?, theme = ?, updated_at = datetime('now')
+         WHERE id = ? AND user_id = ?`
+      )
+      .run(name, theme, presetId, user.id);
+    if (Number(info.changes) === 0) return res.status(404).json({ error: "Dice preset not found." });
+    const row = db
+      .prepare(
+        `SELECT id, name, theme, created_at AS createdAt, updated_at AS updatedAt
+         FROM dice_presets WHERE id = ? AND user_id = ?`
+      )
+      .get(presetId, user.id);
+    res.json({ preset: presentDicePreset(row) });
+  } catch (e: any) {
+    if (String(e?.message).includes("UNIQUE")) {
+      return res.status(409).json({ error: "You already have a dice preset with that name." });
+    }
+    throw e;
+  }
+});
+
+authRouter.delete("/me/dice-presets/:presetId", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  const presetId = Number(req.params.presetId);
+  if (!Number.isInteger(presetId) || presetId <= 0) {
+    return res.status(400).json({ error: "Invalid dice preset." });
+  }
+  const info = db
+    .prepare("DELETE FROM dice_presets WHERE id = ? AND user_id = ?")
+    .run(presetId, user.id);
+  if (Number(info.changes) === 0) return res.status(404).json({ error: "Dice preset not found." });
+  res.json({ ok: true });
+});
+
+
+// Edit your account identity ΓÇö name, avatar, pronouns, bio. Account-space only;
 // this is who *you* are, not your character.
 authRouter.put("/me/profile", (req, res) => {
   const current = getSessionUser(req);
@@ -166,7 +326,7 @@ authRouter.put("/me/profile", (req, res) => {
     return res.status(400).json({ error: "Invalid avatar image." });
   }
   // Reconstruct the path from just the filename so no traversal segments are
-  // ever stored — same defense the character/map/codex uploaders use.
+  // ever stored ΓÇö same defense the character/map/codex uploaders use.
   const safeAvatar = avatarPath ? `/uploads/${path.basename(avatarPath)}` : "";
   db.prepare(
     "UPDATE users SET display_name = ?, pronouns = ?, bio = ?, avatar_path = ? WHERE id = ?"
@@ -178,7 +338,7 @@ authRouter.put("/me/profile", (req, res) => {
 // One-click account switching for solo testing (DM in one window, player in
 // another). Locked down twice: only when the server was started with
 // `npm run dev` (production uses `npm start`), and only for requests from this
-// machine — a hosted instance never exposes it.
+// machine ΓÇö a hosted instance never exposes it.
 const DEV_MODE = process.env.npm_lifecycle_event === "dev";
 
 const isLocalRequest = (req: Request) =>

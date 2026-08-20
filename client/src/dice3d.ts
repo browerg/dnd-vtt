@@ -1,5 +1,6 @@
 import DiceBox from "@3d-dice/dice-box-threejs";
 import type { RollDetail } from "./api";
+import { applyDiceBoxCustomization, decodeDiceCustomization } from "./diceCustomization";
 
 // 3D dice are pure theater: the server already decided the results, and the
 // notation's "@" suffix forces the dice to land on exactly those faces.
@@ -28,7 +29,7 @@ interface QueueEntry {
 let box: DiceBox | null = null;
 let ready: Promise<void> | null = null;
 let running = false;
-let currentTheme = "white";
+let currentAppearance = "white";
 const queue: QueueEntry[] = [];
 
 function ensureBox(): Promise<void> {
@@ -193,9 +194,17 @@ async function drain(): Promise<void> {
 
     while ((entry = queue.shift())) {
       try {
-        if (entry.theme !== currentTheme) {
-          await box!.updateConfig({ theme_colorset: entry.theme });
-          currentTheme = entry.theme;
+        if (entry.theme !== currentAppearance) {
+          const customization = decodeDiceCustomization(entry.theme);
+          if (customization) {
+            await applyDiceBoxCustomization(box!, customization);
+          } else {
+            await box!.updateConfig({
+              theme_customColorset: null,
+              theme_colorset: entry.theme || "white",
+            });
+          }
+          currentAppearance = entry.theme;
         }
 
         // If the tab loses visibility mid-roll the physics stalls; don't let
