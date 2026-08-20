@@ -202,6 +202,11 @@ const DND_RENAMES: Record<string, [string, string]> = {
 };
 
 export default function DMGuide({ campaignId, system }: Props) {
+  const roleWord = system === "remnant" ? "GM" : "DM";
+  const roleText = (value: string) =>
+    system === "remnant"
+      ? value.replace(/\bco-DM\b/g, "Co-GM").replace(/\bDM\b/g, "GM")
+      : value;
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"library" | "tour" | "section">("library");
   const [tourIndex, setTourIndex] = useState(0);
@@ -212,7 +217,15 @@ export default function DMGuide({ campaignId, system }: Props) {
     () =>
       REMNANT_SECTIONS.map((section) => {
         const rename = system === "dnd5e" ? DND_RENAMES[section.id] : undefined;
-        return rename ? { ...section, title: rename[0], summary: rename[1] } : section;
+        const base = rename ? { ...section, title: rename[0], summary: rename[1] } : section;
+        if (system !== "remnant") return base;
+        return {
+          ...base,
+          title: roleText(base.title),
+          summary: roleText(base.summary),
+          steps: base.steps.map(roleText),
+          tips: base.tips?.map(roleText),
+        };
       }),
     [system]
   );
@@ -267,7 +280,12 @@ export default function DMGuide({ campaignId, system }: Props) {
     setMode("section");
   };
 
-  const step = QUICK_STEPS[tourIndex];
+  const rawStep = QUICK_STEPS[tourIndex];
+  const step = {
+    ...rawStep,
+    title: roleText(rawStep.title),
+    body: roleText(rawStep.body),
+  };
 
   return (
     <>
@@ -279,10 +297,10 @@ export default function DMGuide({ campaignId, system }: Props) {
             setMode("library");
             setOpen(true);
           }}
-          title="Open the DM guide"
+          title={`Open the ${roleWord} guide`}
         >
           <span>?</span>
-          DM Guide
+          {roleWord} Guide
         </button>
       )}
 
@@ -292,7 +310,7 @@ export default function DMGuide({ campaignId, system }: Props) {
             className="dm-guide-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="DM Guide"
+            aria-label={`${roleWord} Guide`}
             onMouseDown={(event) => event.stopPropagation()}
           >
             <header className="dm-guide-header">
@@ -300,10 +318,10 @@ export default function DMGuide({ campaignId, system }: Props) {
                 <span className="eyebrow">Vivid Realms Field Manual</span>
                 <h2>
                   {mode === "tour"
-                    ? "DM Quick Start"
+                    ? `${roleWord} Quick Start`
                     : mode === "section"
                       ? activeSection.title
-                      : "DM Guide"}
+                      : `${roleWord} Guide`}
                 </h2>
               </div>
               <button type="button" className="ghost dm-guide-close" onClick={closeGuide} aria-label="Close guide">

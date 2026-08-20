@@ -6,6 +6,7 @@ import { getIo } from "./realtime.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const MAX_BODY = 4000;
+const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 
 export interface ChatMessage {
   id: number;
@@ -15,7 +16,7 @@ export interface ChatMessage {
   channel: "ic" | "ooc" | "whisper";
   targetUserId: number | null;
   targetName: string | null;
-  speaker: string; // character name for IC messages
+  speaker: string;
   body: string;
   createdAt: string;
 }
@@ -82,13 +83,25 @@ chatRouter.post("/:id/messages", (req, res) => {
         ?.display_name ?? null;
   }
 
-  // IC messages speak as your character, if you have one here.
   let speaker = "";
   if (channel === "ic") {
-    const c = db
-      .prepare("SELECT name FROM characters WHERE campaign_id = ? AND user_id = ? ORDER BY id LIMIT 1")
-      .get(campaignId, user(req).id) as any;
-    speaker = c?.name ?? "";
+    if (isDMRole(role) && req.body?.speakerAsGm === true) {
+      speaker = "GM";
+    } else if (isDMRole(role) && Number.isInteger(Number(req.body?.speakerCharacterId))) {
+      const speakerCharacterId = Number(req.body.speakerCharacterId);
+      const selected = db
+        .prepare("SELECT name FROM characters WHERE id = ? AND campaign_id = ?")
+        .get(speakerCharacterId, campaignId) as any;
+      if (!selected) {
+        return res.status(400).json({ error: "That character is not in this campaign." });
+      }
+      speaker = selected.name;
+    } else {
+      const c = db
+        .prepare("SELECT name FROM characters WHERE campaign_id = ? AND user_id = ? ORDER BY id LIMIT 1")
+        .get(campaignId, user(req).id) as any;
+      speaker = c?.name ?? "";
+    }
   }
 
   const info = db
@@ -111,7 +124,6 @@ chatRouter.post("/:id/messages", (req, res) => {
     createdAt: new Date().toISOString(),
   };
 
-  // Whispers go only to sockets belonging to the sender or the target.
   const io = getIo();
   const room = io.sockets.adapter.rooms.get(`campaign:${campaignId}`) ?? new Set<string>();
   for (const socketId of room) {

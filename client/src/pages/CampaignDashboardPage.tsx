@@ -86,6 +86,7 @@ export default function CampaignDashboardPage() {
   const [rolls, setRolls] = useState<RollPayload[]>([]);
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messagesReady, setMessagesReady] = useState(false);
   const [codexRefresh, setCodexRefresh] = useState(0);
   const [error, setError] = useState("");
   const serverClockOffsetRef = useRef(0);
@@ -112,8 +113,11 @@ export default function CampaignDashboardPage() {
     loadDetail();
     api<{ rolls: RollPayload[] }>(`/api/campaigns/${campaignId}/rolls`).then((r) => setRolls(r.rolls)).catch(() => {});
     api<{ messages: ChatMessage[] }>(`/api/campaigns/${campaignId}/messages`)
-      .then((r) => setMessages(r.messages))
-      .catch(() => {});
+      .then((r) => {
+        setMessages(r.messages);
+        setMessagesReady(true);
+      })
+      .catch(() => setMessagesReady(true));
     loadCharacters();
   }, [campaignId, loadCharacters, loadDetail]);
 
@@ -174,10 +178,16 @@ export default function CampaignDashboardPage() {
   );
 
   const sendChat = useCallback(
-    async (body: string, channel: "ic" | "ooc" | "whisper", targetUserId?: number) => {
+    async (
+      body: string,
+      channel: "ic" | "ooc" | "whisper",
+      targetUserId?: number,
+      speakerCharacterId?: number,
+      speakerAsGm?: boolean
+    ) => {
       await api(`/api/campaigns/${campaignId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ body, channel, targetUserId }),
+        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm }),
       });
     },
     [campaignId]
@@ -274,12 +284,13 @@ export default function CampaignDashboardPage() {
       characters,
       rolls,
       messages,
+      messagesReady,
       myCharacterId,
       codexRefresh,
       doRoll,
       sendChat,
     };
-  }, [detail, user, campaignId, system, isDM, canWrite, online, characters, rolls, messages, myCharacterId, codexRefresh, doRoll, sendChat]);
+  }, [detail, user, campaignId, system, isDM, canWrite, online, characters, rolls, messages, messagesReady, myCharacterId, codexRefresh, doRoll, sendChat]);
 
   if (error) return <div className="page-center error">{error}</div>;
   if (!detail || !ctx) return <div className="page-center muted">Loading…</div>;
@@ -349,7 +360,15 @@ export default function CampaignDashboardPage() {
           view={themeView}
           onCampaignThemeChange={updateCampaignTheme}
         />
-        <span className={`badge role-${detail.yourRole}`}>{detail.yourRole.toUpperCase()}</span>
+        <span className={`badge role-${detail.yourRole}`}>
+          {isRemnant
+            ? detail.yourRole === "dm"
+              ? "GM"
+              : detail.yourRole === "co-dm"
+                ? "CO-GM"
+                : detail.yourRole.toUpperCase()
+            : detail.yourRole.toUpperCase()}
+        </span>
       </header>
 
       <Grid

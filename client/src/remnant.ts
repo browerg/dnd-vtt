@@ -139,6 +139,7 @@ export const SEMBLANCE_TYPES = [
   "Restoration",
   "Perception",
   "Binding",
+  "Custom",
 ] as const;
 export const SEMBLANCE_SCOPES = [
   { key: "Personal", mult: 1 },
@@ -205,6 +206,7 @@ export interface RemnantData {
     name: string;
     undiscovered: boolean;
     type: string;
+    customType?: string;
     scope: string;
     intensity: string;
     duration: string;

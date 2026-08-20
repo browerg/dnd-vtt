@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ChatMessage, Member } from "../api";
+import type { CharacterSummary } from "../sheet";
 import { Avatar } from "./Avatar";
 
 type Tab = "ic" | "ooc" | "whisper";
@@ -12,19 +13,43 @@ const TABS: { key: Tab; label: string }[] = [
 
 interface Props {
   messages: ChatMessage[];
+  messagesReady: boolean;
   members: Member[];
+  characters: CharacterSummary[];
   myId: number;
   canChat: boolean;
-  onSend: (body: string, channel: Tab, targetUserId?: number) => Promise<void>;
+  isDM: boolean;
+  onSend: (
+    body: string,
+    channel: Tab,
+    targetUserId?: number,
+    speakerCharacterId?: number,
+    speakerAsGm?: boolean
+  ) => Promise<void>;
 }
 
-export default function ChatPanel({ messages, members, myId, canChat, onSend }: Props) {
+export default function ChatPanel({
+  messages,
+  messagesReady,
+  members,
+  characters,
+  myId,
+  canChat,
+  isDM,
+  onSend,
+}: Props) {
   const [tab, setTab] = useState<Tab>("ooc");
   const [draft, setDraft] = useState("");
   const [target, setTarget] = useState(0);
+  const [speakerChoice, setSpeakerChoice] = useState("gm");
   const [error, setError] = useState("");
+  const [unread, setUnread] = useState<Record<Tab, number>>({ ic: 0, ooc: 0, whisper: 0 });
+  const [notice, setNotice] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatLogRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
+  const lastMessageIdRef = useRef(0);
+  const noticeTimerRef = useRef<number>();
 
   const shown = messages.filter((m) => m.channel === tab);
   const others = members.filter((m) => m.id !== myId);
@@ -35,12 +60,75 @@ export default function ChatPanel({ messages, members, myId, canChat, onSend }: 
     log.scrollTop = log.scrollHeight;
   }, [shown.length, tab]);
 
+  useEffect(() => {
+    if (!messagesReady) return;
+
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      lastMessageIdRef.current = messages.reduce((max, message) => Math.max(max, message.id), 0);
+      return;
+    }
+
+    const fresh = messages.filter((message) => message.id > lastMessageIdRef.current);
+    if (!fresh.length) return;
+    lastMessageIdRef.current = Math.max(lastMessageIdRef.current, ...fresh.map((message) => message.id));
+
+    const incoming = fresh.filter((message) => message.userId !== myId);
+    if (!incoming.length) return;
+
+    const additions: Record<Tab, number> = { ic: 0, ooc: 0, whisper: 0 };
+    for (const message of incoming) {
+      if (message.channel !== tab) additions[message.channel] += 1;
+    }
+
+    if (additions.ic || additions.ooc || additions.whisper) {
+      setUnread((current) => ({
+        ic: current.ic + additions.ic,
+        ooc: current.ooc + additions.ooc,
+        whisper: current.whisper + additions.whisper,
+      }));
+    }
+
+    const newest = incoming[incoming.length - 1];
+    if (newest.channel !== tab) {
+      const label =
+        newest.channel === "ic"
+          ? "In Character"
+          : newest.channel === "whisper"
+            ? "Whisper"
+            : "Out of Character";
+      setNotice(`New ${label} message from ${newest.speaker || newest.userName}`);
+      window.clearTimeout(noticeTimerRef.current);
+      noticeTimerRef.current = window.setTimeout(() => setNotice(""), 3500);
+    }
+  }, [messages, messagesReady, myId, tab]);
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(noticeTimerRef.current);
+    },
+    []
+  );
+
+  const selectTab = (next: Tab) => {
+    setTab(next);
+    setUnread((current) => ({ ...current, [next]: 0 }));
+    setNotice("");
+  };
+
   const send = async (e: FormEvent) => {
     e.preventDefault();
     if (!draft.trim()) return;
     setError("");
     try {
-      await onSend(draft, tab, tab === "whisper" ? target || others[0]?.id : undefined);
+      const whisperTarget = tab === "whisper" ? target || others[0]?.id : undefined;
+      const speakerAsGm = tab === "ic" && isDM && speakerChoice === "gm";
+      const speakerCharacterId =
+        tab === "ic" && isDM && speakerChoice !== "gm"
+          ? Number(speakerChoice) || undefined
+          : undefined;
+
+      await onSend(draft, tab, whisperTarget, speakerCharacterId, speakerAsGm);
       setDraft("");
     } catch (err: any) {
       setError(err.message);
@@ -49,13 +137,26 @@ export default function ChatPanel({ messages, members, myId, canChat, onSend }: 
 
   return (
     <div className="chat-panel">
+      {notice && (
+        <div className="chat-unread-toast" role="status" aria-live="polite">
+          <span className="chat-unread-pip" />
+          {notice}
+        </div>
+      )}
+
       <div className="tabs chat-tabs">
         {TABS.map(({ key, label }) => (
-          <button key={key} className={tab === key ? "tab active" : "tab"} onClick={() => setTab(key)}>
+          <button key={key} className={tab === key ? "tab active" : "tab"} onClick={() => selectTab(key)}>
             {label}
+            {unread[key] > 0 && (
+              <span className={key === "whisper" ? "chat-tab-unread whisper" : "chat-tab-unread"}>
+                {unread[key] > 99 ? "99+" : unread[key]}
+              </span>
+            )}
           </button>
         ))}
       </div>
+
       <div className="chat-log" ref={chatLogRef}>
         {shown.length === 0 && <p className="muted">Nothing here yet.</p>}
         {shown.map((m) => (
@@ -85,8 +186,24 @@ export default function ChatPanel({ messages, members, myId, canChat, onSend }: 
         ))}
         <div ref={bottomRef} />
       </div>
+
       {canChat && (
         <form onSubmit={send} className="chat-compose">
+          {tab === "ic" && isDM && (
+            <label className="ic-speaker-control">
+              <span>Speaking as</span>
+              <select value={speakerChoice} onChange={(e) => setSpeakerChoice(e.target.value)}>
+                <option value="gm">GM</option>
+                {characters.map((character) => (
+                  <option key={character.id} value={character.id}>
+                    {character.isNpc ? "NPC: " : "Character: "}
+                    {character.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
           {tab === "whisper" && (
             <select value={target || others[0]?.id || 0} onChange={(e) => setTarget(Number(e.target.value))}>
               {others.map((m) => (
@@ -96,14 +213,24 @@ export default function ChatPanel({ messages, members, myId, canChat, onSend }: 
               ))}
             </select>
           )}
+
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={tab === "ic" ? "Speak as your character…" : "Say something…"}
+            placeholder={
+              tab === "ic"
+                ? isDM
+                  ? speakerChoice === "gm"
+                    ? "Speak as the GM…"
+                    : "Speak as the selected character…"
+                  : "Speak as your character…"
+                : "Say something…"
+            }
           />
           <button className="primary">Send</button>
         </form>
       )}
+
       {error && <div className="error">{error}</div>}
     </div>
   );

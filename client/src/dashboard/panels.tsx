@@ -34,6 +34,7 @@ export interface PanelCtx {
   characters: CharacterSummary[];
   rolls: RollPayload[];
   messages: ChatMessage[];
+  messagesReady: boolean;
   myCharacterId: number | null;
   codexRefresh: number;
   doRoll: (body: {
@@ -44,7 +45,13 @@ export interface PanelCtx {
     manual?: boolean;
     total?: number;
   }) => Promise<void>;
-  sendChat: (body: string, channel: "ic" | "ooc" | "whisper", targetUserId?: number) => Promise<void>;
+  sendChat: (
+    body: string,
+    channel: "ic" | "ooc" | "whisper",
+    targetUserId?: number,
+    speakerCharacterId?: number,
+    speakerAsGm?: boolean
+  ) => Promise<void>;
 }
 
 export interface PanelDef {
@@ -250,9 +257,12 @@ export const PANELS: PanelDef[] = [
     render: (ctx) => (
       <ChatPanel
         messages={ctx.messages}
+        messagesReady={ctx.messagesReady}
         members={ctx.members}
+        characters={ctx.characters}
         myId={ctx.myId}
         canChat={ctx.canWrite}
+        isDM={ctx.isDM}
         onSend={ctx.sendChat}
       />
     ),

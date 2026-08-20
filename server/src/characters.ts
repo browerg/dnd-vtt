@@ -1,6 +1,6 @@
 import { Router, type Request } from "express";
 import multer from "multer";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomInt } from "node:crypto";
 import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { db, uploadsDir } from "./db.js";
@@ -79,6 +79,7 @@ function remnantDefaultData() {
       name: "",
       undiscovered: false,
       type: "Enhancement",
+      customType: "",
       scope: "Personal",
       intensity: "Minor",
       duration: "Instant",
@@ -301,6 +302,87 @@ charactersRouter.put("/:id/characters/:charId", (req, res) => {
       character: { ...toPayload({ ...row, name, data: json }), updatedAt: new Date().toISOString() },
     });
   res.json({ ok: true });
+});
+
+const SHORT_REST_AURA_FRACTION: Record<string, number> = {
+  Initiate: 1 / 3,
+  Huntsman: 1 / 2,
+  Specialist: 2 / 3,
+  "Legendary Huntsman": 3 / 4,
+};
+
+charactersRouter.post("/:id/characters/:charId/rest", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+
+  const row = getCharacter(Number(req.params.charId), campaignId);
+  if (!row) return res.status(404).json({ error: "Character not found." });
+  if (!canEditCharacter(row, user(req).id, role)) {
+    return res.status(403).json({ error: "Only the character's player or the DM can rest this character." });
+  }
+
+  const kind = req.body?.kind === "full" ? "full" : req.body?.kind === "short" ? "short" : "";
+  if (!kind) return res.status(400).json({ error: "Choose a short or full rest." });
+
+  const data = JSON.parse(row.data) as any;
+  if (data?.system !== "remnant") {
+    return res.status(400).json({ error: "RWBY rest rules only apply to Remnant characters." });
+  }
+
+  const maxHp = Math.max(1, Number(data.maxHp) || Number(data.hp) || 1);
+  const auraMax = Math.max(1, Number(data.auraMax) || Number(data.aura) || 1);
+  const oldHp = Math.max(0, Number(data.hp) || 0);
+  const oldAura = Math.max(0, Number(data.aura) || 0);
+
+  let hp = oldHp;
+  let aura = oldAura;
+  let gritRoll: number | undefined;
+
+  if (kind === "short") {
+    const gritSides = [4, 6, 8, 10, 12].includes(Number(data.attributes?.grit))
+      ? Number(data.attributes.grit)
+      : 6;
+    gritRoll = randomInt(1, gritSides + 1);
+    hp = Math.min(maxHp, oldHp + gritRoll);
+    const fraction = SHORT_REST_AURA_FRACTION[String(data.rank)] ?? 1 / 3;
+    aura = Math.min(auraMax, oldAura + Math.ceil(auraMax * fraction));
+  } else {
+    hp = Math.min(maxHp, oldHp + Math.ceil(maxHp / 2));
+    aura = auraMax;
+  }
+
+  const conditions = Array.isArray(data.conditions) ? data.conditions : [];
+  const conditionsToClear =
+    kind === "full"
+      ? new Set(["Aura Broken", "Downed", "Critically Downed"])
+      : aura > 0
+        ? new Set(["Aura Broken"])
+        : new Set<string>();
+
+  const nextData = {
+    ...data,
+    hp,
+    maxHp,
+    aura,
+    auraMax,
+    conditions: conditions.filter((condition: string) => !conditionsToClear.has(condition)),
+    semblance:
+      kind === "full" && data.semblance
+        ? { ...data.semblance, active: false, maintainedRounds: 0 }
+        : data.semblance,
+  };
+
+  const json = JSON.stringify(nextData);
+  db.prepare("UPDATE characters SET data = ?, updated_at = datetime('now') WHERE id = ?").run(json, row.id);
+  broadcastCharacter(campaignId, row.id, user(req).id);
+
+  res.json({
+    data: nextData,
+    hpRecovered: hp - oldHp,
+    auraRecovered: aura - oldAura,
+    gritRoll,
+  });
 });
 
 const DUST_EFFECTS = new Set([

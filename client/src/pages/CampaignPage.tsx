@@ -41,6 +41,7 @@ export default function CampaignPage() {
   const { user } = useAuth();
   const [detail, setDetail] = useState<CampaignDetail | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messagesReady, setMessagesReady] = useState(false);
   const [editingHub, setEditingHub] = useState(false);
   const [codexRefresh, setCodexRefresh] = useState(0);
   const [online, setOnline] = useState<Set<number>>(new Set());
@@ -73,8 +74,11 @@ export default function CampaignPage() {
       .then((r) => setRolls(r.rolls))
       .catch(() => {});
     api<{ messages: ChatMessage[] }>(`/api/campaigns/${campaignId}/messages`)
-      .then((r) => setMessages(r.messages))
-      .catch(() => {});
+      .then((r) => {
+        setMessages(r.messages);
+        setMessagesReady(true);
+      })
+      .catch(() => setMessagesReady(true));
     loadCharacters();
   }, [campaignId, loadCharacters, loadDetail]);
 
@@ -112,10 +116,16 @@ export default function CampaignPage() {
   }, [campaignId, loadCharacters, loadDetail]);
 
   const sendChat = useCallback(
-    async (body: string, channel: "ic" | "ooc" | "whisper", targetUserId?: number) => {
+    async (
+      body: string,
+      channel: "ic" | "ooc" | "whisper",
+      targetUserId?: number,
+      speakerCharacterId?: number,
+      speakerAsGm?: boolean
+    ) => {
       await api(`/api/campaigns/${campaignId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ body, channel, targetUserId }),
+        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm }),
       });
     },
     [campaignId]
@@ -237,7 +247,15 @@ export default function CampaignPage() {
           view={themeView}
           onCampaignThemeChange={updateCampaignTheme}
         />
-        <span className={`badge role-${detail.yourRole}`}>{detail.yourRole.toUpperCase()}</span>
+        <span className={`badge role-${detail.yourRole}`}>
+          {detail.campaign.system === "remnant"
+            ? detail.yourRole === "dm"
+              ? "GM"
+              : detail.yourRole === "co-dm"
+                ? "CO-GM"
+                : detail.yourRole.toUpperCase()
+            : detail.yourRole.toUpperCase()}
+        </span>
       </header>
       <main className="content columns">
         <div className="column">
@@ -371,9 +389,12 @@ export default function CampaignPage() {
             <h3>Chat</h3>
             <ChatPanel
               messages={messages}
+              messagesReady={messagesReady}
               members={detail.members}
+              characters={characters}
               myId={user?.id ?? 0}
               canChat={canRoll}
+              isDM={isDM}
               onSend={sendChat}
             />
           </section>

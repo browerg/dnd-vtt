@@ -263,6 +263,7 @@ export default function BestiaryPage() {
   const [campaignSession, setCampaignSession] = useState(0);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
+  const [showDndCreatures, setShowDndCreatures] = useState(false);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [grimmDraft, setGrimmDraft] = useState<GrimmDraft | null>(null);
@@ -368,6 +369,11 @@ export default function BestiaryPage() {
   const set = (patch: Partial<Draft>) => setDraft((d) => (d ? { ...d, ...patch } : d));
   const setG = (patch: Partial<GrimmDraft>) => setGrimmDraft((d) => (d ? { ...d, ...patch } : d));
 
+  const visibleHits =
+    system === "remnant" && !showDndCreatures
+      ? hits.filter((hit) => hit.system === "remnant")
+      : hits;
+
   const prepareMonster = async (monsterId: number) => {
     setError("");
     setNotice("");
@@ -444,8 +450,21 @@ export default function BestiaryPage() {
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
             />
+            {system === "remnant" && (
+              <label className="bestiary-system-toggle">
+                <span>
+                  <strong>Show D&D Creatures</strong>
+                  <small>Include 5e/SRD creatures alongside the Grimm archive.</small>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={showDndCreatures}
+                  onChange={(event) => setShowDndCreatures(event.target.checked)}
+                />
+              </label>
+            )}
             <div className="bestiary-list">
-              {hits.map((h) => (
+              {visibleHits.map((h) => (
                 <button key={h.id} className="bestiary-row" onClick={() => open(h.id)}>
                   <span className="mon-hit">
                     {h.name}{" "}
@@ -460,7 +479,13 @@ export default function BestiaryPage() {
                   </span>
                 </button>
               ))}
-              {hits.length === 0 && <p className="muted">No monsters match.</p>}
+              {visibleHits.length === 0 && (
+                <p className="muted">
+                  {system === "remnant" && !showDndCreatures
+                    ? "No Grimm match. Turn on Show D&D Creatures to include 5e entries."
+                    : "No monsters match."}
+                </p>
+              )}
             </div>
           </section>
         </div>

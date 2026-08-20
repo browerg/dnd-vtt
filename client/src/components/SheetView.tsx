@@ -24,6 +24,13 @@ interface Props {
   characterId: number;
 }
 
+interface RestResponse {
+  data: Character["data"];
+  hpRecovered: number;
+  auraRecovered: number;
+  gritRoll?: number;
+}
+
 // The character sheet, minus any page chrome — load, autosave, live sync, and
 // click-to-roll all self-contained so it can live on a full page OR inside a
 // dashboard panel. Extracted from CharacterSheetPage.
@@ -158,6 +165,19 @@ export default function SheetView({ campaignId, characterId }: Props) {
     });
   };
 
+  const performRest = async (kind: "short" | "full") => {
+    const result = await api<RestResponse>(
+      `/api/campaigns/${campaignId}/characters/${characterId}/rest`,
+      {
+        method: "POST",
+        body: JSON.stringify({ kind }),
+      }
+    );
+    dirtyRef.current = false;
+    setSaveState("saved");
+    setCharacter((prev) => (prev ? { ...prev, data: result.data } : prev));
+    return result;
+  };
 
   // vivid-dust-token-effects
   const triggerDustEffect = async (effect: string) => {
@@ -249,6 +269,7 @@ export default function SheetView({ campaignId, characterId }: Props) {
           ro={ro}
           update={update}
           roll={roll}
+          onRest={performRest}
           onUpload={(file) => uploadItemImage(campaignId, characterId, file)}
           onDustEffect={triggerDustEffect}
         />

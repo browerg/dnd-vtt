@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ACADEMIES,
   ARCHETYPES,
@@ -37,6 +38,9 @@ interface Props {
     label: string,
     mode?: "normal" | "edge" | "setback"
   ) => void;
+  onRest?: (
+    kind: "short" | "full"
+  ) => Promise<{ hpRecovered: number; auraRecovered: number; gritRoll?: number }>;
   onUpload?: (file: File) => Promise<string>;
   onDustEffect?: (effect: string) => void;
 }
@@ -46,12 +50,20 @@ const num = (v: string, fallback = 0) => {
   return Number.isNaN(n) ? fallback : n;
 };
 
-export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDustEffect }: Props) {
+const formLabel = (index: number) => String.fromCharCode(65 + Math.max(0, index));
+
+export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUpload, onDustEffect }: Props) {
   const tb = trainingBonus(d.rank);
   const auraMax = auraMaxFor(d);
   const hpMax = hpMaxFor(d);
   const dr = defenseRating(d);
   const cost = semblanceCost(d);
+  const [restDialog, setRestDialog] = useState<{
+    kind: "short" | "full";
+    result?: { hpRecovered: number; auraRecovered: number; gritRoll?: number };
+    error?: string;
+  } | null>(null);
+  const [restBusy, setRestBusy] = useState(false);
 
   // Any change that can move the computed maxima re-mirrors them into the data
   // so map tokens (which read hp/maxHp/aura/auraMax) stay honest.
@@ -330,7 +342,136 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
             <span className="vital-value">2d10+d{attrDie("finesse")}</span>
           </button>
         </div>
-        {d.aura === 0 && <div className="aura-broken-banner">⚠ AURA BROKEN — shield down, Semblance locked</div>}
+        {!ro && onRest && (
+          <div className="remnant-rest-actions">
+            <div>
+              <strong>Recovery</strong>
+              <span className="muted small">Rest using the RWBY recovery rules.</span>
+            </div>
+            <span className="spacer" />
+            <button
+              type="button"
+              className="ghost mini"
+              onClick={() => setRestDialog({ kind: "short" })}
+            >
+              Short Rest
+            </button>
+            <button
+              type="button"
+              className="primary mini"
+              onClick={() => setRestDialog({ kind: "full" })}
+            >
+              Full Rest
+            </button>
+          </div>
+        )}
+
+        {restDialog && (
+          <div
+            className="rest-modal-backdrop"
+            role="presentation"
+            onMouseDown={() => !restBusy && setRestDialog(null)}
+          >
+            <section
+              className="rest-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="rest-modal-title"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <div className="rest-modal-visual" aria-hidden="true">
+                <img src="/assets/campfirerest.gif" alt="" />
+                <span className="rest-modal-glow" />
+              </div>
+
+              <div className="rest-modal-content">
+                <span className="rest-modal-kicker">FIELD RECOVERY</span>
+                <h2 id="rest-modal-title">
+                  {restDialog.result
+                    ? `${restDialog.kind === "short" ? "Short" : "Full"} Rest Complete`
+                    : `Take a ${restDialog.kind === "short" ? "Short" : "Full"} Rest?`}
+                </h2>
+
+                {!restDialog.result && !restDialog.error && (
+                  <p>
+                    {restDialog.kind === "short"
+                      ? "Recover HP by rolling your Grit die and restore Aura based on your current rank."
+                      : "Recover half your maximum HP and restore your Aura to full."}
+                  </p>
+                )}
+
+                {restDialog.result && (
+                  <div className="rest-result-grid">
+                    <div>
+                      <span>HP recovered</span>
+                      <strong>+{restDialog.result.hpRecovered}</strong>
+                    </div>
+                    <div>
+                      <span>Aura recovered</span>
+                      <strong>+{restDialog.result.auraRecovered}</strong>
+                    </div>
+                    {restDialog.result.gritRoll !== undefined && (
+                      <div>
+                        <span>Grit roll</span>
+                        <strong>{restDialog.result.gritRoll}</strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {restDialog.error && (
+                  <div className="error">{restDialog.error}</div>
+                )}
+
+                <div className="rest-modal-actions">
+                  {!restDialog.result && (
+                    <button
+                      type="button"
+                      className="ghost"
+                      disabled={restBusy}
+                      onClick={() => setRestDialog(null)}
+                    >
+                      Not yet
+                    </button>
+                  )}
+                  <span className="spacer" />
+                  {restDialog.result ? (
+                    <button
+                      type="button"
+                      className="primary"
+                      onClick={() => setRestDialog(null)}
+                    >
+                      Return to sheet
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={restBusy}
+                      onClick={async () => {
+                        if (!onRest) return;
+                        setRestBusy(true);
+                        try {
+                          const result = await onRest(restDialog.kind);
+                          setRestDialog({ kind: restDialog.kind, result });
+                        } catch (error: any) {
+                          setRestDialog({
+                            kind: restDialog.kind,
+                            error: error?.message ?? "Rest could not be completed.",
+                          });
+                        } finally {
+                          setRestBusy(false);
+                        }
+                      }}
+                    >
+                      {restBusy ? "Resting..." : "Begin Rest"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
+          </div>
+        )}        {d.aura === 0 && <div className="aura-broken-banner">⚠ AURA BROKEN — shield down, Semblance locked</div>}
         {d.hp === 0 &&
           !d.conditions.includes("Downed") &&
           !d.conditions.includes("Critically Downed") && (
@@ -501,7 +642,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
               <div className="combat-active-weapon-title">
                 <span>Active Weapon Form</span>
                 <strong>
-                  {form?.type || `Form ${formIndex === 0 ? "A" : "B"}`}
+                  {form?.type || `Form ${formLabel(formIndex)}`}
                 </strong>
                 <small>{form?.range || "Close"} range</small>
               </div>
@@ -513,8 +654,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                   onClick={() =>
                     roll(
                       attackFormula,
-                      `${name}: ${form?.type || "Weapon"} Attack`,
-                      "normal"
+                      `${name}: ${form?.type || "Weapon"} Attack`
                     )
                   }
                 >
@@ -527,8 +667,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                   onClick={() =>
                     roll(
                       damageFormula,
-                      `${name}: ${form?.type || "Weapon"} Damage`,
-                      "normal"
+                      `${name}: ${form?.type || "Weapon"} Damage`
                     )
                   }
                 >
@@ -872,14 +1011,35 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
               <div key={i} className={`trait-row weapon-form${d.activeForm === i ? " active-form" : ""}`}>
                 <div className="row-between">
                   <strong className="small">
-                    Form {i === 0 ? "A" : "B"}
+                    Form {formLabel(i)}
                     {d.activeForm === i && <span className="badge src-custom">active</span>}
                   </strong>
-                  {!ro && d.activeForm !== i && (
-                    <button className="ghost mini" onClick={() => update({ activeForm: i })}>
-                      Transform (Bonus Action)
-                    </button>
-                  )}
+                  <div className="weapon-form-actions">
+                    {!ro && d.activeForm !== i && (
+                      <button className="ghost mini" onClick={() => update({ activeForm: i })}>
+                        Transform (Bonus Action)
+                      </button>
+                    )}
+                    {!ro && d.weaponForms.length > 1 && (
+                      <button
+                        type="button"
+                        className="ghost mini danger"
+                        onClick={() => {
+                          if (!window.confirm(`Remove Form ${formLabel(i)}?`)) return;
+                          const nextForms = d.weaponForms.filter((_, index) => index !== i);
+                          const nextActive =
+                            d.activeForm === i
+                              ? Math.max(0, Math.min(i, nextForms.length - 1))
+                              : d.activeForm > i
+                                ? d.activeForm - 1
+                                : d.activeForm;
+                          update({ weaponForms: nextForms, activeForm: nextActive });
+                        }}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="row-between">
                   <input
@@ -964,7 +1124,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                     const mainAttrName =
                       REMNANT_ATTRIBUTES.find((attribute) => attribute.key === mainAttrKey)?.name ??
                       "Main Attribute";
-                    const formName = form.type || `Form ${i === 0 ? "A" : "B"}`;
+                    const formName = form.type || `Form ${formLabel(i)}`;
                     const attackFormula = remnantCheckFormula(attackAttrDie, tb);
                     const damageFormula = [
                       `1d${form.damage}`,
@@ -1018,7 +1178,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                           className="ghost mini weapon-damage-roll"
                           title="Weapon die + optional style die + main attribute die"
                           onClick={() =>
-                            roll(damageFormula, `${name}: ${formName} damage`, "normal")
+                            roll(damageFormula, `${name}: ${formName} damage`)
                           }
                         >
                           Damage ({`d${form.damage}`}
@@ -1031,6 +1191,26 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 </div>
               </div>
             ))}
+            {!ro && (
+              <div className="weapon-add-form-row">
+                <button
+                  type="button"
+                  className="ghost"
+                  disabled={d.weaponForms.length >= 6}
+                  onClick={() =>
+                    update({
+                      weaponForms: [
+                        ...d.weaponForms,
+                        { type: "", range: "Close", damage: 8, styleDie: 0, special: "" },
+                      ],
+                    })
+                  }
+                >
+                  + Add Weapon Form
+                </button>
+                <span className="muted small">{d.weaponForms.length}/6 forms</span>
+              </div>
+            )}
           </details>
 
           {/* semblance */}
@@ -1090,6 +1270,18 @@ export default function RemnantSheet({ name, d, ro, update, roll, onUpload, onDu
                 </select>
               ))}
             </div>
+            {d.semblance.type === "Custom" && (
+              <input
+                placeholder="Custom Semblance type / concept"
+                value={d.semblance.customType ?? ""}
+                disabled={ro}
+                onChange={(e) =>
+                  update({
+                    semblance: { ...d.semblance, customType: e.target.value },
+                  })
+                }
+              />
+            )}
             <textarea
               rows={2}
               placeholder="Description & effect"

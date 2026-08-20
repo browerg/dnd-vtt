@@ -65,7 +65,7 @@ export default function NPCPanel({ ctx }: { ctx: PanelCtx }) {
   };
 
   const deleteNpc = async (id: number, name: string) => {
-    if (!window.confirm(`Delete NPC â€œ${name}â€? This removes its sheet for good.`)) return;
+    if (!window.confirm(`Delete NPC "${name}"? This removes its sheet for good.`)) return;
     setSelectedId(null);
     await api(`/api/campaigns/${campaignId}/characters/${id}`, {
       method: "DELETE",
@@ -95,7 +95,7 @@ export default function NPCPanel({ ctx }: { ctx: PanelCtx }) {
                 className="npc-tab-flag"
                 title={`Assigned to ${npc.assignedPlayerIds.length} player${npc.assignedPlayerIds.length === 1 ? "" : "s"}`}
               >
-                ðŸ‘¤{npc.assignedPlayerIds.length}
+                Assigned {npc.assignedPlayerIds.length}
               </span>
             )}
           </button>
@@ -104,7 +104,7 @@ export default function NPCPanel({ ctx }: { ctx: PanelCtx }) {
         {isDM && (
           <span className="npc-new">
             <input
-              placeholder="New NPCâ€¦"
+              placeholder="New NPC..."
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
               onKeyDown={(event) => {
@@ -178,7 +178,7 @@ export default function NPCPanel({ ctx }: { ctx: PanelCtx }) {
       ) : (
         <p className="muted npc-empty">
           {isDM
-            ? "No NPCs yet â€” name one above and hit â€œ+ NPCâ€."
+            ? 'No NPCs yet - name one above and hit "+ NPC".'
             : "No NPCs have been assigned to you yet."}
         </p>
       )}
