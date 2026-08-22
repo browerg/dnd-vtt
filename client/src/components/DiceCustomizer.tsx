@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+﻿import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import DiceBox from "@3d-dice/dice-box-threejs";
 import { api } from "../api";
 import { useAuth } from "../App";
@@ -16,7 +16,13 @@ import {
   type DiceNumberStyle,
   type DicePattern,
 } from "../diceCustomization";
-import "./DiceCustomizer.css";
+import {
+  getDiceTrailOptions,
+  getDiceTrailStyle,
+  previewDice,
+  setDiceTrailStyle,
+  type DiceTrailStyle,
+} from "../dice3d";import "./DiceCustomizer.css";
 
 const DICE_TYPES = [4, 6, 8, 10, 12, 20] as const;
 const PREVIEW_ID = "dice-customizer-preview";
@@ -168,6 +174,8 @@ export default function DiceCustomizer() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [trailStyle, setTrailStyle] = useState<DiceTrailStyle>(() => getDiceTrailStyle());
+  const [trailPreviewing, setTrailPreviewing] = useState(false);
 
   const [presets, setPresets] = useState<DicePreset[]>([]);
   const [presetsLoading, setPresetsLoading] = useState(true);
@@ -377,7 +385,7 @@ export default function DiceCustomizer() {
     try {
       await equipTheme(
         encodeDiceCustomization(settings),
-        "Equipped — this appearance now follows your whole dice set and your live rolls."
+        "Equipped â€” this appearance now follows your whole dice set and your live rolls."
       );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not equip your dice.");
@@ -406,7 +414,7 @@ export default function DiceCustomizer() {
         setPresets((current) => [...current, response.preset]);
         setEditingPresetId(response.preset.id);
         setPresetName(response.preset.name);
-        setNotice(`Saved “${response.preset.name}” to My Dice.`);
+        setNotice(`Saved â€œ${response.preset.name}â€ to My Dice.`);
       } else {
         const response = await api<{ preset: DicePreset }>(
           `/api/auth/me/dice-presets/${editingPresetId}`,
@@ -419,7 +427,7 @@ export default function DiceCustomizer() {
           current.map((preset) => (preset.id === response.preset.id ? response.preset : preset))
         );
         setPresetName(response.preset.name);
-        setNotice(`Updated “${response.preset.name}”.`);
+        setNotice(`Updated â€œ${response.preset.name}â€.`);
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not save this preset.");
@@ -438,7 +446,7 @@ export default function DiceCustomizer() {
     setSettings(customization);
     setPresetName(preset.name);
     setEditingPresetId(preset.id);
-    setNotice(`Editing “${preset.name}”.`);
+    setNotice(`Editing â€œ${preset.name}â€.`);
     setError("");
   };
 
@@ -454,7 +462,7 @@ export default function DiceCustomizer() {
     clearMessages();
 
     try {
-      await equipTheme(preset.theme, `Equipped “${preset.name}”.`);
+      await equipTheme(preset.theme, `Equipped â€œ${preset.name}â€.`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not equip this preset.");
     } finally {
@@ -463,7 +471,7 @@ export default function DiceCustomizer() {
   };
 
   const deletePreset = async (preset: DicePreset) => {
-    if (!window.confirm(`Delete “${preset.name}” from My Dice?`)) return;
+    if (!window.confirm(`Delete â€œ${preset.name}â€ from My Dice?`)) return;
 
     setPresetBusy(true);
     clearMessages();
@@ -475,7 +483,7 @@ export default function DiceCustomizer() {
         setEditingPresetId(null);
         setPresetName("");
       }
-      setNotice(`Deleted “${preset.name}”.`);
+      setNotice(`Deleted â€œ${preset.name}â€.`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not delete this preset.");
     } finally {
@@ -527,6 +535,32 @@ export default function DiceCustomizer() {
 
   const atPresetLimit = presets.length >= MAX_PRESETS && editingPresetId === null;
   const patternDisabled = settings.pattern === "none";
+  const trailOptions = getDiceTrailOptions();
+  const devCosmeticsUnlocked = import.meta.env.DEV;
+
+  const selectTrail = (style: DiceTrailStyle) => {
+    setTrailStyle(style);
+    setDiceTrailStyle(style);
+    setNotice(`Selected ${trailOptions.find((option) => option.value === style)?.label ?? "dice trail"}.`);
+    setError("");
+  };
+
+  const previewSelectedTrail = async () => {
+    setTrailPreviewing(true);
+    clearMessages();
+
+    try {
+      setDiceTrailStyle(trailStyle);
+      await previewDice(encodeDiceCustomization(settings));
+      setNotice(
+        `Previewed ${trailOptions.find((option) => option.value === trailStyle)?.label ?? "dice trail"}.`
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not preview this dice trail.");
+    } finally {
+      setTrailPreviewing(false);
+    }
+  };
 
   return (
     <section className="card dice-customizer-card">
@@ -550,7 +584,7 @@ export default function DiceCustomizer() {
         aria-label={`Floating 3D D${sides} preview. Drag to rotate the die.`}
       >
         <span id={PREVIEW_ID} className="dice-customizer-canvas" aria-hidden />
-        {!previewReady && <span className="dice-customizer-loading">Loading 3D die…</span>}
+        {!previewReady && <span className="dice-customizer-loading">Loading 3D dieâ€¦</span>}
         <span className="dice-customizer-inspect">Drag to spin</span>
         <span className="dice-customizer-auto">Slow auto-rotate</span>
       </div>
@@ -743,7 +777,7 @@ export default function DiceCustomizer() {
           <label className={`dice-customizer-field dice-customizer-range${patternDisabled ? " disabled" : ""}`}>
             <span>
               <strong>Pattern scale</strong>
-              <small>{settings.patternScale.toFixed(1)}×</small>
+              <small>{settings.patternScale.toFixed(1)}Ã—</small>
             </span>
             <input
               type="range"
@@ -759,12 +793,80 @@ export default function DiceCustomizer() {
         </div>
       </div>
 
+      <div className="dice-control-section dice-trail-shop-section">
+        <div className="dice-control-section-title">
+          <div>
+            <h4>Dice trails</h4>
+            <span>Cosmetic effects that follow your dice through the roll</span>
+          </div>
+          {devCosmeticsUnlocked && (
+            <span className="dice-trail-dev-badge">DEV Â· ALL UNLOCKED</span>
+          )}
+        </div>
+
+        <div className="dice-trail-shop-grid">
+          {trailOptions.map((option) => {
+            const selected = trailStyle === option.value;
+            const premium = option.value !== "aura";
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={`dice-trail-shop-card${selected ? " selected" : ""}`}
+                onClick={() => selectTrail(option.value)}
+                aria-pressed={selected}
+              >
+                <span className={`dice-trail-orb dice-trail-orb-${option.value}`} aria-hidden />
+                <span className="dice-trail-shop-copy">
+                  <strong>{option.label}</strong>
+                  <small>
+                    {option.value === "aura"
+                      ? "Starter cosmetic"
+                      : devCosmeticsUnlocked
+                        ? "Unlocked in dev mode"
+                        : premium
+                          ? "Emporium cosmetic"
+                          : "Unlocked"}
+                  </small>
+                </span>
+                <span className={`dice-trail-status${selected ? " selected" : ""}`}>
+                  {selected ? "EQUIPPED" : option.value === "aura" ? "FREE" : devCosmeticsUnlocked ? "FREE" : "SHOP"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="dice-trail-preview-row">
+          <div>
+            <strong>Test the selected trail</strong>
+            <span className="muted small">
+              Throws a live 3D preview using your current dice appearance.
+            </span>
+          </div>
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => void previewSelectedTrail()}
+            disabled={trailPreviewing}
+          >
+            {trailPreviewing ? "Rollingâ€¦" : "Preview trail"}
+          </button>
+        </div>
+
+        <p className="muted small dice-trail-dev-note">
+          {devCosmeticsUnlocked
+            ? "Development mode: every cosmetic is available for testing. Production ownership will be enforced by the server."
+            : "Aura Glow is the starter trail. Premium trails will unlock through The Emporium."}
+        </p>
+      </div>
       <div className="dice-customizer-actions">
         <button type="button" className="ghost" onClick={reset} disabled={saving || presetBusy}>
           Reset
         </button>
         <button type="button" className="primary" onClick={equipCurrent} disabled={saving || presetBusy}>
-          {saving ? "Equipping…" : "Equip current dice"}
+          {saving ? "Equippingâ€¦" : "Equip current dice"}
         </button>
       </div>
 
@@ -806,7 +908,7 @@ export default function DiceCustomizer() {
             disabled={presetBusy || atPresetLimit}
           >
             {presetBusy
-              ? "Saving…"
+              ? "Savingâ€¦"
               : editingPresetId === null
                 ? atPresetLimit
                   ? "5 / 5 saved"
@@ -817,7 +919,7 @@ export default function DiceCustomizer() {
       </div>
 
       {presetsLoading ? (
-        <p className="muted small dice-preset-loading">Loading My Dice…</p>
+        <p className="muted small dice-preset-loading">Loading My Diceâ€¦</p>
       ) : presets.length === 0 ? (
         <div className="dice-preset-empty">
           <strong>No saved dice yet.</strong>
@@ -838,7 +940,7 @@ export default function DiceCustomizer() {
                     <strong>{preset.name}</strong>
                     <span>
                       {customization
-                        ? `${patternLabel(customization.pattern)} · ${customization.finish}`
+                        ? `${patternLabel(customization.pattern)} Â· ${customization.finish}`
                         : "Custom"}
                     </span>
                   </div>
@@ -895,3 +997,4 @@ export default function DiceCustomizer() {
     </section>
   );
 }
+

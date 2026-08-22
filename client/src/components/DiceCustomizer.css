@@ -1,4 +1,4 @@
-.dice-customizer-card {
+﻿.dice-customizer-card {
   overflow: hidden;
 }
 
@@ -484,5 +484,158 @@
 
   .dice-customizer-select-field select {
     min-width: 115px;
+  }
+}
+
+/* Dice trail cosmetics */
+.dice-trail-shop-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.dice-trail-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.dice-trail-shop-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 66px;
+  padding: 10px 11px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, transform .15s ease, background .15s ease;
+}
+
+.dice-trail-shop-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.045);
+}
+
+.dice-trail-shop-card.selected {
+  border-color: rgba(126, 224, 255, .72);
+  background: rgba(82, 187, 220, .09);
+  box-shadow: inset 0 0 24px rgba(82, 187, 220, .06);
+}
+
+.dice-trail-shop-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dice-trail-shop-copy strong {
+  line-height: 1.15;
+}
+
+.dice-trail-shop-copy small {
+  opacity: .62;
+  line-height: 1.15;
+}
+
+.dice-trail-status,
+.dice-trail-dev-badge {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  padding: 4px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+.dice-trail-status {
+  opacity: .65;
+}
+
+.dice-trail-status.selected {
+  opacity: 1;
+  border-color: rgba(126, 224, 255, .55);
+}
+
+.dice-trail-dev-badge {
+  color: #b9f3c8;
+  border-color: rgba(113, 225, 145, .35);
+  background: rgba(63, 160, 91, .1);
+}
+
+.dice-trail-orb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  box-shadow: 0 0 15px currentColor;
+}
+
+.dice-trail-orb-aura {
+  color: rgb(116,231,255);
+  background: radial-gradient(circle at 38% 35%, white 0 7%, rgb(116,231,255) 28%, rgba(116,231,255,.12) 72%);
+}
+
+.dice-trail-orb-ember {
+  color: rgb(255,105,45);
+  background: radial-gradient(circle at 38% 35%, #fff3c8 0 8%, #ff692d 32%, rgba(150,22,0,.18) 74%);
+}
+
+.dice-trail-orb-frost {
+  color: rgb(120,200,255);
+  background: radial-gradient(circle at 38% 35%, white 0 8%, #8fd8ff 30%, rgba(115,195,255,.12) 72%);
+}
+
+.dice-trail-orb-shadow {
+  color: rgb(120,70,185);
+  background: radial-gradient(circle at 38% 35%, #d2b4ff 0 7%, #7846b9 29%, rgba(34,12,60,.22) 74%);
+}
+
+.dice-trail-orb-lightning {
+  color: rgb(155,210,255);
+  background: radial-gradient(circle at 38% 35%, white 0 10%, #9bd2ff 25%, rgba(40,100,180,.16) 70%);
+}
+
+.dice-trail-orb-petals {
+  color: rgb(220,45,95);
+  background: radial-gradient(circle at 38% 35%, #ffd2df 0 8%, #dc2d5f 31%, rgba(100,0,30,.15) 72%);
+}
+
+.dice-trail-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  background: rgba(0,0,0,.11);
+}
+
+.dice-trail-preview-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dice-trail-dev-note {
+  margin: 9px 2px 0;
+}
+
+@media (max-width: 640px) {
+  .dice-trail-preview-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dice-trail-preview-row button {
+    width: 100%;
   }
 }

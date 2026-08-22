@@ -1,4 +1,4 @@
-import { DatabaseSync } from "node:sqlite";
+﻿import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -33,6 +33,28 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_dice_presets_user_name
     ON dice_presets (user_id, name COLLATE NOCASE);
 
+  CREATE TABLE IF NOT EXISTS user_wallets (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    balance INTEGER NOT NULL DEFAULT 0 CHECK (balance >= 0)
+  );
+
+  CREATE TABLE IF NOT EXISTS vcoin_transactions (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount     INTEGER NOT NULL,
+    reason     TEXT NOT NULL,
+    reference  TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_vcoin_transactions_user
+    ON vcoin_transactions (user_id, id);
+
+  CREATE TABLE IF NOT EXISTS cosmetic_unlocks (
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    cosmetic_id  TEXT NOT NULL,
+    unlocked_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, cosmetic_id)
+  );
   CREATE TABLE IF NOT EXISTS sessions (
     token      TEXT PRIMARY KEY,
     user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -403,7 +425,7 @@ const spellCount = (db.prepare("SELECT COUNT(*) AS n FROM spells").get() as any)
 if (spellCount === 0) {
   const srdPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "srd", "srd-spells.json");
   try {
-    const raw = readFileSync(srdPath, "utf8").replace(/^∩╗┐/, "");
+    const raw = readFileSync(srdPath, "utf8").replace(/^âˆ©â•—â”/, "");
     const spells = JSON.parse(raw) as any[];
     const insert = db.prepare("INSERT INTO spells (name, level, data) VALUES (?, ?, ?)");
     for (const s of spells) insert.run(s.name, Number(s.level) || 0, JSON.stringify(s));
@@ -418,7 +440,7 @@ const monsterCount = (db.prepare("SELECT COUNT(*) AS n FROM monsters").get() as 
 if (monsterCount === 0) {
   const srdPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "srd", "srd-monsters.json");
   try {
-    const raw = readFileSync(srdPath, "utf8").replace(/^∩╗┐/, "");
+    const raw = readFileSync(srdPath, "utf8").replace(/^âˆ©â•—â”/, "");
     const monsters = JSON.parse(raw) as any[];
     // CRs come as strings and may be fractions ("1/4").
     const parseCr = (v: unknown): number => {
@@ -438,3 +460,4 @@ if (monsterCount === 0) {
     console.warn("SRD monster seed skipped:", (e as Error).message);
   }
 }
+

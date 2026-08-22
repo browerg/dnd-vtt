@@ -1,10 +1,11 @@
-import express from "express";
+﻿import express from "express";
 import { createServer } from "node:http";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { Server } from "socket.io";
 import { authRouter } from "./auth.js";
+import { shopRouter } from "./shop.js";
 import { campaignsRouter, invitesRouter } from "./campaigns.js";
 import { rollsRouter } from "./rolls.js";
 import { charactersRouter } from "./characters.js";
@@ -31,6 +32,7 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/auth", authRouter);
+app.use("/api/shop", shopRouter);
 app.use("/api/campaigns", rollsRouter);
 app.use("/api/campaigns", charactersRouter);
 app.use("/api/campaigns", chatRouter);
@@ -69,7 +71,7 @@ if (existsSync(clientDist)) {
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if ((err as any)?.code === "LIMIT_FILE_SIZE") {
     return res.status(400).json({
-      error: `That file is too big — the limit is ${MAX_UPLOAD_MB}MB.`,
+      error: `That file is too big â€” the limit is ${MAX_UPLOAD_MB}MB.`,
     });
   }
   console.error(err);
@@ -83,3 +85,4 @@ setupSockets(io);
 
 const PORT = Number(process.env.PORT ?? 3001);
 httpServer.listen(PORT, () => console.log(`server listening on http://localhost:${PORT}`));
+

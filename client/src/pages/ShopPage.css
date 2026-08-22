@@ -1,0 +1,309 @@
+﻿.emporium-page {
+  display: grid;
+  gap: 16px;
+}
+
+.emporium-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+.emporium-hero::after {
+  content: "";
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  right: -90px;
+  top: -130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(117, 210, 255, .14), transparent 68%);
+  pointer-events: none;
+}
+
+.emporium-kicker,
+.emporium-wallet > span,
+.emporium-coming-soon > span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  opacity: .65;
+}
+
+.emporium-hero h2 {
+  margin: 5px 0 6px;
+}
+
+.emporium-wallet {
+  min-width: 210px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  background: rgba(0,0,0,.15);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.emporium-wallet strong {
+  font-size: 26px;
+}
+
+.emporium-wallet small {
+  color: #a9efbd;
+}
+
+.emporium-devbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 13px;
+  border: 1px dashed rgba(102, 220, 137, .36);
+  border-radius: 11px;
+  background: rgba(61, 146, 85, .08);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.emporium-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.emporium-section-heading h3,
+.emporium-section-heading p {
+  margin: 0;
+}
+
+.emporium-section-heading > span {
+  font-size: 12px;
+  opacity: .62;
+}
+
+.emporium-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 13px;
+}
+
+.emporium-item {
+  min-height: 270px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  border-top-width: 2px;
+}
+
+.emporium-item.rarity-starter { border-top-color: rgba(170, 220, 235, .45); }
+.emporium-item.rarity-uncommon { border-top-color: rgba(91, 218, 145, .55); }
+.emporium-item.rarity-rare { border-top-color: rgba(111, 154, 255, .62); }
+.emporium-item.rarity-legendary { border-top-color: rgba(237, 178, 68, .72); }
+
+.emporium-item.owned {
+  box-shadow: inset 0 0 36px rgba(88, 196, 142, .04);
+}
+
+.emporium-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.emporium-effect-preview {
+  width: 76px;
+  height: 76px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,.07), rgba(255,255,255,.015) 58%, transparent 74%);
+}
+
+.emporium-effect-preview::before {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .15;
+  filter: blur(14px);
+  z-index: -1;
+}
+
+.emporium-effect-preview.trail-aura { color: rgb(116,231,255); }
+.emporium-effect-preview.trail-ember { color: rgb(255,105,45); }
+.emporium-effect-preview.trail-frost { color: rgb(120,200,255); }
+.emporium-effect-preview.trail-shadow { color: rgb(120,70,185); }
+.emporium-effect-preview.trail-lightning { color: rgb(155,210,255); }
+.emporium-effect-preview.trail-petals { color: rgb(220,45,95); }
+
+.emporium-effect-art {
+  position: absolute;
+  inset: 7px;
+  width: calc(100% - 14px);
+  height: calc(100% - 14px);
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.emporium-effect-art-main {
+  z-index: 2;
+  filter: drop-shadow(0 0 8px currentColor);
+  animation: emporium-vfx-float 2.2s ease-in-out infinite;
+}
+
+.emporium-effect-art-ghost {
+  z-index: 1;
+  opacity: .24;
+  filter: blur(4px) drop-shadow(0 0 12px currentColor);
+  transform: scale(1.2) rotate(12deg);
+  animation: emporium-vfx-pulse 1.7s ease-in-out infinite alternate;
+}
+
+.trail-shadow .emporium-effect-art-main {
+  opacity: .8;
+  animation-duration: 3.1s;
+}
+
+.trail-lightning .emporium-effect-art-main {
+  animation: emporium-vfx-lightning 1.15s steps(2, end) infinite;
+}
+
+.emporium-petal-preview {
+  position: absolute;
+  inset: 4px;
+}
+
+.emporium-petal-preview i {
+  position: absolute;
+  width: 15px;
+  height: 8px;
+  border-radius: 80% 20% 80% 20%;
+  background: linear-gradient(135deg, #ffd5e1, #dc2d5f 58%, #8f1237);
+  box-shadow: 0 0 8px rgba(220,45,95,.65);
+  animation: emporium-petal-drift 2.3s ease-in-out infinite alternate;
+}
+
+.emporium-petal-preview i:nth-child(1) { left: 13px; top: 13px; transform: rotate(25deg); }
+.emporium-petal-preview i:nth-child(2) { left: 38px; top: 17px; transform: rotate(-32deg); animation-delay: -.4s; }
+.emporium-petal-preview i:nth-child(3) { left: 24px; top: 34px; transform: rotate(62deg); animation-delay: -.8s; }
+.emporium-petal-preview i:nth-child(4) { left: 45px; top: 43px; transform: rotate(18deg); animation-delay: -1.1s; }
+.emporium-petal-preview i:nth-child(5) { left: 9px; top: 49px; transform: rotate(-58deg); animation-delay: -1.5s; }
+
+@keyframes emporium-vfx-float {
+  0%, 100% { transform: translateY(2px) rotate(-3deg) scale(.96); }
+  50% { transform: translateY(-3px) rotate(4deg) scale(1.05); }
+}
+
+@keyframes emporium-vfx-pulse {
+  from { opacity: .14; transform: scale(1.05) rotate(4deg); }
+  to { opacity: .32; transform: scale(1.28) rotate(18deg); }
+}
+
+@keyframes emporium-vfx-lightning {
+  0%, 100% { opacity: .68; transform: rotate(-8deg) scale(.94); }
+  35% { opacity: 1; transform: rotate(4deg) scale(1.08); }
+  55% { opacity: .48; transform: rotate(-2deg) scale(.98); }
+  72% { opacity: 1; transform: rotate(9deg) scale(1.04); }
+}
+
+@keyframes emporium-petal-drift {
+  from { margin-top: 3px; margin-left: -3px; }
+  to { margin-top: -5px; margin-left: 4px; }
+}
+.emporium-rarity {
+  padding: 4px 7px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  opacity: .72;
+}
+
+.emporium-item-copy {
+  flex: 1;
+}
+
+.emporium-item-copy h4,
+.emporium-item-copy p {
+  margin: 0;
+}
+
+.emporium-item-copy p {
+  margin-top: 5px;
+}
+
+.emporium-price-row {
+  min-height: 22px;
+  font-size: 17px;
+}
+
+.emporium-owned {
+  color: #8fe8aa;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.emporium-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 8px;
+}
+
+.emporium-actions > * {
+  width: 100%;
+}
+
+.emporium-equip-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.emporium-coming-soon {
+  display: grid;
+  gap: 10px;
+}
+
+.emporium-coming-soon > div {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.emporium-coming-soon strong {
+  padding: 7px 9px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 9px;
+  font-size: 12px;
+  opacity: .68;
+}
+
+@media (max-width: 700px) {
+  .emporium-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .emporium-wallet {
+    min-width: 0;
+  }
+}
+
+
