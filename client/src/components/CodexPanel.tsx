@@ -8,6 +8,8 @@ interface Quest {
   description: string;
   status: "active" | "completed" | "failed";
   hidden: boolean;
+  rewardAmount: number;
+  rewardLocked: boolean;
 }
 
 interface Npc {
@@ -17,6 +19,8 @@ interface Npc {
   location: string;
   alive: boolean;
   hidden: boolean;
+  rewardAmount: number;
+  rewardLocked: boolean;
   secretNotes?: string;
 }
 
@@ -86,10 +90,13 @@ export default function CodexPanel({ campaignId, isDM, canWrite, myId, refreshKe
     const form = e.target as HTMLFormElement;
     const title = (form.elements.namedItem("title") as HTMLInputElement).value;
     const description = (form.elements.namedItem("desc") as HTMLTextAreaElement).value;
+    const rewardAmount = Number(
+      (form.elements.namedItem("rewardAmount") as HTMLInputElement).value
+    );
     act(async () => {
       await api(`/api/campaigns/${campaignId}/quests`, {
         method: "POST",
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({ title, description, rewardAmount }),
       });
       form.reset();
     });
@@ -162,11 +169,41 @@ export default function CodexPanel({ campaignId, isDM, canWrite, myId, refreshKe
                 <strong>
                   {q.title}
                   {q.hidden && <span className="badge vis-badge">hidden</span>}
+                  <span className="badge">
+                    {q.rewardAmount === 0 ? "No VCoins" : `ðŸª™ ${q.rewardAmount} VCoins`}
+                  </span>
                 </strong>
                 <span className="codex-controls">
                   {isDM ? (
                     <>
-                      <select
+                      <label
+                        className="small"
+                        title={q.rewardLocked ? "Reward already paid â€” this amount is locked." : "VCoins paid to each campaign member when completed."}
+                      >
+                        VCoins
+                        <input
+                          type="number"
+                          min={0}
+                          max={500}
+                          defaultValue={q.rewardAmount}
+                          disabled={q.rewardLocked}
+                          style={{ width: 72 }}
+                          onBlur={(event) => {
+                            const next = Math.max(
+                              0,
+                              Math.min(500, Math.floor(Number(event.currentTarget.value) || 0))
+                            );
+                            event.currentTarget.value = String(next);
+                            if (next === q.rewardAmount) return;
+                            act(() =>
+                              api(`/api/campaigns/${campaignId}/quests/${q.id}`, {
+                                method: "PUT",
+                                body: JSON.stringify({ rewardAmount: next }),
+                              })
+                            );
+                          }}
+                        />
+                      </label>                      <select
                         value={q.status}
                         onChange={(e) =>
                           act(() =>
@@ -215,7 +252,21 @@ export default function CodexPanel({ campaignId, isDM, canWrite, myId, refreshKe
           ))}
           {isDM && (
             <form onSubmit={addQuest} className="stack codex-form">
-              <input name="title" placeholder="New quest title" required />
+              <div className="row-between">
+                <input name="title" placeholder="New quest title" required />
+                <label className="small">
+                  VCoins
+                  <input
+                    name="rewardAmount"
+                    type="number"
+                    min={0}
+                    max={500}
+                    defaultValue={25}
+                    style={{ width: 82 }}
+                    required
+                  />
+                </label>
+              </div>
               <textarea name="desc" rows={2} placeholder="Objectives, rewards, rumors…" />
               <button className="ghost">Add quest</button>
             </form>

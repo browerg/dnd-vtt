@@ -1,0 +1,81 @@
+.vcoin-rewards-panel {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.vcoin-reward-form {
+  margin-top: 0;
+}
+
+.vcoin-reward-form label {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.vcoin-reward-form select,
+.vcoin-reward-form input {
+  width: 100%;
+  min-width: 0;
+}
+
+.vcoin-quick-amounts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.vcoin-quick-amounts button {
+  min-width: 0;
+  padding-inline: 0.35rem;
+}
+
+.vcoin-quick-amounts button.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.vcoin-reward-success {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--online) 42%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--online) 10%, transparent);
+  color: var(--online);
+}
+
+.vcoin-recent {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.vcoin-reward-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vcoin-reward-list li {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.vcoin-reward-list li strong {
+  color: var(--accent);
+}
+
+.badge.vcoin-source-quest {
+  color: var(--online);
+}
+
+.badge.vcoin-source-dm {
+  color: var(--accent);
+}

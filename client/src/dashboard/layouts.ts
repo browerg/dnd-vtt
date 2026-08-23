@@ -33,6 +33,7 @@ const DM_LAYOUT: GridItem[] = [
   { i: "dice", x: 8, y: 12, w: 4, h: 10, minW: 3, minH: 6 },
   { i: "codex", x: 0, y: 22, w: 8, h: 14, minW: 4, minH: 6 },
   { i: "hub", x: 8, y: 22, w: 4, h: 7, minW: 3, minH: 4 },
+  { i: "vcoins", x: 8, y: 29, w: 4, h: 11, minW: 3, minH: 7 },
 ];
 
 export function defaultLayout(role: string): GridItem[] {

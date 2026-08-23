@@ -12,6 +12,7 @@ import DicePanel from "../components/DicePanel";
 import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
+import VCoinRewardsPanel from "../components/VCoinRewardsPanel";
 
 // Shared data + callbacks handed to every panel. The dashboard owns the socket
 // and state; panels are thin views over this context.
@@ -37,6 +38,7 @@ export interface PanelCtx {
   messagesReady: boolean;
   myCharacterId: number | null;
   codexRefresh: number;
+  vcoinRefresh: number;
   doRoll: (body: {
     formula: string;
     label: string;
@@ -268,6 +270,22 @@ export const PANELS: PanelDef[] = [
     ),
   },
   {
+    id: "vcoins",
+    title: "VCoin Rewards",
+    icon: "ðŸª™",
+    roles: ["dm"],
+    minW: 3,
+    minH: 7,
+    defaultW: 4,
+    defaultH: 11,
+    render: (ctx) => (
+      <VCoinRewardsPanel
+        campaignId={ctx.campaignId}
+        members={ctx.members}
+        refreshKey={ctx.vcoinRefresh}
+      />
+    ),
+  },  {
     id: "hub",
     title: "Campaign",
     icon: "🏰",

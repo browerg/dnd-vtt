@@ -42,6 +42,7 @@ const REMNANT_PANEL_TITLES: Record<string, string> = {
   notes: "Mission notes",
   chat: "Comms channel",
   hub: "Campaign briefing",
+  vcoins: "VCoin rewards",
 };
 
 const REMNANT_PANEL_ICONS: Record<string, string> = {
@@ -57,6 +58,7 @@ const REMNANT_PANEL_ICONS: Record<string, string> = {
   notes: "\u2301",
   chat: "\u2301",
   hub: "\u2726",
+  vcoins: "\u25C6",
 };
 
 interface CampaignDetail {
@@ -88,6 +90,7 @@ export default function CampaignDashboardPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messagesReady, setMessagesReady] = useState(false);
   const [codexRefresh, setCodexRefresh] = useState(0);
+  const [vcoinRefresh, setVcoinRefresh] = useState(0);
   const [error, setError] = useState("");
   const serverClockOffsetRef = useRef(0);
 
@@ -164,6 +167,8 @@ export default function CampaignDashboardPage() {
     });
     socket.on("codex:update", (msg: { campaignId: number }) => {
       if (msg.campaignId === campaignId) setCodexRefresh((n) => n + 1);
+    });    socket.on("vcoin:reward", (msg: { campaignId: number }) => {
+      if (msg.campaignId === campaignId) setVcoinRefresh((n) => n + 1);
     });
     return () => {
       socket.disconnect();
@@ -226,6 +231,17 @@ export default function CampaignDashboardPage() {
     [campaignId, user]
   );
 
+  // vivid-vcoin-panel-migration
+  useEffect(() => {
+    if (!detail || layout.length === 0) return;
+    const dm = detail.yourRole === "dm" || detail.yourRole === "co-dm";
+    if (!dm || layout.some((item) => item.i === "vcoins")) return;
+
+    persistLayout([
+      ...layout,
+      { i: "vcoins", x: 8, y: 29, w: 4, h: 11, minW: 3, minH: 7 },
+    ]);
+  }, [detail, layout, persistLayout]);
   const onLayoutChange = (next: GridItem[]) => {
     if (!initialized.current) return;
     persistLayout(next.map((it) => ({ ...it })));
@@ -287,10 +303,11 @@ export default function CampaignDashboardPage() {
       messagesReady,
       myCharacterId,
       codexRefresh,
+      vcoinRefresh,
       doRoll,
       sendChat,
     };
-  }, [detail, user, campaignId, system, isDM, canWrite, online, characters, rolls, messages, messagesReady, myCharacterId, codexRefresh, doRoll, sendChat]);
+  }, [detail, user, campaignId, system, isDM, canWrite, online, characters, rolls, messages, messagesReady, myCharacterId, codexRefresh, vcoinRefresh, doRoll, sendChat]);
 
   if (error) return <div className="page-center error">{error}</div>;
   if (!detail || !ctx) return <div className="page-center muted">Loading…</div>;

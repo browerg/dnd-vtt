@@ -7,6 +7,7 @@ import { db, uploadsDir } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
+import { awardQuestCompletion, DEFAULT_QUEST_VCOINS, MAX_QUEST_VCOINS } from "./vcoins.js";
 
 // Campaign codex: quests, NPCs, journal, handouts. Quests/NPCs/handouts are
 // DM-authored with per-item hiding; the journal belongs to everyone.
@@ -52,11 +53,27 @@ codexRouter.get("/:id/quests", (req, res) => {
   const campaignId = Number(req.params.id);
   const rows = db
     .prepare(
-      `SELECT id, title, description, status, hidden, created_at FROM quests
-       WHERE campaign_id = ? ${isDMRole(role) ? "" : "AND hidden = 0"} ORDER BY id DESC`
+      `SELECT q.id, q.title, q.description, q.status, q.hidden, q.created_at,
+              q.vcoin_reward,
+              CASE WHEN r.quest_id IS NULL THEN 0 ELSE 1 END AS reward_locked
+       FROM quests q
+       LEFT JOIN quest_vcoin_rewards r ON r.quest_id = q.id
+       WHERE q.campaign_id = ? ${isDMRole(role) ? "" : "AND q.hidden = 0"}
+       ORDER BY q.id DESC`
     )
     .all(campaignId) as any[];
-  res.json({ quests: rows.map((r) => ({ ...r, hidden: !!r.hidden })) });
+  res.json({
+    quests: rows.map((r) => ({
+      id: Number(r.id),
+      title: String(r.title),
+      description: String(r.description ?? ""),
+      status: r.status,
+      hidden: !!r.hidden,
+      created_at: r.created_at,
+      rewardAmount: Number(r.vcoin_reward ?? DEFAULT_QUEST_VCOINS),
+      rewardLocked: !!r.reward_locked,
+    })),
+  });
 });
 
 codexRouter.post("/:id/quests", (req, res) => {
@@ -65,12 +82,23 @@ codexRouter.post("/:id/quests", (req, res) => {
   if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM manages quests." });
   const title = String(req.body?.title ?? "").trim();
   if (!title) return res.status(400).json({ error: "The quest needs a title." });
+
+  const rewardAmount = Number(req.body?.rewardAmount ?? DEFAULT_QUEST_VCOINS);
+  if (!Number.isInteger(rewardAmount) || rewardAmount < 0 || rewardAmount > MAX_QUEST_VCOINS) {
+    return res.status(400).json({
+      error: `Quest rewards must be from 0 to ${MAX_QUEST_VCOINS} VCoins.`,
+    });
+  }
+
   const campaignId = Number(req.params.id);
-  db.prepare("INSERT INTO quests (campaign_id, title, description, hidden) VALUES (?, ?, ?, ?)").run(
+  db.prepare(
+    "INSERT INTO quests (campaign_id, title, description, hidden, vcoin_reward) VALUES (?, ?, ?, ?, ?)"
+  ).run(
     campaignId,
     title,
     String(req.body?.description ?? "").trim(),
-    req.body?.hidden ? 1 : 0
+    req.body?.hidden ? 1 : 0,
+    rewardAmount
   );
   touch(campaignId, "quests");
   res.json({ ok: true });
@@ -85,16 +113,59 @@ codexRouter.put("/:id/quests/:qid", (req, res) => {
     .prepare("SELECT * FROM quests WHERE id = ? AND campaign_id = ?")
     .get(Number(req.params.qid), campaignId) as any;
   if (!q) return res.status(404).json({ error: "Quest not found." });
+
   const b = req.body ?? {};
-  db.prepare("UPDATE quests SET title = ?, description = ?, status = ?, hidden = ? WHERE id = ?").run(
-    typeof b.title === "string" && b.title.trim() ? b.title.trim() : q.title,
-    typeof b.description === "string" ? b.description : q.description,
-    ["active", "completed", "failed"].includes(b.status) ? b.status : q.status,
-    typeof b.hidden === "boolean" ? (b.hidden ? 1 : 0) : q.hidden,
+  const nextTitle =
+    typeof b.title === "string" && b.title.trim() ? b.title.trim() : q.title;
+  const nextDescription =
+    typeof b.description === "string" ? b.description : q.description;
+  const nextStatus =
+    ["active", "completed", "failed"].includes(b.status) ? b.status : q.status;
+  const nextHidden =
+    typeof b.hidden === "boolean" ? (b.hidden ? 1 : 0) : q.hidden;
+
+  const paidReward = db
+    .prepare("SELECT amount FROM quest_vcoin_rewards WHERE quest_id = ?")
+    .get(q.id) as { amount: number } | undefined;
+
+  let nextRewardAmount = paidReward
+    ? Number(paidReward.amount)
+    : Number(q.vcoin_reward ?? DEFAULT_QUEST_VCOINS);
+
+  if (!paidReward && b.rewardAmount !== undefined) {
+    const requestedReward = Number(b.rewardAmount);
+    if (!Number.isInteger(requestedReward) || requestedReward < 0 || requestedReward > MAX_QUEST_VCOINS) {
+      return res.status(400).json({
+        error: `Quest rewards must be from 0 to ${MAX_QUEST_VCOINS} VCoins.`,
+      });
+    }
+    nextRewardAmount = requestedReward;
+  }
+
+  db.prepare(
+    "UPDATE quests SET title = ?, description = ?, status = ?, hidden = ?, vcoin_reward = ? WHERE id = ?"
+  ).run(
+    nextTitle,
+    nextDescription,
+    nextStatus,
+    nextHidden,
+    nextRewardAmount,
     q.id
   );
+
+  const vcoinReward =
+    nextStatus === "completed"
+      ? awardQuestCompletion(
+          campaignId,
+          q.id,
+          nextTitle,
+          nextRewardAmount,
+          user(req).id
+        )
+      : null;
+
   touch(campaignId, "quests");
-  res.json({ ok: true });
+  res.json({ ok: true, vcoinReward });
 });
 
 codexRouter.delete("/:id/quests/:qid", (req, res) => {
