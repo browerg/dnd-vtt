@@ -16,6 +16,7 @@ import MapObjects from "../components/MapObjects";
 import SceneDirector from "../components/SceneDirector";
 import PreparedTokenTray, { type MonsterPreparation } from "../components/PreparedTokenTray";
 import YouTubeMapPlayer from "../components/YouTubeMapPlayer";
+import TurnStartEffect from "../components/TurnStartEffect";
 import "./MapTokenArt.css";
 import "./MapObjects.css";
 import "./SceneDirector.css";
@@ -46,7 +47,7 @@ interface Stroke {
   id: string;
   color: string;
   size: number;
-  points: number[]; // flat [x1, y1, x2, y2, …] in map coords
+  points: number[]; // flat [x1, y1, x2, y2, â€¦] in map coords
 }
 
 interface Combatant {
@@ -67,12 +68,12 @@ interface CombatState {
 type Tool = "move" | "reveal" | "hide" | "ruler" | "draw" | "erase";
 
 const MAP_TOOL_META: Record<Tool, { label: string; icon: string; shortcut: string; hint: string }> = {
-  move: { label: "Move", icon: "✥", shortcut: "M", hint: "Pan the map or move tokens" },
-  ruler: { label: "Ruler", icon: "📏", shortcut: "R", hint: "Drag to measure distance" },
-  draw: { label: "Draw", icon: "✏️", shortcut: "D", hint: "Sketch directly on the map" },
-  erase: { label: "Erase", icon: "⌫", shortcut: "E", hint: "Click or drag over drawings" },
-  reveal: { label: "Reveal", icon: "◌", shortcut: "V", hint: "Paint away fog of war" },
-  hide: { label: "Hide", icon: "●", shortcut: "H", hint: "Paint fog of war back in" },
+  move: { label: "Move", icon: "âœ¥", shortcut: "M", hint: "Pan the map or move tokens" },
+  ruler: { label: "Ruler", icon: "ðŸ“", shortcut: "R", hint: "Drag to measure distance" },
+  draw: { label: "Draw", icon: "âœï¸", shortcut: "D", hint: "Sketch directly on the map" },
+  erase: { label: "Erase", icon: "âŒ«", shortcut: "E", hint: "Click or drag over drawings" },
+  reveal: { label: "Reveal", icon: "â—Œ", shortcut: "V", hint: "Paint away fog of war" },
+  hide: { label: "Hide", icon: "â—", shortcut: "H", hint: "Paint fog of war back in" },
 };
 
 interface RulerLine {
@@ -120,7 +121,7 @@ const CONDITION_VISUALS: Record<string, { icon: string; group: string }> = {
   Poisoned: { icon: "P", group: "damage" },
   Terrified: { icon: "T", group: "impairment" },
   Despairing: { icon: "H", group: "impairment" },
-  Prone: { icon: "↓", group: "control" },
+  Prone: { icon: "â†“", group: "control" },
   "Weapon Jam": { icon: "J", group: "impairment" },
   Blinded: { icon: "B", group: "impairment" },
   Charmed: { icon: "C", group: "impairment" },
@@ -313,6 +314,11 @@ export default function MapPage() {
     Record<number, { effect: string; nonce: number }>
   >({});
   const dustEffectTimers = useRef<Record<number, number>>({});
+  const [turnStartTokenEffects, setTurnStartTokenEffects] = useState<
+    Record<number, { effect: string; nonce: number }>
+  >({});
+  const turnStartEffectTimers = useRef<Record<number, number>>({});
+  const lastTurnStartRef = useRef("");
   const [combatEffectNotice, setCombatEffectNotice] = useState("");
   const combatEffectReadyRef = useRef(false);
   const previousTokenIdsRef = useRef<Set<number>>(new Set());
@@ -418,6 +424,64 @@ export default function MapPage() {
   const [monsterToPrepare, setMonsterToPrepare] = useState<MonsterPreparation | null>(null);
   const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
   const [statblock, setStatblock] = useState<MonsterDetail | null>(null);
+
+  // vivid-turn-start-cosmetics
+  useEffect(() => {
+    if (!combat.active || combat.combatants.length === 0) {
+      lastTurnStartRef.current = "";
+      return;
+    }
+
+    const current = combat.combatants[combat.turn];
+    if (!current?.tokenId) return;
+
+    const token = tokensRef.current.find((candidate) => candidate.id === current.tokenId);
+    // Turn-start cosmetics are player-character flair, not monster/NPC noise.
+    if (!token || token.characterId == null || token.ownerId == null) return;
+
+    const turnKey = `${combat.round}:${combat.turn}:${current.id}`;
+    if (lastTurnStartRef.current === turnKey) return;
+    lastTurnStartRef.current = turnKey;
+
+    let cancelled = false;
+    void api<{ effect?: string }>(
+      `/api/shop/turn-start-effect?campaignId=${campaignId}&userId=${token.ownerId}`
+    )
+      .then((response) => {
+        if (cancelled) return;
+        const effect = String(response.effect ?? "none");
+        if (effect === "none") return;
+
+        window.clearTimeout(turnStartEffectTimers.current[token.id]);
+        setTurnStartTokenEffects((previous) => ({
+          ...previous,
+          [token.id]: { effect, nonce: Date.now() },
+        }));
+
+        turnStartEffectTimers.current[token.id] = window.setTimeout(() => {
+          setTurnStartTokenEffects((previous) => {
+            const next = { ...previous };
+            delete next[token.id];
+            return next;
+          });
+          delete turnStartEffectTimers.current[token.id];
+        }, 1500);
+      })
+      .catch(() => {
+        // Cosmetics are enhancement-only; a lookup failure must never interrupt combat.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaignId, combat.active, combat.round, combat.turn, combat.combatants]);
+
+  useEffect(
+    () => () => {
+      Object.values(turnStartEffectTimers.current).forEach((timer) => window.clearTimeout(timer));
+    },
+    []
+  );
   const revealedRef = useRef(revealed);
   revealedRef.current = revealed;
   mapIdRef.current = map?.id ?? null;
@@ -615,7 +679,7 @@ export default function MapPage() {
     loadAll();
   }, [loadAll]);
 
-  // YouTube embeds are cross-origin, so we can't read their intrinsic size —
+  // YouTube embeds are cross-origin, so we can't read their intrinsic size â€”
   // treat them as a fixed 16:9 stage that the grid and fog draw over.
   useEffect(() => {
     if (map?.youtubeId) setImgSize({ w: 1920, h: 1080 });
@@ -929,7 +993,7 @@ export default function MapPage() {
     try {
       (e.target as Element).setPointerCapture?.(e.pointerId);
     } catch {
-      // stale/unknown pointer id — capture is best-effort, dragging still works
+      // stale/unknown pointer id â€” capture is best-effort, dragging still works
     }
     if (tool === "ruler") {
       const p = toMapCoords(e.clientX, e.clientY);
@@ -1513,7 +1577,7 @@ Choose Cancel to permanently delete it instead.`
           disabled={current <= 0}
           onClick={() => setTokenAura(token, Math.max(0, current - 1), currentMax, color)}
         >
-          −
+          âˆ’
         </button>
         <input
           aria-label="Enemy current Aura"
@@ -1589,7 +1653,7 @@ Choose Cancel to permanently delete it instead.`
   );
 
   if (error && !loaded) return <div className="page-center error">{error}</div>;
-  if (!loaded) return <div className="page-center muted">Loading…</div>;
+  if (!loaded) return <div className="page-center muted">Loadingâ€¦</div>;
 
   const g = map?.gridSize ?? 70;
   const currentCombatant = combat.active ? combat.combatants[combat.turn] : undefined;
@@ -1599,9 +1663,9 @@ Choose Cancel to permanently delete it instead.`
     const cells = Math.hypot(r.x2 - r.x1, r.y2 - r.y1) / g;
     if (system === "remnant") {
       const band = cells <= 2 ? "Close" : cells <= 10 ? "Mid" : cells <= 24 ? "Long" : "Extreme";
-      return `${band} · ${cells.toFixed(1)} sq`;
+      return `${band} Â· ${cells.toFixed(1)} sq`;
     }
-    return `${Math.round(cells * 5)} ft · ${cells.toFixed(1)} sq`;
+    return `${Math.round(cells * 5)} ft Â· ${cells.toFixed(1)} sq`;
   };
   const activeRulers = (ruler ? [{ name: "", r: ruler }] : []).concat(
     Object.entries(remoteRulers).map(([name, r]) => ({ name, r }))
@@ -1661,29 +1725,29 @@ Choose Cancel to permanently delete it instead.`
             </strong>
             <span className="map-active-tool-hint">
               {MAP_TOOL_META[tool].hint}
-              {tool !== "move" && " · Esc returns to Move"}
+              {tool !== "move" && " Â· Esc returns to Move"}
             </span>
           </div>
         )}
         {map && (
           <button
             className={tool === "ruler" ? "ghost mini active-tool" : "ghost mini"}
-            title="Ruler (R) — drag across the map"
+            title="Ruler (R) â€” drag across the map"
             aria-pressed={tool === "ruler"}
             onClick={() => setTool(tool === "ruler" ? "move" : "ruler")}
           >
-            📏 Ruler
+            ðŸ“ Ruler
           </button>
         )}
         {map && role !== "spectator" && (
           <>
             <button
               className={tool === "draw" ? "ghost mini active-tool" : "ghost mini"}
-              title="Draw (D) — everyone sees it"
+              title="Draw (D) â€” everyone sees it"
               aria-pressed={tool === "draw"}
               onClick={() => setTool(tool === "draw" ? "move" : "draw")}
             >
-              ✏️ Draw
+              âœï¸ Draw
             </button>
             {(tool === "draw" || tool === "erase") && (
               <>
@@ -1696,7 +1760,7 @@ Choose Cancel to permanently delete it instead.`
                 />
                 <button
                   className={tool === "erase" ? "ghost mini active-tool" : "ghost mini"}
-                  title="Erase (E) — click or drag over a drawing"
+                  title="Erase (E) â€” click or drag over a drawing"
                   aria-pressed={tool === "erase"}
                   onClick={() => setTool(tool === "erase" ? "draw" : "erase")}
                 >
@@ -1730,7 +1794,7 @@ Choose Cancel to permanently delete it instead.`
                   <button
                     key={t}
                     className={tool === t ? "seg-btn active active-tool" : "seg-btn"}
-                    title={`${MAP_TOOL_META[t].label} (${MAP_TOOL_META[t].shortcut}) — ${MAP_TOOL_META[t].hint}`}
+                    title={`${MAP_TOOL_META[t].label} (${MAP_TOOL_META[t].shortcut}) â€” ${MAP_TOOL_META[t].hint}`}
                     aria-pressed={tool === t}
                     onClick={() => setTool(t)}
                   >
@@ -1782,9 +1846,9 @@ Choose Cancel to permanently delete it instead.`
         )}
         {isDM && (
           <div className="dm-top-panel-buttons">
-            <button type="button" className={dmPanel === "maps" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "maps" ? null : "maps")}>🗺️ Maps</button>
-            <button type="button" className={dmPanel === "tokens" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "tokens" ? null : "tokens")}>＋ Add Token</button>
-            <button type="button" className={dmPanel === "audio" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "audio" ? null : "audio")}>🔊 Audio</button>
+            <button type="button" className={dmPanel === "maps" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "maps" ? null : "maps")}>ðŸ—ºï¸ Maps</button>
+            <button type="button" className={dmPanel === "tokens" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "tokens" ? null : "tokens")}>ï¼‹ Add Token</button>
+            <button type="button" className={dmPanel === "audio" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "audio" ? null : "audio")}>ðŸ”Š Audio</button>
           </div>
         )}
         <CampaignThemePicker
@@ -1803,7 +1867,7 @@ Choose Cancel to permanently delete it instead.`
           <section className="dm-top-panel" onClick={(event) => event.stopPropagation()}>
             <div className="row-between dm-top-panel-heading">
               <div><span className="muted small">DM setup</span><h2>{dmPanel === "maps" ? "Maps" : dmPanel === "tokens" ? "Add Tokens" : "Audio & Atmosphere"}</h2></div>
-              <button type="button" className="ghost mini" onClick={() => setDmPanel(null)}>✕</button>
+              <button type="button" className="ghost mini" onClick={() => setDmPanel(null)}>âœ•</button>
             </div>
             {error && <div className="error">{error}</div>}
             {dmPanel === "maps" && <div className="dm-top-panel-grid">
@@ -1821,9 +1885,9 @@ Choose Cancel to permanently delete it instead.`
                         })
                       }
                     >
-                      {m.active ? "▶ " : ""}
+                      {m.active ? "â–¶ " : ""}
                       {m.name}
-                      {m.youtubeId ? " ▶️" : m.isVideo ? " 🎞️" : ""}
+                      {m.youtubeId ? " â–¶ï¸" : m.isVideo ? " ðŸŽžï¸" : ""}
                     </button>
                     <button
                       className="ghost mini"
@@ -1838,7 +1902,7 @@ Choose Cancel to permanently delete it instead.`
                         }
                       }}
                     >
-                      ✕
+                      âœ•
                     </button>
                   </div>
                 ))}
@@ -1877,11 +1941,11 @@ Choose Cancel to permanently delete it instead.`
                   }}
                 >
                   <input name="ytname" placeholder="Map name" />
-                  <input name="yturl" placeholder="…or paste a YouTube link" required />
+                  <input name="yturl" placeholder="â€¦or paste a YouTube link" required />
                   <button className="ghost">Add YouTube map</button>
                 </form>
                 <p className="muted small">
-                  Heads up: YouTube maps can show ads mid-session — uploaded files never do.
+                  Heads up: YouTube maps can show ads mid-session â€” uploaded files never do.
                 </p>
               </section>
             </div>}
@@ -1898,12 +1962,12 @@ Choose Cancel to permanently delete it instead.`
                 <section>
                   <h4>Monsters</h4>
                   <input
-                    placeholder="Search monsters (SRD + custom)…"
+                    placeholder="Search monsters (SRD + custom)â€¦"
                     value={monsterQuery}
                     onChange={(e) => setMonsterQuery(e.target.value)}
                   />
                   <Link to={`/campaigns/${campaignId}/bestiary`} className="muted small">
-                    Open bestiary — create &amp; edit monsters
+                    Open bestiary â€” create &amp; edit monsters
                   </Link>
                   <div className="monster-hits">
                     {monsterHits.map((m) => (
@@ -2085,7 +2149,7 @@ Choose Cancel to permanently delete it instead.`
       {(preparedTokenDropPreview || preparedEncounterDropPreview) && (
         <div className="prepared-token-drop-status">
           {sceneEncounterPlacement
-            ? `Choose scene placement: ${sceneEncounterPlacement.group.name} · click to save · Esc/right-click cancels`
+            ? `Choose scene placement: ${sceneEncounterPlacement.group.name} Â· click to save Â· Esc/right-click cancels`
             : preparedTokenDropBusy
               ? "Deploying..."
               : preparedEncounterDropPreview
@@ -2120,7 +2184,7 @@ Choose Cancel to permanently delete it instead.`
         >
           {!map ? (
             <div className="page-center muted">
-              {isDM ? "Upload a map to get started →" : "The DM hasn't set a map yet."}
+              {isDM ? "Upload a map to get started â†’" : "The DM hasn't set a map yet."}
             </div>
           ) : (
             <div
@@ -2230,6 +2294,12 @@ Choose Cancel to permanently delete it instead.`
                   >
                     {t.auraMax != null && t.aura != null && t.aura > 0 && (
                       <span className="token-aura-shell" aria-hidden="true" />
+                    )}
+                    {turnStartTokenEffects[t.id] && (
+                      <TurnStartEffect
+                        key={turnStartTokenEffects[t.id].nonce}
+                        effect={turnStartTokenEffects[t.id].effect}
+                      />
                     )}
                     {dustTokenEffects[t.id] && (
                       <span
@@ -2406,7 +2476,7 @@ Choose Cancel to permanently delete it instead.`
                   </svg>
                   <span className="ruler-label" style={{ left: (r.x1 + r.x2) / 2, top: (r.y1 + r.y2) / 2 }}>
                     {rulerLabel(r)}
-                    {name && <span className="ruler-user"> · {name}</span>}
+                    {name && <span className="ruler-user"> Â· {name}</span>}
                   </span>
                 </div>
               ))}
@@ -2428,7 +2498,7 @@ Choose Cancel to permanently delete it instead.`
               })
             }
           >
-            {sidebarCollapsed ? "‹" : "›"}
+            {sidebarCollapsed ? "â€¹" : "â€º"}
           </button>
           <div className="encounter-sidebar-content">
           {error && <div className="error">{error}</div>}
@@ -2551,13 +2621,13 @@ Choose Cancel to permanently delete it instead.`
               <div className="row-between">
                 <h4>{selectedToken.name}</h4>
                 <button className="ghost mini" onClick={() => setSelectedTokenId(null)}>
-                  ✕
+                  âœ•
                 </button>
               </div>
               {statblock.system === "remnant" ? (
                 <>
                   <p className="muted small">
-                    {statblock.size} {statblock.type} · Threat {statblock.threat}
+                    {statblock.size} {statblock.type} Â· Threat {statblock.threat}
                   </p>
                   <div className="row-between statline">
                     <span>
@@ -2597,7 +2667,7 @@ Choose Cancel to permanently delete it instead.`
               ) : (
                 <>
               <p className="muted small">
-                {statblock.size} {statblock.type} · CR {fmtCr(statblock.cr)}
+                {statblock.size} {statblock.type} Â· CR {fmtCr(statblock.cr)}
               </p>
               <div className="row-between statline">
                 <span>
@@ -2611,7 +2681,7 @@ Choose Cancel to permanently delete it instead.`
                     (k, i) =>
                       `${["STR", "DEX", "CON", "INT", "WIS", "CHA"][i]} ${fmtMod(mod((statblock as any)[k]))}`
                   )
-                  .join(" · ")}
+                  .join(" Â· ")}
               </p>
               {(statblock.special_abilities ?? []).map((a) => (
                 <details key={a.name} className="mon-ability">
@@ -2677,13 +2747,13 @@ Choose Cancel to permanently delete it instead.`
             </section>
           )}
           <section>
-            <h4>{combat.active ? `Combat — round ${combat.round}` : "Initiative"}</h4>
+            <h4>{combat.active ? `Combat â€” round ${combat.round}` : "Initiative"}</h4>
             <div className="initiative-rule-card">
-              <span className="initiative-rule-icon" aria-hidden="true">↕</span>
+              <span className="initiative-rule-icon" aria-hidden="true">â†•</span>
               <span>
                 <strong>Turn order</strong>
                 <small>
-                  Highest roll first · ties use {system === "remnant" ? "Finesse/Ferocity die" : "Dexterity"} · exact ties act simultaneously
+                  Highest roll first Â· ties use {system === "remnant" ? "Finesse/Ferocity die" : "Dexterity"} Â· exact ties act simultaneously
                 </small>
               </span>
             </div>
@@ -2722,7 +2792,7 @@ Choose Cancel to permanently delete it instead.`
                     {position}
                   </span>
                   <span className="init-name">
-                    {combat.active && i === combat.turn ? "▶ " : ""}
+                    {combat.active && i === combat.turn ? "â–¶ " : ""}
                     {c.name}
                     <span className="initiative-tiebreak-label">
                       {c.tieBreaker > 0
@@ -2751,7 +2821,7 @@ Choose Cancel to permanently delete it instead.`
                     {tok && tok.conditions.length > 0 && (
                       <span className="init-conds" title={tok.conditions.join(", ")}>
                         {" "}
-                        ⚠{tok.conditions.length}
+                        âš {tok.conditions.length}
                       </span>
                     )}
                   </span>
@@ -2768,7 +2838,7 @@ Choose Cancel to permanently delete it instead.`
                           });
                         }}
                       >
-                        ✕
+                        âœ•
                       </button>
                     )}
                   </span>
@@ -2782,7 +2852,7 @@ Choose Cancel to permanently delete it instead.`
                   <>
                     <div className="row-between">
                       <select value={combatantPick} onChange={(e) => setCombatantPick(e.target.value)}>
-                        <option value="">Add from map…</option>
+                        <option value="">Add from mapâ€¦</option>
                         {tokens
                           .filter((t) => !combat.combatants.some((c) => c.tokenId === t.id))
                           .map((t) => (
@@ -2815,7 +2885,7 @@ Choose Cancel to permanently delete it instead.`
                         className="primary"
                         onClick={() => api(`/api/campaigns/${campaignId}/combat/start`, { method: "POST" })}
                       >
-                        ⚔️ Start combat
+                        âš”ï¸ Start combat
                       </button>
                     )}
                   </>
@@ -2825,7 +2895,7 @@ Choose Cancel to permanently delete it instead.`
                       className="primary"
                       onClick={() => api(`/api/campaigns/${campaignId}/combat/next`, { method: "POST" })}
                     >
-                      Next turn →
+                      Next turn â†’
                     </button>
                     <button
                       className="ghost"
@@ -2865,7 +2935,7 @@ Choose Cancel to permanently delete it instead.`
             {sidebarRosterTab === "characters" ? (
               <div className="encounter-roster-list">
                 {characters
-                  // Don't leak secret NPC names to players — only the DM (or a
+                  // Don't leak secret NPC names to players â€” only the DM (or a
                   // shared, player-controllable NPC) shows in the list.
                   .filter((c) => !c.isNpc || isDM || c.playerControllable)
                   .map((c) => {
@@ -2896,8 +2966,8 @@ Choose Cancel to permanently delete it instead.`
                                           : "DOWN"
                                       : `${token.hp}/${token.maxHp} HP`
                                     : "On map",
-                                  token.conditions.length ? `⚠ ${token.conditions.length}` : "",
-                                ].filter(Boolean).join(" · ")
+                                  token.conditions.length ? `âš  ${token.conditions.length}` : "",
+                                ].filter(Boolean).join(" Â· ")
                               : "Not deployed"}
                           </span>
                         </button>
@@ -2954,8 +3024,8 @@ Choose Cancel to permanently delete it instead.`
                               : `${t.hp}/${t.maxHp} HP`
                             : "",
                           t.aura != null && t.auraMax != null ? `${t.aura}/${t.auraMax} Aura` : "",
-                          t.conditions.length ? `⚠ ${t.conditions.length}` : "",
-                        ].filter(Boolean).join(" · ") || "Map token"}
+                          t.conditions.length ? `âš  ${t.conditions.length}` : "",
+                        ].filter(Boolean).join(" Â· ") || "Map token"}
                       </span>
                     </button>
                     {(isDM || canMove(t)) && (
@@ -2964,7 +3034,7 @@ Choose Cancel to permanently delete it instead.`
                         title={`Remove ${t.name} from map`}
                         onClick={() => removeToken(t.id)}
                       >
-                        ✕
+                        âœ•
                       </button>
                     )}
                   </div>
@@ -2983,7 +3053,7 @@ Choose Cancel to permanently delete it instead.`
                   className="sidebar-dm-tool scene"
                   onClick={() => window.dispatchEvent(new Event("dm-tools:open-scene-director"))}
                 >
-                  <span aria-hidden="true">◈</span>
+                  <span aria-hidden="true">â—ˆ</span>
                   <span>
                     <strong>Scene Director</strong>
                     <small>Save and activate encounters</small>
@@ -2994,7 +3064,7 @@ Choose Cancel to permanently delete it instead.`
                   className="sidebar-dm-tool object"
                   onClick={() => window.dispatchEvent(new Event("dm-tools:add-map-object"))}
                 >
-                  <span aria-hidden="true">＋</span>
+                  <span aria-hidden="true">ï¼‹</span>
                   <span>
                     <strong>Map Object</strong>
                     <small>Add doors, chests, clues, and more</small>
@@ -3030,7 +3100,7 @@ Choose Cancel to permanently delete it instead.`
             <>
             </>
           )}
-          <p className="muted map-hint">Drag to pan · scroll to zoom · double-click to ping</p>
+          <p className="muted map-hint">Drag to pan Â· scroll to zoom Â· double-click to ping</p>
           </div>
         </aside>
       </div>

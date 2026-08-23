@@ -5,6 +5,7 @@ import { getSessionUser } from "./auth.js";
 export const shopRouter = Router();
 
 export type CriticalSlot = "nat20" | "nat1";
+export type CosmeticSlot = CriticalSlot | "turnStart";
 export type CriticalEffectStyle =
   | "golden"
   | "rose"
@@ -12,6 +13,15 @@ export type CriticalEffectStyle =
   | "fracture"
   | "smoke"
   | "debris";
+
+export type TurnStartEffectStyle =
+  | "none"
+  | "aura"
+  | "ember"
+  | "frost"
+  | "shadow"
+  | "lightning"
+  | "rose";
 
 export const COSMETICS = [
   {
@@ -132,15 +142,91 @@ export const COSMETICS = [
     price: 500,
     rarity: "legendary",
   },
+
+  // Turn-start effects. These play briefly around a player-owned token when
+  // initiative advances to that combatant.
+  {
+    id: "turn-none",
+    type: "turn-start-effect",
+    slot: "turnStart",
+    effect: "none",
+    name: "No Turn Effect",
+    description: "Keep initiative transitions clean and unadorned.",
+    price: 0,
+    rarity: "starter",
+  },
+  {
+    id: "turn-aura",
+    type: "turn-start-effect",
+    slot: "turnStart",
+    effect: "aura",
+    name: "Aura Pulse",
+    description: "A bright Aura wave expands from your token as your turn begins.",
+    price: 200,
+    rarity: "uncommon",
+  },
+  {
+    id: "turn-ember",
+    type: "turn-start-effect",
+    slot: "turnStart",
+    effect: "ember",
+    name: "Dust Ignition",
+    description: "A quick burst of ember-bright Dust ignites beneath your token.",
+    price: 300,
+    rarity: "uncommon",
+  },
+  {
+    id: "turn-frost",
+    type: "turn-start-effect",
+    slot: "turnStart",
+    effect: "frost",
+    name: "Frost Ring",
+    description: "A crystalline frost ring flashes outward before cracking away.",
+    price: 300,
+    rarity: "uncommon",
+  },
+  {
+    id: "turn-lightning",
+    type: "turn-start-effect",
+    slot: "turnStart",
+    effect: "lightning",
+    name: "Voltage Surge",
+    description: "Electric arcs snap around your token the instant initiative reaches you.",
+    price: 400,
+    rarity: "rare",
+  },
+  {
+    id: "turn-shadow",
+    type: "turn-start-effect",
+    slot: "turnStart",
+    effect: "shadow",
+    name: "Shadow Bloom",
+    description: "Dark violet smoke blooms outward and collapses back into your token.",
+    price: 450,
+    rarity: "rare",
+  },
+  {
+    id: "turn-rose",
+    type: "turn-start-effect",
+    slot: "turnStart",
+    effect: "rose",
+    name: "Rose Entrance",
+    description: "A sweeping ring of crimson petals marks the beginning of your turn.",
+    price: 500,
+    rarity: "legendary",
+  },
+
 ] as const;
 
 type Cosmetic = (typeof COSMETICS)[number];
 type CriticalCosmetic = Extract<Cosmetic, { slot: CriticalSlot }>;
+type TurnStartCosmetic = Extract<Cosmetic, { slot: "turnStart" }>;
 
 const DEFAULT_CRITICAL_LOADOUT: Record<CriticalSlot, CriticalCosmetic["id"]> = {
   nat20: "crit20-golden",
   nat1: "crit1-fracture",
 };
+const DEFAULT_TURN_START_ID: TurnStartCosmetic["id"] = "turn-none";
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS cosmetic_loadout (
@@ -149,6 +235,12 @@ db.exec(`
     cosmetic_id  TEXT NOT NULL,
     updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (user_id, slot)
+  );
+
+  CREATE TABLE IF NOT EXISTS turn_start_loadout (
+    user_id      INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    cosmetic_id  TEXT NOT NULL,
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
 
@@ -210,6 +302,15 @@ function criticalCosmeticById(id: string): CriticalCosmetic | undefined {
   return item && isCriticalCosmetic(item) ? item : undefined;
 }
 
+function isTurnStartCosmetic(item: Cosmetic): item is TurnStartCosmetic {
+  return item.type === "turn-start-effect";
+}
+
+function turnStartCosmeticById(id: string): TurnStartCosmetic | undefined {
+  const item = COSMETICS.find((candidate) => candidate.id === id);
+  return item && isTurnStartCosmetic(item) ? item : undefined;
+}
+
 function equippedCriticalIds(userId: number): Record<CriticalSlot, string> {
   const equipped: Record<CriticalSlot, string> = { ...DEFAULT_CRITICAL_LOADOUT };
   const rows = db
@@ -242,6 +343,70 @@ export function criticalEffectsForUser(
   };
 }
 
+
+function shopPreviewCharacter(
+  userId: number
+): { id: number; name: string; imageUrl: string; imageKind: "token" | "portrait" | null } | null {
+  const row = db
+    .prepare(
+      `SELECT c.id, c.name, c.portrait_path,
+              (
+                SELECT t.image_path
+                FROM tokens t
+                WHERE t.character_id = c.id AND COALESCE(t.image_path, '') <> ''
+                ORDER BY t.id DESC
+                LIMIT 1
+              ) AS token_image_path
+       FROM characters c
+       WHERE c.user_id = ? AND COALESCE(c.is_npc, 0) = 0
+       ORDER BY
+         CASE WHEN EXISTS (SELECT 1 FROM tokens tx WHERE tx.character_id = c.id) THEN 0 ELSE 1 END,
+         (SELECT MAX(tx2.id) FROM tokens tx2 WHERE tx2.character_id = c.id) DESC,
+         c.updated_at DESC,
+         c.id DESC
+       LIMIT 1`
+    )
+    .get(userId) as
+    | {
+        id: number;
+        name: string;
+        portrait_path: string | null;
+        token_image_path: string | null;
+      }
+    | undefined;
+
+  if (!row) return null;
+
+  const imageKind = row.token_image_path ? "token" : row.portrait_path ? "portrait" : null;
+  const imagePath = row.token_image_path || row.portrait_path || "";
+  const fileName = imagePath ? imagePath.replace(/\\/g, "/").split("/").pop() ?? "" : "";
+
+  return {
+    id: row.id,
+    name: row.name,
+    imageUrl: fileName ? `/uploads/${encodeURIComponent(fileName)}` : "",
+    imageKind,
+  };
+}
+
+function equippedTurnStartId(userId: number): TurnStartCosmetic["id"] {
+  const row = db
+    .prepare(
+      `SELECT cosmetic_id
+       FROM turn_start_loadout
+       WHERE user_id = ?`
+    )
+    .get(userId) as { cosmetic_id: string } | undefined;
+
+  const item = row ? turnStartCosmeticById(row.cosmetic_id) : undefined;
+  return item?.id ?? DEFAULT_TURN_START_ID;
+}
+
+export function turnStartEffectForUser(userId: number): TurnStartEffectStyle {
+  const item = turnStartCosmeticById(equippedTurnStartId(userId));
+  return (item?.effect ?? "none") as TurnStartEffectStyle;
+}
+
 shopRouter.get("/", (req, res) => {
   const user = getSessionUser(req);
   if (!user) return res.status(401).json({ error: "Not logged in" });
@@ -255,8 +420,15 @@ shopRouter.get("/", (req, res) => {
       bypass: bypass.active,
       bypassReason: bypass.reason,
     },
-    equipped: equippedCriticalIds(user.id),
-    equippedEffects: criticalEffectsForUser(user.id),
+    equipped: {
+      ...equippedCriticalIds(user.id),
+      turnStart: equippedTurnStartId(user.id),
+    },
+    equippedEffects: {
+      ...criticalEffectsForUser(user.id),
+      turnStart: turnStartEffectForUser(user.id),
+    },
+    previewCharacter: shopPreviewCharacter(user.id),
     items: COSMETICS.map((item) => presentItem(user.id, item, bypass.active)),
   });
 });
@@ -267,8 +439,8 @@ shopRouter.post("/equip", (req, res) => {
 
   const cosmeticId = String(req.body?.cosmeticId ?? "");
   const item = COSMETICS.find((candidate) => candidate.id === cosmeticId);
-  if (!item || !isCriticalCosmetic(item)) {
-    return res.status(404).json({ error: "That critical-roll cosmetic does not exist." });
+  if (!item || (!isCriticalCosmetic(item) && !isTurnStartCosmetic(item))) {
+    return res.status(404).json({ error: "That equippable cosmetic does not exist." });
   }
 
   const bypass = bypassFor(user.id);
@@ -276,18 +448,34 @@ shopRouter.post("/equip", (req, res) => {
     return res.status(403).json({ error: "Unlock that effect before equipping it." });
   }
 
-  db.prepare(
-    `INSERT INTO cosmetic_loadout (user_id, slot, cosmetic_id, updated_at)
-     VALUES (?, ?, ?, datetime('now'))
-     ON CONFLICT(user_id, slot) DO UPDATE SET
-       cosmetic_id = excluded.cosmetic_id,
-       updated_at = datetime('now')`
-  ).run(user.id, item.slot, item.id);
+  if (isTurnStartCosmetic(item)) {
+    db.prepare(
+      `INSERT INTO turn_start_loadout (user_id, cosmetic_id, updated_at)
+       VALUES (?, ?, datetime('now'))
+       ON CONFLICT(user_id) DO UPDATE SET
+         cosmetic_id = excluded.cosmetic_id,
+         updated_at = datetime('now')`
+    ).run(user.id, item.id);
+  } else {
+    db.prepare(
+      `INSERT INTO cosmetic_loadout (user_id, slot, cosmetic_id, updated_at)
+       VALUES (?, ?, ?, datetime('now'))
+       ON CONFLICT(user_id, slot) DO UPDATE SET
+         cosmetic_id = excluded.cosmetic_id,
+         updated_at = datetime('now')`
+    ).run(user.id, item.slot, item.id);
+  }
 
   res.json({
     ok: true,
-    equipped: equippedCriticalIds(user.id),
-    equippedEffects: criticalEffectsForUser(user.id),
+    equipped: {
+      ...equippedCriticalIds(user.id),
+      turnStart: equippedTurnStartId(user.id),
+    },
+    equippedEffects: {
+      ...criticalEffectsForUser(user.id),
+      turnStart: turnStartEffectForUser(user.id),
+    },
   });
 });
 
@@ -335,6 +523,43 @@ shopRouter.get("/critical-effect", (req, res) => {
 
   const effects = criticalEffectsForUser(roller.user_id);
   res.json({ effect: effects[kind] });
+});
+
+// Resolve a player's equipped turn-start cosmetic for a viewer in the same campaign.
+shopRouter.get("/turn-start-effect", (req, res) => {
+  const viewer = getSessionUser(req);
+  if (!viewer) return res.status(401).json({ error: "Not logged in" });
+
+  const campaignId = Number(req.query.campaignId);
+  const targetUserId = Number(req.query.userId);
+  if (
+    !Number.isInteger(campaignId) ||
+    campaignId <= 0 ||
+    !Number.isInteger(targetUserId) ||
+    targetUserId <= 0
+  ) {
+    return res.status(400).json({ error: "Invalid turn-start effect request." });
+  }
+
+  const viewerMember = db
+    .prepare(
+      `SELECT 1 FROM campaign_members
+       WHERE campaign_id = ? AND user_id = ?
+       LIMIT 1`
+    )
+    .get(campaignId, viewer.id);
+  if (!viewerMember) return res.status(404).json({ error: "Campaign not found." });
+
+  const targetMember = db
+    .prepare(
+      `SELECT 1 FROM campaign_members
+       WHERE campaign_id = ? AND user_id = ?
+       LIMIT 1`
+    )
+    .get(campaignId, targetUserId);
+  if (!targetMember) return res.json({ effect: "none" });
+
+  res.json({ effect: turnStartEffectForUser(targetUserId) });
 });
 
 shopRouter.post("/purchase", (req, res) => {

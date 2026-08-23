@@ -1,0 +1,419 @@
+.turn-start-effect {
+  --turn-color: #8be6ff;
+  --turn-color-soft: rgba(139, 230, 255, 0.46);
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: 190%;
+  height: 190%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.turn-start-aura {
+  --turn-color: var(--token-aura-color, #8be6ff);
+  --turn-color-soft: var(--token-aura-soft, rgba(139, 230, 255, 0.5));
+}
+
+.turn-start-ember {
+  --turn-color: #ff9c45;
+  --turn-color-soft: rgba(255, 90, 35, 0.52);
+}
+
+.turn-start-frost {
+  --turn-color: #d9f8ff;
+  --turn-color-soft: rgba(115, 218, 255, 0.5);
+}
+
+.turn-start-lightning {
+  --turn-color: #dff9ff;
+  --turn-color-soft: rgba(85, 186, 255, 0.62);
+}
+
+.turn-start-shadow {
+  --turn-color: #a875ff;
+  --turn-color-soft: rgba(79, 39, 126, 0.68);
+}
+
+.turn-start-rose {
+  --turn-color: #ff7896;
+  --turn-color-soft: rgba(193, 30, 76, 0.56);
+}
+
+.turn-start-flash,
+.turn-start-ring,
+.turn-start-beam,
+.turn-start-particles,
+.turn-start-petals,
+.turn-start-art {
+  position: absolute;
+  pointer-events: none;
+}
+
+.turn-start-flash {
+  inset: 23%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 8%, var(--turn-color-soft) 26%, transparent 68%);
+  filter: blur(2px);
+  animation: turn-start-flash 0.7s ease-out both;
+}
+
+.turn-start-ring {
+  left: 50%;
+  top: 57%;
+  width: 52%;
+  height: 23%;
+  border: max(2px, 0.035em) solid color-mix(in srgb, var(--turn-color) 82%, white 18%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 8px var(--turn-color),
+    0 0 22px var(--turn-color-soft),
+    inset 0 0 10px var(--turn-color-soft);
+  transform: translate(-50%, -50%);
+  animation: turn-start-ring 1.05s cubic-bezier(0.12, 0.78, 0.18, 1) both;
+}
+
+.turn-start-ring-b {
+  animation-delay: 0.12s;
+  opacity: 0.72;
+}
+
+.turn-start-beam {
+  left: 50%;
+  bottom: 35%;
+  width: 22%;
+  height: 52%;
+  background: linear-gradient(to top, var(--turn-color-soft), rgba(255, 255, 255, 0.38) 42%, transparent 92%);
+  filter: blur(5px);
+  transform: translateX(-50%) scaleY(0.15);
+  transform-origin: center bottom;
+  animation: turn-start-beam 0.92s ease-out both;
+}
+
+.turn-start-art {
+  left: 50%;
+  top: 49%;
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter:
+    saturate(1.3)
+    contrast(1.1)
+    drop-shadow(0 0 8px var(--turn-color))
+    drop-shadow(0 0 18px var(--turn-color-soft));
+  transform: translate(-50%, -50%) scale(0.35) rotate(-7deg);
+  animation: turn-start-art 1.08s cubic-bezier(0.12, 0.8, 0.2, 1) both;
+}
+
+.turn-start-art-ghost {
+  opacity: 0.48;
+  animation-delay: 0.08s;
+  transform: translate(-50%, -50%) scale(0.3) rotate(12deg);
+}
+
+.turn-start-particles,
+.turn-start-petals {
+  inset: 0;
+}
+
+.turn-start-particles i {
+  --angle: calc(var(--turn-particle) * 30deg);
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 4%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--turn-color) 78%, white 22%);
+  box-shadow: 0 0 8px var(--turn-color);
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-16%);
+  animation: turn-start-particle 0.95s ease-out both;
+  animation-delay: calc(var(--turn-particle) * 0.012s);
+}
+
+.turn-start-petals i {
+  --petal-angle: calc(var(--turn-petal) * 25.714deg);
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 8%;
+  height: 4%;
+  border-radius: 80% 15% 80% 15%;
+  background: linear-gradient(135deg, #ff97ad, #c8194c 68%);
+  box-shadow: 0 0 6px rgba(255, 69, 113, 0.72);
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--petal-angle)) translateY(-12%);
+  animation: turn-start-petal 1.25s cubic-bezier(0.12, 0.72, 0.25, 1) both;
+  animation-delay: calc(var(--turn-petal) * 0.018s);
+}
+
+.turn-start-shadow .turn-start-art {
+  width: 92%;
+  height: 92%;
+  opacity: 0.76;
+  filter:
+    hue-rotate(245deg)
+    saturate(1.2)
+    brightness(0.8)
+    drop-shadow(0 0 16px #5f3297);
+}
+
+.turn-start-lightning .turn-start-art {
+  width: 90%;
+  height: 90%;
+  filter:
+    brightness(1.8)
+    saturate(0.75)
+    drop-shadow(0 0 8px #8edcff)
+    drop-shadow(0 0 18px #4a9fff);
+}
+
+.turn-start-frost .turn-start-art {
+  opacity: 0.88;
+  filter:
+    hue-rotate(155deg)
+    brightness(1.45)
+    saturate(0.65)
+    drop-shadow(0 0 12px #7de7ff);
+}
+
+.turn-start-ember .turn-start-art {
+  opacity: 0.9;
+  filter:
+    brightness(1.3)
+    saturate(1.35)
+    drop-shadow(0 0 12px #ff7038);
+}
+
+.turn-start-preview-mode {
+  width: 220px;
+  height: 220px;
+}
+
+.turn-start-preview-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 230;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(8, 10, 18, 0.22), rgba(8, 10, 18, 0.62));
+  animation: turn-preview-stage 0.18s ease-out both;
+}
+
+.turn-start-preview-token {
+  --token-aura-color: #89e4ff;
+  --token-aura-soft: rgba(105, 214, 255, 0.55);
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 92px;
+  height: 92px;
+  place-items: center;
+  border: 3px solid rgba(255, 255, 255, 0.72);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.32), transparent 26%),
+    linear-gradient(145deg, #42536f, #131827 72%);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.58);
+  color: white;
+  font-family: var(--font-display, serif);
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.turn-start-preview-token > strong {
+  position: relative;
+  z-index: 3;
+}
+
+.turn-start-preview-token.has-image {
+  background: rgba(10, 13, 22, 0.9);
+}
+
+.turn-start-preview-character-art {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: inherit;
+  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.62));
+}
+
+.turn-start-preview-token.token-image > .turn-start-preview-character-art {
+  object-fit: contain;
+  object-position: center bottom;
+  border-radius: 0;
+}
+
+.emporium-turn-start-preview {
+  --token-aura-color: #8be6ff;
+  --token-aura-soft: rgba(139, 230, 255, 0.45);
+  position: relative;
+  display: grid;
+  width: 92px;
+  height: 76px;
+  place-items: center;
+  overflow: visible;
+}
+
+.emporium-turn-start-preview > .turn-start-effect {
+  width: 118px;
+  height: 118px;
+  transform: translate(-50%, -50%) scale(0.72);
+}
+
+.emporium-turn-start-token {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #465777, #161b2a 72%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+  color: white;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.emporium-turn-start-token > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: inherit;
+}
+
+.emporium-turn-start-token.token-image > img {
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.emporium-turn-start-token.has-image {
+  overflow: hidden;
+  background: rgba(10, 13, 22, 0.86);
+}
+
+.emporium-turn-start-token.has-image > img {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55));
+}
+
+.emporium-turn-start-token > span {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes turn-start-flash {
+  0% { opacity: 0; transform: scale(0.2); }
+  24% { opacity: 1; transform: scale(0.78); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+@keyframes turn-start-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.28); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.95); }
+}
+
+@keyframes turn-start-beam {
+  0% { opacity: 0; transform: translateX(-50%) scaleY(0.08); }
+  24% { opacity: 0.9; transform: translateX(-50%) scaleY(1); }
+  100% { opacity: 0; transform: translateX(-50%) scaleY(1.3); }
+}
+
+@keyframes turn-start-art {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.25) rotate(-12deg); }
+  22% { opacity: 0.95; }
+  72% { opacity: 0.72; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.24) rotate(8deg); }
+}
+
+@keyframes turn-start-particle {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-10%); }
+  22% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-82px) scale(0.28);
+  }
+}
+
+@keyframes turn-start-petal {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--petal-angle)) translateY(-8%) scale(0.4); }
+  18% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(calc(var(--petal-angle) + 85deg)) translateY(-92px) scale(0.78);
+  }
+}
+
+@keyframes turn-preview-stage {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-start-effect *,
+  .turn-start-effect {
+    animation: none !important;
+  }
+
+  .turn-start-effect {
+    opacity: 0.72;
+  }
+}
+
+/* Small shop cards settle into a readable still after showing the full effect in Preview. */
+.turn-start-static-preview .turn-start-flash,
+.turn-start-static-preview .turn-start-ring,
+.turn-start-static-preview .turn-start-beam,
+.turn-start-static-preview .turn-start-art,
+.turn-start-static-preview .turn-start-particles i,
+.turn-start-static-preview .turn-start-petals i {
+  animation: none !important;
+}
+
+.turn-start-static-preview .turn-start-flash {
+  opacity: 0.34;
+  transform: scale(0.86);
+}
+
+.turn-start-static-preview .turn-start-ring-a {
+  opacity: 0.72;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.turn-start-static-preview .turn-start-ring-b {
+  opacity: 0.35;
+  transform: translate(-50%, -50%) scale(1.48);
+}
+
+.turn-start-static-preview .turn-start-beam {
+  opacity: 0.28;
+  transform: translateX(-50%) scaleY(0.78);
+}
+
+.turn-start-static-preview .turn-start-art-main {
+  opacity: 0.72;
+  transform: translate(-50%, -50%) scale(0.82) rotate(-5deg);
+}
+
+.turn-start-static-preview .turn-start-art-ghost {
+  opacity: 0.28;
+  transform: translate(-50%, -50%) scale(0.98) rotate(10deg);
+}
+
+.turn-start-static-preview .turn-start-petals i {
+  opacity: 0.72;
+  transform: translate(-50%, -50%) rotate(var(--petal-angle)) translateY(-34px) scale(0.68);
+}

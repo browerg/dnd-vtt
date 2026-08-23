@@ -2,16 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { previewDice, setDiceTrailStyle, type DiceTrailStyle } from "../dice3d";
+import TurnStartEffect from "../components/TurnStartEffect";
 import "./ShopPage.css";
 import "./CriticalEffectShop.css";
 
-type CriticalSlot = "nat20" | "nat1";
-type ShopItemType = "dice-trail" | "nat20-effect" | "nat1-effect";
+type CosmeticSlot = "nat20" | "nat1" | "turnStart";
+type ShopItemType = "dice-trail" | "nat20-effect" | "nat1-effect" | "turn-start-effect";
 
 interface ShopItem {
   id: string;
   type: ShopItemType;
-  slot?: CriticalSlot;
+  slot?: CosmeticSlot;
   effect: string;
   name: string;
   description: string;
@@ -26,8 +27,14 @@ interface ShopResponse {
     bypass: boolean;
     bypassReason: "dev" | "gm" | null;
   };
-  equipped: Record<CriticalSlot, string>;
-  equippedEffects: Record<CriticalSlot, string>;
+  equipped: Record<CosmeticSlot, string>;
+  equippedEffects: Record<CosmeticSlot, string>;
+  previewCharacter: {
+    id: number;
+    name: string;
+    imageUrl: string;
+    imageKind: "token" | "portrait" | null;
+  } | null;
   items: ShopItem[];
 }
 
@@ -56,12 +63,17 @@ function criticalKind(item: ShopItem): "nat20" | "nat1" | null {
   return null;
 }
 
+function isTurnStartEffect(item: ShopItem) {
+  return item.type === "turn-start-effect";
+}
+
 export default function ShopPage() {
   const [shop, setShop] = useState<ShopResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [turnPreview, setTurnPreview] = useState<{ effect: string; name: string; nonce: number } | null>(null);
 
   const loadShop = async () => {
     const response = await api<ShopResponse>("/api/shop");
@@ -92,6 +104,7 @@ export default function ShopPage() {
   const diceTrails = useMemo(() => items.filter((item) => item.type === "dice-trail"), [items]);
   const nat20Effects = useMemo(() => items.filter((item) => item.type === "nat20-effect"), [items]);
   const nat1Effects = useMemo(() => items.filter((item) => item.type === "nat1-effect"), [items]);
+  const turnStartEffects = useMemo(() => items.filter((item) => item.type === "turn-start-effect"), [items]);
 
   const isEquipped = (item: ShopItem) => {
     if (!item.slot) return false;
@@ -108,6 +121,18 @@ export default function ShopPage() {
         setDiceTrailStyle(item.effect);
         await previewDice("white");
         setNotice(`Previewed ${item.name}.`);
+      } else if (isTurnStartEffect(item)) {
+        if (item.effect === "none") {
+          setTurnPreview(null);
+          setNotice("No Turn Effect disables the initiative animation.");
+        } else {
+          const preview = { effect: item.effect, name: item.name, nonce: Date.now() };
+          setTurnPreview(preview);
+          window.setTimeout(() => {
+            setTurnPreview((current) => current?.nonce === preview.nonce ? null : current);
+          }, 1500);
+          setNotice(`Previewed ${item.name}.`);
+        }
       } else {
         const kind = criticalKind(item);
         if (!kind) return;
@@ -218,6 +243,32 @@ export default function ShopPage() {
       );
     }
 
+    if (isTurnStartEffect(item)) {
+      const previewCharacter = shop?.previewCharacter;
+      const initials = previewCharacter?.name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join("") || "PC";
+
+      return (
+        <span className="emporium-turn-start-preview" aria-hidden>
+          <TurnStartEffect effect={item.effect} staticPreview />
+          <i
+            className={`emporium-turn-start-token${previewCharacter?.imageUrl ? ` has-image ${previewCharacter.imageKind ?? "portrait"}-image` : ""}`}
+            title={previewCharacter?.name || "Character preview"}
+          >
+            {previewCharacter?.imageUrl ? (
+              <img src={previewCharacter.imageUrl} alt="" />
+            ) : (
+              <span>{initials}</span>
+            )}
+          </i>
+        </span>
+      );
+    }
+
     const kind = criticalKind(item);
     return (
       <span
@@ -323,6 +374,36 @@ export default function ShopPage() {
 
   return (
     <div className="shell">
+      {turnPreview && (
+        <div className="turn-start-preview-stage" role="status" aria-live="polite">
+          <div
+            key={turnPreview.nonce}
+            className={`turn-start-preview-token${
+              shop?.previewCharacter?.imageUrl
+                ? ` has-image ${shop.previewCharacter.imageKind ?? "portrait"}-image`
+                : ""
+            }`}
+          >
+            <TurnStartEffect effect={turnPreview.effect} preview />
+            {shop?.previewCharacter?.imageUrl ? (
+              <img
+                className="turn-start-preview-character-art"
+                src={shop.previewCharacter.imageUrl}
+                alt=""
+              />
+            ) : (
+              <strong>
+                {shop?.previewCharacter?.name
+                  ?.split(/\s+/)
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((part) => part[0]?.toUpperCase())
+                  .join("") || "PC"}
+              </strong>
+            )}
+          </div>
+        </div>
+      )}
       <header className="topbar">
         <Link to="/" className="ghost link">
           ← Campaigns
@@ -392,6 +473,12 @@ export default function ShopPage() {
               "Natural 1 Effects",
               "When the dice betray you, at least fail with style.",
               nat1Effects
+            )}
+
+            {renderSection(
+              "Turn Start Effects",
+              "A short token-centered entrance that fires when initiative reaches your character.",
+              turnStartEffects
             )}
           </>
         )}
