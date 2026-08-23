@@ -1,0 +1,275 @@
+/* Unlockable Natural 20 / Natural 1 variants.
+   Base "golden" and "fracture" styling comes from CriticalRollOverlay.css. */
+
+.critical-roll-overlay.effect-golden {
+  --critical-primary: #d9ad50;
+  --critical-secondary: #78dff2;
+  --critical-rgb: 217, 173, 80;
+}
+
+/* NAT 20 — Rose Burst */
+.critical-roll-overlay.effect-rose {
+  --critical-primary: #f35d91;
+  --critical-secondary: #ffd5e4;
+  --critical-rgb: 243, 93, 145;
+}
+
+.effect-rose .critical-screen-flash {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 225, 236, .72), transparent 16%),
+    radial-gradient(circle at center, rgba(243, 93, 145, .4), transparent 48%);
+}
+
+.effect-rose .critical-rings span {
+  border-color: rgba(255, 150, 188, .42);
+  border-radius: 46% 54% 42% 58%;
+}
+
+.effect-rose .critical-particles span {
+  width: 18px;
+  height: 9px;
+  border-radius: 85% 20% 80% 25%;
+  background: linear-gradient(135deg, #ffe8f0, #f35d91 52%, #9f1948);
+  box-shadow: 0 0 12px rgba(243, 93, 145, .7);
+  animation-name: critical-rose-petal;
+}
+
+.effect-rose .critical-emblem-frame {
+  border-radius: 50% 18% 50% 18%;
+}
+
+/* NAT 20 — Lightning Strike */
+.critical-roll-overlay.effect-lightning {
+  --critical-primary: #dff8ff;
+  --critical-secondary: #62cfff;
+  --critical-rgb: 98, 207, 255;
+}
+
+.effect-lightning .critical-screen-flash {
+  background:
+    linear-gradient(112deg, transparent 0 43%, rgba(255,255,255,.92) 44% 45%, transparent 46%),
+    linear-gradient(69deg, transparent 0 57%, rgba(98,207,255,.65) 58% 59%, transparent 60%),
+    radial-gradient(circle at center, rgba(105, 214, 255, .44), transparent 45%);
+  animation: critical-lightning-flash .88s steps(3, end) both;
+}
+
+.effect-lightning .critical-rings span {
+  border-radius: 0;
+  transform: rotate(45deg);
+  box-shadow: 0 0 20px rgba(98,207,255,.26);
+}
+
+.effect-lightning .critical-particles span {
+  width: 3px;
+  height: 52px;
+  background: linear-gradient(#fff, #62cfff 55%, transparent);
+  box-shadow: 0 0 14px rgba(98,207,255,.95);
+  animation-name: critical-lightning-shard;
+}
+
+.effect-lightning .critical-emblem {
+  animation-name: critical-lightning-emblem;
+}
+
+.effect-lightning .critical-emblem-frame {
+  border-radius: 0;
+  border-width: 3px;
+}
+
+/* NAT 1 — classic fracture */
+.critical-roll-overlay.effect-fracture {
+  --critical-primary: #e34858;
+  --critical-secondary: #8a1727;
+  --critical-rgb: 227, 72, 88;
+}
+
+/* NAT 1 — Skull & Smoke */
+.critical-roll-overlay.effect-smoke {
+  --critical-primary: #b99ad8;
+  --critical-secondary: #6d4b8e;
+  --critical-rgb: 142, 102, 178;
+}
+
+.effect-smoke .critical-screen-flash {
+  background:
+    radial-gradient(circle at 50% 58%, rgba(185,154,216,.18), transparent 25%),
+    radial-gradient(circle at center, rgba(33, 21, 43, .8), transparent 68%);
+  animation: critical-smoke-flash 1.15s ease-out both;
+}
+
+.effect-smoke .critical-vignette {
+  box-shadow:
+    inset 0 0 190px 70px rgba(15, 9, 20, .72),
+    inset 0 0 48px 8px rgba(142, 102, 178, .38);
+}
+
+.effect-smoke .critical-particles span {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(199,176,219,.38), rgba(82,52,104,.25) 46%, transparent 72%);
+  filter: blur(7px);
+  box-shadow: none;
+  animation-name: critical-smoke-drift;
+}
+
+.effect-smoke .critical-fractures {
+  opacity: .3;
+  filter: blur(1px);
+}
+
+.effect-smoke .critical-emblem-frame {
+  border-radius: 50%;
+  border-style: dashed;
+}
+
+/* NAT 1 — Falling Debris */
+.critical-roll-overlay.effect-debris {
+  --critical-primary: #e59b62;
+  --critical-secondary: #8f4d31;
+  --critical-rgb: 229, 155, 98;
+}
+
+.effect-debris .critical-screen-flash {
+  background:
+    linear-gradient(180deg, rgba(64,38,25,.62), transparent 34%),
+    radial-gradient(circle at center, rgba(229,155,98,.28), transparent 45%);
+  animation: critical-debris-impact .7s ease-out both;
+}
+
+.effect-debris .critical-rings span {
+  border-radius: 4px;
+  border-color: rgba(229,155,98,.34);
+}
+
+.effect-debris .critical-particles {
+  top: 0;
+}
+
+.effect-debris .critical-particles span {
+  width: 16px;
+  height: 13px;
+  border-radius: 2px;
+  background: linear-gradient(145deg, #e0b08b, #88523a 64%, #3d2118);
+  box-shadow: 0 0 8px rgba(229,155,98,.42);
+  animation-name: critical-debris-fall;
+}
+
+.effect-debris .critical-fractures span {
+  background: linear-gradient(90deg, #e59b62, transparent 18%, #8f4d31 20% 100%);
+}
+
+@keyframes critical-rose-petal {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(0) rotate(0deg) scale(.4);
+  }
+  20% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(-40vh) rotate(280deg) scale(1.15);
+  }
+}
+
+@keyframes critical-lightning-flash {
+  0%, 100% { opacity: 0; }
+  12% { opacity: 1; }
+  27% { opacity: .15; }
+  38% { opacity: .9; }
+  52% { opacity: .08; }
+  68% { opacity: .62; }
+}
+
+@keyframes critical-lightning-shard {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(0) scaleY(.05);
+  }
+  12% { opacity: 1; }
+  36% { opacity: .28; }
+  48% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(-46vh) scaleY(1.2);
+  }
+}
+
+@keyframes critical-lightning-emblem {
+  0% { opacity: 0; transform: scale(.45) rotate(-7deg); }
+  45% { opacity: 1; transform: scale(1.08) rotate(2deg); }
+  55% { transform: scale(.98) translateX(-4px); }
+  65% { transform: scale(1.02) translateX(4px); }
+  100% { transform: scale(1); }
+}
+
+@keyframes critical-smoke-flash {
+  0% { opacity: 0; }
+  22% { opacity: .78; }
+  100% { opacity: 0; }
+}
+
+@keyframes critical-smoke-drift {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(5vh) scale(.35);
+  }
+  28% { opacity: .62; }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(-31vh) scale(1.8);
+  }
+}
+
+@keyframes critical-debris-impact {
+  0% { opacity: 0; transform: translateY(-4px); }
+  18% { opacity: 1; transform: translateY(5px); }
+  35% { transform: translateY(-3px); }
+  55% { opacity: .55; transform: translateY(2px); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+
+@keyframes critical-debris-fall {
+  0% {
+    opacity: 0;
+    transform: translate(
+      calc(cos(var(--particle-angle)) * 35vw),
+      -18vh
+    ) rotate(0deg) scale(.7);
+  }
+  14% { opacity: .92; }
+  100% {
+    opacity: 0;
+    transform: translate(
+      calc(cos(var(--particle-angle)) * 20vw),
+      72vh
+    ) rotate(340deg) scale(1.15);
+  }
+}
+
+/* Fallback for engines that do not evaluate trig functions in transform. */
+@supports not (width: calc(cos(0deg) * 1px)) {
+  .effect-debris .critical-particles span {
+    animation-name: critical-debris-fall-simple;
+  }
+}
+
+@keyframes critical-debris-fall-simple {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(-38vh) rotate(0deg) scale(.7);
+  }
+  14% { opacity: .92; }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--particle-angle)) translateY(68vh) rotate(340deg) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .effect-rose .critical-particles span,
+  .effect-lightning .critical-particles span,
+  .effect-smoke .critical-particles span,
+  .effect-debris .critical-particles span {
+    animation-duration: .01ms !important;
+  }
+}

@@ -1,28 +1,80 @@
 import { useEffect, useMemo, useState } from "react";
 import "./CriticalRollOverlay.css";
+import "./CriticalRollEffects.css";
 
 export type CriticalRollKind = "nat20" | "nat1";
+export type CriticalEffectStyle =
+  | "golden"
+  | "rose"
+  | "lightning"
+  | "fracture"
+  | "smoke"
+  | "debris";
 
 export interface CriticalRollEventDetail {
   kind: CriticalRollKind;
   userName?: string;
   label?: string;
+  effect?: string;
 }
 
 interface ActiveCritical extends CriticalRollEventDetail {
   id: number;
   system: "remnant" | "dnd5e";
+  effect: CriticalEffectStyle;
 }
 
 const EVENT_NAME = "tabletop:critical-roll";
 let eventId = 0;
+
+const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning"]);
+const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris"]);
 
 function currentSystem(): "remnant" | "dnd5e" {
   const system = document.querySelector<HTMLElement>("[data-system]")?.dataset.system;
   return system === "remnant" ? "remnant" : "dnd5e";
 }
 
-function playCriticalSound(kind: CriticalRollKind) {
+function campaignIdFromPath(): number | null {
+  const match = window.location.pathname.match(/\/campaigns\/(\d+)(?:\/|$)/);
+  if (!match) return null;
+  const campaignId = Number(match[1]);
+  return Number.isInteger(campaignId) && campaignId > 0 ? campaignId : null;
+}
+
+function normalizeEffect(kind: CriticalRollKind, value?: string): CriticalEffectStyle {
+  if (value) {
+    const effect = value as CriticalEffectStyle;
+    if (kind === "nat20" && NAT20_EFFECTS.has(effect)) return effect;
+    if (kind === "nat1" && NAT1_EFFECTS.has(effect)) return effect;
+  }
+  return kind === "nat20" ? "golden" : "fracture";
+}
+
+async function resolveEffect(detail: CriticalRollEventDetail): Promise<CriticalEffectStyle> {
+  if (detail.effect) return normalizeEffect(detail.kind, detail.effect);
+
+  const campaignId = campaignIdFromPath();
+  const userName = detail.userName?.trim();
+  if (!campaignId || !userName) return normalizeEffect(detail.kind);
+
+  const query = new URLSearchParams({
+    campaignId: String(campaignId),
+    userName,
+    kind: detail.kind,
+  });
+
+  try {
+    const response = await fetch(`/api/shop/critical-effect?${query.toString()}`);
+    if (!response.ok) return normalizeEffect(detail.kind);
+    const body = (await response.json()) as { effect?: string };
+    return normalizeEffect(detail.kind, body.effect);
+  } catch {
+    return normalizeEffect(detail.kind);
+  }
+}
+
+function playCriticalSound(kind: CriticalRollKind, effect: CriticalEffectStyle) {
   if (localStorage.getItem("critical-roll-sound") === "off") return;
 
   try {
@@ -33,22 +85,44 @@ function playCriticalSound(kind: CriticalRollKind) {
     const context = new AudioContextClass();
     const start = context.currentTime + 0.015;
     const master = context.createGain();
+
+    const effectBoost =
+      effect === "lightning" ? 1.08 :
+      effect === "debris" ? 1.05 :
+      effect === "smoke" ? 0.86 :
+      1;
+
     master.gain.setValueAtTime(0.0001, start);
-    master.gain.exponentialRampToValueAtTime(kind === "nat20" ? 0.16 : 0.12, start + 0.03);
+    master.gain.exponentialRampToValueAtTime((kind === "nat20" ? 0.16 : 0.12) * effectBoost, start + 0.03);
     master.gain.exponentialRampToValueAtTime(0.0001, start + (kind === "nat20" ? 1.15 : 0.92));
     master.connect(context.destination);
 
-    const frequencies = kind === "nat20" ? [392, 523.25, 659.25, 783.99] : [196, 130.81, 82.41];
+    let frequencies =
+      kind === "nat20" ? [392, 523.25, 659.25, 783.99] : [196, 130.81, 82.41];
+
+    if (effect === "rose") frequencies = [349.23, 440, 523.25, 698.46];
+    if (effect === "lightning") frequencies = [523.25, 783.99, 1046.5, 1318.51];
+    if (effect === "smoke") frequencies = [146.83, 110, 73.42];
+    if (effect === "debris") frequencies = [164.81, 98, 55];
+
     frequencies.forEach((frequency, index) => {
       const oscillator = context.createOscillator();
       const voice = context.createGain();
       const noteStart = start + index * (kind === "nat20" ? 0.09 : 0.12);
       const noteLength = kind === "nat20" ? 0.58 : 0.48;
 
-      oscillator.type = kind === "nat20" ? "triangle" : "sawtooth";
+      oscillator.type =
+        effect === "lightning" ? "square" :
+        effect === "smoke" ? "sine" :
+        kind === "nat20" ? "triangle" :
+        "sawtooth";
+
       oscillator.frequency.setValueAtTime(frequency, noteStart);
       if (kind === "nat1") {
-        oscillator.frequency.exponentialRampToValueAtTime(Math.max(42, frequency * 0.65), noteStart + noteLength);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          Math.max(42, frequency * 0.65),
+          noteStart + noteLength
+        );
       }
 
       voice.gain.setValueAtTime(0.0001, noteStart);
@@ -72,22 +146,31 @@ export default function CriticalRollOverlay() {
   const [active, setActive] = useState<ActiveCritical | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const receive = (event: Event) => {
       const detail = (event as CustomEvent<CriticalRollEventDetail>).detail;
       if (!detail || (detail.kind !== "nat20" && detail.kind !== "nat1")) return;
 
-      setQueue((pending) => [
-        ...pending.slice(-3),
-        {
-          ...detail,
-          id: ++eventId,
-          system: currentSystem(),
-        },
-      ]);
+      void resolveEffect(detail).then((effect) => {
+        if (cancelled) return;
+        setQueue((pending) => [
+          ...pending.slice(-3),
+          {
+            ...detail,
+            effect,
+            id: ++eventId,
+            system: currentSystem(),
+          },
+        ]);
+      });
     };
 
     window.addEventListener(EVENT_NAME, receive);
-    return () => window.removeEventListener(EVENT_NAME, receive);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(EVENT_NAME, receive);
+    };
   }, []);
 
   useEffect(() => {
@@ -99,7 +182,7 @@ export default function CriticalRollOverlay() {
 
   useEffect(() => {
     if (!active) return;
-    playCriticalSound(active.kind);
+    playCriticalSound(active.kind, active.effect);
     const timer = window.setTimeout(
       () => setActive(null),
       active.kind === "nat20" ? 3300 : 2900
@@ -121,7 +204,7 @@ export default function CriticalRollOverlay() {
   return (
     <div
       key={active.id}
-      className={`critical-roll-overlay ${active.kind} ${active.system}`}
+      className={`critical-roll-overlay ${active.kind} ${active.system} effect-${active.effect}`}
       role="status"
       aria-live="assertive"
     >

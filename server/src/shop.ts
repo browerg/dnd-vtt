@@ -1,8 +1,17 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import { db } from "./db.js";
 import { getSessionUser } from "./auth.js";
 
 export const shopRouter = Router();
+
+export type CriticalSlot = "nat20" | "nat1";
+export type CriticalEffectStyle =
+  | "golden"
+  | "rose"
+  | "lightning"
+  | "fracture"
+  | "smoke"
+  | "debris";
 
 export const COSMETICS = [
   {
@@ -59,9 +68,89 @@ export const COSMETICS = [
     price: 500,
     rarity: "legendary",
   },
+
+  // Natural 20 celebration effects.
+  {
+    id: "crit20-golden",
+    type: "nat20-effect",
+    slot: "nat20",
+    effect: "golden",
+    name: "Golden Critical",
+    description: "The classic radiant critical-success fanfare.",
+    price: 0,
+    rarity: "starter",
+  },
+  {
+    id: "crit20-lightning",
+    type: "nat20-effect",
+    slot: "nat20",
+    effect: "lightning",
+    name: "Lightning Strike",
+    description: "A white-blue electrical surge detonates around your natural 20.",
+    price: 400,
+    rarity: "rare",
+  },
+  {
+    id: "crit20-rose",
+    type: "nat20-effect",
+    slot: "nat20",
+    effect: "rose",
+    name: "Rose Burst",
+    description: "A dramatic crimson-pink bloom of petals celebrates the perfect roll.",
+    price: 500,
+    rarity: "legendary",
+  },
+
+  // Natural 1 failure effects.
+  {
+    id: "crit1-fracture",
+    type: "nat1-effect",
+    slot: "nat1",
+    effect: "fracture",
+    name: "Critical Failure",
+    description: "The classic red fracture-and-glitch failure screen.",
+    price: 0,
+    rarity: "starter",
+  },
+  {
+    id: "crit1-smoke",
+    type: "nat1-effect",
+    slot: "nat1",
+    effect: "smoke",
+    name: "Skull & Smoke",
+    description: "The table darkens under a rolling cloud of ominous violet smoke.",
+    price: 350,
+    rarity: "rare",
+  },
+  {
+    id: "crit1-debris",
+    type: "nat1-effect",
+    slot: "nat1",
+    effect: "debris",
+    name: "Falling Debris",
+    description: "The critical failure hits hard enough to bring the ceiling down.",
+    price: 500,
+    rarity: "legendary",
+  },
 ] as const;
 
 type Cosmetic = (typeof COSMETICS)[number];
+type CriticalCosmetic = Extract<Cosmetic, { slot: CriticalSlot }>;
+
+const DEFAULT_CRITICAL_LOADOUT: Record<CriticalSlot, CriticalCosmetic["id"]> = {
+  nat20: "crit20-golden",
+  nat1: "crit1-fracture",
+};
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS cosmetic_loadout (
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    slot         TEXT NOT NULL CHECK (slot IN ('nat20','nat1')),
+    cosmetic_id  TEXT NOT NULL,
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, slot)
+  );
+`);
 
 function ensureWallet(userId: number) {
   db.prepare(
@@ -112,6 +201,47 @@ function presentItem(userId: number, item: Cosmetic, bypass: boolean) {
   return { ...item, owned };
 }
 
+function isCriticalCosmetic(item: Cosmetic): item is CriticalCosmetic {
+  return item.type === "nat20-effect" || item.type === "nat1-effect";
+}
+
+function criticalCosmeticById(id: string): CriticalCosmetic | undefined {
+  const item = COSMETICS.find((candidate) => candidate.id === id);
+  return item && isCriticalCosmetic(item) ? item : undefined;
+}
+
+function equippedCriticalIds(userId: number): Record<CriticalSlot, string> {
+  const equipped: Record<CriticalSlot, string> = { ...DEFAULT_CRITICAL_LOADOUT };
+  const rows = db
+    .prepare(
+      `SELECT slot, cosmetic_id
+       FROM cosmetic_loadout
+       WHERE user_id = ?`
+    )
+    .all(userId) as { slot: string; cosmetic_id: string }[];
+
+  for (const row of rows) {
+    if (row.slot !== "nat20" && row.slot !== "nat1") continue;
+    const item = criticalCosmeticById(row.cosmetic_id);
+    if (item?.slot === row.slot) equipped[row.slot] = item.id;
+  }
+
+  return equipped;
+}
+
+export function criticalEffectsForUser(
+  userId: number
+): Record<CriticalSlot, CriticalEffectStyle> {
+  const ids = equippedCriticalIds(userId);
+  const nat20 = criticalCosmeticById(ids.nat20);
+  const nat1 = criticalCosmeticById(ids.nat1);
+
+  return {
+    nat20: (nat20?.effect ?? "golden") as CriticalEffectStyle,
+    nat1: (nat1?.effect ?? "fracture") as CriticalEffectStyle,
+  };
+}
+
 shopRouter.get("/", (req, res) => {
   const user = getSessionUser(req);
   if (!user) return res.status(401).json({ error: "Not logged in" });
@@ -125,8 +255,86 @@ shopRouter.get("/", (req, res) => {
       bypass: bypass.active,
       bypassReason: bypass.reason,
     },
+    equipped: equippedCriticalIds(user.id),
+    equippedEffects: criticalEffectsForUser(user.id),
     items: COSMETICS.map((item) => presentItem(user.id, item, bypass.active)),
   });
+});
+
+shopRouter.post("/equip", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+
+  const cosmeticId = String(req.body?.cosmeticId ?? "");
+  const item = COSMETICS.find((candidate) => candidate.id === cosmeticId);
+  if (!item || !isCriticalCosmetic(item)) {
+    return res.status(404).json({ error: "That critical-roll cosmetic does not exist." });
+  }
+
+  const bypass = bypassFor(user.id);
+  if (item.price > 0 && !bypass.active && !hasUnlock(user.id, item.id)) {
+    return res.status(403).json({ error: "Unlock that effect before equipping it." });
+  }
+
+  db.prepare(
+    `INSERT INTO cosmetic_loadout (user_id, slot, cosmetic_id, updated_at)
+     VALUES (?, ?, ?, datetime('now'))
+     ON CONFLICT(user_id, slot) DO UPDATE SET
+       cosmetic_id = excluded.cosmetic_id,
+       updated_at = datetime('now')`
+  ).run(user.id, item.slot, item.id);
+
+  res.json({
+    ok: true,
+    equipped: equippedCriticalIds(user.id),
+    equippedEffects: criticalEffectsForUser(user.id),
+  });
+});
+
+// CriticalRollOverlay already receives the roller's display name from the live
+// synchronized roll. Resolve that roller to their server-owned equipped effect
+// so every viewer sees the roller's chosen celebration/failure cosmetic.
+shopRouter.get("/critical-effect", (req, res) => {
+  const viewer = getSessionUser(req);
+  if (!viewer) return res.status(401).json({ error: "Not logged in" });
+
+  const campaignId = Number(req.query.campaignId);
+  const userName = String(req.query.userName ?? "").trim();
+  const kind = String(req.query.kind ?? "");
+
+  if (!Number.isInteger(campaignId) || campaignId <= 0) {
+    return res.status(400).json({ error: "Invalid campaign." });
+  }
+  if (!userName || (kind !== "nat20" && kind !== "nat1")) {
+    return res.status(400).json({ error: "Invalid critical-effect request." });
+  }
+
+  const member = db
+    .prepare(
+      `SELECT 1 FROM campaign_members
+       WHERE campaign_id = ? AND user_id = ?
+       LIMIT 1`
+    )
+    .get(campaignId, viewer.id);
+  if (!member) return res.status(404).json({ error: "Campaign not found." });
+
+  const roller = db
+    .prepare(
+      `SELECT r.user_id
+       FROM rolls r
+       JOIN users u ON u.id = r.user_id
+       WHERE r.campaign_id = ? AND u.display_name = ?
+       ORDER BY r.id DESC
+       LIMIT 1`
+    )
+    .get(campaignId, userName) as { user_id: number } | undefined;
+
+  if (!roller) {
+    return res.json({ effect: kind === "nat20" ? "golden" : "fracture" });
+  }
+
+  const effects = criticalEffectsForUser(roller.user_id);
+  res.json({ effect: effects[kind] });
 });
 
 shopRouter.post("/purchase", (req, res) => {
@@ -155,10 +363,15 @@ shopRouter.post("/purchase", (req, res) => {
     });
   }
 
-  const purchase = db.transaction(() => {
+  db.exec("BEGIN IMMEDIATE");
+  try {
     const balance = walletBalance(user.id);
     if (balance < item.price) {
-      return { ok: false as const, balance };
+      db.exec("ROLLBACK");
+      return res.status(409).json({
+        error: `You need ${item.price - balance} more VCoins for ${item.name}.`,
+        balance,
+      });
     }
 
     const unlock = db.prepare(
@@ -167,7 +380,13 @@ shopRouter.post("/purchase", (req, res) => {
     ).run(user.id, item.id);
 
     if (Number(unlock.changes) === 0) {
-      return { ok: true as const, balance, alreadyOwned: true };
+      db.exec("COMMIT");
+      return res.json({
+        ok: true,
+        alreadyOwned: true,
+        balance,
+        item: presentItem(user.id, item, false),
+      });
     }
 
     db.prepare(
@@ -181,27 +400,20 @@ shopRouter.post("/purchase", (req, res) => {
        VALUES (?, ?, ?, ?)`
     ).run(user.id, -item.price, `Purchased ${item.name}`, item.id);
 
-    return {
-      ok: true as const,
+    db.exec("COMMIT");
+
+    return res.json({
+      ok: true,
       balance: balance - item.price,
       alreadyOwned: false,
-    };
-  });
-
-  const result = purchase();
-  if (!result.ok) {
-    return res.status(409).json({
-      error: `You need ${item.price - result.balance} more VCoins for ${item.name}.`,
-      balance: result.balance,
+      item: presentItem(user.id, item, false),
     });
+  } catch (error) {
+    if (db.isTransaction) {
+      db.exec("ROLLBACK");
+    }
+    throw error;
   }
-
-  res.json({
-    ok: true,
-    balance: result.balance,
-    alreadyOwned: result.alreadyOwned,
-    item: presentItem(user.id, item, false),
-  });
 });
 
 // Development-only helper so the economy can be tested without waiting for
@@ -223,4 +435,3 @@ shopRouter.post("/dev/grant", (req, res) => {
 
   res.json({ ok: true, balance: walletBalance(user.id) });
 });
-
