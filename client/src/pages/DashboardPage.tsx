@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, type CampaignSummary } from "../api";
 import { useAuth } from "../App";
@@ -105,9 +105,9 @@ export default function DashboardPage() {
             <span className="select-nav-icon customize-icon" aria-hidden />
             Customize
           </Link>
-          <Link to="/shop" className="select-nav-link">
+          <Link to="/emporium" className="select-nav-link">
             <span className="select-nav-icon shop-icon" aria-hidden />
-            Shop
+            Emporium
           </Link>
           <Link to="/profile" className="select-profile-link">
             <Avatar

@@ -67,6 +67,14 @@ function isTurnStartEffect(item: ShopItem) {
   return item.type === "turn-start-effect";
 }
 
+type MerchantAnimation = "idle" | "money" | "eat";
+
+const MERCHANT_GIFS: Record<MerchantAnimation, string> = {
+  idle: "/assets/ui/emporium-goblin-idle.gif",
+  money: "/assets/ui/emporium-goblin-money.gif",
+  eat: "/assets/ui/emporium-goblin-eat.gif",
+};
+
 export default function ShopPage() {
   const [shop, setShop] = useState<ShopResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +82,8 @@ export default function ShopPage() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [turnPreview, setTurnPreview] = useState<{ effect: string; name: string; nonce: number } | null>(null);
+  const [merchantAnimation, setMerchantAnimation] = useState<MerchantAnimation>("idle");
+  const [merchantNonce, setMerchantNonce] = useState(0);
 
   const loadShop = async () => {
     const response = await api<ShopResponse>("/api/shop");
@@ -99,6 +109,33 @@ export default function ShopPage() {
       cancelled = true;
     };
   }, []);
+
+  const playMerchant = (animation: Exclude<MerchantAnimation, "idle">) => {
+    setMerchantAnimation(animation);
+    setMerchantNonce((nonce) => nonce + 1);
+  };
+
+  // While the shopkeeper is idle, occasionally let him snack. The random
+  // animation is deliberately infrequent so the mascot stays atmospheric.
+  useEffect(() => {
+    if (merchantAnimation !== "idle") return;
+    const delay = 15000 + Math.floor(Math.random() * 20000);
+    const timer = window.setTimeout(() => {
+      setMerchantAnimation("eat");
+      setMerchantNonce((nonce) => nonce + 1);
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [merchantAnimation, merchantNonce]);
+
+  // One-shot reactions return to the normal idle loop when their GIF finishes.
+  useEffect(() => {
+    if (merchantAnimation === "idle") return;
+    const duration = merchantAnimation === "money" ? 2750 : 2050;
+    const timer = window.setTimeout(() => setMerchantAnimation("idle"), duration);
+    return () => window.clearTimeout(timer);
+  }, [merchantAnimation, merchantNonce]);
+
+  const merchantGif = MERCHANT_GIFS[merchantAnimation];
 
   const items = useMemo(() => shop?.items ?? [], [shop]);
   const diceTrails = useMemo(() => items.filter((item) => item.type === "dice-trail"), [items]);
@@ -166,6 +203,7 @@ export default function ShopPage() {
         body: JSON.stringify({ cosmeticId: item.id }),
       });
       await loadShop();
+      playMerchant("money");
       setNotice(shop?.wallet.bypass ? `${item.name} is available to you.` : `Unlocked ${item.name}!`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not purchase that cosmetic.");
@@ -293,7 +331,7 @@ export default function ShopPage() {
     description: string,
     sectionItems: ShopItem[]
   ) => (
-    <section className="emporium-section-block">
+    <section className={`emporium-section-block section-${sectionItems[0]?.type ?? "default"}`}>
       <div className="emporium-section-heading">
         <div>
           <h3>{title}</h3>
@@ -424,6 +462,15 @@ export default function ShopPage() {
               Earn VCoins while you play, then spend them on completely unnecessary,
               extremely important cosmetics.
             </p>
+          </div>
+
+          <div className="emporium-merchant" aria-hidden="true">
+            <img
+              key={`${merchantAnimation}-${merchantNonce}`}
+              src={merchantGif}
+              alt=""
+              className={`emporium-merchant-sprite is-${merchantAnimation}`}
+            />
           </div>
 
           <div className="emporium-wallet">

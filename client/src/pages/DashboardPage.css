@@ -241,18 +241,39 @@
 }
 
 .shop-icon {
-  border: 1px solid currentColor;
-  border-top: 0;
+  width: 0.92rem;
+  height: 0.92rem;
+  border: 1px solid var(--select-gold);
+  border-radius: 50%;
+  color: var(--select-gold);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255,255,255,.28), transparent 24%),
+    rgba(210, 170, 88, .09);
+  box-shadow:
+    inset 0 0 0 2px rgba(210, 170, 88, .08),
+    0 0 8px rgba(210, 170, 88, .2);
 }
 
 .shop-icon::before {
+  content: "V";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--select-gold);
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 5px rgba(210, 170, 88, .4);
+}
+
+.shop-icon::after {
   content: "";
   position: absolute;
-  left: -2px;
-  top: -5px;
-  width: 0.95rem;
-  height: 0.32rem;
-  border: 1px solid currentColor;
+  inset: 2px;
+  border: 1px solid rgba(210, 170, 88, .34);
+  border-radius: 50%;
 }
 
 .select-profile-link {

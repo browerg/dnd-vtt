@@ -35,7 +35,7 @@ export default function CustomizePage() {
         </Link>
         <span className="brand">🎨 Customize</span>
         <span className="spacer" />
-        <Link to="/shop" className="ghost link">
+        <Link to="/emporium" className="ghost link">
           🏪 Shop
         </Link>
       </header>
@@ -92,7 +92,7 @@ export default function CustomizePage() {
         <section className="card">
           <h3>More someday</h3>
           <p className="muted small">
-            Token frames, name flair, table felts… ideas live in the <Link to="/shop">Shop</Link> —
+            Token frames, name flair, table felts… ideas live in the <Link to="/emporium">Emporium</Link> —
             currently a pile of lumber and ambition.
           </p>
         </section>

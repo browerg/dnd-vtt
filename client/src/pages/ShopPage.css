@@ -1,4 +1,4 @@
-﻿.emporium-page {
+.emporium-page {
   display: grid;
   gap: 16px;
 }
@@ -307,3 +307,112 @@
 }
 
 
+
+/* Emporium shelves + goblin merchant */
+.emporium-section-block {
+  --emporium-section-accent: rgba(117, 210, 255, .72);
+  display: grid;
+  gap: 15px;
+  padding: 17px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-left: 3px solid var(--emporium-section-accent);
+  border-radius: 16px;
+  background:
+    linear-gradient(105deg, color-mix(in srgb, var(--emporium-section-accent) 7%, transparent), transparent 38%),
+    rgba(5, 9, 16, .18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.emporium-section-block.section-dice-trail {
+  --emporium-section-accent: rgba(85, 219, 255, .82);
+}
+
+.emporium-section-block.section-nat20-effect {
+  --emporium-section-accent: rgba(241, 190, 77, .88);
+}
+
+.emporium-section-block.section-nat1-effect {
+  --emporium-section-accent: rgba(255, 91, 106, .82);
+}
+
+.emporium-section-block.section-turn-start-effect {
+  --emporium-section-accent: rgba(176, 112, 255, .84);
+}
+
+.emporium-section-block .emporium-section-heading {
+  align-items: center;
+  padding: 2px 2px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--emporium-section-accent) 32%, transparent);
+}
+
+.emporium-section-block .emporium-section-heading h3 {
+  font-size: 1.08rem;
+  letter-spacing: .025em;
+}
+
+.emporium-section-block .emporium-section-heading h3::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--emporium-section-accent);
+  box-shadow: 0 0 10px var(--emporium-section-accent);
+  vertical-align: .08em;
+}
+
+.emporium-hero > div:first-child {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.emporium-merchant {
+  position: relative;
+  flex: 0 0 150px;
+  width: 150px;
+  height: 142px;
+  align-self: flex-end;
+  display: grid;
+  place-items: end center;
+  margin: -10px 2px -24px;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.emporium-merchant::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 24px;
+  right: 24px;
+  bottom: 17px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.32);
+  filter: blur(8px);
+}
+
+.emporium-merchant-sprite {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  object-position: center bottom;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 9px rgba(0,0,0,.28));
+}
+
+@media (max-width: 820px) {
+  .emporium-merchant {
+    order: 3;
+    flex-basis: 116px;
+    width: 116px;
+    height: 110px;
+    margin-bottom: -24px;
+  }
+
+  .emporium-merchant-sprite {
+    width: 120px;
+    height: 120px;
+  }
+}
