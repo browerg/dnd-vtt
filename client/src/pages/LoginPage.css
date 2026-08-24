@@ -906,3 +906,70 @@
     display: none;
   }
 }
+
+/* Password recovery additions */
+.gateway-meta-link {
+  padding: 0;
+  color: var(--gateway-cyan);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gateway-meta-link:hover {
+  color: var(--gateway-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.gateway-success {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+  padding: 0.78rem 0.85rem;
+  border: 1px solid rgba(110, 210, 139, 0.42);
+  background: rgba(110, 210, 139, 0.075);
+  color: #a7e5b8;
+}
+
+.gateway-success > span {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid rgba(110, 210, 139, 0.55);
+  border-radius: 50%;
+  font-size: 0.7rem;
+}
+
+.gateway-success p {
+  margin: 0;
+  color: #a7e5b8;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.gateway-submit-link {
+  display: flex;
+  margin-top: 1.5rem;
+  text-decoration: none;
+}
+
+.gateway-reset-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.2rem;
+}
+
+.gateway-reset-footer a {
+  color: var(--gateway-muted);
+  font-size: 0.74rem;
+}
+
+.gateway-reset-footer a:hover {
+  color: var(--gateway-cyan);
+}

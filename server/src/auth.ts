@@ -1,5 +1,5 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { db } from "./db.js";
 
@@ -99,6 +99,95 @@ function verifyPassword(password: string, stored: string): boolean {
   return timingSafeEqual(candidate, Buffer.from(hash, "hex"));
 }
 
+const PASSWORD_RESET_MINUTES = 30;
+const PASSWORD_RESET_COOLDOWN_MS = 60_000;
+const passwordResetRequests = new Map<string, number>();
+
+function hashResetToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function passwordResetBaseUrl(req: Request): string {
+  const configured = String(process.env.VIVID_PUBLIC_URL ?? "").trim().replace(/\/+$/, "");
+  if (configured) return configured;
+
+  const origin = String(req.headers.origin ?? "").trim().replace(/\/+$/, "");
+  if (origin) return origin;
+
+  const forwardedProto = String(req.headers["x-forwarded-proto"] ?? "")
+    .split(",")[0]
+    .trim();
+  const forwardedHost = String(req.headers["x-forwarded-host"] ?? "")
+    .split(",")[0]
+    .trim();
+  const host = forwardedHost || String(req.headers.host ?? "localhost:3001");
+  const proto = forwardedProto || req.protocol || "http";
+  return `${proto}://${host}`;
+}
+
+async function sendPasswordResetEmail(email: string, resetUrl: string): Promise<void> {
+  const apiKey = String(process.env.RESEND_API_KEY ?? "").trim();
+  const from = String(
+    process.env.VIVID_EMAIL_FROM ?? "Vivid Realms <onboarding@resend.dev>"
+  ).trim();
+
+  // Local development works without an email provider: the secure reset URL is
+  // printed in the server terminal so the full flow can be tested end-to-end.
+  if (!apiKey) {
+    if (process.env.npm_lifecycle_event === "dev") {
+      console.log(`\n[Vivid Realms password reset]\n${email}\n${resetUrl}\n`);
+    } else {
+      console.warn(
+        "[password reset] RESEND_API_KEY is not configured; recovery email was not sent."
+      );
+    }
+    return;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [email],
+      subject: "Reset your Vivid Realms password",
+      text:
+        `A password reset was requested for your Vivid Realms account.\n\n` +
+        `Reset your password: ${resetUrl}\n\n` +
+        `This link expires in ${PASSWORD_RESET_MINUTES} minutes and can only be used once.`,
+      html: `
+        <div style="background:#070b12;padding:34px;font-family:Arial,sans-serif;color:#edf4f8">
+          <div style="max-width:560px;margin:0 auto;border:1px solid #29394b;background:#0e1520;padding:30px">
+            <div style="font-size:12px;letter-spacing:3px;color:#d2aa58;font-weight:700">VIVID REALMS</div>
+            <h1 style="margin:16px 0 8px;font-size:28px">Restore Access</h1>
+            <p style="color:#9aaebe;line-height:1.6">
+              A password reset was requested for your Vivid Realms account.
+            </p>
+            <p style="margin:28px 0">
+              <a href="${resetUrl}"
+                 style="display:inline-block;background:#d2aa58;color:#071019;text-decoration:none;font-weight:800;letter-spacing:1px;padding:13px 20px">
+                RESET PASSWORD
+              </a>
+            </p>
+            <p style="color:#7f94a6;font-size:13px;line-height:1.6">
+              This recovery gateway expires in ${PASSWORD_RESET_MINUTES} minutes and can only be used once.
+              If you did not request this, you can ignore this email.
+            </p>
+          </div>
+        </div>
+      `,
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Resend returned ${response.status}: ${detail.slice(0, 300)}`);
+  }
+}
+
 export function getSessionUser(req: Request): SessionUser | null {
   const token = parseCookies(req.headers.cookie)["sid"];
   return token ? userForToken(token) : null;
@@ -182,6 +271,100 @@ authRouter.post("/login", (req, res) => {
   res.json({ id: user.id, email: user.email, display_name: user.display_name });
 });
 
+authRouter.post("/forgot-password", async (req, res, next) => {
+  const generic = {
+    ok: true,
+    message: "If an account exists for that email, a recovery link has been sent.",
+  };
+  const email = String(req.body?.email ?? "").trim();
+
+  // Always return the same response so this endpoint cannot be used to discover
+  // which email addresses have Vivid Realms accounts.
+  if (!email || !email.includes("@")) return res.json(generic);
+
+  const throttleKey = `${req.ip}:${email.toLowerCase()}`;
+  const now = Date.now();
+  const previous = passwordResetRequests.get(throttleKey) ?? 0;
+  if (now - previous < PASSWORD_RESET_COOLDOWN_MS) return res.json(generic);
+  passwordResetRequests.set(throttleKey, now);
+  if (passwordResetRequests.size > 5000) passwordResetRequests.clear();
+
+  try {
+    db.prepare(
+      "DELETE FROM password_reset_tokens WHERE expires_at <= datetime('now')"
+    ).run();
+
+    const user = db
+      .prepare("SELECT id, email FROM users WHERE email = ?")
+      .get(email) as { id: number; email: string } | undefined;
+
+    if (!user) return res.json(generic);
+
+    // Only the newest recovery link remains valid.
+    db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(user.id);
+
+    const token = randomBytes(32).toString("hex");
+    db.prepare(
+      `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+       VALUES (?, ?, datetime('now', '+${PASSWORD_RESET_MINUTES} minutes'))`
+    ).run(user.id, hashResetToken(token));
+
+    const resetUrl =
+      `${passwordResetBaseUrl(req)}/reset-password?token=${encodeURIComponent(token)}`;
+
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+    } catch (emailError) {
+      console.error("[password reset] Failed to send recovery email:", emailError);
+    }
+
+    return res.json(generic);
+  } catch (error) {
+    next(error);
+  }
+});
+
+authRouter.post("/reset-password", (req, res) => {
+  const token = String(req.body?.token ?? "").trim();
+  const password = String(req.body?.password ?? "");
+
+  if (token.length < 32) {
+    return res.status(400).json({ error: "That recovery link is invalid or incomplete." });
+  }
+  if (password.length < 8) {
+    return res.status(400).json({ error: "Your new password must be at least 8 characters." });
+  }
+
+  const row = db
+    .prepare(
+      `SELECT user_id
+       FROM password_reset_tokens
+       WHERE token_hash = ? AND expires_at > datetime('now')`
+    )
+    .get(hashResetToken(token)) as { user_id: number } | undefined;
+
+  if (!row) {
+    return res.status(400).json({ error: "That recovery link is invalid or has expired." });
+  }
+
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+      hashPassword(password),
+      row.user_id
+    );
+    db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(row.user_id);
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").run(row.user_id);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  res.setHeader("Set-Cookie", "sid=; Path=/; HttpOnly; Max-Age=0");
+  res.json({ ok: true });
+});
+
 authRouter.post("/logout", (req, res) => {
   const token = parseCookies(req.headers.cookie)["sid"];
   if (token) db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
@@ -191,6 +374,46 @@ authRouter.post("/logout", (req, res) => {
 
 authRouter.get("/me", (req, res) => {
   res.json({ user: getSessionUser(req) });
+});
+
+authRouter.put("/me/password", (req, res) => {
+  const current = getSessionUser(req);
+  if (!current) return res.status(401).json({ error: "Not logged in" });
+
+  const currentPassword = String(req.body?.currentPassword ?? "");
+  const newPassword = String(req.body?.newPassword ?? "");
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: "Your new password must be at least 8 characters." });
+  }
+
+  const row = db
+    .prepare("SELECT password_hash FROM users WHERE id = ?")
+    .get(current.id) as { password_hash: string } | undefined;
+
+  if (!row || !verifyPassword(currentPassword, row.password_hash)) {
+    return res.status(401).json({ error: "Your current password is incorrect." });
+  }
+
+  const currentToken = parseCookies(req.headers.cookie)["sid"];
+
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+      hashPassword(newPassword),
+      current.id
+    );
+    db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(current.id);
+    db.prepare("DELETE FROM sessions WHERE user_id = ? AND token <> ?").run(
+      current.id,
+      currentToken
+    );
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  res.json({ ok: true });
 });
 
 // Pick your dice ΓÇö the theme rides along on every roll you make.

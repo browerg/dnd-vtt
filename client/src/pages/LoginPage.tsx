@@ -1,4 +1,4 @@
-﻿import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { api, type User } from "../api";
 import { useAuth } from "../App";
 import "./LoginPage.css";
@@ -11,12 +11,13 @@ interface DevUser {
 
 export default function LoginPage() {
   const { setUser } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [devBusyId, setDevBusyId] = useState<number | null>(null);
   const [devUsers, setDevUsers] = useState<DevUser[]>([]);
@@ -33,9 +34,10 @@ export default function LoginPage() {
       .catch(() => {});
   }, []);
 
-  const changeMode = (nextMode: "login" | "register") => {
+  const changeMode = (nextMode: "login" | "register" | "forgot") => {
     setMode(nextMode);
     setError("");
+    setNotice("");
   };
 
   const devLogin = async (userId: number) => {
@@ -57,8 +59,18 @@ export default function LoginPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
+    setNotice("");
     setBusy(true);
     try {
+      if (mode === "forgot") {
+        const response = await api<{ ok: true; message: string }>("/api/auth/forgot-password", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        });
+        setNotice(response.message);
+        return;
+      }
+
       const body =
         mode === "login" ? { email, password } : { email, displayName, password };
       const user = await api<User>(`/api/auth/${mode}`, {
@@ -154,11 +166,19 @@ export default function LoginPage() {
         <div className="gateway-access-inner">
           <div className="gateway-access-heading">
             <p className="gateway-eyebrow">SECURE ACCESS TERMINAL</p>
-            <h2>{mode === "login" ? "Welcome back" : "Open your gateway"}</h2>
+            <h2>
+              {mode === "login"
+                ? "Welcome back"
+                : mode === "register"
+                  ? "Open your gateway"
+                  : "Restore access"}
+            </h2>
             <p>
               {mode === "login"
                 ? "Sign in to return to your campaigns."
-                : "Create an account and begin building your table."}
+                : mode === "register"
+                  ? "Create an account and begin building your table."
+                  : "Enter your account email and we'll send a secure recovery link."}
             </p>
           </div>
 
@@ -218,30 +238,32 @@ export default function LoginPage() {
               </span>
             </label>
 
-            <label className="gateway-field" htmlFor={passwordId}>
-              <span>Password</span>
-              <span className="gateway-input-wrap">
-                <span className="field-icon lock-icon" aria-hidden />
-                <input
-                  id={passwordId}
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete={mode === "login" ? "current-password" : "new-password"}
-                  placeholder={mode === "register" ? "At least 8 characters" : "Enter your password"}
-                  minLength={mode === "register" ? 8 : undefined}
-                  required
-                />
-                <button
-                  className="password-toggle"
-                  type="button"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => setShowPassword((visible) => !visible)}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </span>
-            </label>
+            {mode !== "forgot" && (
+              <label className="gateway-field" htmlFor={passwordId}>
+                <span>Password</span>
+                <span className="gateway-input-wrap">
+                  <span className="field-icon lock-icon" aria-hidden />
+                  <input
+                    id={passwordId}
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete={mode === "login" ? "current-password" : "new-password"}
+                    placeholder={mode === "register" ? "At least 8 characters" : "Enter your password"}
+                    minLength={mode === "register" ? 8 : undefined}
+                    required
+                  />
+                  <button
+                    className="password-toggle"
+                    type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((visible) => !visible)}
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </span>
+              </label>
+            )}
 
             <div className="gateway-form-meta">
               <span className="connection-state">
@@ -249,6 +271,24 @@ export default function LoginPage() {
                 Connection secure
               </span>
               {mode === "register" && <span>8+ characters required</span>}
+              {mode === "login" && (
+                <button
+                  type="button"
+                  className="gateway-meta-link"
+                  onClick={() => changeMode("forgot")}
+                >
+                  Forgot password?
+                </button>
+              )}
+              {mode === "forgot" && (
+                <button
+                  type="button"
+                  className="gateway-meta-link"
+                  onClick={() => changeMode("login")}
+                >
+                  â† Back to login
+                </button>
+              )}
             </div>
 
             {error && (
@@ -258,8 +298,25 @@ export default function LoginPage() {
               </div>
             )}
 
+            {notice && (
+              <div className="gateway-success" role="status">
+                <span aria-hidden>âœ“</span>
+                <p>{notice}</p>
+              </div>
+            )}
+
             <button className="gateway-submit" disabled={busy}>
-              <span>{busy ? "Authenticating..." : mode === "login" ? "Enter tabletop" : "Create account"}</span>
+              <span>
+                {busy
+                  ? mode === "forgot"
+                    ? "Sending recovery link..."
+                    : "Authenticating..."
+                  : mode === "login"
+                    ? "Enter tabletop"
+                    : mode === "register"
+                      ? "Create account"
+                      : "Send recovery link"}
+              </span>
               {!busy && <span className="submit-arrow" aria-hidden />}
             </button>
           </form>

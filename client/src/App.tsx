@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { api, type User } from "./api";
 import { applyBackground, getBackground } from "./background";
 import LoginPage from "./pages/LoginPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import CampaignPage from "./pages/CampaignPage";
 import CampaignDashboardPage from "./pages/CampaignDashboardPage";
@@ -57,6 +58,7 @@ export default function App() {
       <CriticalRollOverlay />
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" />} />
         <Route path="/campaigns/:id" element={user ? <CampaignDashboardPage /> : <Navigate to="/login" />} />
         <Route path="/campaigns/:id/hub" element={user ? <CampaignPage /> : <Navigate to="/login" />} />

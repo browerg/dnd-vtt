@@ -16,6 +16,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordNotice, setPasswordNotice] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const upload = async (file: File) => {
     setUploading(true);
@@ -45,6 +51,36 @@ export default function ProfilePage() {
       setError(e.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const changePassword = async () => {
+    setPasswordNotice("");
+    setPasswordError("");
+
+    if (newPassword.length < 8) {
+      setPasswordError("Your new password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Those new passwords do not match.");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await api("/api/auth/me/password", {
+        method: "PUT",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordNotice("Password changed. Other signed-in sessions were closed.");
+    } catch (e: any) {
+      setPasswordError(e.message);
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -117,6 +153,63 @@ export default function ProfilePage() {
             <span className="muted small">This is your account identity — not your character.</span>
             <button className="primary" onClick={save} disabled={saving || uploading}>
               {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </section>
+
+        <section className="card">
+          <h3>Account security</h3>
+          <p className="muted small">
+            Change your password here. Your current device stays signed in; other sessions are closed.
+          </p>
+
+          <label className="stack">
+            <span className="muted small">Current password</span>
+            <input
+              type="password"
+              value={currentPassword}
+              autoComplete="current-password"
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current password"
+            />
+          </label>
+
+          <label className="stack">
+            <span className="muted small">New password</span>
+            <input
+              type="password"
+              value={newPassword}
+              autoComplete="new-password"
+              minLength={8}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 8 characters"
+            />
+          </label>
+
+          <label className="stack">
+            <span className="muted small">Confirm new password</span>
+            <input
+              type="password"
+              value={confirmPassword}
+              autoComplete="new-password"
+              minLength={8}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Enter it again"
+            />
+          </label>
+
+          {passwordError && <div className="error">{passwordError}</div>}
+          {passwordNotice && <p className="muted small">{passwordNotice}</p>}
+
+          <div className="row-between">
+            <span className="muted small">Minimum 8 characters.</span>
+            <button
+              className="primary"
+              type="button"
+              onClick={changePassword}
+              disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+            >
+              {changingPassword ? "Changingâ€¦" : "Change password"}
             </button>
           </div>
         </section>
