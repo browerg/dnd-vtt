@@ -6,6 +6,7 @@ import path from "node:path";
 import { Server } from "socket.io";
 import { authRouter } from "./auth.js";
 import { shopRouter } from "./shop.js";
+import { achievementsRouter } from "./achievements.js";
 import { vcoinRewardsRouter } from "./vcoins.js";
 import { campaignsRouter, invitesRouter } from "./campaigns.js";
 import { rollsRouter } from "./rolls.js";
@@ -34,6 +35,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRouter);
 app.use("/api/shop", shopRouter);
+app.use("/api/achievements", achievementsRouter);
 app.use("/api/campaigns", vcoinRewardsRouter);
 app.use("/api/campaigns", rollsRouter);
 app.use("/api/campaigns", charactersRouter);

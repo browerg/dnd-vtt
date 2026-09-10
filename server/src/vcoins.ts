@@ -3,6 +3,7 @@ import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
+import { achievements } from "./achievements.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
@@ -109,6 +110,8 @@ export function awardQuestCompletion(
       db.exec("COMMIT");
       return { awarded: false, amount: Number(existing?.amount ?? amount), recipientCount: 0 };
     }
+
+    achievements.recordQuest(recipients.map((recipient) => recipient.user_id));
 
     if (amount > 0) {
       for (const recipient of recipients) {

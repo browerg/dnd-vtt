@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api, uploadImage, type User } from "../api";
 import { useAuth } from "../App";
 import { Avatar } from "../components/Avatar";
+import Achievements from "../components/Achievements";
 
 const BIO_MAX = 280;
 
@@ -213,6 +214,7 @@ export default function ProfilePage() {
             </button>
           </div>
         </section>
+        <Achievements />
       </main>
     </div>
   );

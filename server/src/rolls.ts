@@ -4,6 +4,7 @@ import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { roll, DiceError, type RollDetail } from "./dice.js";
 import { getIo } from "./realtime.js";
+import { achievements } from "./achievements.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 
@@ -63,23 +64,33 @@ export function performRoll(
   const diceTheme =
     ((db.prepare("SELECT dice_theme FROM users WHERE id = ?").get(roller.id) as any)
       ?.dice_theme as string) ?? "";
-  const info = db
-    .prepare(
-      `INSERT INTO rolls (campaign_id, user_id, formula, label, mode, visibility, detail, total)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
-      campaignId,
-      roller.id,
-      formula.trim(),
-      label.trim(),
-      mode,
-      visibility,
-      JSON.stringify(detail),
-      detail.kept.total
-    );
+  db.exec("SAVEPOINT recorded_roll");
+  let rollId: number;
+  try {
+    const info = db
+      .prepare(
+        `INSERT INTO rolls (campaign_id, user_id, formula, label, mode, visibility, detail, total)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        campaignId,
+        roller.id,
+        formula.trim(),
+        label.trim(),
+        mode,
+        visibility,
+        JSON.stringify(detail),
+        detail.kept.total
+      );
+    rollId = Number(info.lastInsertRowid);
+    achievements.recordRoll(roller.id, detail, visibility);
+    db.exec("RELEASE recorded_roll");
+  } catch (error) {
+    db.exec("ROLLBACK TO recorded_roll; RELEASE recorded_roll");
+    throw error;
+  }
   const payload: RollPayload = {
-    id: Number(info.lastInsertRowid),
+    id: rollId,
     campaignId,
     userId: roller.id,
     userName: roller.display_name,

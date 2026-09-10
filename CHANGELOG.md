@@ -11,6 +11,18 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ## 10 September 2026
 
+### Achievements
+
+- Seven new account-wide achievements track your first maximum and minimum
+  rolls, two of either in a row, ten of either overall, and your first completed
+  quest. Find your progress and unlocked titles on **Profile**.
+- Maximum means every kept die shows its highest face; minimum means every
+  kept die shows 1. Modifiers and discarded dice do not count. Each roll counts
+  once, and ordinary rolls break streaks. Manual and blind rolls are excluded.
+- Quest completion counts for current campaign members other than spectators,
+  including quests with no VCoin reward. Tracking starts with this update.
+- Cosmetic rewards are planned for later; earned achievements stay saved.
+
 ### Vibrant daylight themes
 
 - Five new bright themes: **Beacon Daybreak**, **Atlas Skyglass**, **Mistral Bloom**,
