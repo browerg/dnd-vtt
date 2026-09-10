@@ -39,17 +39,20 @@ This document tracks confirmed rules, bugs, usability problems, feature requests
 
 ## Active map-tool indicator
 
-- [~] Clearly identify the currently selected map tool.
-- [ ] Add an optional persistent `ACTIVE TOOL` label.
-- [~] Improve map cursors for selected tools.
-- [~] Reduce accidental draw/move actions caused by unclear tool state.
+- [x] Clearly identify the currently selected map tool.
+- [x] Add an optional persistent `ACTIVE TOOL` label. (Always-on rather than toggleable.)
+- [x] Improve map cursors for selected tools. (All six tools have distinct cursors.)
+- [~] Reduce accidental draw/move actions caused by unclear tool state. (Indicator,
+      cursors, and per-tool hints are all shipped; needs a playtest to confirm the
+      accidents actually stopped.)
 
 ## Panel movement and resizing
 
-- [~] Reduce text/interface highlighting while panels move or resize.
-- [~] Improve resize handles and resizing behavior.
-- [~] Improve panel movement consistency.
-- [~] Reduce unwanted snapping.
+- [x] Reduce text/interface highlighting while panels move or resize.
+- [x] Improve resize handles and resizing behavior.
+- [x] Improve panel movement consistency.
+- [x] Reduce unwanted snapping. (`compactType={null}` + `preventCollision={false}` —
+      panels stay exactly where they are dropped.)
 - [x] Persist dashboard panel layouts on the server.
 - [~] Continue panel deletion/usability polish.
 - [ ] Decide whether snapping should be optional.
@@ -249,29 +252,49 @@ This document tracks confirmed rules, bugs, usability problems, feature requests
 
 # Milestone 10: Discord Session Integration
 
+**Complete.** This milestone ships in the launcher, not the VTT — see
+[vivid-realms-launcher](https://github.com/browerg/vivid-realms-launcher)
+(`src/main.js`, the `announceDiscordSession` / `announceDiscordSessionEnded` /
+`testDiscordWebhook` functions and the `launcher:save-discord-settings` IPC handler).
+That is why it read as untouched here for so long.
+
 ## Session notifications
 
-- [ ] Add optional Discord webhook URL to launcher settings.
-- [ ] Add Test Discord Connection / Send Test Message.
-- [ ] Wait for a valid Cloudflare public URL before notifying Discord.
-- [ ] Automatically announce when hosting successfully starts.
-- [ ] Prevent duplicate session-live notifications.
-- [ ] Do not block hosting if Discord delivery fails.
+- [x] Add optional Discord webhook URL to launcher settings.
+- [x] Add Test Discord Connection / Send Test Message.
+- [x] Wait for a valid Cloudflare public URL before notifying Discord. (Fires from
+      `parseTunnelOutput` only once the `*.trycloudflare.com` address is scraped.)
+- [x] Automatically announce when hosting successfully starts.
+- [x] Prevent duplicate session-live notifications. (`discordAnnouncementAttempted`
+      latch plus a URL-change guard.)
+- [x] Do not block hosting if Discord delivery fails. (Failures are caught, logged,
+      and surfaced as a status message; hosting continues.)
 
 ## Join session link
 
-- [ ] Include the current public VTT URL.
-- [ ] Present a clear Join Game / Join Session action.
-- [ ] Use the newly generated quick-tunnel URL each session.
-- [ ] Never reuse a stale URL.
+- [x] Include the current public VTT URL.
+- [x] Present a clear Join Game / Join Session action. (Real Discord link buttons,
+      with an automatic fallback to plain clickable URLs if Discord rejects the
+      components payload.)
+- [x] Use the newly generated quick-tunnel URL each session.
+- [x] Never reuse a stale URL. (Invite URL and announcement latches reset on both
+      start and stop.)
 
 ## Initial scope
 
-- [ ] Discord webhook only.
-- [ ] No bot commands yet.
-- [ ] No Discord account linking yet.
-- [ ] No role sync yet.
-- [ ] No VTT/Discord chat sync yet.
+- [x] Discord webhook only.
+- [x] No bot commands yet.
+- [x] No Discord account linking yet.
+- [x] No role sync yet.
+- [x] No VTT/Discord chat sync yet.
+
+## Delivered beyond the original scope
+
+- [x] Session-**ended** notification with a formatted session duration.
+- [x] Optional Session Notes URL, surfaced in both the start and end messages.
+- [x] Custom session announcement text (up to 1,200 characters).
+- [x] Independent enable/disable toggles for start and end announcements.
+- [x] Webhook URL validated against an allowlist of Discord hosts before any request.
 
 ---
 
@@ -292,6 +315,13 @@ This document tracks confirmed rules, bugs, usability problems, feature requests
 - [x] Per-player NPC control assignments.
 - [x] DM onboarding tour and guide library.
 - [x] Multiplayer dice animation synchronization.
+- [x] Discord session integration — start/end notifications, Join Session button,
+      session notes link, and custom announcement text (ships in the launcher repo).
+- [x] Active map-tool indicator, per-tool cursors, and keyboard shortcuts.
+- [x] Dashboard panel drag/resize polish — no text selection while dragging, styled
+      resize handles, free placement with no auto-compaction.
+- [x] Repaired double-encoded UTF-8 (mojibake) across 9 client/server source files —
+      em-dashes, ellipses, and every map-tool and panel icon.
 
 ---
 
@@ -300,18 +330,18 @@ This document tracks confirmed rules, bugs, usability problems, feature requests
 ## Immediate
 
 1. Remote multiplayer test of synchronized dice.
-2. Discord session-live webhook notification.
-3. Discord Join Game / Join Session link.
-4. Remaining map-tool indicator polish.
-5. Remaining panel movement/resizing polish.
+2. Firefox/browser compatibility pass (rolls, 3D dice, pointer capture, range sliders).
+3. Playtest confirmation that the map-tool indicator actually stopped the accidental
+   draw/move actions.
 
 ## Next
 
-1. Firefox/browser compatibility pass.
-2. Richer built-in campaign notes.
-3. Additional custom-monster editing.
-4. Additional Dust combinations/effects after rules review.
-5. More combat-log polish.
+1. Richer built-in campaign notes (formatting, search, tags, linking).
+2. Additional custom-monster editing.
+3. Additional Dust combinations/effects after rules review.
+4. More combat-log polish.
+5. Decide the open design questions below — several are now the main thing blocking
+   further Aura/condition automation.
 
 ## Later
 
