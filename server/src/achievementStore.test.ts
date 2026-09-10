@@ -87,3 +87,26 @@ test("quest unlocks are idempotent, transactional, and support future cosmetic g
     assert.equal(db.prepare("SELECT count(*) AS n FROM cosmetic_unlocks WHERE user_id = 2").get()!.n, 0);
   } finally { delete ACHIEVEMENT_REWARDS["first-quest"]; db.close(); }
 });
+
+test("profile showcases reject unearned, unknown, duplicate and excess badges without losing selections", () => {
+  const { db, store } = fixture();
+  try {
+    assert.deepEqual(store.showcase(1), []);
+    assert.throws(() => store.setShowcase(1, ["first-max"]), /earned/);
+    store.recordRoll(1, detail(20, [20]), "public");
+    store.recordRoll(1, detail(20, [20]), "public");
+    store.recordQuest([1]);
+    const ids = ["first-quest", "double-max", "first-max"];
+    assert.deepEqual(store.setShowcase(1, ids).map((badge) => badge.id), ids);
+    assert.deepEqual(createAchievementStore(db).showcase(1).map((badge) => badge.id), ids);
+    for (const bad of [null, "first-max", [1], ["unknown"], ["first-max", "first-max"], [...ids, "first-min"]]) {
+      assert.throws(() => store.setShowcase(1, bad));
+      assert.deepEqual(store.showcase(1).map((badge) => badge.id), ids);
+    }
+    assert.throws(() => store.setShowcase(2, ["first-max"]), /earned/);
+    assert.deepEqual(store.showcase(2), []);
+    assert.ok(store.showcase(1).every((badge) => !Object.hasOwn(badge, "progress") && badge.badgeImage.endsWith(".png")));
+    assert.deepEqual(store.setShowcase(1, []), []);
+    assert.ok(store.list(1).find((badge) => badge.id === "first-max")!.unlockedAt);
+  } finally { db.close(); }
+});

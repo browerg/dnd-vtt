@@ -14,6 +14,7 @@ import JoinPage from "./pages/JoinPage";
 import CustomizePage from "./pages/CustomizePage";
 import ShopPage from "./pages/ShopPage";
 import ProfilePage from "./pages/ProfilePage";
+import PlayerProfilePage from "./pages/PlayerProfilePage";
 import CriticalRollOverlay from "./components/CriticalRollOverlay";
 
 interface AuthState {
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="/campaigns/:id/bestiary" element={user ? <BestiaryPage /> : <Navigate to="/login" />} />
         <Route path="/customize" element={user ? <CustomizePage /> : <Navigate to="/login" />} />
         <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
+        <Route path="/profiles/:userId" element={user ? <PlayerProfilePage /> : <Navigate to="/login" />} />
         <Route path="/emporium" element={user ? <ShopPage /> : <Navigate to="/login" />} />
         <Route path="/shop" element={user ? <Navigate to="/emporium" replace /> : <Navigate to="/login" />} />
         <Route path="/join/:code" element={<JoinPage />} />

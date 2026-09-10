@@ -32,6 +32,13 @@ export function createAchievementStore(db: DatabaseSync) {
       unlocked_at TEXT NOT NULL DEFAULT (datetime('now')),
       PRIMARY KEY (user_id, achievement_id)
     );
+    CREATE TABLE IF NOT EXISTS profile_badges (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      achievement_id TEXT NOT NULL,
+      position INTEGER NOT NULL CHECK (position BETWEEN 0 AND 2),
+      PRIMARY KEY (user_id, achievement_id),
+      UNIQUE (user_id, position)
+    );
   `);
 
   function list(userId: number) {
@@ -45,6 +52,7 @@ export function createAchievementStore(db: DatabaseSync) {
       }
       return {
         ...definition,
+        badgeImage: `/assets/achievements/${definition.id}.png`,
         progress: unlockedAt ? definition.target : Math.min(definition.target, Number(progress?.[definition.metric] ?? 0)),
         unlockedAt,
         rewardCosmeticId,
@@ -95,5 +103,36 @@ export function createAchievementStore(db: DatabaseSync) {
     }
   }
 
-  return { list, recordRoll, recordQuest };
+  function showcase(userId: number) {
+    const rows = db.prepare(`SELECT p.achievement_id FROM profile_badges p
+      JOIN achievement_unlocks u ON u.user_id = p.user_id AND u.achievement_id = p.achievement_id
+      WHERE p.user_id = ? ORDER BY p.position`).all(userId);
+    return rows.flatMap((row) => {
+      const definition = ACHIEVEMENTS.find((a) => a.id === row.achievement_id);
+      return definition ? [{ id: definition.id, name: definition.name, description: definition.description,
+        badgeImage: `/assets/achievements/${definition.id}.png` }] : [];
+    });
+  }
+
+  function setShowcase(userId: number, ids: unknown) {
+    if (!Array.isArray(ids) || ids.length > 3 || ids.some((id) => typeof id !== "string") || new Set(ids).size !== ids.length) {
+      throw new Error("Choose up to three different earned badges.");
+    }
+    const unlocked = db.prepare("SELECT achievement_id FROM achievement_unlocks WHERE user_id = ?").all(userId);
+    if (ids.some((id) => !ACHIEVEMENTS.some((a) => a.id === id) || !unlocked.some((row) => row.achievement_id === id))) {
+      throw new Error("You can only display badges you have earned.");
+    }
+    db.exec("SAVEPOINT profile_showcase");
+    try {
+      db.prepare("DELETE FROM profile_badges WHERE user_id = ?").run(userId);
+      ids.forEach((id, position) => db.prepare("INSERT INTO profile_badges (user_id, achievement_id, position) VALUES (?, ?, ?)").run(userId, id, position));
+      db.exec("RELEASE profile_showcase");
+    } catch (error) {
+      db.exec("ROLLBACK TO profile_showcase; RELEASE profile_showcase");
+      throw error;
+    }
+    return showcase(userId);
+  }
+
+  return { list, recordRoll, recordQuest, showcase, setShowcase };
 }

@@ -13,6 +13,10 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ### Achievements
 
+- Every achievement now has its own collectible fantasy badge. Display up to
+  three earned badges on your Profile, and swap them whenever you like.
+- Click a member's name in the campaign hub to see their featured badges.
+  Only chosen badges are shared; other achievement progress stays private.
 - Seven new account-wide achievements track your first maximum and minimum
   rolls, two of either in a row, ten of either overall, and your first completed
   quest. Find your progress and unlocked titles on **Profile**.

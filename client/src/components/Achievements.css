@@ -1,0 +1,15 @@
+.badge-showcase { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem 0; }
+.showcase-medal { flex: 1 1 150px; max-width: 240px; margin: 0; text-align: center; }
+.showcase-medal img { border-radius: 20px; border: 1px solid #8e794f; background: #101522; object-fit: contain; }
+.showcase-medal figcaption { display: grid; gap: .3rem; margin-top: .55rem; }
+.showcase-medal figcaption span { color: var(--muted); font-size: .85rem; }
+.achievement-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+.achievement-medal { display: flex; flex-direction: column; align-items: center; gap: .65rem; text-align: center; margin: 0; }
+.achievement-medal > img { width: 140px; height: 140px; object-fit: contain; border-radius: 24px; background: #101522; }
+.achievement-medal.is-locked > img { filter: grayscale(1); opacity: .6; }
+.achievement-medal p { margin: 0; }
+.achievement-medal progress { width: 100%; accent-color: var(--accent); }
+.achievement-medal > label { width: 100%; }
+.achievement-medal button { margin-top: auto; }
+.achievement-rules { margin: 1rem 0; }
+.achievement-rules summary { cursor: pointer; color: var(--muted); }

@@ -459,7 +459,7 @@ export default function CampaignPage() {
                   <span>
                     <span className={online.has(m.id) ? "dot online" : "dot"} />
                     <Avatar name={m.display_name} src={m.avatar_path || undefined} id={m.id} size={22} />
-                    {m.display_name}
+                    <Link to={`/profiles/${m.id}`}>{m.display_name}</Link>
                   </span>
                   <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>
                 </li>
