@@ -1,0 +1,243 @@
+/* =====================================================================
+   Vibrant daylight themes
+   Imported after themes.css so these palettes can share one readable,
+   low-noise daylight treatment without duplicating the core theme engine.
+   ===================================================================== */
+
+.campaign-themed[data-theme="beacon-daybreak"] {
+  --theme-page: #fff7f4;
+  --theme-deep: #f6e5e7;
+  --theme-panel: #ffffff;
+  --theme-well: #fce9ec;
+  --theme-border: #7a5a60;
+  --theme-accent: #a31d3d;
+  --theme-accent-2: #145da0;
+  --theme-danger: #9f1d2e;
+  --theme-text: #19171a;
+  --theme-muted: #51464b;
+  --theme-line: rgba(122, 90, 96, 0.42);
+  --theme-glow: rgba(163, 29, 61, 0.16);
+  --theme-radius: 8px;
+  --theme-texture:
+    radial-gradient(circle at 10% 0%, rgba(163, 29, 61, 0.08), transparent 34%),
+    radial-gradient(circle at 92% 8%, rgba(20, 93, 160, 0.07), transparent 32%);
+}
+
+.campaign-themed[data-theme="atlas-skyglass"] {
+  --theme-page: #f1f9ff;
+  --theme-deep: #dfeef8;
+  --theme-panel: #ffffff;
+  --theme-well: #e8f4fc;
+  --theme-border: #5b7184;
+  --theme-accent: #174a7e;
+  --theme-accent-2: #0b6b63;
+  --theme-danger: #a32638;
+  --theme-text: #121b24;
+  --theme-muted: #405362;
+  --theme-line: rgba(91, 113, 132, 0.42);
+  --theme-glow: rgba(23, 74, 126, 0.14);
+  --theme-radius: 7px;
+  --theme-texture:
+    radial-gradient(circle at 50% -10%, rgba(23, 74, 126, 0.08), transparent 38%),
+    radial-gradient(circle at 100% 50%, rgba(11, 107, 99, 0.06), transparent 38%);
+}
+
+.campaign-themed[data-theme="mistral-bloom"] {
+  --theme-page: #fff7fd;
+  --theme-deep: #f2e5f2;
+  --theme-panel: #ffffff;
+  --theme-well: #f9edf8;
+  --theme-border: #755b75;
+  --theme-accent: #6d28a8;
+  --theme-accent-2: #a21a70;
+  --theme-danger: #a31f3c;
+  --theme-text: #1d1721;
+  --theme-muted: #514655;
+  --theme-line: rgba(117, 91, 117, 0.42);
+  --theme-glow: rgba(109, 40, 168, 0.15);
+  --theme-radius: 12px;
+  --theme-texture:
+    radial-gradient(circle at 8% 12%, rgba(162, 26, 112, 0.08), transparent 31%),
+    radial-gradient(circle at 86% 0%, rgba(109, 40, 168, 0.08), transparent 34%);
+}
+
+.campaign-themed[data-theme="vacuo-sunburst"] {
+  --theme-page: #fff8e8;
+  --theme-deep: #f2e4c8;
+  --theme-panel: #fffef8;
+  --theme-well: #fbf0d2;
+  --theme-border: #75654b;
+  --theme-accent: #9a4500;
+  --theme-accent-2: #1f6b3a;
+  --theme-danger: #a12a1e;
+  --theme-text: #201a12;
+  --theme-muted: #554936;
+  --theme-line: rgba(117, 101, 75, 0.42);
+  --theme-glow: rgba(154, 69, 0, 0.15);
+  --theme-radius: 6px;
+  --theme-texture:
+    radial-gradient(circle at 10% 0%, rgba(216, 123, 23, 0.10), transparent 33%),
+    radial-gradient(circle at 94% 12%, rgba(31, 107, 58, 0.07), transparent 32%);
+}
+
+.campaign-themed[data-theme="aura-pop"] {
+  --theme-page: #f7fbff;
+  --theme-deep: #e5ebf7;
+  --theme-panel: #ffffff;
+  --theme-well: #eef3ff;
+  --theme-border: #665f7b;
+  --theme-accent: #a21a70;
+  --theme-accent-2: #145da0;
+  --theme-danger: #a81c35;
+  --theme-text: #17141b;
+  --theme-muted: #4d4659;
+  --theme-line: rgba(102, 95, 123, 0.42);
+  --theme-glow: rgba(162, 26, 112, 0.15);
+  --theme-radius: 11px;
+  --theme-texture:
+    radial-gradient(circle at 16% 0%, rgba(162, 26, 112, 0.08), transparent 32%),
+    radial-gradient(circle at 84% 4%, rgba(20, 93, 160, 0.08), transparent 34%);
+}
+
+/* Shared daylight behavior: clean surfaces, strong controls and zero grain. */
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) {
+  --shadow-card: 0 2px 12px rgba(20, 24, 31, 0.12);
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+)::after {
+  display: none;
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) .topbar {
+  background: color-mix(in srgb, var(--theme-panel), var(--theme-page) 8%);
+  border-bottom-color: var(--theme-border);
+  box-shadow: 0 1px 0 var(--theme-line), 0 4px 16px rgba(20, 24, 31, 0.10);
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) :is(
+  .card,
+  .bestiary .card,
+  .panel,
+  .dock-body,
+  .statblock,
+  .announce-toast,
+  .encounter-sidebar-content,
+  .modal-card,
+  .theme-picker-popover
+) {
+  border: 1px solid var(--theme-border);
+  background: var(--theme-panel);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: none;
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) :is(button, .ghost.link, input, textarea, select) {
+  border-color: var(--theme-border);
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) :is(input, textarea, select) {
+  background: var(--theme-well);
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) button.primary {
+  color: #ffffff;
+  background: var(--theme-accent);
+  border-color: color-mix(in srgb, var(--theme-accent), black 24%);
+  box-shadow: 0 3px 12px var(--theme-glow);
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) button.primary:hover {
+  background: color-mix(in srgb, var(--theme-accent), black 8%);
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) .muted {
+  color: var(--theme-muted);
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) :is(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 3px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+
+/* Keep map labels and sidebars readable even when the canvas itself is busy. */
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) .map-sidebar {
+  background: var(--theme-panel);
+}
+
+.campaign-themed:is(
+  [data-theme="beacon-daybreak"],
+  [data-theme="atlas-skyglass"],
+  [data-theme="mistral-bloom"],
+  [data-theme="vacuo-sunburst"],
+  [data-theme="aura-pop"]
+) :is(.token-name, .ruler-label) {
+  color: var(--theme-text);
+  background: color-mix(in srgb, var(--theme-panel), var(--theme-page) 12%);
+  border-color: var(--theme-border);
+}

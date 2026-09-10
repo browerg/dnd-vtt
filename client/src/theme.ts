@@ -17,6 +17,11 @@ export type ThemeId =
   | "emberforge"
   | "dreamveil"
   | "clear-daylight"
+  | "beacon-daybreak"
+  | "atlas-skyglass"
+  | "mistral-bloom"
+  | "vacuo-sunburst"
+  | "aura-pop"
   | "high-contrast-night";
 
 export type ThemeOverride = "campaign" | ThemeId;
@@ -175,6 +180,51 @@ export const THEMES: ThemeDefinition[] = [
     brand: "VIVID REALMS // CLEAR DAYLIGHT",
     glyph: "☀",
     preview: ["#f4f6fa", "#0a4fa0", "#0d5a52"],
+  },
+  {
+    id: "beacon-daybreak",
+    name: "Beacon Daybreak",
+    system: "both",
+    description: "Bright ivory and rose with rich Beacon crimson and cobalt details.",
+    brand: "BEACON ACADEMY // DAYBREAK",
+    glyph: "🌹",
+    preview: ["#fff7f4", "#a31d3d", "#145da0"],
+  },
+  {
+    id: "atlas-skyglass",
+    name: "Atlas Skyglass",
+    system: "both",
+    description: "Crisp ice-white surfaces with saturated sapphire and teal diagnostics.",
+    brand: "ATLAS // SKYGLASS INTERFACE",
+    glyph: "❄",
+    preview: ["#f1f9ff", "#174a7e", "#0b6b63"],
+  },
+  {
+    id: "mistral-bloom",
+    name: "Mistral Bloom",
+    system: "both",
+    description: "Luminous orchid, violet and magenta over a soft festival-white canvas.",
+    brand: "MISTRAL // BLOOM FESTIVAL",
+    glyph: "🌸",
+    preview: ["#fff7fd", "#6d28a8", "#a21a70"],
+  },
+  {
+    id: "vacuo-sunburst",
+    name: "Vacuo Sunburst",
+    system: "both",
+    description: "Sunlit sand, vivid burnt orange and oasis green built for bright rooms.",
+    brand: "VACUO // SUNBURST EXPEDITION",
+    glyph: "☀",
+    preview: ["#fff8e8", "#9a4500", "#1f6b3a"],
+  },
+  {
+    id: "aura-pop",
+    name: "Aura Pop",
+    system: "both",
+    description: "Clean modern white with punchy magenta and electric-blue Aura accents.",
+    brand: "VIVID REALMS // AURA POP",
+    glyph: "✦",
+    preview: ["#f7fbff", "#a21a70", "#145da0"],
   },
   {
     id: "high-contrast-night",
