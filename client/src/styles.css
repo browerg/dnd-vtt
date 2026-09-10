@@ -1537,7 +1537,14 @@ select:focus { outline: none; border-color: var(--accent); }
   transition: box-shadow .12s ease, outline-color .12s ease;
 }
 
-/* Large edge and corner targets — all eight resize directions. */
+/* Large edge and corner targets — all eight resize directions.
+
+   These sit flush at 0 rather than hanging -4px outside the panel, because
+   react-grid-layout applies .react-grid-item to the same element that carries
+   .panel — and .panel sets overflow:hidden. Anything outside the box was
+   clipped, so only stray fragments of each handle rendered (the "random dots"
+   players reported) and the clipped areas were not hit-testable, which is what
+   made edge resizing feel unreliable. */
 .dashboard-grid.editing .react-resizable-handle {
   display: block;
   position: absolute;
@@ -1569,8 +1576,8 @@ select:focus { outline: none; border-color: var(--accent); }
   cursor: ns-resize;
 }
 
-.dashboard-grid.editing .react-resizable-handle-n { top: -4px; }
-.dashboard-grid.editing .react-resizable-handle-s { bottom: -4px; }
+.dashboard-grid.editing .react-resizable-handle-n { top: 0; }
+.dashboard-grid.editing .react-resizable-handle-s { bottom: 0; }
 
 .dashboard-grid.editing .react-resizable-handle-n::after,
 .dashboard-grid.editing .react-resizable-handle-s::after {
@@ -1593,8 +1600,8 @@ select:focus { outline: none; border-color: var(--accent); }
   cursor: ew-resize;
 }
 
-.dashboard-grid.editing .react-resizable-handle-e { right: -4px; }
-.dashboard-grid.editing .react-resizable-handle-w { left: -4px; }
+.dashboard-grid.editing .react-resizable-handle-e { right: 0; }
+.dashboard-grid.editing .react-resizable-handle-w { left: 0; }
 
 .dashboard-grid.editing .react-resizable-handle-e::after,
 .dashboard-grid.editing .react-resizable-handle-w::after {
@@ -1617,16 +1624,16 @@ select:focus { outline: none; border-color: var(--accent); }
 }
 
 .dashboard-grid.editing .react-resizable-handle-ne {
-  top: -4px; right: -4px; cursor: nesw-resize;
+  top: 0; right: 0; cursor: nesw-resize;
 }
 .dashboard-grid.editing .react-resizable-handle-nw {
-  top: -4px; left: -4px; cursor: nwse-resize;
+  top: 0; left: 0; cursor: nwse-resize;
 }
 .dashboard-grid.editing .react-resizable-handle-se {
-  right: -4px; bottom: -4px; cursor: nwse-resize;
+  right: 0; bottom: 0; cursor: nwse-resize;
 }
 .dashboard-grid.editing .react-resizable-handle-sw {
-  left: -4px; bottom: -4px; cursor: nesw-resize;
+  left: 0; bottom: 0; cursor: nesw-resize;
 }
 
 .dashboard-grid.editing .react-resizable-handle-ne::after,
@@ -2028,6 +2035,14 @@ button[aria-pressed="true"]::after {
 .chat-panel .chat-compose select {
   grid-column: 1 / -1;
   width: 100%;
+}
+
+/* The GM's "Speaking as" control is a <label> wrapping a <select>, so the rule
+   above never reached it — it sat in column 1 and pushed the message box into
+   the narrow auto column, with Send bumped to its own row. Span it instead, so
+   the compose row stays [message | Send] with the speaker picker above. */
+.chat-panel .chat-compose .ic-speaker-control {
+  grid-column: 1 / -1;
 }
 
 .chat-panel .chat-compose input {
