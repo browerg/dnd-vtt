@@ -1552,6 +1552,16 @@ select:focus { outline: none; border-color: var(--accent); }
   opacity: .45;
   background-image: none;
   filter: none;
+  /* react-resizable rotates seven of the eight handles (n 225deg, s 45deg,
+     e 315deg, w 135deg, ne 270deg, nw 180deg, sw 90deg) so its single
+     bottom-right chevron graphic points the right way. We draw our own edge
+     bars and corner brackets, so those rotations have to go: without this the
+     edge bars spin into diagonals that scatter their marks across the panel
+     interior, and every corner bracket except se points the wrong way. */
+  transform: none;
+  /* Also from the library, sized for its own graphic — it offsets where our
+     ::after marks resolve against the padding box. */
+  padding: 0;
 }
 
 .dashboard-grid.editing .react-resizable-handle:hover,
