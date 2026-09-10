@@ -9,6 +9,20 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ---
 
+## 10 September 2026
+
+### Vibrant daylight themes
+
+- Five new bright themes: **Beacon Daybreak**, **Atlas Skyglass**, **Mistral Bloom**,
+  **Vacuo Sunburst**, and **Aura Pop**.
+- Designed for bright rooms, with solid light panels, clear borders, dark text,
+  readable map labels, and no film grain. Primary buttons use white text, and
+  keyboard focus gets a clearly visible outline.
+- Find them in the theme menu in the top bar for both Remnant and D&D 5e campaigns.
+- Clear Daylight, High Contrast Night, and all existing themes are unchanged.
+
+---
+
 ## 9 September 2026
 
 ### Easier to read
