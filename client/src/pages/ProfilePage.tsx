@@ -209,7 +209,7 @@ export default function ProfilePage() {
               onClick={changePassword}
               disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
             >
-              {changingPassword ? "Changingâ€¦" : "Change password"}
+              {changingPassword ? "Changing…" : "Change password"}
             </button>
           </div>
         </section>

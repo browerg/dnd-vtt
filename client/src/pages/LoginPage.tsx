@@ -286,7 +286,7 @@ export default function LoginPage() {
                   className="gateway-meta-link"
                   onClick={() => changeMode("login")}
                 >
-                  â† Back to login
+                  ← Back to login
                 </button>
               )}
             </div>
@@ -300,7 +300,7 @@ export default function LoginPage() {
 
             {notice && (
               <div className="gateway-success" role="status">
-                <span aria-hidden>âœ“</span>
+                <span aria-hidden>✓</span>
                 <p>{notice}</p>
               </div>
             )}

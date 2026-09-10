@@ -73,7 +73,7 @@ if (existsSync(clientDist)) {
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if ((err as any)?.code === "LIMIT_FILE_SIZE") {
     return res.status(400).json({
-      error: `That file is too big â€” the limit is ${MAX_UPLOAD_MB}MB.`,
+      error: `That file is too big — the limit is ${MAX_UPLOAD_MB}MB.`,
     });
   }
   console.error(err);

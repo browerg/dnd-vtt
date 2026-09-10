@@ -280,7 +280,7 @@ export default function CampaignPage() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    ðŸ“„ Open Campaign Notes
+                    📄 Open Campaign Notes
                   </a>
                 )}
                 {detail.campaign.house_rules && (

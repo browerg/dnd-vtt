@@ -272,7 +272,7 @@ export const PANELS: PanelDef[] = [
   {
     id: "vcoins",
     title: "VCoin Rewards",
-    icon: "ðŸª™",
+    icon: "🪙",
     roles: ["dm"],
     minW: 3,
     minH: 7,

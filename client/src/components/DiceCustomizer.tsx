@@ -385,7 +385,7 @@ export default function DiceCustomizer() {
     try {
       await equipTheme(
         encodeDiceCustomization(settings),
-        "Equipped â€” this appearance now follows your whole dice set and your live rolls."
+        "Equipped — this appearance now follows your whole dice set and your live rolls."
       );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not equip your dice.");
@@ -414,7 +414,7 @@ export default function DiceCustomizer() {
         setPresets((current) => [...current, response.preset]);
         setEditingPresetId(response.preset.id);
         setPresetName(response.preset.name);
-        setNotice(`Saved â€œ${response.preset.name}â€ to My Dice.`);
+        setNotice(`Saved “${response.preset.name}” to My Dice.`);
       } else {
         const response = await api<{ preset: DicePreset }>(
           `/api/auth/me/dice-presets/${editingPresetId}`,
@@ -427,7 +427,7 @@ export default function DiceCustomizer() {
           current.map((preset) => (preset.id === response.preset.id ? response.preset : preset))
         );
         setPresetName(response.preset.name);
-        setNotice(`Updated â€œ${response.preset.name}â€.`);
+        setNotice(`Updated “${response.preset.name}”.`);
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not save this preset.");
@@ -446,7 +446,7 @@ export default function DiceCustomizer() {
     setSettings(customization);
     setPresetName(preset.name);
     setEditingPresetId(preset.id);
-    setNotice(`Editing â€œ${preset.name}â€.`);
+    setNotice(`Editing “${preset.name}”.`);
     setError("");
   };
 
@@ -462,7 +462,7 @@ export default function DiceCustomizer() {
     clearMessages();
 
     try {
-      await equipTheme(preset.theme, `Equipped â€œ${preset.name}â€.`);
+      await equipTheme(preset.theme, `Equipped “${preset.name}”.`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not equip this preset.");
     } finally {
@@ -471,7 +471,7 @@ export default function DiceCustomizer() {
   };
 
   const deletePreset = async (preset: DicePreset) => {
-    if (!window.confirm(`Delete â€œ${preset.name}â€ from My Dice?`)) return;
+    if (!window.confirm(`Delete “${preset.name}” from My Dice?`)) return;
 
     setPresetBusy(true);
     clearMessages();
@@ -483,7 +483,7 @@ export default function DiceCustomizer() {
         setEditingPresetId(null);
         setPresetName("");
       }
-      setNotice(`Deleted â€œ${preset.name}â€.`);
+      setNotice(`Deleted “${preset.name}”.`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not delete this preset.");
     } finally {
@@ -584,7 +584,7 @@ export default function DiceCustomizer() {
         aria-label={`Floating 3D D${sides} preview. Drag to rotate the die.`}
       >
         <span id={PREVIEW_ID} className="dice-customizer-canvas" aria-hidden />
-        {!previewReady && <span className="dice-customizer-loading">Loading 3D dieâ€¦</span>}
+        {!previewReady && <span className="dice-customizer-loading">Loading 3D die…</span>}
         <span className="dice-customizer-inspect">Drag to spin</span>
         <span className="dice-customizer-auto">Slow auto-rotate</span>
       </div>
@@ -777,7 +777,7 @@ export default function DiceCustomizer() {
           <label className={`dice-customizer-field dice-customizer-range${patternDisabled ? " disabled" : ""}`}>
             <span>
               <strong>Pattern scale</strong>
-              <small>{settings.patternScale.toFixed(1)}Ã—</small>
+              <small>{settings.patternScale.toFixed(1)}×</small>
             </span>
             <input
               type="range"
@@ -800,7 +800,7 @@ export default function DiceCustomizer() {
             <span>Cosmetic effects that follow your dice through the roll</span>
           </div>
           {devCosmeticsUnlocked && (
-            <span className="dice-trail-dev-badge">DEV Â· ALL UNLOCKED</span>
+            <span className="dice-trail-dev-badge">DEV · ALL UNLOCKED</span>
           )}
         </div>
 
@@ -851,7 +851,7 @@ export default function DiceCustomizer() {
             onClick={() => void previewSelectedTrail()}
             disabled={trailPreviewing}
           >
-            {trailPreviewing ? "Rollingâ€¦" : "Preview trail"}
+            {trailPreviewing ? "Rolling…" : "Preview trail"}
           </button>
         </div>
 
@@ -866,7 +866,7 @@ export default function DiceCustomizer() {
           Reset
         </button>
         <button type="button" className="primary" onClick={equipCurrent} disabled={saving || presetBusy}>
-          {saving ? "Equippingâ€¦" : "Equip current dice"}
+          {saving ? "Equipping…" : "Equip current dice"}
         </button>
       </div>
 
@@ -908,7 +908,7 @@ export default function DiceCustomizer() {
             disabled={presetBusy || atPresetLimit}
           >
             {presetBusy
-              ? "Savingâ€¦"
+              ? "Saving…"
               : editingPresetId === null
                 ? atPresetLimit
                   ? "5 / 5 saved"
@@ -919,7 +919,7 @@ export default function DiceCustomizer() {
       </div>
 
       {presetsLoading ? (
-        <p className="muted small dice-preset-loading">Loading My Diceâ€¦</p>
+        <p className="muted small dice-preset-loading">Loading My Dice…</p>
       ) : presets.length === 0 ? (
         <div className="dice-preset-empty">
           <strong>No saved dice yet.</strong>
@@ -940,7 +940,7 @@ export default function DiceCustomizer() {
                     <strong>{preset.name}</strong>
                     <span>
                       {customization
-                        ? `${patternLabel(customization.pattern)} Â· ${customization.finish}`
+                        ? `${patternLabel(customization.pattern)} · ${customization.finish}`
                         : "Custom"}
                     </span>
                   </div>

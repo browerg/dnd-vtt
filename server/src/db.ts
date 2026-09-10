@@ -435,7 +435,7 @@ const spellCount = (db.prepare("SELECT COUNT(*) AS n FROM spells").get() as any)
 if (spellCount === 0) {
   const srdPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "srd", "srd-spells.json");
   try {
-    const raw = readFileSync(srdPath, "utf8").replace(/^âˆ©â•—â”/, "");
+    const raw = readFileSync(srdPath, "utf8").replace(/^∩╗┐/, "");
     const spells = JSON.parse(raw) as any[];
     const insert = db.prepare("INSERT INTO spells (name, level, data) VALUES (?, ?, ?)");
     for (const s of spells) insert.run(s.name, Number(s.level) || 0, JSON.stringify(s));
@@ -450,7 +450,7 @@ const monsterCount = (db.prepare("SELECT COUNT(*) AS n FROM monsters").get() as 
 if (monsterCount === 0) {
   const srdPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "srd", "srd-monsters.json");
   try {
-    const raw = readFileSync(srdPath, "utf8").replace(/^âˆ©â•—â”/, "");
+    const raw = readFileSync(srdPath, "utf8").replace(/^∩╗┐/, "");
     const monsters = JSON.parse(raw) as any[];
     // CRs come as strings and may be fractions ("1/4").
     const parseCr = (v: unknown): number => {

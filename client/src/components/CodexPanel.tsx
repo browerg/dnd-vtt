@@ -170,7 +170,7 @@ export default function CodexPanel({ campaignId, isDM, canWrite, myId, refreshKe
                   {q.title}
                   {q.hidden && <span className="badge vis-badge">hidden</span>}
                   <span className="badge">
-                    {q.rewardAmount === 0 ? "No VCoins" : `ðŸª™ ${q.rewardAmount} VCoins`}
+                    {q.rewardAmount === 0 ? "No VCoins" : `🪙 ${q.rewardAmount} VCoins`}
                   </span>
                 </strong>
                 <span className="codex-controls">
@@ -178,7 +178,7 @@ export default function CodexPanel({ campaignId, isDM, canWrite, myId, refreshKe
                     <>
                       <label
                         className="small"
-                        title={q.rewardLocked ? "Reward already paid â€” this amount is locked." : "VCoins paid to each campaign member when completed."}
+                        title={q.rewardLocked ? "Reward already paid — this amount is locked." : "VCoins paid to each campaign member when completed."}
                       >
                         VCoins
                         <input
