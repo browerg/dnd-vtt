@@ -15,7 +15,9 @@ export type ThemeId =
   | "verdant-sanctuary"
   | "frostbound-citadel"
   | "emberforge"
-  | "dreamveil";
+  | "dreamveil"
+  | "clear-daylight"
+  | "high-contrast-night";
 
 export type ThemeOverride = "campaign" | ThemeId;
 
@@ -164,6 +166,24 @@ export const THEMES: ThemeDefinition[] = [
     brand: "VIVID REALMS // DREAMVEIL",
     glyph: "\u2736",
     preview: ["#100d24", "#b185f4", "#59d2df"],
+  },
+  {
+    id: "clear-daylight",
+    name: "Clear Daylight",
+    system: "both",
+    description: "High-contrast daylight palette built for easy reading. No grain, no texture.",
+    brand: "VIVID REALMS // CLEAR DAYLIGHT",
+    glyph: "☀",
+    preview: ["#f4f6fa", "#0a4fa0", "#0d5a52"],
+  },
+  {
+    id: "high-contrast-night",
+    name: "High Contrast Night",
+    system: "both",
+    description: "Maximum contrast on true black, for easy reading without a bright screen.",
+    brand: "VIVID REALMS // HIGH CONTRAST",
+    glyph: "◑",
+    preview: ["#000000", "#ffd23f", "#5cc8ff"],
   },
 ];
 

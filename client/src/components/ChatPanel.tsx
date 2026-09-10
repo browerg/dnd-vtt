@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ChatMessage, Member } from "../api";
 import type { CharacterSummary } from "../sheet";
 import { Avatar } from "./Avatar";
+import { chatSoundEnabled, playChatSound, setChatSoundEnabled } from "../chatSound";
 
 type Tab = "ic" | "ooc" | "whisper";
 
@@ -45,6 +46,7 @@ export default function ChatPanel({
   const [error, setError] = useState("");
   const [unread, setUnread] = useState<Record<Tab, number>>({ ic: 0, ooc: 0, whisper: 0 });
   const [notice, setNotice] = useState("");
+  const [soundOn, setSoundOn] = useState(chatSoundEnabled);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatLogRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
@@ -75,6 +77,11 @@ export default function ChatPanel({
 
     const incoming = fresh.filter((message) => message.userId !== myId);
     if (!incoming.length) return;
+
+    // Audible cue for anything someone else said, on any tab — players kept
+    // missing chat entirely while looking at the map. playChatSound re-reads
+    // the stored preference on every call, so no stale-closure worry here.
+    playChatSound(incoming.some((message) => message.channel === "whisper") ? "whisper" : "message");
 
     const additions: Record<Tab, number> = { ic: 0, ooc: 0, whisper: 0 };
     for (const message of incoming) {
@@ -155,6 +162,21 @@ export default function ChatPanel({
             )}
           </button>
         ))}
+        <button
+          type="button"
+          className="chat-sound-toggle"
+          aria-pressed={soundOn}
+          title={soundOn ? "Chat sound on — click to mute" : "Chat sound muted — click to unmute"}
+          onClick={() => {
+            const next = !soundOn;
+            setSoundOn(next);
+            setChatSoundEnabled(next);
+            if (next) playChatSound("message", true); // preview so they know what to listen for
+          }}
+        >
+          <span aria-hidden="true">{soundOn ? "🔔" : "🔕"}</span>
+          <span className="sr-only">{soundOn ? "Mute chat sound" : "Unmute chat sound"}</span>
+        </button>
       </div>
 
       <div className="chat-log" ref={chatLogRef}>

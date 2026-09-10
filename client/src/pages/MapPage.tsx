@@ -616,7 +616,14 @@ export default function MapPage() {
     }
   };
 
-  const isDM = role === "dm" || role === "co-dm";
+  // `isGm` is the real role. `isDM` is what the interface renders against, so
+  // a GM can preview the table exactly as the players see it — fog at full
+  // opacity, hidden objects gone, secret NPC names withheld, DM tools away.
+  // This is a client-side preview only: every route still authorises off the
+  // server-side role, so nothing here widens or narrows real permissions.
+  const isGm = role === "dm" || role === "co-dm";
+  const [viewAsPlayer, setViewAsPlayer] = useState(false);
+  const isDM = isGm && !viewAsPlayer;
   const canRoll = role !== "" && role !== "spectator";
   const themeView = useCampaignTheme({
     campaignId,
@@ -1851,6 +1858,31 @@ Choose Cancel to permanently delete it instead.`
             <button type="button" className={dmPanel === "audio" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "audio" ? null : "audio")}>🔊 Audio</button>
           </div>
         )}
+        {isGm && (
+          <button
+            type="button"
+            className={viewAsPlayer ? "ghost mini active-tool" : "ghost mini"}
+            aria-pressed={viewAsPlayer}
+            title={
+              viewAsPlayer
+                ? "You are seeing the table as a player. Click to return to the GM view."
+                : "Preview the table exactly as your players see it"
+            }
+            onClick={() => {
+              setViewAsPlayer((current) => {
+                const next = !current;
+                // The fog/draw tools are GM-only, so the toolbar disappears in
+                // player view. Drop back to Move or the cursor would keep
+                // showing a tool the player cannot actually have selected.
+                if (next) setTool("move");
+                return next;
+              });
+              setDmPanel(null); // a DM panel left open would hang over the preview
+            }}
+          >
+            {viewAsPlayer ? "👁️ Player view" : "👁️ View as player"}
+          </button>
+        )}
         <CampaignThemePicker
           campaignId={campaignId}
           role={role}
@@ -2155,6 +2187,18 @@ Choose Cancel to permanently delete it instead.`
               : preparedEncounterDropPreview
                 ? `Drop encounter: ${preparedEncounterDropPreview.name}`
                 : `Drop ${preparedTokenDropPreview?.name} onto this square`}
+        </div>
+      )}
+      {viewAsPlayer && (
+        <div className="player-view-banner" role="status" aria-live="polite">
+          <span aria-hidden="true">👁️</span>
+          <span>
+            <strong>Player view.</strong> This is what your players see — fog, hidden
+            objects and secret notes are all concealed. Your GM tools are hidden too.
+          </span>
+          <button type="button" className="ghost mini" onClick={() => setViewAsPlayer(false)}>
+            Back to GM view
+          </button>
         </div>
       )}
       <div className="map-layout">
