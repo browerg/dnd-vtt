@@ -653,3 +653,29 @@
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
+
+/* TEMPORARY — glass material experiment. Remove with the test row. */
+.glass-test-section { margin-top: 1rem; }
+.glass-test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.glass-test-card {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--bg-well, transparent);
+  cursor: pointer;
+}
+.glass-test-card:hover:not(:disabled) { border-color: var(--accent); }
+.glass-test-card.selected {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.glass-test-card:disabled { opacity: 0.55; cursor: wait; }
+.glass-test-card small { color: var(--muted); font-size: 0.68rem; line-height: 1.3; }

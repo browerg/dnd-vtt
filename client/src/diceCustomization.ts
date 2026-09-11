@@ -85,7 +85,118 @@ type InternalDiceFactory = {
   dice_texture?: unknown;
   dice_material?: string;
   materials_cache?: Record<string, unknown>;
+  createMaterials?: (...args: unknown[]) => unknown;
+  __vividGlassWrapped?: boolean;
 };
+
+/* ------------------------------------------------------------------ *
+ * TEMPORARY — glass material experiment
+ *
+ * The library's "glass" preset is { roughness: 0.1, metalness: 0 } with no
+ * transparency at all, which is why the glossy finish reads as polished
+ * plastic rather than glass. This lets a few treatments be compared on real
+ * rolls before deciding whether to build anything on top of them.
+ *
+ * Delete this block, GLASS_TEST_MODES and the setGlassTestMode export once a
+ * look is chosen.
+ * ------------------------------------------------------------------ */
+
+export type GlassTestMode = "off" | "tinted" | "transmission" | "ruby";
+
+export const GLASS_TEST_MODES: { value: GlassTestMode; label: string; blurb: string }[] = [
+  { value: "off", label: "A · Current", blurb: "Today's glossy finish, untouched" },
+  { value: "tinted", label: "B · Tinted resin", blurb: "Simple opacity — works on any material" },
+  { value: "transmission", label: "C · Deep glass", blurb: "Real light transmission through the die" },
+  { value: "ruby", label: "D · Ruby glass", blurb: "Thick crimson transmission" },
+];
+
+let glassTestMode: GlassTestMode = "off";
+
+export function setGlassTestMode(mode: GlassTestMode): void {
+  glassTestMode = mode;
+}
+
+export function getGlassTestMode(): GlassTestMode {
+  return glassTestMode;
+}
+
+type MutableMaterial = Record<string, unknown> & { needsUpdate?: boolean };
+
+/** Applies the selected treatment to one built die material, in place. */
+function applyGlassTest(material: unknown): void {
+  if (!material || typeof material !== "object") return;
+  const m = material as MutableMaterial;
+
+  // Transmission only exists on MeshPhysicalMaterial. Detecting it at runtime
+  // avoids caring which class the minified bundle actually uses.
+  const supportsTransmission = "transmission" in m;
+
+  switch (glassTestMode) {
+    case "tinted":
+      m.transparent = true;
+      m.opacity = 0.65;
+      m.roughness = 0.08;
+      break;
+
+    case "transmission":
+      if (supportsTransmission) {
+        m.transmission = 0.9;
+        m.thickness = 0.5;
+        m.ior = 1.5;
+        m.roughness = 0.05;
+        m.transparent = true;
+      } else {
+        // Graceful fallback so the button still shows something.
+        m.transparent = true;
+        m.opacity = 0.55;
+        m.roughness = 0.05;
+      }
+      break;
+
+    case "ruby":
+      if (supportsTransmission) {
+        m.transmission = 0.85;
+        m.thickness = 1.4;
+        m.ior = 1.77; // roughly ruby
+        m.roughness = 0.03;
+        m.transparent = true;
+      } else {
+        m.transparent = true;
+        m.opacity = 0.6;
+        m.roughness = 0.03;
+      }
+      // Tint the body without touching the number faces.
+      if (m.color && typeof (m.color as { setHex?: unknown }).setHex === "function") {
+        (m.color as { setHex: (hex: number) => void }).setHex(0x9b111e);
+      }
+      break;
+
+    case "off":
+    default:
+      return;
+  }
+
+  m.needsUpdate = true;
+}
+
+/**
+ * Wraps the factory's material builder once, so every die built afterwards
+ * passes through the experiment. Materials are created per die, so patching
+ * here catches them all without needing scene access.
+ */
+function wrapGlassTest(factory: InternalDiceFactory): void {
+  if (factory.__vividGlassWrapped || typeof factory.createMaterials !== "function") return;
+  const original = factory.createMaterials.bind(factory);
+  factory.createMaterials = (...args: unknown[]) => {
+    const built = original(...args);
+    if (glassTestMode !== "off") {
+      if (Array.isArray(built)) built.forEach(applyGlassTest);
+      else applyGlassTest(built);
+    }
+    return built;
+  };
+  factory.__vividGlassWrapped = true;
+}
 
 type TextureEntry = {
   name?: string;
@@ -328,4 +439,7 @@ export async function applyDiceBoxCustomization(
   );
   factory.dice_material = material;
   factory.materials_cache = {};
+
+  // TEMPORARY — see the glass experiment block above.
+  wrapGlassTest(factory);
 }

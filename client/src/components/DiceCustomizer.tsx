@@ -7,6 +7,9 @@ import {
   DICE_FINISH_OPTIONS,
   DICE_NUMBER_STYLE_OPTIONS,
   DICE_PATTERN_OPTIONS,
+  GLASS_TEST_MODES,
+  setGlassTestMode,
+  type GlassTestMode,
   applyDiceBoxCustomization,
   decodeDiceCustomization,
   diceBoxAppearanceConfig,
@@ -589,6 +592,28 @@ export default function DiceCustomizer() {
     setError("");
   };
 
+  // TEMPORARY — glass material experiment. Rolls the same die under each
+  // treatment so a look can be chosen before anything is built on it.
+  const [glassMode, setGlassMode] = useState<GlassTestMode>("off");
+
+  const tryGlassMode = async (mode: GlassTestMode) => {
+    setGlassMode(mode);
+    setGlassTestMode(mode);
+    setTrailPreviewing(true);
+    clearMessages();
+    try {
+      // Re-applying the customization rebuilds the materials through the wrap.
+      await previewDice(encodeDiceCustomization(settings));
+      setNotice(
+        `Rolled ${GLASS_TEST_MODES.find((m) => m.value === mode)?.label ?? mode}. Compare, then tell me which reads as glass.`
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not roll that preview.");
+    } finally {
+      setTrailPreviewing(false);
+    }
+  };
+
   const previewSelectedTrail = async () => {
     setTrailPreviewing(true);
     clearMessages();
@@ -896,6 +921,34 @@ export default function DiceCustomizer() {
         <p className="muted small dice-trail-dev-note">
           Aura Glow is the starter trail. The rest unlock through The Emporium.
         </p>
+
+        {/* TEMPORARY — glass material experiment. Remove once a look is picked. */}
+        <div className="dice-control-section glass-test-section">
+          <div className="dice-control-section-title">
+            <div>
+              <h4>Glass test</h4>
+              <span>
+                Today's glossy finish is opaque — low roughness, no transparency. Roll each and
+                say which one actually reads as glass.
+              </span>
+            </div>
+          </div>
+          <div className="glass-test-grid">
+            {GLASS_TEST_MODES.map((mode) => (
+              <button
+                key={mode.value}
+                type="button"
+                className={`glass-test-card${glassMode === mode.value ? " selected" : ""}`}
+                onClick={() => void tryGlassMode(mode.value)}
+                disabled={trailPreviewing}
+                aria-pressed={glassMode === mode.value}
+              >
+                <strong>{mode.label}</strong>
+                <small>{mode.blurb}</small>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="dice-customizer-actions">
         <button type="button" className="ghost" onClick={reset} disabled={saving || presetBusy}>
