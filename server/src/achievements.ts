@@ -23,7 +23,9 @@ achievementsRouter.get("/", (req: Request, res) => {
 achievementsRouter.put("/showcase", (req: Request, res) => {
   const userId = (req as Request & { user: SessionUser }).user.id;
   try {
-    res.json({ showcase: achievements.setShowcase(userId, req.body?.badgeIds) });
+    const result = achievements.setShowcase(userId, req.body?.badgeIds);
+    notifyAchievementUnlocks(result.unlocks);
+    res.json({ showcase: result.showcase });
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }

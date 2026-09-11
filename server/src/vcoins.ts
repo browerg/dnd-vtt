@@ -113,7 +113,7 @@ export function awardQuestCompletion(
       return { awarded: false, amount: Number(existing?.amount ?? amount), recipientCount: 0 };
     }
 
-    unlocks = achievements.recordQuest(recipients.map((recipient) => recipient.user_id));
+    unlocks = achievements.recordQuest(recipients.map((recipient) => recipient.user_id), questId);
 
     if (amount > 0) {
       for (const recipient of recipients) {

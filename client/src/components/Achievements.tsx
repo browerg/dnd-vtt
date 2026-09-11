@@ -84,6 +84,7 @@ export default function Achievements({ onChange, embedded = false }: { onChange?
       <p className="muted small">Account-wide progress across campaigns. Badge artwork unlocks with each achievement; additional cosmetic rewards may be added later.</p>
       <p className="muted small">A maximum roll means every kept die shows its highest face; a minimum means every kept die shows 1. A d20 counts on 20 or 1; 2d10 counts on two 10s or two 1s. Extra dice must also be maximum or minimum. Modifiers and discarded dice do not count. Each roll counts once, and an ordinary result breaks your streak. Manual and blind rolls are excluded and do not interrupt streaks.</p>
       <p className="muted small">The Adventure Begins unlocks for current campaign members other than spectators when the GM first completes a quest, even with no VCoin reward.</p>
+      <p className="muted small">Roll totals and new purchase milestones start with the ten-achievement expansion. Manual and blind rolls are excluded. Each distinct quest counts once; existing first-quest credit is preserved, with further completions counted from this update. Free cosmetics, GM/developer access, and already-owned items do not count as purchases. Save a full showcase to earn A Whole New Persona.</p>
       </details>
       {loading && <p role="status">Loading achievements…</p>}
       {error && <p role="alert" className="error">{error}</p>}

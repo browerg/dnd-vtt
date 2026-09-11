@@ -9,6 +9,16 @@ export const ACHIEVEMENTS = [
   { id: "ten-max", name: "Favored by Fate", description: "Roll 10 maximum results.", metric: "maximum", target: 10 },
   { id: "ten-min", name: "Can't Keep Me Down", description: "Roll 10 minimum results.", metric: "minimum", target: 10 },
   { id: "first-quest", name: "The Adventure Begins", description: "Complete your first quest with your campaign.", metric: "quests", target: 1 },
+  { id: "first-roll", name: "Let Fate Decide", description: "Make your first eligible in-app dice roll.", metric: "rolls", target: 1 },
+  { id: "hundred-rolls", name: "Dice Goblin", description: "Make 100 eligible in-app dice rolls.", metric: "rolls", target: 100 },
+  { id: "thousand-rolls", name: "Certified Dice Gremlin", description: "Make 1,000 eligible in-app dice rolls.", metric: "rolls", target: 1000 },
+  { id: "max-then-min", name: "Emotional Whiplash", description: "Roll a maximum, then a minimum on your next eligible roll.", metric: "max_then_min", target: 1 },
+  { id: "min-then-max", name: "The Comeback", description: "Roll a minimum, then a maximum on your next eligible roll.", metric: "min_then_max", target: 1 },
+  { id: "triple-max", name: "Third Time's the Charm", description: "Roll three maximum results consecutively.", metric: "max_streak", target: 3 },
+  { id: "five-quests", name: "Side Quest Enthusiast", description: "Complete 5 distinct quests with your campaigns.", metric: "quests", target: 5 },
+  { id: "twenty-five-quests", name: "The Plot Depends on Me", description: "Complete 25 distinct quests with your campaigns.", metric: "quests", target: 25 },
+  { id: "first-purchase", name: "A Little Treat", description: "Purchase your first cosmetic with VCoins.", metric: "purchases", target: 1 },
+  { id: "full-showcase", name: "A Whole New Persona", description: "Display three earned badges on your profile.", metric: "full_showcase", target: 1 },
 ] as const;
 
 type AchievementId = typeof ACHIEVEMENTS[number]["id"];
@@ -56,7 +66,18 @@ export function createAchievementStore(db: DatabaseSync) {
       PRIMARY KEY (user_id, achievement_id),
       UNIQUE (user_id, position)
     );
+    CREATE TABLE IF NOT EXISTS achievement_quest_credits (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      quest_id INTEGER NOT NULL,
+      PRIMARY KEY (user_id, quest_id)
+    );
   `);
+  // Older installs stored only the first quest and capped max streaks at two.
+  // Preserve that known credit; do not invent totals from incomplete history.
+  const columns = new Set(db.prepare("PRAGMA table_info(achievement_progress)").all().map((column) => column.name));
+  for (const column of ["rolls", "max_then_min", "min_then_max", "purchases", "full_showcase"]) {
+    if (!columns.has(column)) db.exec(`ALTER TABLE achievement_progress ADD COLUMN ${column} INTEGER NOT NULL DEFAULT 0`);
+  }
 
   function list(userId: number) {
     const progress = db.prepare("SELECT * FROM achievement_progress WHERE user_id = ?").get(userId);
@@ -103,10 +124,13 @@ export function createAchievementStore(db: DatabaseSync) {
     try {
       db.prepare("INSERT OR IGNORE INTO achievement_progress (user_id) VALUES (?)").run(userId);
       db.prepare(`UPDATE achievement_progress SET
+        rolls = MIN(1000, rolls + 1),
+        max_then_min = MAX(max_then_min, CASE WHEN ? AND max_streak > 0 THEN 1 ELSE 0 END),
+        min_then_max = MAX(min_then_max, CASE WHEN ? AND min_streak > 0 THEN 1 ELSE 0 END),
         maximum = MIN(10, maximum + ?), minimum = MIN(10, minimum + ?),
-        max_streak = CASE WHEN ? THEN MIN(2, max_streak + 1) ELSE 0 END,
+        max_streak = CASE WHEN ? THEN MIN(3, max_streak + 1) ELSE 0 END,
         min_streak = CASE WHEN ? THEN MIN(2, min_streak + 1) ELSE 0 END
-        WHERE user_id = ?`).run(Number(maximum), Number(minimum), Number(maximum), Number(minimum), userId);
+        WHERE user_id = ?`).run(Number(minimum), Number(maximum), Number(maximum), Number(minimum), Number(maximum), Number(minimum), userId);
       const newlyUnlocked = unlock(userId);
       db.exec("RELEASE achievement_roll");
       return newlyUnlocked;
@@ -117,14 +141,30 @@ export function createAchievementStore(db: DatabaseSync) {
   }
 
   // Called inside the existing one-time quest reward transaction, even at 0 VCoins.
-  function recordQuest(userIds: number[]) {
+  function recordQuest(userIds: number[], questId: number) {
     const newlyUnlocked: AchievementUnlock[] = [];
-    for (const userId of new Set(userIds)) {
-      db.prepare(`INSERT INTO achievement_progress (user_id, quests) VALUES (?, 1)
-        ON CONFLICT(user_id) DO UPDATE SET quests = 1`).run(userId);
-      newlyUnlocked.push(...unlock(userId));
+    db.exec("SAVEPOINT achievement_quest");
+    try {
+      for (const userId of new Set(userIds)) {
+        const claim = db.prepare("INSERT OR IGNORE INTO achievement_quest_credits (user_id, quest_id) VALUES (?, ?)").run(userId, questId);
+        if (!Number(claim.changes)) continue;
+        db.prepare(`INSERT INTO achievement_progress (user_id, quests) VALUES (?, 1)
+          ON CONFLICT(user_id) DO UPDATE SET quests = MIN(25, quests + 1)`).run(userId);
+        newlyUnlocked.push(...unlock(userId));
+      }
+      db.exec("RELEASE achievement_quest");
+    } catch (error) {
+      db.exec("ROLLBACK TO achievement_quest; RELEASE achievement_quest");
+      throw error;
     }
     return newlyUnlocked;
+  }
+
+  // Only called inside the successful paid-purchase transaction, after debit.
+  function recordPurchase(userId: number) {
+    db.prepare(`INSERT INTO achievement_progress (user_id, purchases) VALUES (?, 1)
+      ON CONFLICT(user_id) DO UPDATE SET purchases = 1`).run(userId);
+    return unlock(userId);
   }
 
   function showcase(userId: number) {
@@ -147,16 +187,22 @@ export function createAchievementStore(db: DatabaseSync) {
       throw new Error("You can only display badges you have earned.");
     }
     db.exec("SAVEPOINT profile_showcase");
+    let unlocks: AchievementUnlock[] = [];
     try {
       db.prepare("DELETE FROM profile_badges WHERE user_id = ?").run(userId);
       ids.forEach((id, position) => db.prepare("INSERT INTO profile_badges (user_id, achievement_id, position) VALUES (?, ?, ?)").run(userId, id, position));
+      if (ids.length === 3) {
+        db.prepare(`INSERT INTO achievement_progress (user_id, full_showcase) VALUES (?, 1)
+          ON CONFLICT(user_id) DO UPDATE SET full_showcase = 1`).run(userId);
+        unlocks = unlock(userId);
+      }
       db.exec("RELEASE profile_showcase");
     } catch (error) {
       db.exec("ROLLBACK TO profile_showcase; RELEASE profile_showcase");
       throw error;
     }
-    return showcase(userId);
+    return { showcase: showcase(userId), unlocks };
   }
 
-  return { list, recordRoll, recordQuest, showcase, setShowcase };
+  return { list, recordRoll, recordQuest, recordPurchase, showcase, setShowcase };
 }

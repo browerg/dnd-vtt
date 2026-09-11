@@ -22,6 +22,18 @@ a group inside it, and `- ` is a bullet. Newest at the top.
   in it. Replying to a whisper addresses it back to the sender automatically.
 - Press Escape while composing to cancel a reply.
 
+### Ten more distinctions
+
+- Added Let Fate Decide, Dice Goblin, Certified Dice Gremlin, Emotional Whiplash,
+  The Comeback, Third Time's the Charm, Side Quest Enthusiast, The Plot Depends
+  on Me, A Little Treat, and A Whole New Persona, each with its own badge.
+- Earn them through roll totals, dramatic consecutive rolls, distinct quest
+  completions, your first paid cosmetic purchase, and saving three profile badges.
+- New roll and purchase milestones start with this expansion. Existing first-quest
+  credit is preserved; additional quest completions now count toward 5 and 25.
+- All new badges support signature titles, showcases, and unlock notifications,
+  with optimized WebP artwork for fast loading.
+
 ### Faster badge artwork
 
 - Unlock notifications now use tiny WebP thumbnails, with a sharper version

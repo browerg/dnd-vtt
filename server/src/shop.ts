@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "./db.js";
 import { getSessionUser } from "./auth.js";
+import { achievements, notifyAchievementUnlocks } from "./achievements.js";
 
 export const shopRouter = Router();
 
@@ -625,7 +626,9 @@ shopRouter.post("/purchase", (req, res) => {
        VALUES (?, ?, ?, ?)`
     ).run(user.id, -item.price, `Purchased ${item.name}`, item.id);
 
+    const achievementUnlocks = achievements.recordPurchase(user.id);
     db.exec("COMMIT");
+    notifyAchievementUnlocks(achievementUnlocks);
 
     return res.json({
       ok: true,
