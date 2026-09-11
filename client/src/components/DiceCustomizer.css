@@ -639,3 +639,17 @@
     width: 100%;
   }
 }
+
+/* Trails the player has not unlocked in the Emporium. Still clickable, so the
+   click can explain why rather than doing nothing. */
+.dice-trail-shop-card.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.dice-trail-shop-card.locked:hover {
+  opacity: 0.72;
+}
+.dice-trail-shop-card.locked .dice-trail-status {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}

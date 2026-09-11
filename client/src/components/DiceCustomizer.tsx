@@ -536,12 +536,56 @@ export default function DiceCustomizer() {
   const atPresetLimit = presets.length >= MAX_PRESETS && editingPresetId === null;
   const patternDisabled = settings.pattern === "none";
   const trailOptions = getDiceTrailOptions();
-  const devCosmeticsUnlocked = import.meta.env.DEV;
+
+  // Trail ownership comes from the Emporium, not from the build mode. It used
+  // to key off import.meta.env.DEV, which meant every trail was selectable and
+  // players saw a "DEV · ALL UNLOCKED" badge whenever the table was hosted in
+  // dev — and the picker never checked ownership at all, so the prices were
+  // decorative.
+  const [trailShop, setTrailShop] = useState<Record<string, { owned: boolean; price: number }>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    api<{ items?: { type: string; effect: string; price: number; owned: boolean }[] }>("/api/shop")
+      .then((response) => {
+        if (cancelled) return;
+        const owned: Record<string, { owned: boolean; price: number }> = {};
+        for (const item of response.items ?? []) {
+          if (item.type === "dice-trail") {
+            owned[item.effect] = { owned: !!item.owned, price: Number(item.price) || 0 };
+          }
+        }
+        setTrailShop(owned);
+      })
+      // If the shop is unreachable the map stays empty, which locks the paid
+      // trails rather than handing them out.
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const trailEntry = (style: DiceTrailStyle) => trailShop[style];
+  const trailOwned = (style: DiceTrailStyle) => trailEntry(style)?.owned === true;
+
+  // A trail saved before ownership was enforced must not keep applying.
+  useEffect(() => {
+    if (!Object.keys(trailShop).length) return;
+    if (trailOwned(trailStyle)) return;
+    setTrailStyle("aura");
+    setDiceTrailStyle("aura");
+  }, [trailShop]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectTrail = (style: DiceTrailStyle) => {
+    const label = trailOptions.find((option) => option.value === style)?.label ?? "This dice trail";
+    if (!trailOwned(style)) {
+      setNotice("");
+      setError(`${label} is an Emporium cosmetic. Unlock it in the shop to equip it.`);
+      return;
+    }
     setTrailStyle(style);
     setDiceTrailStyle(style);
-    setNotice(`Selected ${trailOptions.find((option) => option.value === style)?.label ?? "dice trail"}.`);
+    setNotice(`Selected ${label}.`);
     setError("");
   };
 
@@ -799,39 +843,33 @@ export default function DiceCustomizer() {
             <h4>Dice trails</h4>
             <span>Cosmetic effects that follow your dice through the roll</span>
           </div>
-          {devCosmeticsUnlocked && (
-            <span className="dice-trail-dev-badge">DEV · ALL UNLOCKED</span>
-          )}
         </div>
 
         <div className="dice-trail-shop-grid">
           {trailOptions.map((option) => {
             const selected = trailStyle === option.value;
-            const premium = option.value !== "aura";
+            const entry = trailEntry(option.value);
+            const owned = trailOwned(option.value);
+            const price = entry?.price ?? 0;
 
             return (
               <button
                 key={option.value}
                 type="button"
-                className={`dice-trail-shop-card${selected ? " selected" : ""}`}
+                className={`dice-trail-shop-card${selected ? " selected" : ""}${owned ? "" : " locked"}`}
                 onClick={() => selectTrail(option.value)}
                 aria-pressed={selected}
+                title={owned ? undefined : `Unlock ${option.label} in the Emporium`}
               >
                 <span className={`dice-trail-orb dice-trail-orb-${option.value}`} aria-hidden />
                 <span className="dice-trail-shop-copy">
                   <strong>{option.label}</strong>
                   <small>
-                    {option.value === "aura"
-                      ? "Starter cosmetic"
-                      : devCosmeticsUnlocked
-                        ? "Unlocked in dev mode"
-                        : premium
-                          ? "Emporium cosmetic"
-                          : "Unlocked"}
+                    {price === 0 ? "Starter cosmetic" : owned ? "Unlocked" : "Emporium cosmetic"}
                   </small>
                 </span>
                 <span className={`dice-trail-status${selected ? " selected" : ""}`}>
-                  {selected ? "EQUIPPED" : option.value === "aura" ? "FREE" : devCosmeticsUnlocked ? "FREE" : "SHOP"}
+                  {selected ? "EQUIPPED" : owned ? (price === 0 ? "FREE" : "OWNED") : `${price} VC`}
                 </span>
               </button>
             );
@@ -856,9 +894,7 @@ export default function DiceCustomizer() {
         </div>
 
         <p className="muted small dice-trail-dev-note">
-          {devCosmeticsUnlocked
-            ? "Development mode: every cosmetic is available for testing. Production ownership will be enforced by the server."
-            : "Aura Glow is the starter trail. Premium trails will unlock through The Emporium."}
+          Aura Glow is the starter trail. The rest unlock through The Emporium.
         </p>
       </div>
       <div className="dice-customizer-actions">
