@@ -188,11 +188,12 @@ export default function CampaignDashboardPage() {
       channel: "ic" | "ooc" | "whisper",
       targetUserId?: number,
       speakerCharacterId?: number,
-      speakerAsGm?: boolean
+      speakerAsGm?: boolean,
+      replyToId?: number
     ) => {
       await api(`/api/campaigns/${campaignId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm }),
+        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm, replyToId }),
       });
     },
     [campaignId]

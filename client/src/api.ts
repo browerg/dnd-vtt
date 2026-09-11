@@ -61,6 +61,13 @@ export interface RollPayload {
   animateAt?: number; // server clock time when every client should start the 3D roll
 }
 
+/** The quoted snippet a reply carries, resolved server-side. */
+export interface ChatReplyPreview {
+  id: number;
+  author: string;
+  body: string;
+}
+
 export interface ChatMessage {
   id: number;
   campaignId: number;
@@ -72,6 +79,7 @@ export interface ChatMessage {
   speaker: string;
   body: string;
   createdAt: string;
+  replyTo: ChatReplyPreview | null;
 }
 
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {

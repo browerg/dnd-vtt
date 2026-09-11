@@ -410,6 +410,9 @@ for (const ddl of [
   "ALTER TABLE characters ADD COLUMN player_controllable INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE users ADD COLUMN avatar_path TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE users ADD COLUMN pronouns TEXT NOT NULL DEFAULT ''",
+  // Replies stay inside their own channel, so a whisper can never be quoted
+  // into public chat. SET NULL keeps a reply readable if its parent is removed.
+  "ALTER TABLE messages ADD COLUMN reply_to_id INTEGER REFERENCES messages(id) ON DELETE SET NULL",
   "ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE users ADD COLUMN profile_style TEXT NOT NULL DEFAULT 'astral'",
 ]) {

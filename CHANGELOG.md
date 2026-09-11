@@ -11,6 +11,17 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ## 10 September 2026
 
+### Chat replies
+
+- You can now reply to a message. Hover any line in the comms channel and click
+  the reply arrow — your message is sent with a quote of theirs above it.
+- Click the quote on a reply to jump to the message it answers, which flashes
+  briefly so you can spot it.
+- Replies stay inside their own channel: an In Character line cannot be quoted
+  into Out of Character, and a whisper can only be replied to by the two people
+  in it. Replying to a whisper addresses it back to the sender automatically.
+- Press Escape while composing to cancel a reply.
+
 ### Faster badge artwork
 
 - Unlock notifications now use tiny WebP thumbnails, with a sharper version

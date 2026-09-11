@@ -52,7 +52,8 @@ export interface PanelCtx {
     channel: "ic" | "ooc" | "whisper",
     targetUserId?: number,
     speakerCharacterId?: number,
-    speakerAsGm?: boolean
+    speakerAsGm?: boolean,
+    replyToId?: number
   ) => Promise<void>;
 }
 

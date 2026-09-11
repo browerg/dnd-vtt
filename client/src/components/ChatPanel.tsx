@@ -25,7 +25,8 @@ interface Props {
     channel: Tab,
     targetUserId?: number,
     speakerCharacterId?: number,
-    speakerAsGm?: boolean
+    speakerAsGm?: boolean,
+    replyToId?: number
   ) => Promise<void>;
 }
 
@@ -47,6 +48,10 @@ export default function ChatPanel({
   const [unread, setUnread] = useState<Record<Tab, number>>({ ic: 0, ooc: 0, whisper: 0 });
   const [notice, setNotice] = useState("");
   const [soundOn, setSoundOn] = useState(chatSoundEnabled);
+  // The message being replied to. Cleared on send, on cancel, and whenever the
+  // tab changes — a reply only ever belongs to its own channel.
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const composeRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatLogRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
@@ -121,6 +126,16 @@ export default function ChatPanel({
     setTab(next);
     setUnread((current) => ({ ...current, [next]: 0 }));
     setNotice("");
+    setReplyTo(null); // a reply belongs to the channel it was started in
+  };
+
+  const startReply = (message: ChatMessage) => {
+    setReplyTo(message);
+    // Whispers reply to whoever sent it, not whoever was last selected.
+    if (message.channel === "whisper") {
+      setTarget(message.userId === myId ? message.targetUserId ?? 0 : message.userId);
+    }
+    composeRef.current?.focus();
   };
 
   const send = async (e: FormEvent) => {
@@ -135,8 +150,9 @@ export default function ChatPanel({
           ? Number(speakerChoice) || undefined
           : undefined;
 
-      await onSend(draft, tab, whisperTarget, speakerCharacterId, speakerAsGm);
+      await onSend(draft, tab, whisperTarget, speakerCharacterId, speakerAsGm, replyTo?.id);
       setDraft("");
+      setReplyTo(null);
     } catch (err: any) {
       setError(err.message);
     }
@@ -182,7 +198,23 @@ export default function ChatPanel({
       <div className="chat-log" ref={chatLogRef}>
         {shown.length === 0 && <p className="muted">Nothing here yet.</p>}
         {shown.map((m) => (
-          <div key={m.id} className="chat-msg">
+          <div key={m.id} id={`chat-msg-${m.id}`} className="chat-msg">
+            {m.replyTo && (
+              <button
+                type="button"
+                className="chat-quote"
+                title="Jump to the message this replies to"
+                onClick={() => {
+                  const el = document.getElementById(`chat-msg-${m.replyTo!.id}`);
+                  el?.scrollIntoView({ block: "center" });
+                  el?.classList.add("chat-msg-flash");
+                  window.setTimeout(() => el?.classList.remove("chat-msg-flash"), 1200);
+                }}
+              >
+                <span className="chat-quote-author">{m.replyTo.author}</span>
+                <span className="chat-quote-body">{m.replyTo.body}</span>
+              </button>
+            )}
             {m.channel !== "ic" && (
               <Avatar
                 name={m.userName}
@@ -204,6 +236,17 @@ export default function ChatPanel({
               )}
             </span>
             <span className="chat-body">{m.body}</span>
+            {canChat && (
+              <button
+                type="button"
+                className="chat-reply-btn"
+                title={`Reply to ${m.speaker || m.userName}`}
+                onClick={() => startReply(m)}
+              >
+                <span aria-hidden="true">↩</span>
+                <span className="sr-only">Reply to {m.speaker || m.userName}</span>
+              </button>
+            )}
           </div>
         ))}
         <div ref={bottomRef} />
@@ -211,6 +254,17 @@ export default function ChatPanel({
 
       {canChat && (
         <form onSubmit={send} className="chat-compose">
+          {replyTo && (
+            <div className="chat-replying-to">
+              <span className="chat-replying-label">Replying to</span>
+              <span className="chat-replying-author">{replyTo.speaker || replyTo.userName}</span>
+              <span className="chat-replying-body">{replyTo.body}</span>
+              <button type="button" onClick={() => setReplyTo(null)} title="Cancel reply">
+                <span aria-hidden="true">✕</span>
+                <span className="sr-only">Cancel reply</span>
+              </button>
+            </div>
+          )}
           {tab === "ic" && isDM && (
             <label className="ic-speaker-control">
               <span>Speaking as</span>
@@ -237,8 +291,15 @@ export default function ChatPanel({
           )}
 
           <input
+            ref={composeRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && replyTo) {
+                e.preventDefault();
+                setReplyTo(null);
+              }
+            }}
             placeholder={
               tab === "ic"
                 ? isDM

@@ -2055,6 +2055,112 @@ button[aria-pressed="true"]::after {
   grid-column: 1 / -1;
 }
 
+/* ---- replies ---- */
+
+/* Same full-row span as the speaker control, for the same reason. */
+.chat-panel .chat-compose .chat-replying-to {
+  grid-column: 1 / -1;
+}
+
+.chat-replying-to {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.45rem;
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm, 4px);
+  background: color-mix(in srgb, var(--accent), transparent 92%);
+  font-size: 0.74rem;
+  min-width: 0;
+}
+
+.chat-replying-label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.62rem;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.chat-replying-author {
+  color: var(--accent);
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.chat-replying-body {
+  color: var(--muted);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-replying-to > button {
+  flex: 0 0 auto;
+  padding: 0 0.3rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chat-replying-to > button:hover { color: var(--text); }
+
+/* The quoted snippet shown above a reply in the log. */
+.chat-quote {
+  display: flex;
+  gap: 0.35rem;
+  width: 100%;
+  margin-bottom: 0.15rem;
+  padding: 0.15rem 0.4rem;
+  border: none;
+  border-left: 2px solid var(--border);
+  border-radius: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.chat-quote:hover { border-left-color: var(--accent); }
+.chat-quote-author { font-weight: 700; flex: 0 0 auto; }
+.chat-quote-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Reply affordance — quiet until the message is hovered or it has focus. */
+.chat-reply-btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0 0.25rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, color 0.12s ease;
+}
+.chat-msg:hover .chat-reply-btn,
+.chat-reply-btn:focus-visible { opacity: 1; }
+.chat-reply-btn:hover { color: var(--accent); }
+
+/* Brief highlight when jumping to a quoted message. */
+.chat-msg-flash {
+  animation: chat-msg-flash 1.2s ease-out;
+  border-radius: var(--radius-sm, 4px);
+}
+@keyframes chat-msg-flash {
+  from { background: color-mix(in srgb, var(--accent), transparent 72%); }
+  to { background: transparent; }
+}
+
 .chat-panel .chat-compose input {
   min-width: 0;
   width: 100%;

@@ -3,6 +3,7 @@ import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
+import { previewOf, resolveReply, type ChatReplyPreview } from "./chatReply.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const MAX_BODY = 4000;
@@ -19,7 +20,9 @@ export interface ChatMessage {
   speaker: string;
   body: string;
   createdAt: string;
+  replyTo: ChatReplyPreview | null;
 }
+
 
 const visibleTo = (msg: ChatMessage, viewerId: number) =>
   msg.channel !== "whisper" || msg.userId === viewerId || msg.targetUserId === viewerId;
@@ -33,10 +36,15 @@ chatRouter.get("/:id/messages", (req, res) => {
   const rows = db
     .prepare(
       `SELECT m.id, m.campaign_id, m.user_id, u.display_name AS user_name, m.channel,
-              m.target_user_id, t.display_name AS target_name, m.speaker, m.body, m.created_at
+              m.target_user_id, t.display_name AS target_name, m.speaker, m.body, m.created_at,
+              m.reply_to_id,
+              p.speaker AS reply_speaker, p.body AS reply_body,
+              pu.display_name AS reply_user_name
        FROM messages m
        JOIN users u ON u.id = m.user_id
        LEFT JOIN users t ON t.id = m.target_user_id
+       LEFT JOIN messages p ON p.id = m.reply_to_id
+       LEFT JOIN users pu ON pu.id = p.user_id
        WHERE m.campaign_id = ? ORDER BY m.id DESC LIMIT 200`
     )
     .all(campaignId) as any[];
@@ -53,6 +61,9 @@ chatRouter.get("/:id/messages", (req, res) => {
         speaker: r.speaker,
         body: r.body,
         createdAt: r.created_at,
+        replyTo: r.reply_to_id
+          ? previewOf({ id: r.reply_to_id, speaker: r.reply_speaker, user_name: r.reply_user_name, body: r.reply_body })
+          : null,
       })
     )
     .filter((m) => visibleTo(m, user(req).id))
@@ -83,6 +94,15 @@ chatRouter.post("/:id/messages", (req, res) => {
         ?.display_name ?? null;
   }
 
+  const reply = resolveReply(db, {
+    requested: req.body?.replyToId,
+    campaignId,
+    channel,
+    userId: user(req).id,
+  });
+  if (!reply.ok) return res.status(reply.status).json({ error: reply.error });
+  const { replyToId, replyTo } = reply;
+
   let speaker = "";
   if (channel === "ic") {
     if (isDMRole(role) && req.body?.speakerAsGm === true) {
@@ -106,10 +126,10 @@ chatRouter.post("/:id/messages", (req, res) => {
 
   const info = db
     .prepare(
-      `INSERT INTO messages (campaign_id, user_id, channel, target_user_id, speaker, body)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO messages (campaign_id, user_id, channel, target_user_id, speaker, body, reply_to_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     )
-    .run(campaignId, user(req).id, channel, targetUserId, speaker, body);
+    .run(campaignId, user(req).id, channel, targetUserId, speaker, body, replyToId);
 
   const message: ChatMessage = {
     id: Number(info.lastInsertRowid),
@@ -122,6 +142,7 @@ chatRouter.post("/:id/messages", (req, res) => {
     speaker,
     body,
     createdAt: new Date().toISOString(),
+    replyTo,
   };
 
   const io = getIo();
