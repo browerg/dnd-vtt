@@ -1,0 +1,111 @@
+.entrance-app:focus { outline: none; }
+.vr-entrance {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  overflow: hidden;
+  background: #090a10;
+  color: #fff;
+  opacity: 1;
+  transition: opacity 450ms ease;
+}
+.vr-entrance--leaving { opacity: 0; pointer-events: none; }
+.vr-entrance__video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.vr-entrance__invitation {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+.vr-entrance__hint { margin: 0; font-size: .9rem; color: #e0d6ed; text-shadow: 0 2px 5px #000; letter-spacing: .08em; }
+.vr-entrance .vr-entrance__skip {
+  position: absolute;
+  right: max(1.5rem, env(safe-area-inset-right));
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  padding: .7rem 1.1rem;
+  border: 1px solid #877c9b;
+  border-radius: 999px;
+  background: #17131f;
+  color: #fff;
+  cursor: pointer;
+}
+.vr-entrance__loading { position: absolute; bottom: 5rem; left: 0; right: 0; text-align: center; color: #fff; text-shadow: 0 2px 5px #000; }
+.vr-entrance button:focus-visible { outline: 3px solid #dfc6ff; outline-offset: 6px; }
+
+/* Adapted from Uiverse.io by MuhammadHasann; scoped to the entrance. */
+.vr-entrance .vr-enter-button {
+  --active: 0;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .65rem;
+  padding: 1.15rem 2rem;
+  max-width: 100%;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transform: scale(calc(1 + var(--active) * .06));
+  transition: transform .3s ease-in-out;
+}
+.vr-enter-button::before, .vr-enter-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.vr-enter-button::before {
+  z-index: 0;
+  background: #201b29;
+  box-shadow: inset 0 .5px #fff, inset 0 -1px 2px #000, 0 4px 18px #0009,
+    0 0 0 calc(var(--active) * .375rem) #7313fb99;
+  transition: box-shadow .3s ease-in-out;
+}
+.vr-enter-button::after {
+  z-index: 1;
+  background: radial-gradient(at 51% 89%, #bda0da 0, transparent 50%),
+    radial-gradient(at 100% 100%, #9974bd 0, transparent 50%),
+    radial-gradient(at 22% 91%, #9974bd 0, transparent 50%), #853bfc;
+  opacity: var(--active);
+  transition: opacity .3s ease-in-out;
+}
+.vr-entrance .vr-enter-button:is(:hover, :focus-visible) { --active: 1; }
+.vr-entrance .vr-enter-button:active { transform: scale(1); }
+.vr-enter-button__border {
+  position: absolute;
+  inset: -2px;
+  overflow: hidden;
+  border-radius: inherit;
+  z-index: -1;
+  background: #8c76aa;
+}
+.vr-enter-button__border::before {
+  content: "";
+  position: absolute;
+  top: calc(50% - 1rem);
+  left: 0;
+  width: 100%;
+  height: 2rem;
+  background: #fff;
+  mask-image: linear-gradient(transparent, white);
+  animation: vr-entrance-orbit 3s linear infinite;
+}
+.vr-enter-button__sparkle { position: relative; z-index: 2; width: 1.75rem; flex-shrink: 0; }
+.vr-enter-button__sparkle path { fill: currentColor; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; transform-origin: center; }
+.vr-enter-button:is(:hover, :focus-visible) path { animation: vr-entrance-sparkle 1.5s ease-in-out infinite; }
+.vr-enter-button path:nth-child(2) { animation-delay: .2s; }
+.vr-enter-button path:nth-child(3) { animation-delay: .4s; }
+.vr-enter-button__text { position: relative; z-index: 2; font-family: "Cinzel", serif; font-size: clamp(.9rem, 3.5vw, 1.1rem); font-weight: 600; }
+@keyframes vr-entrance-orbit { to { transform: rotate(360deg); } }
+@keyframes vr-entrance-sparkle { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+@media (prefers-reduced-motion: reduce) {
+  .vr-entrance, .vr-entrance *, .vr-entrance *::before, .vr-entrance *::after { animation: none !important; transition: none !important; }
+}

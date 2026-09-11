@@ -9,6 +9,17 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ---
 
+## 11 September 2026
+
+### Enter Vivid Realms
+
+- A sparkling Enter Vivid Realms button welcomes you over the intro's opening
+  frame. Click to bring the scene to life with sound, then fade into the app.
+- The entrance appears once per tab session. Skip Intro or Escape takes you
+  straight in; reduced-motion preferences bypass it automatically.
+- The app loads behind the entrance. The optimized video is about 1 MB, and
+  failed or stalled playback automatically lets you through.
+
 ## 10 September 2026
 
 ### Chat replies

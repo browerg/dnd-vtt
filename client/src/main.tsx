@@ -1,6 +1,7 @@
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import Entrance from "./components/Entrance";
 // Engraved academy capitals for headers, warm humanist sans for everything else.
 import "@fontsource/cinzel/600.css";
 import "@fontsource/cinzel/700.css";
@@ -17,6 +18,6 @@ import "./daylightThemes.css";
 // dropping it only changes dev behavior, and keeps the dashboard usable.
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
-    <App />
+    <Entrance><App /></Entrance>
   </BrowserRouter>
 );
