@@ -3,7 +3,8 @@ import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
-import { achievements } from "./achievements.js";
+import { achievements, notifyAchievementUnlocks } from "./achievements.js";
+import type { AchievementUnlock } from "./achievementStore.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
@@ -94,6 +95,7 @@ export function awardQuestCompletion(
   const amount = Math.max(0, Math.min(MAX_QUEST_VCOINS, Math.floor(requestedAmount)));
   const reason = `Quest completed: ${questTitle}`;
   const recipients = eligibleMembers(campaignId);
+  let unlocks: AchievementUnlock[] = [];
 
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -111,7 +113,7 @@ export function awardQuestCompletion(
       return { awarded: false, amount: Number(existing?.amount ?? amount), recipientCount: 0 };
     }
 
-    achievements.recordQuest(recipients.map((recipient) => recipient.user_id));
+    unlocks = achievements.recordQuest(recipients.map((recipient) => recipient.user_id));
 
     if (amount > 0) {
       for (const recipient of recipients) {
@@ -132,6 +134,7 @@ export function awardQuestCompletion(
   }
 
   if (amount > 0) broadcast(campaignId, "quest");
+  notifyAchievementUnlocks(unlocks);
   return { awarded: true, amount, recipientCount: amount > 0 ? recipients.length : 0 };
 }
 

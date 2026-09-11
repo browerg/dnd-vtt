@@ -15,6 +15,7 @@ import CustomizePage from "./pages/CustomizePage";
 import ShopPage from "./pages/ShopPage";
 import ProfilePage from "./pages/ProfilePage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
+import AchievementNotifications from "./components/AchievementNotifications";
 import CriticalRollOverlay from "./components/CriticalRollOverlay";
 
 interface AuthState {
@@ -57,6 +58,7 @@ export default function App() {
       {/* Lives outside the routes so the 3D dice canvas survives navigation. */}
       <div id="dice-overlay" className="dice-overlay" />
       <CriticalRollOverlay />
+      {user && <AchievementNotifications key={user.id} />}
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

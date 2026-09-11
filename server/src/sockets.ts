@@ -19,6 +19,7 @@ export function setupSockets(io: Server) {
 
   io.on("connection", (socket: Socket) => {
     const user = socket.data.user as SessionUser;
+    socket.join(`user:${user.id}`);
 
     socket.on("campaign:join", (campaignId: number) => {
       if (!memberRole(Number(campaignId), user.id)) return;

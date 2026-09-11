@@ -1,0 +1,12 @@
+.achievement-notifications { position: fixed; top: 1rem; right: 1rem; z-index: 12000; width: min(380px, calc(100vw - 2rem)); pointer-events: none; }
+.achievement-unlock-toast { display: flex; align-items: center; gap: .9rem; padding: 1rem; color: #f7efd9; background: #141925; border: 1px solid #c5a558; border-radius: 14px 14px 0 0; box-shadow: 0 8px 28px #0005; pointer-events: auto; animation: achievement-arrive .28s ease-out; }
+.achievement-unlock-toast img { flex: 0 0 72px; object-fit: contain; border-radius: 14px; }
+.achievement-unlock-toast strong { display: block; margin: .2rem 0; font-size: 1.05rem; }
+.achievement-unlock-toast p { margin: .2rem 0 .4rem; color: #c6cad5; font-size: .85rem; }
+.achievement-unlock-toast a { color: #efd18a; font-size: .85rem; }
+.achievement-unlock-kicker { font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #efd18a; }
+.achievement-toast-controls { display: flex; justify-content: space-between; gap: .5rem; padding: .4rem .65rem; background: #141925; border: 1px solid #c5a558; border-top: 0; border-radius: 0 0 14px 14px; pointer-events: auto; }
+.achievement-toast-controls button { color: #c6cad5; background: transparent; border: 0; font-size: .75rem; box-shadow: none; }
+.achievement-notifications :is(a,button):focus-visible { outline: 3px solid #efd18a; outline-offset: 2px; }
+@keyframes achievement-arrive { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .achievement-unlock-toast { animation: none; } }

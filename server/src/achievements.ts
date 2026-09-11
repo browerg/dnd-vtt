@@ -1,7 +1,16 @@
 import { Router, type Request } from "express";
 import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
-import { createAchievementStore } from "./achievementStore.js";
+import { createAchievementStore, type AchievementUnlock } from "./achievementStore.js";
+import { getIo } from "./realtime.js";
+
+// Call only after the transaction commits. A private account room prevents
+// other players from receiving unlocks from private rolls.
+export function notifyAchievementUnlocks(unlocks: AchievementUnlock[]) {
+  for (const { userId, ...achievement } of unlocks) {
+    getIo().to(`user:${userId}`).emit("achievement:unlocked", achievement);
+  }
+}
 
 export const achievements = createAchievementStore(db);
 export const achievementsRouter = Router();

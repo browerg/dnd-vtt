@@ -110,3 +110,18 @@ test("profile showcases reject unearned, unknown, duplicate and excess badges wi
     assert.ok(store.list(1).find((badge) => badge.id === "first-max")!.unlockedAt);
   } finally { db.close(); }
 });
+
+test("notification payloads contain only newly earned achievements for their owner", () => {
+  const { db, store } = fixture();
+  try {
+    const first = store.recordRoll(1, detail(20, [20]), "private");
+    assert.deepEqual(first.map((a) => a.id), ["first-max"]);
+    assert.equal(first[0].userId, 1);
+    assert.equal(first[0].badgeImage, "/assets/achievements/first-max.png");
+    assert.deepEqual(store.recordRoll(1, detail(20, [20]), "public").map((a) => a.id), ["double-max"]);
+    assert.deepEqual(store.recordRoll(1, detail(20, [20]), "public"), []);
+    assert.deepEqual(store.recordRoll(1, detail(20, [1]), "blind"), []);
+    assert.deepEqual(store.recordQuest([1, 2]).map((a) => [a.userId, a.id]), [[1, "first-quest"], [2, "first-quest"]]);
+    assert.deepEqual(store.recordQuest([1, 2]), []);
+  } finally { db.close(); }
+});

@@ -33,7 +33,12 @@ export default function Achievements() {
       setLoading(false);
     }
   };
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const refresh = () => { void load(); };
+    refresh();
+    window.addEventListener("achievements:updated", refresh);
+    return () => window.removeEventListener("achievements:updated", refresh);
+  }, []);
 
   const toggleBadge = async (id: string) => {
     const ids = showcase.map((badge) => badge.id);

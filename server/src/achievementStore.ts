@@ -12,6 +12,13 @@ export const ACHIEVEMENTS = [
 ] as const;
 
 type AchievementId = typeof ACHIEVEMENTS[number]["id"];
+export interface AchievementUnlock {
+  userId: number;
+  id: string;
+  name: string;
+  description: string;
+  badgeImage: string;
+}
 // Add real cosmetic catalog IDs here when the rewards are ready. Reading the
 // achievement list also grants newly linked rewards to previous achievers.
 export const ACHIEVEMENT_REWARDS: Partial<Record<AchievementId, string>> = {};
@@ -61,19 +68,23 @@ export function createAchievementStore(db: DatabaseSync) {
   }
 
   function unlock(userId: number) {
+    const newlyUnlocked: AchievementUnlock[] = [];
     const progress = db.prepare("SELECT * FROM achievement_progress WHERE user_id = ?").get(userId)!;
     for (const definition of ACHIEVEMENTS) {
       if (Number(progress[definition.metric]) >= definition.target) {
-        db.prepare("INSERT OR IGNORE INTO achievement_unlocks (user_id, achievement_id) VALUES (?, ?)").run(userId, definition.id);
+        const result = db.prepare("INSERT OR IGNORE INTO achievement_unlocks (user_id, achievement_id) VALUES (?, ?)").run(userId, definition.id);
+        if (Number(result.changes) > 0) newlyUnlocked.push({ userId, id: definition.id, name: definition.name,
+          description: definition.description, badgeImage: `/assets/achievements/${definition.id}.png` });
       }
     }
+    return newlyUnlocked;
   }
 
   function recordRoll(userId: number, detail: RollDetail, visibility: string) {
     // Blind results must not become visible through achievement progress.
-    if (detail.manual || visibility === "blind") return;
+    if (detail.manual || visibility === "blind") return [];
     const groups = detail.kept.groups;
-    if (!groups.length || groups.some((g) => !g.results.length)) return;
+    if (!groups.length || groups.some((g) => !g.results.length)) return [];
     // A whole roll earns at most one result. Modifiers and discarded dice do
     // not affect a natural maximum/minimum, including Remnant dice pools.
     const maximum = groups.every((g) => g.results.every((face) => face === g.sides));
@@ -86,8 +97,9 @@ export function createAchievementStore(db: DatabaseSync) {
         max_streak = CASE WHEN ? THEN MIN(2, max_streak + 1) ELSE 0 END,
         min_streak = CASE WHEN ? THEN MIN(2, min_streak + 1) ELSE 0 END
         WHERE user_id = ?`).run(Number(maximum), Number(minimum), Number(maximum), Number(minimum), userId);
-      unlock(userId);
+      const newlyUnlocked = unlock(userId);
       db.exec("RELEASE achievement_roll");
+      return newlyUnlocked;
     } catch (error) {
       db.exec("ROLLBACK TO achievement_roll; RELEASE achievement_roll");
       throw error;
@@ -96,11 +108,13 @@ export function createAchievementStore(db: DatabaseSync) {
 
   // Called inside the existing one-time quest reward transaction, even at 0 VCoins.
   function recordQuest(userIds: number[]) {
+    const newlyUnlocked: AchievementUnlock[] = [];
     for (const userId of new Set(userIds)) {
       db.prepare(`INSERT INTO achievement_progress (user_id, quests) VALUES (?, 1)
         ON CONFLICT(user_id) DO UPDATE SET quests = 1`).run(userId);
-      unlock(userId);
+      newlyUnlocked.push(...unlock(userId));
     }
+    return newlyUnlocked;
   }
 
   function showcase(userId: number) {

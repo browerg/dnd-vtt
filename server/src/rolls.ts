@@ -4,7 +4,8 @@ import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { roll, DiceError, type RollDetail } from "./dice.js";
 import { getIo } from "./realtime.js";
-import { achievements } from "./achievements.js";
+import { achievements, notifyAchievementUnlocks } from "./achievements.js";
+import type { AchievementUnlock } from "./achievementStore.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 
@@ -66,6 +67,7 @@ export function performRoll(
       ?.dice_theme as string) ?? "";
   db.exec("SAVEPOINT recorded_roll");
   let rollId: number;
+  let unlocks: AchievementUnlock[] = [];
   try {
     const info = db
       .prepare(
@@ -83,7 +85,7 @@ export function performRoll(
         detail.kept.total
       );
     rollId = Number(info.lastInsertRowid);
-    achievements.recordRoll(roller.id, detail, visibility);
+    unlocks = achievements.recordRoll(roller.id, detail, visibility);
     db.exec("RELEASE recorded_roll");
   } catch (error) {
     db.exec("ROLLBACK TO recorded_roll; RELEASE recorded_roll");
@@ -105,6 +107,7 @@ export function performRoll(
     animateAt: Date.now() + 1200,
   };
   broadcastRoll(payload);
+  notifyAchievementUnlocks(unlocks);
   return payload;
 }
 

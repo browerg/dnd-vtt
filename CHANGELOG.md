@@ -13,6 +13,8 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ### Achievements
 
+- New achievements now appear in a top-right badge notification with a short
+  celebratory chime. Multiple unlocks queue, and you can mute the unlock sound.
 - Every achievement now has its own collectible fantasy badge. Display up to
   three earned badges on your Profile, and swap them whenever you like.
 - Click a member's name in the campaign hub to see their featured badges.
