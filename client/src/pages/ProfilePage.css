@@ -2,6 +2,14 @@
 .personal-profile[data-profile-style="ember"] { --profile-glow: #c46769; --profile-ink: #f4b8aa; --profile-tint: #452329; }
 .personal-profile[data-profile-style="verdant"] { --profile-glow: #688c5e; --profile-ink: #cee3a8; --profile-tint: #24362a; }
 .personal-profile[data-profile-style="tide"] { --profile-glow: #478eae; --profile-ink: #ade0ef; --profile-tint: #1b3441; }
+/* --profile-ink also colours the small uppercase eyebrow labels on a near-black
+   card, so every value below clears WCAG AAA against #18151f and #1b1722. */
+.personal-profile[data-profile-style="gilded"] { --profile-glow: #c9992f; --profile-ink: #f2d79a; --profile-tint: #3a2d16; }
+.personal-profile[data-profile-style="crimson"] { --profile-glow: #b23245; --profile-ink: #f0a8b4; --profile-tint: #3d1620; }
+.personal-profile[data-profile-style="atlas"] { --profile-glow: #8f9bab; --profile-ink: #dce5ee; --profile-tint: #262c35; }
+.personal-profile[data-profile-style="obsidian"] { --profile-glow: #4a4458; --profile-ink: #c3bcd2; --profile-tint: #1a171f; }
+.personal-profile[data-profile-style="sakura"] { --profile-glow: #cf7fa8; --profile-ink: #f6c6db; --profile-tint: #3c1f2d; }
+.personal-profile[data-profile-style="dust"] { --profile-glow: #cc6b34; --profile-ink: #f5c199; --profile-tint: #3b2118; }
 .profile-navigation { max-width: 1220px; margin: auto; padding: 24px 32px; display: flex; align-items: center; gap: 24px; }
 .profile-navigation a { color: #bcb5c8; text-decoration: none; font-size: .9rem; }
 .profile-navigation .profile-wordmark { margin: auto; font-family: var(--font-display); color: #e6d5af; letter-spacing: .16em; font-size: .9rem; }

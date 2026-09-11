@@ -2,6 +2,7 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { db } from "./db.js";
+import { DEFAULT_PROFILE_STYLE, isProfileStyle } from "./profileStyles.js";
 
 const SESSION_DAYS = 30;
 
@@ -542,8 +543,8 @@ authRouter.put("/me/profile", (req, res) => {
   const pronouns = String(req.body?.pronouns ?? "").trim();
   const bio = String(req.body?.bio ?? "").trim();
   const avatarPath = String(req.body?.avatarPath ?? "").trim();
-  const profileStyle = req.body?.profileStyle ?? current.profileStyle ?? "astral";
-  if (!["astral", "ember", "verdant", "tide"].includes(profileStyle)) {
+  const profileStyle = req.body?.profileStyle ?? current.profileStyle ?? DEFAULT_PROFILE_STYLE;
+  if (!isProfileStyle(profileStyle)) {
     return res.status(400).json({ error: "Choose a valid profile palette." });
   }
   if (!displayName) return res.status(400).json({ error: "Display name can't be empty." });

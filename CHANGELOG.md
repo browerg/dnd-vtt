@@ -13,6 +13,13 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 - Something new has been added. You'll see it the next time you open Vivid Realms.
 
+### Six more profile palettes
+
+- Your profile cover has ten looks now instead of four. Joining Astral violet,
+  Ember rose, Verdant gold and Moonlit tide: **Gilded amber**, **Crimson petal**,
+  **Atlas steel**, **Obsidian**, **Sakura dusk** and **Dust ignition**.
+- Pick one under Profile, then Personalize profile. Campaign members see it too.
+
 ### For the GM
 
 - The launcher can post these release notes straight to your Discord. Open

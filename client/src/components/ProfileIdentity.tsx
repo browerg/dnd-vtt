@@ -2,11 +2,19 @@ import { Avatar } from "./Avatar";
 import type { ProfileBadge } from "./BadgeShowcase";
 import "../pages/ProfilePage.css";
 
+// Adding one here means adding it to PROFILE_STYLE_IDS in the server's
+// profileStyles.ts too, or saving is rejected. A test compares the two lists.
 export const PROFILE_PALETTES = [
   { id: "astral", name: "Astral violet", color: "#b899ee" },
   { id: "ember", name: "Ember rose", color: "#eea39c" },
   { id: "verdant", name: "Verdant gold", color: "#afd6a6" },
   { id: "tide", name: "Moonlit tide", color: "#9ed6e9" },
+  { id: "gilded", name: "Gilded amber", color: "#e8c879" },
+  { id: "crimson", name: "Crimson petal", color: "#e08b9c" },
+  { id: "atlas", name: "Atlas steel", color: "#c4cfdc" },
+  { id: "obsidian", name: "Obsidian", color: "#a9a2b8" },
+  { id: "sakura", name: "Sakura dusk", color: "#e9a9c6" },
+  { id: "dust", name: "Dust ignition", color: "#eaa876" },
 ];
 
 export interface ProfileIdentityData {
