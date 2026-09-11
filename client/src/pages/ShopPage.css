@@ -57,19 +57,6 @@
   color: #a9efbd;
 }
 
-.emporium-devbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 13px;
-  border: 1px dashed rgba(102, 220, 137, .36);
-  border-radius: 11px;
-  background: rgba(61, 146, 85, .08);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .08em;
-}
 
 .emporium-section-heading {
   display: flex;

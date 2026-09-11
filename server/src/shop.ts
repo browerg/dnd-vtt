@@ -721,20 +721,10 @@ shopRouter.post("/purchase", (req, res) => {
 
 // Development-only helper so the economy can be tested without waiting for
 // the play-session reward system. This route does not exist in production.
-shopRouter.post("/dev/grant", (req, res) => {
-  const user = getSessionUser(req);
-  if (!user) return res.status(401).json({ error: "Not logged in" });
-  if (process.env.NODE_ENV === "production") return res.status(404).json({ error: "Not found" });
-
-  const requested = Number(req.body?.amount ?? 500);
-  const amount = Math.max(1, Math.min(5000, Math.floor(requested)));
-
-  ensureWallet(user.id);
-  db.prepare("UPDATE user_wallets SET balance = balance + ? WHERE user_id = ?").run(amount, user.id);
-  db.prepare(
-    `INSERT INTO vcoin_transactions (user_id, amount, reason, reference)
-     VALUES (?, ?, 'Development test grant', 'dev-grant')`
-  ).run(user.id, amount);
-
-  res.json({ ok: true, balance: walletBalance(user.id) });
-});
+// The "+500 VCoins" development grant used to live here. It was gated on
+// NODE_ENV !== "production" — the same check that made every cosmetic free —
+// so while the table is hosted in dev mode any logged-in player could call it
+// and mint themselves up to 5,000 VCoins, which defeats the shop entirely.
+// Removed rather than re-gated: the GM already has a real tool for this in the
+// VCoin Rewards dashboard panel, which is audited and can target one player or
+// the whole party.

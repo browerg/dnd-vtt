@@ -236,21 +236,6 @@ export default function ShopPage() {
     }
   };
 
-  const grantDevCoins = async () => {
-    setNotice("");
-    setError("");
-    try {
-      await api("/api/shop/dev/grant", {
-        method: "POST",
-        body: JSON.stringify({ amount: 500 }),
-      });
-      await loadShop();
-      setNotice("Added 500 development VCoins.");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not grant test VCoins.");
-    }
-  };
-
   const renderPreview = (item: ShopItem) => {
     if (isDiceTrail(item)) {
       return (
@@ -485,15 +470,6 @@ export default function ShopPage() {
             )}
           </div>
         </section>
-
-        {shop?.wallet.bypassReason === "dev" && (
-          <section className="emporium-devbar">
-            <span>DEV ECONOMY TESTING</span>
-            <button type="button" className="ghost" onClick={() => void grantDevCoins()}>
-              +500 VCoins
-            </button>
-          </section>
-        )}
 
         {error && <div className="notice error">{error}</div>}
         {notice && <div className="notice">{notice}</div>}
