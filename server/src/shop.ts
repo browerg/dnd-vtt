@@ -243,7 +243,42 @@ db.exec(`
     cosmetic_id  TEXT NOT NULL,
     updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS shop_migrations (
+    id         TEXT PRIMARY KEY,
+    applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
+
+// One-time amnesty for the period when the dev bypass made every cosmetic free.
+// Anything a player had actually equipped becomes properly theirs, so nobody
+// loses the effect they are wearing; everything else goes back to being earned.
+// Deliberately once-only rather than every boot: after this, equipping already
+// requires ownership, so re-running would only ever rubber-stamp the GM's own
+// bypassed loadout.
+const AMNESTY_ID = "grandfather-equipped-cosmetics-v1";
+if (!db.prepare("SELECT 1 FROM shop_migrations WHERE id = ?").get(AMNESTY_ID)) {
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const granted = [
+      db.prepare(
+        `INSERT OR IGNORE INTO cosmetic_unlocks (user_id, cosmetic_id)
+         SELECT user_id, cosmetic_id FROM cosmetic_loadout`
+      ).run(),
+      db.prepare(
+        `INSERT OR IGNORE INTO cosmetic_unlocks (user_id, cosmetic_id)
+         SELECT user_id, cosmetic_id FROM turn_start_loadout`
+      ).run(),
+    ].reduce((total, result) => total + Number(result.changes), 0);
+
+    db.prepare("INSERT INTO shop_migrations (id) VALUES (?)").run(AMNESTY_ID);
+    db.exec("COMMIT");
+    console.log(`kept ${granted} equipped cosmetic(s) for players after removing the free-cosmetics bypass`);
+  } catch (error) {
+    if (db.isTransaction) db.exec("ROLLBACK");
+    throw error;
+  }
+}
 
 function ensureWallet(userId: number) {
   db.prepare(
@@ -284,7 +319,11 @@ function walletBalance(userId: number): number {
 }
 
 function bypassFor(userId: number): { active: boolean; reason: "dev" | "gm" | null } {
-  if (process.env.NODE_ENV !== "production") return { active: true, reason: "dev" };
+  // This used to hand every cosmetic to everyone whenever NODE_ENV was not
+  // "production" — but the table is normally hosted in dev mode so players can
+  // sign in easily, so in practice the whole Emporium was free for the whole
+  // group. Free cosmetics now have to be asked for deliberately.
+  if (process.env.VIVID_FREE_COSMETICS === "1") return { active: true, reason: "dev" };
   if (isGameMaster(userId)) return { active: true, reason: "gm" };
   return { active: false, reason: null };
 }
