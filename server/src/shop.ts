@@ -40,7 +40,7 @@ export const COSMETICS = [
     effect: "ember",
     name: "Ember Trail",
     description: "Fire sprites and sparks peel away from every throw.",
-    price: 250,
+    price: 100,
     rarity: "uncommon",
   },
   {
@@ -49,7 +49,7 @@ export const COSMETICS = [
     effect: "frost",
     name: "Frost Trail",
     description: "Cold motes and icy stars linger behind the dice.",
-    price: 250,
+    price: 100,
     rarity: "uncommon",
   },
   {
@@ -58,7 +58,7 @@ export const COSMETICS = [
     effect: "shadow",
     name: "Shadow Trail",
     description: "Dark violet smoke blooms in the wake of the roll.",
-    price: 350,
+    price: 100,
     rarity: "rare",
   },
   {
@@ -67,7 +67,7 @@ export const COSMETICS = [
     effect: "lightning",
     name: "Lightning Trail",
     description: "Fast electric arcs snap around the moving dice.",
-    price: 400,
+    price: 100,
     rarity: "rare",
   },
   {
@@ -76,7 +76,7 @@ export const COSMETICS = [
     effect: "petals",
     name: "Rose Petals",
     description: "Crimson petals scatter behind the dice as they tumble.",
-    price: 500,
+    price: 100,
     rarity: "legendary",
   },
 
@@ -98,7 +98,7 @@ export const COSMETICS = [
     effect: "lightning",
     name: "Lightning Strike",
     description: "A white-blue electrical surge detonates around your natural 20.",
-    price: 400,
+    price: 50,
     rarity: "rare",
   },
   {
@@ -108,7 +108,7 @@ export const COSMETICS = [
     effect: "rose",
     name: "Rose Burst",
     description: "A dramatic crimson-pink bloom of petals celebrates the perfect roll.",
-    price: 500,
+    price: 50,
     rarity: "legendary",
   },
 
@@ -130,7 +130,7 @@ export const COSMETICS = [
     effect: "smoke",
     name: "Skull & Smoke",
     description: "The table darkens under a rolling cloud of ominous violet smoke.",
-    price: 350,
+    price: 50,
     rarity: "rare",
   },
   {
@@ -140,7 +140,7 @@ export const COSMETICS = [
     effect: "debris",
     name: "Falling Debris",
     description: "The critical failure hits hard enough to bring the ceiling down.",
-    price: 500,
+    price: 50,
     rarity: "legendary",
   },
 
@@ -163,7 +163,7 @@ export const COSMETICS = [
     effect: "aura",
     name: "Aura Pulse",
     description: "A bright Aura wave expands from your token as your turn begins.",
-    price: 200,
+    price: 50,
     rarity: "uncommon",
   },
   {
@@ -173,7 +173,7 @@ export const COSMETICS = [
     effect: "ember",
     name: "Dust Ignition",
     description: "A quick burst of ember-bright Dust ignites beneath your token.",
-    price: 300,
+    price: 50,
     rarity: "uncommon",
   },
   {
@@ -183,7 +183,7 @@ export const COSMETICS = [
     effect: "frost",
     name: "Frost Ring",
     description: "A crystalline frost ring flashes outward before cracking away.",
-    price: 300,
+    price: 50,
     rarity: "uncommon",
   },
   {
@@ -193,7 +193,7 @@ export const COSMETICS = [
     effect: "lightning",
     name: "Voltage Surge",
     description: "Electric arcs snap around your token the instant initiative reaches you.",
-    price: 400,
+    price: 50,
     rarity: "rare",
   },
   {
@@ -203,7 +203,7 @@ export const COSMETICS = [
     effect: "shadow",
     name: "Shadow Bloom",
     description: "Dark violet smoke blooms outward and collapses back into your token.",
-    price: 450,
+    price: 50,
     rarity: "rare",
   },
   {
@@ -213,7 +213,7 @@ export const COSMETICS = [
     effect: "rose",
     name: "Rose Entrance",
     description: "A sweeping ring of crimson petals marks the beginning of your turn.",
-    price: 500,
+    price: 50,
     rarity: "legendary",
   },
 
@@ -256,6 +256,9 @@ db.exec(`
 // Deliberately once-only rather than every boot: after this, equipping already
 // requires ownership, so re-running would only ever rubber-stamp the GM's own
 // bypassed loadout.
+/** What a wallet starts with, and what the economy reset below sets everyone to. */
+export const STARTING_BALANCE = 100;
+
 const AMNESTY_ID = "grandfather-equipped-cosmetics-v1";
 if (!db.prepare("SELECT 1 FROM shop_migrations WHERE id = ?").get(AMNESTY_ID)) {
   db.exec("BEGIN IMMEDIATE");
@@ -280,11 +283,44 @@ if (!db.prepare("SELECT 1 FROM shop_migrations WHERE id = ?").get(AMNESTY_ID)) {
   }
 }
 
+// A clean slate for the economy: every existing account is set to the starting
+// balance so the group begins level against the new prices. Balances built up
+// while cosmetics were free did not mean anything, so this replaces them rather
+// than topping them up. Guarded, so it never wipes spending after the reset.
+const WALLET_RESET_ID = "reset-wallets-to-starting-balance-v1";
+if (!db.prepare("SELECT 1 FROM shop_migrations WHERE id = ?").get(WALLET_RESET_ID)) {
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    // The "WHERE true" is load-bearing: without a WHERE clause SQLite cannot
+    // tell whether "ON" starts the upsert or a join, and refuses to parse it.
+    const reset = db.prepare(
+      `INSERT INTO user_wallets (user_id, balance)
+       SELECT id, ? FROM users WHERE true
+       ON CONFLICT(user_id) DO UPDATE SET balance = excluded.balance`
+    ).run(STARTING_BALANCE);
+
+    db.prepare(
+      `INSERT INTO vcoin_transactions (user_id, amount, reason, reference)
+       SELECT id, ?, 'Economy reset — balance set for the new shop prices', 'wallet-reset-v1'
+       FROM users`
+    ).run(STARTING_BALANCE);
+
+    db.prepare("INSERT INTO shop_migrations (id) VALUES (?)").run(WALLET_RESET_ID);
+    db.exec("COMMIT");
+    console.log(`set ${Number(reset.changes)} wallet(s) to ${STARTING_BALANCE} VCoins`);
+  } catch (error) {
+    if (db.isTransaction) db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 function ensureWallet(userId: number) {
+  // New accounts start on the same balance the reset gave everyone else, so
+  // someone joining later can actually buy something.
   db.prepare(
     `INSERT OR IGNORE INTO user_wallets (user_id, balance)
-     VALUES (?, 0)`
-  ).run(userId);
+     VALUES (?, ?)`
+  ).run(userId, STARTING_BALANCE);
 }
 
 function isGameMaster(userId: number): boolean {

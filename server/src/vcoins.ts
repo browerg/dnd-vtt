@@ -3,6 +3,7 @@ import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
+import { STARTING_BALANCE } from "./shop.js";
 import { achievements, notifyAchievementUnlocks } from "./achievements.js";
 import type { AchievementUnlock } from "./achievementStore.js";
 
@@ -46,10 +47,12 @@ db.exec(`
 `);
 
 function ensureWallet(userId: number) {
+  // Same starting balance as the shop uses, so a wallet created by a reward
+  // matches one created by browsing the Emporium.
   db.prepare(
     `INSERT OR IGNORE INTO user_wallets (user_id, balance)
-     VALUES (?, 0)`
-  ).run(userId);
+     VALUES (?, ?)`
+  ).run(userId, STARTING_BALANCE);
 }
 
 function eligibleMembers(campaignId: number): { user_id: number; display_name: string; role: string }[] {
