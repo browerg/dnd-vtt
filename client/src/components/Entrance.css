@@ -21,20 +21,20 @@
   gap: 1.5rem;
   padding: 1.5rem;
 }
-.vr-entrance__hint { margin: 0; font-size: .9rem; color: #e0d6ed; text-shadow: 0 2px 5px #000; letter-spacing: .08em; }
+.vr-entrance__hint { margin: 0; font-size: .9rem; color: #d8c9ad; text-shadow: 0 2px 5px #000; letter-spacing: .08em; }
 .vr-entrance .vr-entrance__skip {
   position: absolute;
   right: max(1.5rem, env(safe-area-inset-right));
   bottom: max(1.5rem, env(safe-area-inset-bottom));
   padding: .7rem 1.1rem;
-  border: 1px solid #877c9b;
+  border: 1px solid #887044;
   border-radius: 999px;
-  background: #17131f;
-  color: #fff;
+  background: #181612;
+  color: #f4dfb4;
   cursor: pointer;
 }
 .vr-entrance__loading { position: absolute; bottom: 5rem; left: 0; right: 0; text-align: center; color: #fff; text-shadow: 0 2px 5px #000; }
-.vr-entrance button:focus-visible { outline: 3px solid #dfc6ff; outline-offset: 6px; }
+.vr-entrance button:focus-visible { outline: 3px solid #e3c07b; outline-offset: 6px; }
 
 /* Adapted from Uiverse.io by MuhammadHasann; scoped to the entrance. */
 .vr-entrance .vr-enter-button {
@@ -50,7 +50,7 @@
   border: none;
   border-radius: 9999px;
   background: transparent;
-  color: #fff;
+  color: #ffe6b2;
   cursor: pointer;
   transform: scale(calc(1 + var(--active) * .06));
   transition: transform .3s ease-in-out;
@@ -64,16 +64,16 @@
 }
 .vr-enter-button::before {
   z-index: 0;
-  background: #201b29;
-  box-shadow: inset 0 .5px #fff, inset 0 -1px 2px #000, 0 4px 18px #0009,
-    0 0 0 calc(var(--active) * .375rem) #7313fb99;
+  background: #191713;
+  box-shadow: inset 0 .5px #d9b976, inset 0 -1px 2px #000, 0 4px 18px #0009,
+    0 0 0 calc(var(--active) * .375rem) #b98b3933;
   transition: box-shadow .3s ease-in-out;
 }
 .vr-enter-button::after {
   z-index: 1;
-  background: radial-gradient(at 51% 89%, #bda0da 0, transparent 50%),
-    radial-gradient(at 100% 100%, #9974bd 0, transparent 50%),
-    radial-gradient(at 22% 91%, #9974bd 0, transparent 50%), #853bfc;
+  background: radial-gradient(at 51% 89%, #66502b 0, transparent 50%),
+    radial-gradient(at 100% 100%, #463820 0, transparent 50%),
+    radial-gradient(at 22% 91%, #463820 0, transparent 50%), #211c14;
   opacity: var(--active);
   transition: opacity .3s ease-in-out;
 }
@@ -85,7 +85,7 @@
   overflow: hidden;
   border-radius: inherit;
   z-index: -1;
-  background: #8c76aa;
+  background: #9d7b40;
 }
 .vr-enter-button__border::before {
   content: "";
@@ -94,7 +94,7 @@
   left: 0;
   width: 100%;
   height: 2rem;
-  background: #fff;
+  background: #ffe5aa;
   mask-image: linear-gradient(transparent, white);
   animation: vr-entrance-orbit 3s linear infinite;
 }
