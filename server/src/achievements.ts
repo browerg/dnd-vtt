@@ -39,7 +39,7 @@ achievementsRouter.get("/profiles/:userId", (req: Request, res) => {
     JOIN campaign_members member ON viewer.campaign_id = member.campaign_id
     WHERE viewer.user_id = ? AND member.user_id = ? LIMIT 1`).get(viewerId, userId);
   if (viewerId !== userId && !shared) return res.status(404).json({ error: "Profile not found." });
-  const profile = db.prepare("SELECT id, display_name, avatar_path AS avatarPath FROM users WHERE id = ?").get(userId);
+  const profile = db.prepare("SELECT id, display_name, avatar_path AS avatarPath, pronouns, bio, profile_style AS profileStyle FROM users WHERE id = ?").get(userId);
   if (!profile) return res.status(404).json({ error: "Profile not found." });
   res.json({ profile, showcase: achievements.showcase(userId) });
 });

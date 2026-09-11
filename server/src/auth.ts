@@ -13,6 +13,7 @@ export interface SessionUser {
   avatarPath?: string;
   pronouns?: string;
   bio?: string;
+  profileStyle?: string;
 }
 
 // Curated dice colorsets from @3d-dice/dice-box-threejs. '' means the default.
@@ -197,7 +198,7 @@ export function userForToken(token: string): SessionUser | null {
   const row = db
     .prepare(
       `SELECT u.id, u.email, u.display_name, u.dice_theme AS diceTheme,
-              u.avatar_path AS avatarPath, u.pronouns, u.bio
+              u.avatar_path AS avatarPath, u.pronouns, u.bio, u.profile_style AS profileStyle
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ? AND s.expires_at > datetime('now')`
@@ -541,6 +542,10 @@ authRouter.put("/me/profile", (req, res) => {
   const pronouns = String(req.body?.pronouns ?? "").trim();
   const bio = String(req.body?.bio ?? "").trim();
   const avatarPath = String(req.body?.avatarPath ?? "").trim();
+  const profileStyle = req.body?.profileStyle ?? current.profileStyle ?? "astral";
+  if (!["astral", "ember", "verdant", "tide"].includes(profileStyle)) {
+    return res.status(400).json({ error: "Choose a valid profile palette." });
+  }
   if (!displayName) return res.status(400).json({ error: "Display name can't be empty." });
   if (displayName.length > 40) return res.status(400).json({ error: "Display name is too long (40 characters max)." });
   if (pronouns.length > 30) return res.status(400).json({ error: "Pronouns are too long (30 characters max)." });
@@ -552,8 +557,8 @@ authRouter.put("/me/profile", (req, res) => {
   // ever stored ΓÇö same defense the character/map/codex uploaders use.
   const safeAvatar = avatarPath ? `/uploads/${path.basename(avatarPath)}` : "";
   db.prepare(
-    "UPDATE users SET display_name = ?, pronouns = ?, bio = ?, avatar_path = ? WHERE id = ?"
-  ).run(displayName, pronouns, bio, safeAvatar, current.id);
+    "UPDATE users SET display_name = ?, pronouns = ?, bio = ?, avatar_path = ?, profile_style = ? WHERE id = ?"
+  ).run(displayName, pronouns, bio, safeAvatar, profileStyle, current.id);
   res.json({ user: getSessionUser(req) });
 });
 

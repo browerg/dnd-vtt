@@ -6,6 +6,7 @@ export interface User {
   avatarPath?: string;
   pronouns?: string;
   bio?: string;
+  profileStyle?: string;
 }
 
 export interface CampaignSummary {

@@ -11,6 +11,14 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ## 10 September 2026
 
+### Your adventurer's record
+
+- Profiles have a new identity: celestial covers, four personal palettes, a
+  signature earned title, and a prominent three-badge showcase.
+- Wear an earned badge as your title, browse your collection, and revisit your
+  unlocked milestones. Profile editing and account security have their own space.
+- Campaign members see the same showcase, with your saved bio and pronouns.
+
 ### Achievements
 
 - New achievements now appear in a top-right badge notification with a short

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import BadgeShowcase, { type ProfileBadge } from "./BadgeShowcase";
 
-interface Achievement {
+export interface Achievement {
   id: string;
   name: string;
   description: string;
@@ -13,13 +13,17 @@ interface Achievement {
   badgeImage: string;
 }
 
-export default function Achievements() {
+export interface AchievementSnapshot { items: Achievement[]; showcase: ProfileBadge[] }
+
+export default function Achievements({ onChange, embedded = false }: { onChange?: (data: AchievementSnapshot) => void; embedded?: boolean }) {
   const [items, setItems] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showcase, setShowcase] = useState<ProfileBadge[]>([]);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const [filter, setFilter] = useState<"all" | "earned" | "locked">("all");
+  useEffect(() => { onChange?.({ items, showcase }); }, [items, showcase, onChange]);
   const load = async () => {
     setLoading(true);
     setError("");
@@ -56,14 +60,25 @@ export default function Achievements() {
     finally { setSaving(false); }
   };
 
+  const wearTitle = async (id: string) => {
+    setSaving(true); setError(""); setNotice("");
+    try {
+      const result = await api<{ showcase: ProfileBadge[] }>("/api/achievements/showcase", {
+        method: "PUT", body: JSON.stringify({ badgeIds: [id, ...showcase.filter((badge) => badge.id !== id).map((badge) => badge.id)].slice(0, 3) }),
+      });
+      setShowcase(result.showcase); setNotice("Signature title updated.");
+    } catch (e: any) { setError(e.message || "Could not update title."); }
+    finally { setSaving(false); }
+  };
+
   return (
-    <section className="card" aria-labelledby="achievements-heading">
+    <section className={`card${embedded ? " profile-collection" : ""}`} aria-labelledby="achievements-heading">
       <div className="row-between">
-        <h3 id="achievements-heading">Achievements</h3>
+        <h3 id="achievements-heading">The collection</h3>
         <button type="button" className="ghost" onClick={() => void load()} disabled={loading || saving}>Refresh</button>
       </div>
-      <p className="muted small">Your trophy shelf. Display up to three earned badges on your profile for your campaign members to see.</p>
-      <BadgeShowcase badges={showcase} />
+      <p className="muted small">Every medal has a story. Choose three to display, or wear one as your signature title. Wearing a title places that badge first and replaces your third badge if the showcase is full.</p>
+      {!embedded && <BadgeShowcase badges={showcase} />}
       {notice && <p role="status">{notice}</p>}
       <details className="achievement-rules"><summary>How achievements work</summary>
       <p className="muted small">Account-wide progress across campaigns. Badge artwork unlocks with each achievement; additional cosmetic rewards may be added later.</p>
@@ -73,8 +88,13 @@ export default function Achievements() {
       {loading && <p role="status">Loading achievements…</p>}
       {error && <p role="alert" className="error">{error}</p>}
       {!loading && !error && <p className="muted small">{items.filter((item) => item.unlockedAt).length} / {items.length} unlocked</p>}
+      <div className="collection-filters" aria-label="Filter achievements">
+        {(["all", "earned", "locked"] as const).map((value) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{value === "all" ? "All distinctions" : value === "earned" ? "Earned" : "Still to discover"}</button>)}
+      </div>
+      {!loading && filter === "earned" && !items.some((item) => item.unlockedAt) && <p className="muted">Your first distinction is waiting at the table. Make a roll or complete a quest to begin.</p>}
+      {!loading && filter === "locked" && items.length > 0 && items.every((item) => item.unlockedAt) && <p className="muted">Every distinction earned. What a collection.</p>}
       <div className="achievement-gallery">
-        {items.map((item) => (
+        {items.filter((item) => filter === "all" || (filter === "earned" ? !!item.unlockedAt : !item.unlockedAt)).map((item) => (
           <article key={item.id} className={`card achievement-medal${item.unlockedAt ? "" : " is-locked"}`}>
             <img src={item.badgeImage} alt="" width="140" height="140" loading="lazy" />
             <div className="row-between">
@@ -93,6 +113,7 @@ export default function Achievements() {
               onClick={() => void toggleBadge(item.id)}>
               {!item.unlockedAt ? "Earn to display" : showcase.some((badge) => badge.id === item.id) ? "Remove from profile" : "Display on profile"}
             </button>
+            {item.unlockedAt && <button type="button" className="ghost" onClick={() => void wearTitle(item.id)} disabled={saving || loading || showcase[0]?.id === item.id}>{showcase[0]?.id === item.id ? "Signature title" : "Wear this title"}</button>}
           </article>
         ))}
       </div>

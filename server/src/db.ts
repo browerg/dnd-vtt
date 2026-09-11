@@ -411,6 +411,7 @@ for (const ddl of [
   "ALTER TABLE users ADD COLUMN avatar_path TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE users ADD COLUMN pronouns TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE users ADD COLUMN profile_style TEXT NOT NULL DEFAULT 'astral'",
 ]) {
   try {
     db.exec(ddl);
