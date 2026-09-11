@@ -4,6 +4,7 @@ import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { getIo } from "./realtime.js";
 import { seedGrimm } from "./grimm.js";
+import { reconcileAccountAchievements } from "./achievementTracking.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 
@@ -69,6 +70,7 @@ campaignsRouter.post("/", (req, res) => {
       console.warn("Grimm seed skipped:", (e as Error).message);
     }
   }
+  reconcileAccountAchievements(user(req).id);
   res.json({ id });
 });
 
@@ -297,5 +299,6 @@ invitesRouter.post("/:code/join", (req, res) => {
   db.prepare(
     "INSERT OR IGNORE INTO campaign_members (campaign_id, user_id, role) VALUES (?, ?, ?)"
   ).run(invite.campaign_id, user(req).id, invite.role);
+  reconcileAccountAchievements(user(req).id);
   res.json({ campaignId: invite.campaign_id });
 });

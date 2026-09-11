@@ -1,22 +1,13 @@
 import { Router, type Request } from "express";
 import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
-import { createAchievementStore, type AchievementUnlock } from "./achievementStore.js";
-import { getIo } from "./realtime.js";
-
-// Call only after the transaction commits. A private account room prevents
-// other players from receiving unlocks from private rolls.
-export function notifyAchievementUnlocks(unlocks: AchievementUnlock[]) {
-  for (const { userId, ...achievement } of unlocks) {
-    getIo().to(`user:${userId}`).emit("achievement:unlocked", achievement);
-  }
-}
-
-export const achievements = createAchievementStore(db);
+import { achievements, notifyAchievementUnlocks, reconcileAccountAchievements } from "./achievementTracking.js";
+export { achievements, notifyAchievementUnlocks } from "./achievementTracking.js";
 export const achievementsRouter = Router();
 achievementsRouter.use(requireAuth);
 achievementsRouter.get("/", (req: Request, res) => {
   const userId = (req as Request & { user: SessionUser }).user.id;
+  reconcileAccountAchievements(userId);
   res.json({ achievements: achievements.list(userId), showcase: achievements.showcase(userId) });
 });
 

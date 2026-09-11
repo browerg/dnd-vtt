@@ -3,6 +3,7 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypt
 import path from "node:path";
 import { db } from "./db.js";
 import { DEFAULT_PROFILE_STYLE, isProfileStyle } from "./profileStyles.js";
+import { reconcileAccountAchievements } from "./achievementTracking.js";
 
 const SESSION_DAYS = 30;
 
@@ -560,6 +561,7 @@ authRouter.put("/me/profile", (req, res) => {
   db.prepare(
     "UPDATE users SET display_name = ?, pronouns = ?, bio = ?, avatar_path = ?, profile_style = ? WHERE id = ?"
   ).run(displayName, pronouns, bio, safeAvatar, profileStyle, current.id);
+  reconcileAccountAchievements(current.id);
   res.json({ user: getSessionUser(req) });
 });
 

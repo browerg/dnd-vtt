@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { io } from "socket.io-client";
+import { api } from "../api";
 import type { ProfileBadge } from "./BadgeShowcase";
 import "./AchievementNotifications.css";
 
@@ -24,6 +25,9 @@ export default function AchievementNotifications() {
       setQueue((previous) => [...previous, badge]);
       window.dispatchEvent(new Event("achievements:updated"));
     });
+    // Reconcile existing campaign/profile data after this socket can receive
+    // account notifications. The server awards each achievement only once.
+    socket.on("connect", () => { void api("/api/achievements").catch(() => {}); });
     // Browsers require a player gesture before audio can start. Keep this
     // context ready so a later quest completion can play its chime too.
     const enableAudio = () => {

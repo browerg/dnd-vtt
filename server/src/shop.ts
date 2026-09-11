@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "./db.js";
 import { getSessionUser } from "./auth.js";
 import { achievements, notifyAchievementUnlocks } from "./achievements.js";
+import { reconcileAccountAchievements } from "./achievementTracking.js";
 
 export const shopRouter = Router();
 
@@ -542,6 +543,7 @@ shopRouter.post("/equip", (req, res) => {
     ).run(user.id, item.slot, item.id);
   }
 
+  reconcileAccountAchievements(user.id);
   res.json({
     ok: true,
     equipped: {

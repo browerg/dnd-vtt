@@ -11,6 +11,20 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ## 11 September 2026
 
+### Ten more ways to leave your mark
+
+- Wear It Proud: equip your first profile badge. Seat at the Table: join or
+  belong to a campaign as a player, DM, or co-DM. Behind the Screen: be a campaign's DM.
+- A Hero Is Born and The Usual Suspects celebrate owning one and three player
+  characters across your campaigns.
+- In My Own Words rewards a profile bio, True Colors rewards a saved profile
+  palette beyond Astral violet, and Dressed to Impress rewards equipping an
+  owned, non-default cosmetic effect.
+- Rock Bottom Has a Basement unlocks after three minimum rolls in a row.
+  Quest Regular celebrates ten distinct completed quests.
+- All ten have collectible badge artwork and unlock notifications. Existing
+  campaign, character, and profile data counts automatically; earned badges stay yours.
+
 - Something new has been added. You'll see it the next time you open Vivid Realms.
 
 ### Six more profile palettes

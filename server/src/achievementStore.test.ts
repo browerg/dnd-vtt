@@ -40,11 +40,11 @@ test("max/min totals, streak resets, persistent unlocks and account isolation", 
     assert.ok(read("double-max").unlockedAt);
     for (let i = 0; i < 12; i++) store.recordRoll(1, detail(20, [20]), "public");
     for (let i = 0; i < 12; i++) store.recordRoll(1, detail(20, [1], 50), "public");
-    assert.equal(store.list(1).filter((a) => a.unlockedAt).length, 9);
+    assert.equal(store.list(1).filter((a) => a.unlockedAt).length, 10);
     assert.equal(read("ten-max").progress, 10);
     assert.equal(read("ten-min").progress, 10);
     assert.equal(store.list(2).filter((a) => a.unlockedAt).length, 0);
-    assert.equal(createAchievementStore(db).list(1).filter((a) => a.unlockedAt).length, 9);
+    assert.equal(createAchievementStore(db).list(1).filter((a) => a.unlockedAt).length, 10);
   } finally { db.close(); }
 });
 
@@ -194,7 +194,7 @@ test("paid purchases and full showcases issue one persistent unlock", () => {
     assert.deepEqual(store.recordPurchase(1).map((a) => a.id), ["first-purchase"]);
     assert.deepEqual(store.recordPurchase(1), []);
     store.recordRoll(1, detail(20, [20]), "public");
-    assert.deepEqual(store.setShowcase(1, ["first-max", "first-roll"]).unlocks, []);
+    assert.deepEqual(store.setShowcase(1, ["first-max", "first-roll"]).unlocks.map((a) => a.id), ["first-badge"]);
     assert.deepEqual(store.setShowcase(1, ["first-max", "first-roll", "first-purchase"]).unlocks.map((a) => a.id), ["full-showcase"]);
     assert.deepEqual(store.setShowcase(1, ["first-max", "first-roll", "first-purchase"]).unlocks, []);
     store.setShowcase(1, []);
@@ -214,5 +214,22 @@ test("upgrading old progress preserves known quest credit without resetting or d
     store.recordQuest([1], 100);
     assert.equal(createAchievementStore(db).list(1).find((a) => a.id === "five-quests")!.progress, 2);
     assert.equal(store.list(1).find((a) => a.id === "ten-max")!.progress, 7);
+  } finally { db.close(); }
+});
+
+test("three minimum rolls require a consecutive eligible streak and ten quests use existing credit", () => {
+  const { db, store } = fixture();
+  try {
+    const read = (id: string) => store.list(1).find((a) => a.id === id)!;
+    for (const face of [1, 1, 8, 1, 1]) store.recordRoll(1, detail(20, [face]), "public");
+    assert.equal(read("triple-min").unlockedAt, null);
+    store.recordRoll(1, detail(20, [20]), "blind");
+    store.recordRoll(1, { ...detail(20, [20]), manual: true }, "public");
+    assert.ok(store.recordRoll(1, detail(20, [1]), "public").some((a) => a.id === "triple-min"));
+    for (let id = 1; id <= 9; id++) store.recordQuest([1], id);
+    assert.equal(read("ten-quests").progress, 9);
+    assert.equal(read("ten-quests").unlockedAt, null);
+    assert.ok(store.recordQuest([1], 10).some((a) => a.id === "ten-quests"));
+    assert.deepEqual(store.recordQuest([1], 10), []);
   } finally { db.close(); }
 });

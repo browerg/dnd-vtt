@@ -7,6 +7,7 @@ import { db, uploadsDir } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
+import { reconcileAccountAchievements } from "./achievementTracking.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
@@ -255,6 +256,7 @@ charactersRouter.post("/:id/characters", (req, res) => {
     .prepare("INSERT INTO characters (campaign_id, user_id, name, data, is_npc) VALUES (?, ?, ?, ?, ?)")
     .run(campaignId, user(req).id, name, JSON.stringify(data), isNpc ? 1 : 0);
   broadcastCharacter(campaignId, Number(info.lastInsertRowid), user(req).id);
+  reconcileAccountAchievements(user(req).id);
   res.json({ id: Number(info.lastInsertRowid) });
 });
 

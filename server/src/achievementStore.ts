@@ -19,7 +19,20 @@ export const ACHIEVEMENTS = [
   { id: "twenty-five-quests", name: "The Plot Depends on Me", description: "Complete 25 distinct quests with your campaigns.", metric: "quests", target: 25 },
   { id: "first-purchase", name: "A Little Treat", description: "Purchase your first cosmetic with VCoins.", metric: "purchases", target: 1 },
   { id: "full-showcase", name: "A Whole New Persona", description: "Display three earned badges on your profile.", metric: "full_showcase", target: 1 },
+  { id: "first-badge", name: "Wear It Proud", description: "Equip an earned badge on your profile.", metric: "badge_equipped", target: 1 },
+  { id: "first-campaign", name: "Seat at the Table", description: "Be a player, DM, or co-DM in a campaign.", metric: "campaign_member", target: 1 },
+  { id: "first-dm", name: "Behind the Screen", description: "Host a campaign as its DM.", metric: "campaign_dm", target: 1 },
+  { id: "first-character", name: "A Hero Is Born", description: "Own your first player character in a campaign.", metric: "characters_owned", target: 1 },
+  { id: "three-characters", name: "The Usual Suspects", description: "Have three player characters across your campaigns.", metric: "characters_owned", target: 3 },
+  { id: "profile-bio", name: "In My Own Words", description: "Add a bio to your profile.", metric: "profile_bio", target: 1 },
+  { id: "profile-palette", name: "True Colors", description: "Save a profile palette other than Astral violet.", metric: "profile_palette", target: 1 },
+  { id: "first-cosmetic", name: "Dressed to Impress", description: "Equip an unlocked cosmetic effect other than a default effect.", metric: "cosmetic_equipped", target: 1 },
+  { id: "triple-min", name: "Rock Bottom Has a Basement", description: "Roll three minimum results consecutively.", metric: "min_streak", target: 3 },
+  { id: "ten-quests", name: "Quest Regular", description: "Complete 10 distinct quests with your campaigns.", metric: "quests", target: 10 },
 ] as const;
+
+export const ACCOUNT_METRICS = ["badge_equipped", "campaign_member", "campaign_dm", "characters_owned", "profile_bio", "profile_palette", "cosmetic_equipped"] as const;
+export type AccountAchievementFacts = Record<typeof ACCOUNT_METRICS[number], number>;
 
 type AchievementId = typeof ACHIEVEMENTS[number]["id"];
 export interface AchievementUnlock {
@@ -75,7 +88,7 @@ export function createAchievementStore(db: DatabaseSync) {
   // Older installs stored only the first quest and capped max streaks at two.
   // Preserve that known credit; do not invent totals from incomplete history.
   const columns = new Set(db.prepare("PRAGMA table_info(achievement_progress)").all().map((column) => column.name));
-  for (const column of ["rolls", "max_then_min", "min_then_max", "purchases", "full_showcase"]) {
+  for (const column of ["rolls", "max_then_min", "min_then_max", "purchases", "full_showcase", ...ACCOUNT_METRICS]) {
     if (!columns.has(column)) db.exec(`ALTER TABLE achievement_progress ADD COLUMN ${column} INTEGER NOT NULL DEFAULT 0`);
   }
 
@@ -129,7 +142,7 @@ export function createAchievementStore(db: DatabaseSync) {
         min_then_max = MAX(min_then_max, CASE WHEN ? AND min_streak > 0 THEN 1 ELSE 0 END),
         maximum = MIN(10, maximum + ?), minimum = MIN(10, minimum + ?),
         max_streak = CASE WHEN ? THEN MIN(3, max_streak + 1) ELSE 0 END,
-        min_streak = CASE WHEN ? THEN MIN(2, min_streak + 1) ELSE 0 END
+        min_streak = CASE WHEN ? THEN MIN(3, min_streak + 1) ELSE 0 END
         WHERE user_id = ?`).run(Number(minimum), Number(maximum), Number(maximum), Number(minimum), Number(maximum), Number(minimum), userId);
       const newlyUnlocked = unlock(userId);
       db.exec("RELEASE achievement_roll");
@@ -178,6 +191,27 @@ export function createAchievementStore(db: DatabaseSync) {
     });
   }
 
+  // Server-owned snapshots also recognize qualifying data from before this update.
+  // Keep earned progress when a profile is edited or a campaign is later deleted.
+  function recordAccountFacts(userId: number, facts: AccountAchievementFacts) {
+    db.exec("SAVEPOINT achievement_account");
+    try {
+      db.prepare("INSERT OR IGNORE INTO achievement_progress (user_id) VALUES (?)").run(userId);
+      for (const metric of ACCOUNT_METRICS) {
+        const limit = metric === "characters_owned" ? 3 : 1;
+        const value = Math.min(limit, Math.max(0, Math.floor(facts[metric])));
+        if (!Number.isFinite(value)) throw new Error("Invalid achievement fact.");
+        db.prepare(`UPDATE achievement_progress SET ${metric} = MAX(${metric}, ?) WHERE user_id = ?`).run(value, userId);
+      }
+      const unlocks = unlock(userId);
+      db.exec("RELEASE achievement_account");
+      return unlocks;
+    } catch (error) {
+      db.exec("ROLLBACK TO achievement_account; RELEASE achievement_account");
+      throw error;
+    }
+  }
+
   function setShowcase(userId: number, ids: unknown) {
     if (!Array.isArray(ids) || ids.length > 3 || ids.some((id) => typeof id !== "string") || new Set(ids).size !== ids.length) {
       throw new Error("Choose up to three different earned badges.");
@@ -191,11 +225,15 @@ export function createAchievementStore(db: DatabaseSync) {
     try {
       db.prepare("DELETE FROM profile_badges WHERE user_id = ?").run(userId);
       ids.forEach((id, position) => db.prepare("INSERT INTO profile_badges (user_id, achievement_id, position) VALUES (?, ?, ?)").run(userId, id, position));
+      if (ids.length > 0) {
+        db.prepare(`INSERT INTO achievement_progress (user_id, badge_equipped) VALUES (?, 1)
+          ON CONFLICT(user_id) DO UPDATE SET badge_equipped = 1`).run(userId);
+      }
       if (ids.length === 3) {
         db.prepare(`INSERT INTO achievement_progress (user_id, full_showcase) VALUES (?, 1)
           ON CONFLICT(user_id) DO UPDATE SET full_showcase = 1`).run(userId);
-        unlocks = unlock(userId);
       }
+      if (ids.length > 0) unlocks = unlock(userId);
       db.exec("RELEASE profile_showcase");
     } catch (error) {
       db.exec("ROLLBACK TO profile_showcase; RELEASE profile_showcase");
@@ -204,5 +242,5 @@ export function createAchievementStore(db: DatabaseSync) {
     return { showcase: showcase(userId), unlocks };
   }
 
-  return { list, recordRoll, recordQuest, recordPurchase, showcase, setShowcase };
+  return { list, recordRoll, recordQuest, recordPurchase, recordAccountFacts, showcase, setShowcase };
 }
