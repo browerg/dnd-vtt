@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DatabaseSync } from "node:sqlite";
-import { ACHIEVEMENT_REWARDS, createAchievementStore } from "./achievementStore.js";
+import { statSync } from "node:fs";
+import { ACHIEVEMENTS, ACHIEVEMENT_REWARDS, createAchievementStore } from "./achievementStore.js";
 import type { RollDetail } from "./dice.js";
 
 function fixture() {
@@ -15,6 +16,15 @@ function fixture() {
 function detail(sides: number, results: number[], modifier = 0): RollDetail {
   return { mode: "normal", kept: { groups: [{ count: results.length, sides, results }], modifier, total: results.reduce((a, b) => a + b, modifier) } };
 }
+
+test("badge delivery assets stay within notification and profile download budgets", () => {
+  for (const badge of ACHIEVEMENTS) {
+    for (const [size, budget] of [[72, 4096], [144, 10240], [384, 40960]]) {
+      const asset = new URL(`../../client/public/assets/achievements/${badge.id}-${size}.webp`, import.meta.url);
+      assert.ok(statSync(asset).size <= budget, `${badge.id} at ${size}px exceeds its ${budget}-byte budget`);
+    }
+  }
+});
 
 test("max/min totals, streak resets, persistent unlocks and account isolation", () => {
   const { db, store } = fixture();
@@ -105,7 +115,7 @@ test("profile showcases reject unearned, unknown, duplicate and excess badges wi
     }
     assert.throws(() => store.setShowcase(2, ["first-max"]), /earned/);
     assert.deepEqual(store.showcase(2), []);
-    assert.ok(store.showcase(1).every((badge) => !Object.hasOwn(badge, "progress") && badge.badgeImage.endsWith(".png")));
+    assert.ok(store.showcase(1).every((badge) => !Object.hasOwn(badge, "progress") && badge.badgeImage.endsWith("-384.webp")));
     assert.deepEqual(store.setShowcase(1, []), []);
     assert.ok(store.list(1).find((badge) => badge.id === "first-max")!.unlockedAt);
   } finally { db.close(); }
@@ -117,7 +127,9 @@ test("notification payloads contain only newly earned achievements for their own
     const first = store.recordRoll(1, detail(20, [20]), "private");
     assert.deepEqual(first.map((a) => a.id), ["first-max"]);
     assert.equal(first[0].userId, 1);
-    assert.equal(first[0].badgeImage, "/assets/achievements/first-max.png");
+    assert.equal(first[0].badgeImage, "/assets/achievements/first-max-384.webp");
+    assert.equal(first[0].badgeThumbnail, "/assets/achievements/first-max-72.webp");
+    assert.equal(first[0].badgeThumbnail2x, "/assets/achievements/first-max-144.webp");
     assert.deepEqual(store.recordRoll(1, detail(20, [20]), "public").map((a) => a.id), ["double-max"]);
     assert.deepEqual(store.recordRoll(1, detail(20, [20]), "public"), []);
     assert.deepEqual(store.recordRoll(1, detail(20, [1]), "blind"), []);

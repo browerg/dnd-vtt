@@ -18,6 +18,16 @@ export interface AchievementUnlock {
   name: string;
   description: string;
   badgeImage: string;
+  badgeThumbnail: string;
+  badgeThumbnail2x: string;
+}
+
+function badgeArtwork(id: string) {
+  return {
+    badgeImage: `/assets/achievements/${id}-384.webp`,
+    badgeThumbnail: `/assets/achievements/${id}-72.webp`,
+    badgeThumbnail2x: `/assets/achievements/${id}-144.webp`,
+  };
 }
 // Add real cosmetic catalog IDs here when the rewards are ready. Reading the
 // achievement list also grants newly linked rewards to previous achievers.
@@ -59,7 +69,7 @@ export function createAchievementStore(db: DatabaseSync) {
       }
       return {
         ...definition,
-        badgeImage: `/assets/achievements/${definition.id}.png`,
+        ...badgeArtwork(definition.id),
         progress: unlockedAt ? definition.target : Math.min(definition.target, Number(progress?.[definition.metric] ?? 0)),
         unlockedAt,
         rewardCosmeticId,
@@ -74,7 +84,7 @@ export function createAchievementStore(db: DatabaseSync) {
       if (Number(progress[definition.metric]) >= definition.target) {
         const result = db.prepare("INSERT OR IGNORE INTO achievement_unlocks (user_id, achievement_id) VALUES (?, ?)").run(userId, definition.id);
         if (Number(result.changes) > 0) newlyUnlocked.push({ userId, id: definition.id, name: definition.name,
-          description: definition.description, badgeImage: `/assets/achievements/${definition.id}.png` });
+          description: definition.description, ...badgeArtwork(definition.id) });
       }
     }
     return newlyUnlocked;
@@ -124,7 +134,7 @@ export function createAchievementStore(db: DatabaseSync) {
     return rows.flatMap((row) => {
       const definition = ACHIEVEMENTS.find((a) => a.id === row.achievement_id);
       return definition ? [{ id: definition.id, name: definition.name, description: definition.description,
-        badgeImage: `/assets/achievements/${definition.id}.png` }] : [];
+        ...badgeArtwork(definition.id) }] : [];
     });
   }
 

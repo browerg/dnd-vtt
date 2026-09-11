@@ -83,7 +83,7 @@ export default function AchievementNotifications() {
   return <aside className="achievement-notifications" aria-label="Achievement notifications">
     <div role="status" aria-live="polite" aria-atomic="true">
       {current && <div className="achievement-unlock-toast" key={current.id}>
-        <img src={current.badgeImage} alt="" width="72" height="72" />
+        <img src={current.badgeThumbnail} srcSet={`${current.badgeThumbnail} 1x, ${current.badgeThumbnail2x} 2x`} alt="" width="72" height="72" decoding="async" />
         <div><span className="achievement-unlock-kicker">Achievement unlocked</span>
           <strong>{current.name}</strong><p>{current.description}</p>
           <Link to="/profile" onClick={() => setQueue((previous) => previous.slice(1))}>View your badges →</Link>

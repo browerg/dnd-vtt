@@ -11,6 +11,12 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ## 10 September 2026
 
+### Faster badge artwork
+
+- Unlock notifications now use tiny WebP thumbnails, with a sharper version
+  for high-density screens. Profile badges also use optimized artwork instead
+  of full-resolution originals, reducing downloads over slower connections.
+
 ### Your adventurer's record
 
 - Profiles have a new identity: celestial covers, four personal palettes, a

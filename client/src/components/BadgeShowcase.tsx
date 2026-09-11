@@ -5,6 +5,8 @@ export interface ProfileBadge {
   name: string;
   description: string;
   badgeImage: string;
+  badgeThumbnail: string;
+  badgeThumbnail2x: string;
 }
 
 export default function BadgeShowcase({ badges }: { badges: ProfileBadge[] }) {
