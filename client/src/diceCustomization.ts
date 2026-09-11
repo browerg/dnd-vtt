@@ -111,6 +111,13 @@ export const GLASS_TEST_MODES: { value: GlassTestMode; label: string; blurb: str
 ];
 
 let glassTestMode: GlassTestMode = "off";
+// The library sets envMapIntensity = 0 on every non-plastic material, which is
+// why glass and metal look so dark — those finishes get nearly all their
+// brightness from environment reflections. This puts it back, adjustably.
+let glassTestBrightness = 1;
+// Emissive strength applied through the face texture, so the numbers light up
+// rather than the whole die washing out. 0 disables it.
+let glassTestGlow = 0;
 
 export function setGlassTestMode(mode: GlassTestMode): void {
   glassTestMode = mode;
@@ -118,6 +125,14 @@ export function setGlassTestMode(mode: GlassTestMode): void {
 
 export function getGlassTestMode(): GlassTestMode {
   return glassTestMode;
+}
+
+export function setGlassTestBrightness(value: number): void {
+  glassTestBrightness = Math.max(0, Math.min(4, Number(value) || 0));
+}
+
+export function setGlassTestGlow(value: number): void {
+  glassTestGlow = Math.max(0, Math.min(3, Number(value) || 0));
 }
 
 type MutableMaterial = Record<string, unknown> & { needsUpdate?: boolean };
@@ -173,7 +188,21 @@ function applyGlassTest(material: unknown): void {
 
     case "off":
     default:
-      return;
+      break;
+  }
+
+  // Brightness and glow apply to every mode, including the untouched baseline,
+  // so the current finish can be brightened without going translucent at all.
+  m.envMapIntensity = glassTestBrightness;
+
+  if (glassTestGlow > 0) {
+    // m.map is the composited face texture — body colour plus the number
+    // glyphs. Using it as the emissive map means the light parts of the face
+    // emit, so pale numbers on a dark die glow while the body stays dim.
+    if (m.map) m.emissiveMap = m.map;
+    const emissive = m.emissive as { setHex?: (hex: number) => void } | undefined;
+    if (emissive && typeof emissive.setHex === "function") emissive.setHex(0xffffff);
+    m.emissiveIntensity = glassTestGlow;
   }
 
   m.needsUpdate = true;
@@ -189,10 +218,10 @@ function wrapGlassTest(factory: InternalDiceFactory): void {
   const original = factory.createMaterials.bind(factory);
   factory.createMaterials = (...args: unknown[]) => {
     const built = original(...args);
-    if (glassTestMode !== "off") {
-      if (Array.isArray(built)) built.forEach(applyGlassTest);
-      else applyGlassTest(built);
-    }
+    // Runs for every mode, because brightness and glow are worth testing
+    // against the untouched finish too.
+    if (Array.isArray(built)) built.forEach(applyGlassTest);
+    else applyGlassTest(built);
     return built;
   };
   factory.__vividGlassWrapped = true;

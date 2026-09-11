@@ -679,3 +679,9 @@
 }
 .glass-test-card:disabled { opacity: 0.55; cursor: wait; }
 .glass-test-card small { color: var(--muted); font-size: 0.68rem; line-height: 1.3; }
+.glass-test-sliders { display: grid; gap: 0.75rem; margin-top: 0.8rem; }
+.glass-test-sliders label { display: grid; gap: 0.3rem; }
+.glass-test-sliders label > span { display: grid; gap: 0.15rem; font-size: 0.78rem; }
+.glass-test-sliders label b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.glass-test-sliders label small { color: var(--muted); font-size: 0.67rem; line-height: 1.35; }
+.glass-test-sliders input[type="range"] { width: 100%; accent-color: var(--accent); }

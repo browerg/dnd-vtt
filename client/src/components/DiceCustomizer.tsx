@@ -9,6 +9,8 @@ import {
   DICE_PATTERN_OPTIONS,
   GLASS_TEST_MODES,
   setGlassTestMode,
+  setGlassTestBrightness,
+  setGlassTestGlow,
   type GlassTestMode,
   applyDiceBoxCustomization,
   decodeDiceCustomization,
@@ -595,6 +597,21 @@ export default function DiceCustomizer() {
   // TEMPORARY — glass material experiment. Rolls the same die under each
   // treatment so a look can be chosen before anything is built on it.
   const [glassMode, setGlassMode] = useState<GlassTestMode>("off");
+  const [glassBrightness, setGlassBrightness] = useState(1);
+  const [glassGlow, setGlassGlow] = useState(0);
+
+  const rollGlassPreview = async (label: string) => {
+    setTrailPreviewing(true);
+    clearMessages();
+    try {
+      await previewDice(encodeDiceCustomization(settings));
+      setNotice(label);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not roll that preview.");
+    } finally {
+      setTrailPreviewing(false);
+    }
+  };
 
   const tryGlassMode = async (mode: GlassTestMode) => {
     setGlassMode(mode);
@@ -947,6 +964,62 @@ export default function DiceCustomizer() {
                 <small>{mode.blurb}</small>
               </button>
             ))}
+          </div>
+
+          <div className="glass-test-sliders">
+            <label>
+              <span>
+                Brightness <b>{glassBrightness.toFixed(1)}×</b>
+                <small>
+                  The library forces this to 0 on every non-plastic finish — which is why glass
+                  and metal look so dark. 1.0 is a normal environment.
+                </small>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={4}
+                step={0.25}
+                value={glassBrightness}
+                disabled={trailPreviewing}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  setGlassBrightness(value);
+                  setGlassTestBrightness(value);
+                }}
+                onPointerUp={() => void rollGlassPreview(`Brightness ${glassBrightness.toFixed(1)}×.`)}
+                onKeyUp={() => void rollGlassPreview(`Brightness ${glassBrightness.toFixed(1)}×.`)}
+              />
+            </label>
+
+            <label>
+              <span>
+                Glowing numbers <b>{glassGlow === 0 ? "off" : `${glassGlow.toFixed(1)}×`}</b>
+                <small>
+                  Lights the face texture, so pale numbers emit while the body stays dim. This is
+                  the one that could hang off an achievement.
+                </small>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={3}
+                step={0.25}
+                value={glassGlow}
+                disabled={trailPreviewing}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  setGlassGlow(value);
+                  setGlassTestGlow(value);
+                }}
+                onPointerUp={() =>
+                  void rollGlassPreview(glassGlow === 0 ? "Glow off." : `Glow ${glassGlow.toFixed(1)}×.`)
+                }
+                onKeyUp={() =>
+                  void rollGlassPreview(glassGlow === 0 ? "Glow off." : `Glow ${glassGlow.toFixed(1)}×.`)
+                }
+              />
+            </label>
           </div>
         </div>
       </div>
