@@ -131,6 +131,73 @@ export function setGlassTestBrightness(value: number): void {
   glassTestBrightness = Math.max(0, Math.min(4, Number(value) || 0));
 }
 
+/**
+ * The real brightness control. envMapIntensity did nothing because the scene
+ * never assigns an environment map (".envMap = null" in the bundle), so it was
+ * scaling a contribution of zero. light_intensity is a genuine dice-box config
+ * key — its default is 0.7 — and goes in through updateConfig.
+ */
+export function glassTestLightConfig(): Record<string, unknown> {
+  return { light_intensity: 0.7 * glassTestBrightness };
+}
+
+/** The chosen number colour, so the glow mask can isolate the glyphs. */
+let glassTestTextColor = "#ffffff";
+
+/**
+ * Builds a black image with only the number glyphs left visible, for use as an
+ * emissive map. Without this the emissive map is the whole composited face —
+ * body colour included — so the entire die lights up instead of the digits.
+ * Pixels are kept by how close they are to the chosen number colour, which
+ * works whether the numbers are lighter or darker than the body.
+ */
+function makeGlyphMask(source: unknown, textColor: string): unknown {
+  if (typeof document === "undefined") return source;
+  const dimensions = imageDimensions(source);
+  if (!dimensions) return source;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = dimensions.width;
+  canvas.height = dimensions.height;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return source;
+
+  try {
+    context.drawImage(source as CanvasImageSource, 0, 0, canvas.width, canvas.height);
+  } catch {
+    return source;
+  }
+
+  const target = {
+    r: parseInt(textColor.slice(1, 3), 16),
+    g: parseInt(textColor.slice(3, 5), 16),
+    b: parseInt(textColor.slice(5, 7), 16),
+  };
+  if (!Number.isFinite(target.r) || !Number.isFinite(target.g) || !Number.isFinite(target.b)) {
+    return source;
+  }
+
+  const image = context.getImageData(0, 0, canvas.width, canvas.height);
+  const pixels = image.data;
+  // Generous radius: anti-aliased glyph edges should still carry some glow.
+  const TOLERANCE = 120;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const distance = Math.hypot(
+      pixels[i] - target.r,
+      pixels[i + 1] - target.g,
+      pixels[i + 2] - target.b
+    );
+    const strength = Math.max(0, 1 - distance / TOLERANCE);
+    const level = Math.round(255 * strength);
+    pixels[i] = level;
+    pixels[i + 1] = level;
+    pixels[i + 2] = level;
+    pixels[i + 3] = 255;
+  }
+  context.putImageData(image, 0, 0);
+  return canvas;
+}
+
 export function setGlassTestGlow(value: number): void {
   glassTestGlow = Math.max(0, Math.min(3, Number(value) || 0));
 }
@@ -196,10 +263,17 @@ function applyGlassTest(material: unknown): void {
   m.envMapIntensity = glassTestBrightness;
 
   if (glassTestGlow > 0) {
-    // m.map is the composited face texture — body colour plus the number
-    // glyphs. Using it as the emissive map means the light parts of the face
-    // emit, so pale numbers on a dark die glow while the body stays dim.
-    if (m.map) m.emissiveMap = m.map;
+    // Glow only the digits. Feeding the composited face straight in lights the
+    // body too, which just washes the die out — so mask it down to the glyphs
+    // first. Cloning the existing texture keeps its wrapping and colour space
+    // without needing the Texture constructor out of the minified bundle.
+    const map = m.map as { clone?: () => { image: unknown; needsUpdate: boolean }; image?: unknown } | undefined;
+    if (map && typeof map.clone === "function") {
+      const mask = map.clone();
+      mask.image = makeGlyphMask(map.image, glassTestTextColor);
+      mask.needsUpdate = true;
+      m.emissiveMap = mask;
+    }
     const emissive = m.emissive as { setHex?: (hex: number) => void } | undefined;
     if (emissive && typeof emissive.setHex === "function") emissive.setHex(0xffffff);
     m.emissiveIntensity = glassTestGlow;
@@ -450,7 +524,13 @@ export async function applyDiceBoxCustomization(
   value: DiceCustomization
 ): Promise<void> {
   const normalized = normalizeDiceCustomization(value);
-  await box.updateConfig(diceBoxAppearanceConfig(normalized));
+  // TEMPORARY — the glass experiment's brightness rides in on the same config
+  // call, and the glyph mask needs to know which colour the numbers are.
+  glassTestTextColor = normalized.textColor;
+  await box.updateConfig({
+    ...diceBoxAppearanceConfig(normalized),
+    ...glassTestLightConfig(),
+  });
 
   // @3d-dice/dice-box-threejs returns built-in texture records by reference.
   // Never attach finish or our transformed pattern canvases to those shared

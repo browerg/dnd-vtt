@@ -969,10 +969,11 @@ export default function DiceCustomizer() {
           <div className="glass-test-sliders">
             <label>
               <span>
-                Brightness <b>{glassBrightness.toFixed(1)}×</b>
+                Light intensity <b>{(0.7 * glassBrightness).toFixed(2)}</b>
                 <small>
-                  The library forces this to 0 on every non-plastic finish — which is why glass
-                  and metal look so dark. 1.0 is a normal environment.
+                  Now drives the scene lights, which actually move. The first attempt scaled the
+                  environment map — and this scene never loads one, so it did nothing. 0.7 is the
+                  stock value, so 1.0× here is unchanged.
                 </small>
               </span>
               <input
@@ -996,8 +997,9 @@ export default function DiceCustomizer() {
               <span>
                 Glowing numbers <b>{glassGlow === 0 ? "off" : `${glassGlow.toFixed(1)}×`}</b>
                 <small>
-                  Lights the face texture, so pale numbers emit while the body stays dim. This is
-                  the one that could hang off an achievement.
+                  Now masked to the glyphs only, so the body should stay put instead of the whole
+                  die washing out. Note there is no bloom pass in this renderer, so this brightens
+                  the digits rather than making them halo.
                 </small>
               </span>
               <input
