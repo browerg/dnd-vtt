@@ -403,3 +403,422 @@
     height: 120px;
   }
 }
+/* ===================================================================
+   THE GILDED BURROW
+   A goblin treasure vault: candlelight, hammered brass, oxblood velvet,
+   and gold trim that does not know when to stop.
+
+   Appended deliberately — these rules override the plainer base above
+   rather than replacing it, so the structural layout stays intact.
+   =================================================================== */
+
+.emporium-page {
+  /* Its own room, independent of whichever campaign theme is active. */
+  --burrow-gold: #e8c169;
+  --burrow-gold-pale: #fff0c4;
+  --burrow-brass: linear-gradient(145deg, #f7dfa2 0%, #d0a049 28%, #8a5f1c 52%, #e3c176 74%, #a87c2c 100%);
+  --burrow-velvet: #2a0f16;
+  --burrow-velvet-deep: #1a080d;
+  --burrow-candle: rgba(255, 186, 94, .22);
+  gap: 22px;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Candlelight pooling in from the corners, plus a vignette so the middle
+   of the room feels lit and the edges do not. */
+.emporium-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 12% 0%, var(--burrow-candle), transparent 70%),
+    radial-gradient(50% 40% at 92% 8%, rgba(255, 140, 60, .14), transparent 72%),
+    radial-gradient(70% 60% at 50% 115%, rgba(120, 20, 40, .28), transparent 70%),
+    radial-gradient(120% 100% at 50% 50%, transparent 42%, rgba(0, 0, 0, .55) 100%);
+}
+
+/* Scattered coin glints, faint enough to read as texture rather than dots. */
+.emporium-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: .5;
+  background-image:
+    radial-gradient(circle, rgba(255, 216, 140, .5) 0 1px, transparent 1.6px),
+    radial-gradient(circle, rgba(255, 190, 110, .32) 0 1px, transparent 1.8px);
+  background-size: 137px 181px, 211px 149px;
+  background-position: 18px 42px, 96px 11px;
+  mask-image: radial-gradient(80% 70% at 50% 30%, black, transparent 85%);
+}
+
+/* ---- the shopfront ---- */
+
+.emporium-hero {
+  align-items: stretch;
+  padding: 30px 32px;
+  border: 1px solid rgba(232, 193, 105, .34);
+  border-radius: 18px;
+  background:
+    radial-gradient(100% 140% at 0% 0%, rgba(255, 186, 94, .16), transparent 62%),
+    linear-gradient(160deg, var(--burrow-velvet) 0%, var(--burrow-velvet-deep) 68%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 168, .22),
+    inset 0 0 60px rgba(0, 0, 0, .5),
+    0 26px 60px rgba(0, 0, 0, .5);
+}
+
+/* A warm hanging lantern in place of the old cool blue orb. */
+.emporium-hero::after {
+  width: 340px;
+  height: 340px;
+  right: -110px;
+  top: -160px;
+  background: radial-gradient(circle, rgba(255, 190, 92, .22), transparent 66%);
+  animation: burrow-flicker 5.5s ease-in-out infinite;
+}
+
+.emporium-hero h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  letter-spacing: .06em;
+  line-height: 1;
+  margin: 8px 0 10px;
+  background: var(--burrow-brass);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .55));
+}
+
+.emporium-kicker {
+  color: var(--burrow-gold);
+  opacity: .9;
+  letter-spacing: .34em;
+}
+
+.emporium-hero p.muted {
+  color: #d8c2a4;
+  max-width: 46ch;
+}
+
+.emporium-merchant {
+  filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .6));
+}
+
+/* ---- the coin purse ---- */
+
+.emporium-wallet {
+  justify-content: center;
+  min-width: 232px;
+  padding: 18px 20px;
+  border: 1px solid rgba(232, 193, 105, .45);
+  border-radius: 14px;
+  background:
+    linear-gradient(165deg, rgba(255, 214, 140, .12), transparent 60%),
+    #150a10;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 232, 180, .3),
+    inset 0 -18px 30px rgba(0, 0, 0, .45);
+}
+
+.emporium-wallet > span {
+  color: var(--burrow-gold);
+  letter-spacing: .28em;
+  opacity: .85;
+}
+
+.emporium-wallet strong {
+  font-family: var(--font-display);
+  font-size: 30px;
+  letter-spacing: .03em;
+  background: var(--burrow-brass);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---- section headings, like engraved shelf plates ---- */
+
+.emporium-section-heading h3 {
+  font-family: var(--font-display);
+  letter-spacing: .12em;
+  color: var(--burrow-gold-pale);
+}
+
+.emporium-section-heading {
+  padding-bottom: 10px;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, var(--burrow-gold), transparent 70%) 1;
+}
+
+/* ---- each cosmetic in its own display case ---- */
+
+.emporium-grid {
+  gap: 18px;
+}
+
+.emporium-item {
+  padding: 20px;
+  border: 1px solid rgba(232, 193, 105, .26);
+  border-top-width: 1px;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(255, 190, 100, .1), transparent 60%),
+    linear-gradient(170deg, #24101a 0%, #150a11 72%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 168, .16),
+    inset 0 0 44px rgba(0, 0, 0, .5),
+    0 16px 34px rgba(0, 0, 0, .42);
+  transition: transform .28s cubic-bezier(.2, .8, .3, 1), box-shadow .28s ease, border-color .28s ease;
+  animation: burrow-rise .5s cubic-bezier(.2, .8, .3, 1) backwards;
+}
+
+/* Staggered reveal so the shelf fills in rather than snapping into place. */
+.emporium-grid > .emporium-item:nth-child(1) { animation-delay: .02s; }
+.emporium-grid > .emporium-item:nth-child(2) { animation-delay: .07s; }
+.emporium-grid > .emporium-item:nth-child(3) { animation-delay: .12s; }
+.emporium-grid > .emporium-item:nth-child(4) { animation-delay: .17s; }
+.emporium-grid > .emporium-item:nth-child(5) { animation-delay: .22s; }
+.emporium-grid > .emporium-item:nth-child(6) { animation-delay: .27s; }
+.emporium-grid > .emporium-item:nth-child(n + 7) { animation-delay: .32s; }
+
+.emporium-item:hover {
+  transform: translateY(-5px);
+  border-color: rgba(232, 193, 105, .62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 190, .3),
+    inset 0 0 44px rgba(0, 0, 0, .42),
+    0 26px 52px rgba(0, 0, 0, .55),
+    0 0 0 1px rgba(232, 193, 105, .18);
+}
+
+/* A gold sheen sweeping the glass when you lean in. */
+.emporium-item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 34%, rgba(255, 236, 190, .16) 50%, transparent 66%);
+  transform: translateX(-60%);
+  transition: opacity .3s ease;
+}
+
+.emporium-item:hover::after {
+  opacity: 1;
+  animation: burrow-sheen 1.05s ease-out;
+}
+
+/* Corner brackets, mitred per corner. */
+.emporium-filigree i {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(232, 193, 105, .5);
+  pointer-events: none;
+  transition: border-color .28s ease;
+}
+.emporium-filigree i:nth-child(1) { top: 8px; left: 8px; border-width: 1px 0 0 1px; border-top-left-radius: 5px; }
+.emporium-filigree i:nth-child(2) { top: 8px; right: 8px; border-width: 1px 1px 0 0; border-top-right-radius: 5px; }
+.emporium-filigree i:nth-child(3) { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; border-bottom-right-radius: 5px; }
+.emporium-filigree i:nth-child(4) { bottom: 8px; left: 8px; border-width: 0 0 1px 1px; border-bottom-left-radius: 5px; }
+
+.emporium-item:hover .emporium-filigree i {
+  border-color: var(--burrow-gold);
+}
+
+.emporium-item-copy h4 {
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  letter-spacing: .04em;
+  color: var(--burrow-gold-pale);
+  margin-bottom: 4px;
+}
+
+.emporium-item-copy p.muted {
+  color: #c3ab93;
+}
+
+/* ---- rarity as a gemstone chip ---- */
+
+.emporium-rarity {
+  position: relative;
+  padding: 5px 11px 5px 22px;
+  border: 1px solid rgba(232, 193, 105, .34);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .34);
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: .2em;
+  color: var(--burrow-gold-pale);
+  /* The base rule above dims this to .72, which would mute the gem. */
+  opacity: 1;
+  overflow: hidden;
+}
+
+/* The faceted stone, cut with a clip-path. */
+.emporium-rarity::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  clip-path: polygon(50% 0, 100% 36%, 78% 100%, 22% 100%, 0 36%);
+  background: currentColor;
+  box-shadow: 0 0 7px currentColor;
+}
+
+.rarity-starter .emporium-rarity { color: #bfe0ee; }
+.rarity-uncommon .emporium-rarity { color: #86e6ac; }
+.rarity-rare .emporium-rarity { color: #9db9ff; }
+.rarity-legendary .emporium-rarity {
+  color: #ffd27a;
+  border-color: rgba(255, 210, 122, .6);
+  box-shadow: 0 0 16px rgba(255, 190, 90, .22);
+}
+
+/* Legendary gets a slow glint travelling across the chip. */
+.rarity-legendary .emporium-rarity::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 40%, rgba(255, 245, 214, .55) 50%, transparent 60%);
+  animation: burrow-glint 3.4s ease-in-out infinite;
+}
+
+/* ---- the hanging brass price tag ---- */
+
+.emporium-price-row {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+}
+
+.emporium-pricetag {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 9px;
+  padding: 7px 13px 7px 15px;
+  border-radius: 4px 11px 11px 4px;
+  background: var(--burrow-brass);
+  color: #2a1704;
+  font-weight: 900;
+  transform: rotate(-2.2deg);
+  transform-origin: 6px -10px;
+  box-shadow: 0 5px 12px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 250, 226, .55);
+  animation: burrow-swing 6s ease-in-out infinite;
+}
+
+/* The string it hangs from, plus the punched hole. */
+.emporium-pricetag i {
+  position: absolute;
+  left: 6px;
+  top: -11px;
+  width: 1px;
+  height: 11px;
+  background: rgba(232, 193, 105, .75);
+}
+
+.emporium-pricetag i::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  bottom: -3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #2a1704;
+}
+
+.emporium-pricetag b {
+  font-family: var(--font-display);
+  font-size: 1.22rem;
+  line-height: 1;
+}
+
+.emporium-pricetag em {
+  font-style: normal;
+  font-size: .62rem;
+  letter-spacing: .14em;
+  opacity: .8;
+}
+
+.emporium-item:hover .emporium-pricetag {
+  animation-play-state: paused;
+  transform: rotate(-.6deg);
+}
+
+/* ---- owned and equipped read as stamped seals ---- */
+
+.emporium-equipped,
+.emporium-owned {
+  display: inline-block;
+  padding: 6px 13px;
+  border: 1px dashed currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .22em;
+  transform: rotate(-3deg);
+}
+
+.emporium-equipped {
+  color: #ffd27a;
+  text-shadow: 0 0 12px rgba(255, 190, 90, .5);
+}
+
+.emporium-owned {
+  color: #8fdcaa;
+}
+
+/* ---- keyframes ---- */
+
+@keyframes burrow-rise {
+  from { opacity: 0; transform: translateY(16px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes burrow-sheen {
+  from { transform: translateX(-60%); }
+  to { transform: translateX(60%); }
+}
+
+@keyframes burrow-glint {
+  0%, 62% { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
+}
+
+@keyframes burrow-flicker {
+  0%, 100% { opacity: 1; }
+  42% { opacity: .84; }
+  55% { opacity: 1; }
+  70% { opacity: .9; }
+}
+
+@keyframes burrow-swing {
+  0%, 100% { transform: rotate(-2.2deg); }
+  50% { transform: rotate(-4.4deg); }
+}
+
+/* Nobody should be made queasy by a shop. Keep the gold, drop the motion. */
+@media (prefers-reduced-motion: reduce) {
+  .emporium-item,
+  .emporium-pricetag,
+  .emporium-hero::after,
+  .rarity-legendary .emporium-rarity::after {
+    animation: none;
+  }
+  .emporium-item:hover::after { animation: none; opacity: 0; }
+  .emporium-item { transition: border-color .2s ease; }
+  .emporium-item:hover { transform: none; }
+}

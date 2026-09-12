@@ -338,6 +338,12 @@ export default function ShopPage() {
               key={item.id}
               className={`card emporium-item rarity-${item.rarity}${item.owned ? " owned" : ""}${equipped ? " equipped" : ""}`}
             >
+              {/* Gilded corner brackets — four spans so each corner can be
+                  mitred independently. Purely decorative. */}
+              <span className="emporium-filigree" aria-hidden="true">
+                <i /><i /><i /><i />
+              </span>
+
               <div className="emporium-item-top">
                 {renderPreview(item)}
                 <span className="emporium-rarity">{RARITY_LABEL[item.rarity]}</span>
@@ -354,7 +360,12 @@ export default function ShopPage() {
                 ) : item.owned ? (
                   <span className="emporium-owned">OWNED</span>
                 ) : (
-                  <strong>VCoins {item.price}</strong>
+                  // A brass tag on a string, hung off the shelf edge.
+                  <span className="emporium-pricetag">
+                    <i aria-hidden="true" />
+                    <b>{item.price}</b>
+                    <em>VC</em>
+                  </span>
                 )}
               </div>
 
