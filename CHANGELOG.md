@@ -11,6 +11,17 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ## 11 September 2026
 
+### Rulers calibrated by the GM
+
+- Maps now require saved ruler distances before anyone can measure. The GM
+  clicks Set ruler distances and drags directly on the map to calibrate it.
+- On Remnant maps, set the Close, Mid, and Long boundaries separately; beyond
+  Long is Extreme. On D&D maps, drag a known distance and enter its length in feet.
+- Distances are saved per map and remain consistent when zooming or changing
+  the visual grid. The GM can recalibrate later from the ruler toolbar.
+- Existing maps also need a one-time setup to replace the old grid-based guesses.
+  Canceling setup keeps the previous saved calibration, if there is one.
+
 ### Ten more ways to leave your mark
 
 - Wear It Proud: equip your first profile badge. Seat at the Table: join or

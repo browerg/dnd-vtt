@@ -1,0 +1,23 @@
+.ruler-calibration-panel {
+  position: fixed;
+  right: 1rem;
+  top: 6.5rem;
+  z-index: 65;
+  width: min(350px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 8rem);
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--theme-border, #85714b);
+  border-radius: 10px;
+  background: var(--theme-panel, #171922);
+  color: var(--theme-text, #f2e7cd);
+  box-shadow: 0 8px 24px #0005;
+  display: grid;
+  gap: .75rem;
+}
+.ruler-calibration-panel p { margin: 0; font-size: .85rem; line-height: 1.5; }
+.ruler-calibration-panel input { width: 5rem; }
+.ruler-calibration-steps, .ruler-calibration-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.ruler-calibration-steps button { text-transform: capitalize; }
+.ruler-calibration-steps button[aria-pressed="true"] { outline: 2px solid var(--theme-accent, #cfad68); outline-offset: 2px; }
+.ruler-calibration-summary { display: flex; align-items: center; justify-content: center; gap: 1rem; padding: .4rem; font-size: .8rem; background: var(--theme-panel, #171922); }

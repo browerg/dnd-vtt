@@ -25,6 +25,8 @@ import "./MapAudio.css";
 import "./DMTopPanels.css";
 import "./EncounterSidebar.css";
 import "./DMMapDock.css";
+import "./MapRulerCalibration.css";
+import { rulerLabel as calibratedRulerLabel, rulerPixels, validateRulerCalibration, type RulerCalibration } from "../../../shared/mapRuler";
 
 interface MapInfo {
   id: number;
@@ -36,6 +38,7 @@ interface MapInfo {
   audioUrl: string;
   youtubeAudio: boolean;
   gridSize: number;
+  rulerCalibration: RulerCalibration | null;
   gridOn: boolean;
   active: boolean;
   fogOn: boolean;
@@ -325,6 +328,9 @@ export default function MapPage() {
   const previousAuraRef = useRef<Record<number, number | null>>({});
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [role, setRole] = useState("");
+  const isGm = role === "dm" || role === "co-dm";
+  const [viewAsPlayer, setViewAsPlayer] = useState(false);
+  const isDM = isGm && !viewAsPlayer;
   const [system, setSystem] = useState("dnd5e");
   const [campaignTheme, setCampaignTheme] = useState("");
   const [campaignName, setCampaignName] = useState("Campaign");
@@ -333,6 +339,13 @@ export default function MapPage() {
   const [rolls, setRolls] = useState<RollPayload[]>([]);
   const serverClockOffsetRef = useRef(0);
   const [ruler, setRuler] = useState<RulerLine | null>(null);
+  const rulerRef = useRef<RulerLine | null>(null);
+  const [calibratingRuler, setCalibratingRuler] = useState(false);
+  const [calibrationStep, setCalibrationStep] = useState<"close" | "mid" | "long" | "pixels">("close");
+  const [calibrationSpans, setCalibrationSpans] = useState<Partial<Record<"close" | "mid" | "long" | "pixels", number>>>({});
+  const [calibrationFeet, setCalibrationFeet] = useState("5");
+  const [calibrationError, setCalibrationError] = useState("");
+  const [calibrationSaving, setCalibrationSaving] = useState(false);
   const [remoteRulers, setRemoteRulers] = useState<Record<string, RulerLine>>({});
   const rulerTimers = useRef<Record<string, number>>({});
   const rulerEmit = useRef(0);
@@ -377,6 +390,44 @@ export default function MapPage() {
   const [loaded, setLoaded] = useState(false);
   const [tool, setTool] = useState<Tool>("move");
 
+  function beginRulerCalibration() {
+    if (!map || !isDM) return;
+    setCalibrationSpans({});
+    setCalibrationStep(system === "remnant" ? "close" : "pixels");
+    setCalibrationError("");
+    setCalibratingRuler(true);
+    setRuler(null);
+    rulerRef.current = null;
+    setTool("ruler");
+  }
+
+  function activateRuler() {
+    if (!map) return;
+    if (!map.rulerCalibration) {
+      if (isDM) beginRulerCalibration();
+      return;
+    }
+    setTool("ruler");
+  }
+
+  useEffect(() => {
+    setCalibratingRuler(false);
+    setCalibrationSpans({});
+    setRuler(null);
+    rulerRef.current = null;
+    setRemoteRulers({});
+    Object.values(rulerTimers.current).forEach(window.clearTimeout);
+    rulerTimers.current = {};
+    setTool("move");
+  }, [map?.id, isDM]);
+
+  useEffect(() => {
+    if (tool !== "ruler") {
+      setCalibratingRuler(false); setRuler(null); rulerRef.current = null;
+      socketRef.current?.emit("map:ruler", { campaignId, mapId: mapIdRef.current, x1: 0, y1: 0, x2: 0, y2: 0, active: false });
+    }
+  }, [tool]);
+
   useEffect(() => {
     const onToolKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -410,12 +461,13 @@ export default function MapPage() {
       if ((nextTool === "draw" || nextTool === "erase") && role === "spectator") return;
 
       event.preventDefault();
-      setTool(nextTool);
+      if (nextTool === "ruler") activateRuler();
+      else setTool(nextTool);
     };
 
     window.addEventListener("keydown", onToolKey);
     return () => window.removeEventListener("keydown", onToolKey);
-  }, [role]);
+  }, [role, map?.id, map?.rulerCalibration, isDM, system]);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [combat, setCombat] = useState<CombatState>({ active: false, round: 0, turn: 0, combatants: [] });
   const [combatantPick, setCombatantPick] = useState("");
@@ -621,9 +673,6 @@ export default function MapPage() {
   // opacity, hidden objects gone, secret NPC names withheld, DM tools away.
   // This is a client-side preview only: every route still authorises off the
   // server-side role, so nothing here widens or narrows real permissions.
-  const isGm = role === "dm" || role === "co-dm";
-  const [viewAsPlayer, setViewAsPlayer] = useState(false);
-  const isDM = isGm && !viewAsPlayer;
   const canRoll = role !== "" && role !== "spectator";
   const themeView = useCampaignTheme({
     campaignId,
@@ -820,8 +869,8 @@ export default function MapPage() {
     });
     socket.on(
       "map:ruler",
-      (m: { campaignId: number; x1: number; y1: number; x2: number; y2: number; active: boolean; userName: string }) => {
-        if (m.campaignId !== campaignId) return;
+      (m: { campaignId: number; mapId: number; x1: number; y1: number; x2: number; y2: number; active: boolean; userName: string }) => {
+        if (m.campaignId !== campaignId || m.mapId !== mapIdRef.current) return;
         window.clearTimeout(rulerTimers.current[m.userName]);
         const drop = () =>
           setRemoteRulers((prev) => {
@@ -1003,9 +1052,11 @@ export default function MapPage() {
       // stale/unknown pointer id — capture is best-effort, dragging still works
     }
     if (tool === "ruler") {
+      if (calibrationSaving || (!map?.rulerCalibration && !(calibratingRuler && isDM))) return;
       const p = toMapCoords(e.clientX, e.clientY);
       dragRef.current = { kind: "ruler" };
-      setRuler({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
+      rulerRef.current = { x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+      setRuler(rulerRef.current);
       return;
     }
     if (tool === "draw" && role !== "spectator") {
@@ -1075,14 +1126,14 @@ export default function MapPage() {
     if (!d) return;
     if (d.kind === "ruler") {
       const p = toMapCoords(e.clientX, e.clientY);
-      setRuler((prev) => (prev ? { ...prev, x2: p.x, y2: p.y } : prev));
+      const line = rulerRef.current;
+      if (!line) return;
+      rulerRef.current = { ...line, x2: p.x, y2: p.y };
+      setRuler(rulerRef.current);
       const now = performance.now();
-      if (now - rulerEmit.current > 50) {
+      if (!calibratingRuler && map?.rulerCalibration && now - rulerEmit.current > 50) {
         rulerEmit.current = now;
-        setRuler((prev) => {
-          if (prev) socketRef.current?.emit("map:ruler", { campaignId, ...prev, active: true });
-          return prev;
-        });
+        socketRef.current?.emit("map:ruler", { campaignId, mapId: map.id, ...rulerRef.current, active: true });
       }
       return;
     }
@@ -1126,8 +1177,20 @@ export default function MapPage() {
     const d = dragRef.current;
     dragRef.current = null;
     if (d?.kind === "ruler") {
+      if (calibratingRuler && isDM) {
+        const pixels = rulerRef.current ? rulerPixels(rulerRef.current) : 0;
+        if (pixels < 5) { setCalibrationError("Drag a longer span so the calibration is reliable."); return; }
+        setCalibrationSpans((prev) => ({ ...prev, [calibrationStep]: pixels }));
+        setCalibrationError("");
+        if (calibrationStep === "close") setCalibrationStep("mid");
+        else if (calibrationStep === "mid") setCalibrationStep("long");
+        setRuler(null);
+        rulerRef.current = null;
+        return;
+      }
       setRuler(null);
-      socketRef.current?.emit("map:ruler", { campaignId, x1: 0, y1: 0, x2: 0, y2: 0, active: false });
+      rulerRef.current = null;
+      socketRef.current?.emit("map:ruler", { campaignId, mapId: map?.id, x1: 0, y1: 0, x2: 0, y2: 0, active: false });
       return;
     }
     if (d?.kind === "draw") {
@@ -1385,6 +1448,25 @@ export default function MapPage() {
 
   const patchMap = (body: Record<string, unknown>) =>
     map && api(`/api/campaigns/${campaignId}/maps/${map.id}`, { method: "PUT", body: JSON.stringify(body) });
+
+  const saveRulerCalibration = async () => {
+    if (!map || !isDM || calibrationSaving) return;
+    const mapId = map.id;
+    try {
+      const calibration = validateRulerCalibration(system === "remnant"
+        ? { kind: "bands", close: calibrationSpans.close, mid: calibrationSpans.mid, long: calibrationSpans.long }
+        : { kind: "scale", pixels: calibrationSpans.pixels, distance: Number(calibrationFeet) });
+      setCalibrationSaving(true);
+      setCalibrationError("");
+      await api(`/api/campaigns/${campaignId}/maps/${mapId}`, { method: "PUT", body: JSON.stringify({ rulerCalibration: calibration }) });
+      if (mapIdRef.current !== mapId) return;
+      setMap((current) => current?.id === mapId ? { ...current, rulerCalibration: calibration } : current);
+      setCalibratingRuler(false);
+      setRuler(null);
+      rulerRef.current = null;
+    } catch (error) { if (mapIdRef.current === mapId) setCalibrationError((error as Error).message); }
+    finally { setCalibrationSaving(false); }
+  };
 
   const placeCharacter = async (characterId: number) => {
     if (!map) return;
@@ -1665,17 +1747,12 @@ Choose Cancel to permanently delete it instead.`
   const g = map?.gridSize ?? 70;
   const currentCombatant = combat.active ? combat.combatants[combat.turn] : undefined;
 
-  // Distance in grid squares; Remnant reads it as a range band, 5e as feet.
   const rulerLabel = (r: RulerLine) => {
-    const cells = Math.hypot(r.x2 - r.x1, r.y2 - r.y1) / g;
-    if (system === "remnant") {
-      const band = cells <= 2 ? "Close" : cells <= 10 ? "Mid" : cells <= 24 ? "Long" : "Extreme";
-      return `${band} · ${cells.toFixed(1)} sq`;
-    }
-    return `${Math.round(cells * 5)} ft · ${cells.toFixed(1)} sq`;
+    if (calibratingRuler) return `Setting ${calibrationStep === "pixels" ? "known distance" : calibrationStep + " limit"}`;
+    return calibratedRulerLabel(r, map?.rulerCalibration ?? null);
   };
   const activeRulers = (ruler ? [{ name: "", r: ruler }] : []).concat(
-    Object.entries(remoteRulers).map(([name, r]) => ({ name, r }))
+    map?.rulerCalibration && !calibratingRuler ? Object.entries(remoteRulers).map(([name, r]) => ({ name, r })) : []
   );
 
   let fogPath = "";
@@ -1731,7 +1808,7 @@ Choose Cancel to permanently delete it instead.`
               {MAP_TOOL_META[tool].label}
             </strong>
             <span className="map-active-tool-hint">
-              {MAP_TOOL_META[tool].hint}
+              {calibratingRuler ? "Drag to define this map's distances" : MAP_TOOL_META[tool].hint}
               {tool !== "move" && " · Esc returns to Move"}
             </span>
           </div>
@@ -1739,11 +1816,12 @@ Choose Cancel to permanently delete it instead.`
         {map && (
           <button
             className={tool === "ruler" ? "ghost mini active-tool" : "ghost mini"}
-            title="Ruler (R) — drag across the map"
+            title={!map.rulerCalibration ? (isDM ? "Set map distances before using the ruler" : "Waiting for GM ruler calibration") : "Ruler (R) — drag across the map"}
+            disabled={!map.rulerCalibration && !isDM}
             aria-pressed={tool === "ruler"}
-            onClick={() => setTool(tool === "ruler" ? "move" : "ruler")}
+            onClick={() => tool === "ruler" ? setTool("move") : activateRuler()}
           >
-            📏 Ruler
+            📏 {map.rulerCalibration ? "Ruler" : isDM ? "Set ruler distances" : "Ruler · GM setup required"}
           </button>
         )}
         {map && role !== "spectator" && (
@@ -1893,6 +1971,27 @@ Choose Cancel to permanently delete it instead.`
         />
         <span className="muted zoom-label">{Math.round(view.scale * 100)}%</span>
       </header>
+
+      {map && isDM && tool === "ruler" && !calibratingRuler && <div className="ruler-calibration-summary">
+        <span>Distances calibrated for this map</span>
+        <button className="ghost mini" onClick={beginRulerCalibration}>Recalibrate ruler</button>
+      </div>}
+      {map && isDM && calibratingRuler && <section className="ruler-calibration-panel" aria-label="Calibrate map ruler">
+        <strong>Set distances for {map.name}</strong>
+        <p>{system === "remnant" ? "Drag from any point to the farthest point that should count as each range. Set Close, then Mid, then Long. Anything farther is Extreme." : "Drag across a distance you know on the map, then enter how many feet it represents."}</p>
+        {system === "remnant" ? <div className="ruler-calibration-steps">
+          {(["close", "mid", "long"] as const).map((step) => <button type="button" key={step} disabled={calibrationSaving}
+            aria-pressed={calibrationStep === step} onClick={() => { setCalibrationStep(step); setRuler(null); rulerRef.current = null; }}>
+            {step[0].toUpperCase() + step.slice(1)} {calibrationSpans[step] ? "✓" : "— drag to set"}
+          </button>)}
+        </div> : <label>Known distance (feet) <input type="number" min="0.1" step="any" value={calibrationFeet} disabled={calibrationSaving} onChange={(e) => setCalibrationFeet(e.target.value)} />{calibrationSpans.pixels ? " Span captured ✓" : " Drag a span on the map"}</label>}
+        <span role="status">{calibrationSaving ? "Saving…" : system === "remnant" ? `Next drag sets the ${calibrationStep} boundary.` : "You can drag again to adjust the span."}</span>
+        {calibrationError && <p className="error" role="alert">{calibrationError}</p>}
+        <div className="ruler-calibration-actions">
+          <button type="button" disabled={calibrationSaving || (system === "remnant" ? !calibrationSpans.close || !calibrationSpans.mid || !calibrationSpans.long : !calibrationSpans.pixels)} onClick={saveRulerCalibration}>Save map distances</button>
+          <button type="button" className="ghost" disabled={calibrationSaving} onClick={() => setTool("move")}>Cancel</button>
+        </div>
+      </section>}
 
       {isDM && dmPanel && (
         <div className="dm-top-panel-backdrop" onClick={() => setDmPanel(null)}>
@@ -2209,6 +2308,13 @@ Choose Cancel to permanently delete it instead.`
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          onPointerCancel={() => {
+            if (dragRef.current?.kind !== "ruler") return;
+            dragRef.current = null;
+            rulerRef.current = null;
+            setRuler(null);
+            socketRef.current?.emit("map:ruler", { campaignId, mapId: map?.id, x1: 0, y1: 0, x2: 0, y2: 0, active: false });
+          }}
           onPointerLeave={onPointerUp}
           onWheel={onWheel}
           onDoubleClick={sceneEncounterPlacement ? undefined : onDoubleClick}

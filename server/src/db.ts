@@ -386,6 +386,7 @@ for (const ddl of [
   "ALTER TABLE maps ADD COLUMN draw_data TEXT NOT NULL DEFAULT '[]'",
   "ALTER TABLE maps ADD COLUMN music_path TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE maps ADD COLUMN youtube_audio INTEGER NOT NULL DEFAULT 0",
+  "ALTER TABLE maps ADD COLUMN ruler_calibration TEXT DEFAULT NULL",
   "ALTER TABLE map_objects ADD COLUMN interaction_label TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE map_objects ADD COLUMN trigger_message TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE map_objects ADD COLUMN trigger_state TEXT NOT NULL DEFAULT ''",

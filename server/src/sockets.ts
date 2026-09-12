@@ -2,6 +2,8 @@ import type { Server, Socket } from "socket.io";
 import { parseCookies, userForToken, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { moveToken } from "./maps.js";
+import { db } from "./db.js";
+import { canRelayRuler } from "./mapRulerRelay.js";
 
 // The real-time backbone. Every live feature (dice feed, chat, tokens, initiative)
 // rides on campaign rooms; presence is derived from room membership.
@@ -53,12 +55,14 @@ export function setupSockets(io: Server) {
     // sender drags; active:false clears it. Nothing is persisted.
     socket.on(
       "map:ruler",
-      (msg: { campaignId: number; x1: number; y1: number; x2: number; y2: number; active: boolean }) => {
+      (msg: { campaignId: number; mapId: number; x1: number; y1: number; x2: number; y2: number; active: boolean }) => {
         const campaignId = Number(msg?.campaignId);
         if (!memberRole(campaignId, user.id)) return;
-        if (msg?.active && ![msg?.x1, msg?.y1, msg?.x2, msg?.y2].every(Number.isFinite)) return;
+        const mapId = Number(msg?.mapId);
+        if (typeof msg?.active !== "boolean" || !canRelayRuler(db, campaignId, mapId, msg)) return;
         socket.to(room(campaignId)).emit("map:ruler", {
           campaignId,
+          mapId,
           x1: msg.x1,
           y1: msg.y1,
           x2: msg.x2,

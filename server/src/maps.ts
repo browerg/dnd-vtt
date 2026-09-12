@@ -1,4 +1,5 @@
 import { Router, type Request } from "express";
+import { readRulerCalibration, validateRulerCalibration } from "../../shared/mapRuler.js";
 import multer from "multer";
 import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -179,6 +180,7 @@ const mapRow = (r: any) => ({
   audioUrl: r.music_path ? `/uploads/${path.basename(r.music_path)}` : "",
   youtubeAudio: !!r.youtube_audio,
   gridSize: r.grid_size,
+  rulerCalibration: readRulerCalibration(r.ruler_calibration),
   gridOn: !!r.grid_on,
   active: !!r.active,
   fogOn: !!r.fog_on,
@@ -254,13 +256,18 @@ mapsRouter.put("/:id/maps/:mapId", (req, res) => {
 
   const b = req.body ?? {};
   const gridSize = Number.isInteger(b.gridSize) && b.gridSize >= 10 ? b.gridSize : map.grid_size;
+  let calibration = map.ruler_calibration;
+  if (Object.hasOwn(b, "rulerCalibration")) {
+    try { calibration = JSON.stringify(validateRulerCalibration(b.rulerCalibration)); }
+    catch (error) { return res.status(400).json({ error: (error as Error).message }); }
+  }
   const gridOn = typeof b.gridOn === "boolean" ? (b.gridOn ? 1 : 0) : map.grid_on;
   const youtubeAudio =
     typeof b.youtubeAudio === "boolean" ? (b.youtubeAudio ? 1 : 0) : map.youtube_audio;
   const name = typeof b.name === "string" && b.name.trim() ? b.name.trim() : map.name;
   db.prepare(
-    "UPDATE maps SET name = ?, grid_size = ?, grid_on = ?, youtube_audio = ? WHERE id = ?"
-  ).run(name, gridSize, gridOn, youtubeAudio, map.id);
+    "UPDATE maps SET name = ?, grid_size = ?, grid_on = ?, youtube_audio = ?, ruler_calibration = ? WHERE id = ?"
+  ).run(name, gridSize, gridOn, youtubeAudio, calibration, map.id);
   if (b.active === true) {
     db.prepare("UPDATE maps SET active = 0 WHERE campaign_id = ?").run(campaignId);
     db.prepare("UPDATE maps SET active = 1 WHERE id = ?").run(map.id);
