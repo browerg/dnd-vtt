@@ -24,6 +24,7 @@ export interface ProfileIdentityData {
   pronouns?: string;
   bio?: string;
   profileStyle?: string;
+  relicOwner?: boolean;
 }
 
 export default function ProfileIdentity({ profile, badges, editable = false, onEdit }: {
@@ -41,6 +42,7 @@ export default function ProfileIdentity({ profile, badges, editable = false, onE
       <div className="identity-name">
         <span className="profile-eyebrow">{badges[0] ? "✦ " + badges[0].name : "A story in the making"}</span>
         <h1>{profile.display_name}</h1>
+        {!!profile.relicOwner && <span className="relic-owner-title">◆ Relic Owner · Mythic</span>}
         <span className="identity-pronouns">{profile.pronouns || "Vivid Realms adventurer"}</span>
       </div>
       {editable && <button className="profile-outline" type="button" onClick={onEdit}>Personalize profile ↗</button>}

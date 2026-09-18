@@ -1,6 +1,6 @@
 ﻿import DiceBox from "@3d-dice/dice-box-threejs";
 import type { RollDetail } from "./api";
-import { applyDiceBoxCustomization, decodeDiceCustomization } from "./diceCustomization";
+import { applyDiceBoxCustomization, decodeDiceCustomization, applyFirstFlameDice, setFirstFlameMode, animateFirstFlameGlow } from "./diceCustomization";
 
 // 3D dice are pure theater: the server already decided the results, and the
 // notation's "@" suffix forces the dice to land on exactly those faces.
@@ -61,6 +61,7 @@ interface DiceBoxTrailInternals {
 }
 
 export type DiceTrailStyle =
+  | "first-flame"
   | "aura"
   | "ember"
   | "frost"
@@ -74,6 +75,7 @@ const TRAIL_MAX_POINTS = 28;
 const TRAIL_SAMPLE_MS = 18;
 
 const TRAIL_LABELS: Record<DiceTrailStyle, string> = {
+  "first-flame": "First Flame",
   aura: "Aura Glow",
   ember: "Ember",
   frost: "Frost",
@@ -83,6 +85,7 @@ const TRAIL_LABELS: Record<DiceTrailStyle, string> = {
 };
 
 const TRAIL_COLORS: Record<DiceTrailStyle, { core: string; glow: string }> = {
+  "first-flame": { core: "255, 221, 115", glow: "255, 139, 32" },
   aura: { core: "235, 252, 255", glow: "116, 231, 255" },
   ember: { core: "255, 238, 190", glow: "255, 105, 45" },
   frost: { core: "240, 250, 255", glow: "120, 200, 255" },
@@ -297,7 +300,7 @@ function spawnTrailSprites(
   now: number,
   particles: TrailSpriteParticle[]
 ): void {
-  if (style === "petals") {
+  if (style === "petals" || style === "first-flame") {
     const count = Math.random() < 0.72 ? 1 : 2;
     for (let i = 0; i < count; i++) {
       particles.push({
@@ -305,10 +308,10 @@ function spawnTrailSprites(
         x: point.x + (Math.random() - 0.5) * 8,
         y: point.y + (Math.random() - 0.5) * 8,
         vx: (Math.random() - 0.5) * 28,
-        vy: 18 + Math.random() * 32,
+        vy: (style === "first-flame" ? -1 : 1) * (18 + Math.random() * 32),
         bornAt: now,
-        life: 620 + Math.random() * 260,
-        size: 5 + Math.random() * 4,
+        life: style === "first-flame" ? 340 : 620 + Math.random() * 260,
+        size: style === "first-flame" ? 2 + Math.random() * 2 : 5 + Math.random() * 4,
         rotation: Math.random() * Math.PI,
         spin: (Math.random() - 0.5) * 5,
         opacity: 0.9,
@@ -430,7 +433,10 @@ function drawTrailSprites(
     context.translate(x, y);
     context.rotate(rotation);
 
-    if (particle.style === "petals") {
+    if (particle.style === "first-flame") {
+      context.fillStyle = "#ffd36a"; context.shadowColor = "#ff9228"; context.shadowBlur = 10;
+      context.fillRect(-size / 2, -size / 2, size, size);
+    } else if (particle.style === "petals") {
       context.fillStyle = "rgb(235, 70, 115)";
       context.shadowColor = "rgba(255, 110, 155, .7)";
       context.shadowBlur = 8;
@@ -450,6 +456,7 @@ function drawTrailSprites(
   return visible;
 }
 function startDiceTrail(diceBox: DiceBox): () => void {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
   const style = getDiceTrailStyle();
   const internals = diceBox as unknown as DiceBoxTrailInternals;
   const canvas = getTrailCanvas();
@@ -691,9 +698,12 @@ async function drain(): Promise<void> {
 
     while ((entry = queue.shift())) {
       try {
-        if (entry.theme !== currentAppearance) {
+        setFirstFlameMode(entry.theme === "first-flame");
+        if (entry.theme !== currentAppearance || entry.theme === "first-flame") {
           const customization = decodeDiceCustomization(entry.theme);
-          if (customization) {
+          if (entry.theme === "first-flame") {
+            await applyFirstFlameDice(box!);
+          } else if (customization) {
             await applyDiceBoxCustomization(box!, customization);
           } else {
             await box!.updateConfig({
@@ -708,6 +718,7 @@ async function drain(): Promise<void> {
         // one stuck animation wedge the queue forever.
         const rollPromise = box!.roll(entry.notation);
         const stopTrail = startDiceTrail(box!);
+        const stopGlow = animateFirstFlameGlow();
 
         try {
           await Promise.race([
@@ -718,6 +729,7 @@ async function drain(): Promise<void> {
           ]);
         } finally {
           stopTrail();
+          stopGlow();
         }
 
         announceCritical(entry);

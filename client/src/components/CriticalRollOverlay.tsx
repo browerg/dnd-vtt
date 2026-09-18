@@ -4,6 +4,7 @@ import "./CriticalRollEffects.css";
 
 export type CriticalRollKind = "nat20" | "nat1";
 export type CriticalEffectStyle =
+  | "first-flame"
   | "golden"
   | "rose"
   | "lightning"
@@ -27,7 +28,7 @@ interface ActiveCritical extends CriticalRollEventDetail {
 const EVENT_NAME = "tabletop:critical-roll";
 let eventId = 0;
 
-const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning"]);
+const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame"]);
 const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris"]);
 
 function currentSystem(): "remnant" | "dnd5e" {
@@ -182,10 +183,10 @@ export default function CriticalRollOverlay() {
 
   useEffect(() => {
     if (!active) return;
-    playCriticalSound(active.kind, active.effect);
+    if (active.effect !== "first-flame") playCriticalSound(active.kind, active.effect);
     const timer = window.setTimeout(
       () => setActive(null),
-      active.kind === "nat20" ? 3300 : 2900
+      active.effect === "first-flame" ? 2200 : active.kind === "nat20" ? 3300 : 2900
     );
     return () => window.clearTimeout(timer);
   }, [active]);

@@ -16,6 +16,7 @@ export interface SessionUser {
   pronouns?: string;
   bio?: string;
   profileStyle?: string;
+  relicOwner?: boolean;
 }
 
 // Curated dice colorsets from @3d-dice/dice-box-threejs. '' means the default.
@@ -80,7 +81,7 @@ const isCustomDiceTheme = (theme: string) => {
 };
 
 const isValidDiceTheme = (theme: string) =>
-  theme === "" || DICE_THEMES.has(theme) || isCustomDiceTheme(theme);
+  theme === "first-flame" || theme === "" || DICE_THEMES.has(theme) || isCustomDiceTheme(theme);
 
 const presentDicePreset = (row: any) => ({
   id: Number(row.id),
@@ -200,7 +201,8 @@ export function userForToken(token: string): SessionUser | null {
   const row = db
     .prepare(
       `SELECT u.id, u.email, u.display_name, u.dice_theme AS diceTheme,
-              u.avatar_path AS avatarPath, u.pronouns, u.bio, u.profile_style AS profileStyle
+              u.avatar_path AS avatarPath, u.pronouns, u.bio, u.profile_style AS profileStyle,
+              EXISTS(SELECT 1 FROM cosmetic_unlocks cu WHERE cu.user_id = u.id AND cu.cosmetic_id = 'title-relic-owner') AS relicOwner
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ? AND s.expires_at > datetime('now')`
@@ -426,6 +428,9 @@ authRouter.put("/me/dice", (req, res) => {
   const theme = String(req.body?.theme ?? "");
   if (!isValidDiceTheme(theme)) {
     return res.status(400).json({ error: "That dice appearance isn't valid." });
+  }
+  if (theme === "first-flame" && !db.prepare("SELECT 1 FROM cosmetic_unlocks WHERE user_id = ? AND cosmetic_id = 'dice-first-flame'").get(user.id)) {
+    return res.status(403).json({ error: "Unlock Relic of the First Flame before equipping it." });
   }
   db.prepare("UPDATE users SET dice_theme = ? WHERE id = ?").run(theme, user.id);
   res.json({ ok: true, diceTheme: theme });

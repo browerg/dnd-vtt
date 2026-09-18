@@ -7,6 +7,7 @@ export interface User {
   pronouns?: string;
   bio?: string;
   profileStyle?: string;
+  relicOwner?: boolean;
 }
 
 export interface CampaignSummary {

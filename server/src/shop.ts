@@ -4,11 +4,14 @@ import { getSessionUser } from "./auth.js";
 import { achievements, notifyAchievementUnlocks } from "./achievements.js";
 import { reconcileAccountAchievements } from "./achievementTracking.js";
 
+import { CACHE_COST, CACHE_REWARDS, DUPLICATE_REFUNDS, CacheError, createVividCacheStore } from "./vividCacheStore.js";
+
 export const shopRouter = Router();
 
 export type CriticalSlot = "nat20" | "nat1";
 export type CosmeticSlot = CriticalSlot | "turnStart";
 export type CriticalEffectStyle =
+  | "first-flame"
   | "golden"
   | "rose"
   | "lightning"
@@ -26,6 +29,8 @@ export type TurnStartEffectStyle =
   | "rose";
 
 export const COSMETICS = [
+  { id: "trail-first-flame", type: "dice-trail", effect: "first-flame", name: "First Flame Trail", description: "Cache-exclusive molten gold and fading embers.", price: 1, rarity: "mythic" },
+  { id: "crit20-first-flame", type: "nat20-effect", slot: "nat20", effect: "first-flame", name: "First Flame", description: "Cache-exclusive ancient gold flare.", price: 1, rarity: "mythic" },
   {
     id: "trail-aura",
     type: "dice-trail",
@@ -366,7 +371,7 @@ function bypassFor(userId: number): { active: boolean; reason: "dev" | "gm" | nu
 }
 
 function presentItem(userId: number, item: Cosmetic, bypass: boolean) {
-  const owned = item.price === 0 || bypass || hasUnlock(userId, item.id);
+  const owned = item.rarity === "mythic" ? hasUnlock(userId, item.id) : item.price === 0 || bypass || hasUnlock(userId, item.id);
   return { ...item, owned };
 }
 
@@ -521,7 +526,7 @@ shopRouter.post("/equip", (req, res) => {
   }
 
   const bypass = bypassFor(user.id);
-  if (item.price > 0 && !bypass.active && !hasUnlock(user.id, item.id)) {
+  if (item.price > 0 && (item.rarity === "mythic" || !bypass.active) && !hasUnlock(user.id, item.id)) {
     return res.status(403).json({ error: "Unlock that effect before equipping it." });
   }
 
@@ -647,6 +652,7 @@ shopRouter.post("/purchase", (req, res) => {
   const cosmeticId = String(req.body?.cosmeticId ?? "");
   const item = COSMETICS.find((candidate) => candidate.id === cosmeticId);
   if (!item) return res.status(404).json({ error: "That cosmetic does not exist." });
+  if (item.rarity === "mythic") return res.status(403).json({ error: "This cosmetic is exclusive to Vivid Cache." });
 
   ensureWallet(user.id);
   const bypass = bypassFor(user.id);
@@ -730,3 +736,27 @@ shopRouter.post("/purchase", (req, res) => {
 // Removed rather than re-gated: the GM already has a real tool for this in the
 // VCoin Rewards dashboard panel, which is audited and can target one player or
 // the whole party.
+
+const vividCache = createVividCacheStore(db, STARTING_BALANCE);
+shopRouter.get("/cache", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  res.json({ cost: CACHE_COST, balance: walletBalance(user.id), refunds: DUPLICATE_REFUNDS,
+    rewards: CACHE_REWARDS.map(reward => ({ ...reward, owned: reward.unlockIds.every(id => vividCache.owned(user.id, id)) })),
+    pending: vividCache.pending(user.id) });
+});
+shopRouter.post("/cache/open", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  try { res.json(vividCache.open(user.id, String(req.body?.requestId ?? ""))); }
+  catch (error) {
+    if (error instanceof CacheError) return res.status(error.status).json({ error: error.message });
+    throw error;
+  }
+});
+shopRouter.post("/cache/acknowledge", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  vividCache.acknowledge(user.id, String(req.body?.requestId ?? ""));
+  res.json({ ok: true });
+});

@@ -4,6 +4,7 @@ import { api } from "../api";
 import { previewDice, setDiceTrailStyle, type DiceTrailStyle } from "../dice3d";
 import TurnStartEffect from "../components/TurnStartEffect";
 import "./ShopPage.css";
+import VividCache from "../components/VividCache";
 import "./CriticalEffectShop.css";
 
 type CosmeticSlot = "nat20" | "nat1" | "turnStart";
@@ -17,7 +18,7 @@ interface ShopItem {
   name: string;
   description: string;
   price: number;
-  rarity: "starter" | "uncommon" | "rare" | "legendary";
+  rarity: "starter" | "uncommon" | "rare" | "legendary" | "mythic";
   owned: boolean;
 }
 
@@ -39,6 +40,7 @@ interface ShopResponse {
 }
 
 const RARITY_LABEL: Record<ShopItem["rarity"], string> = {
+  mythic: "Mythic",
   starter: "Starter",
   uncommon: "Uncommon",
   rare: "Rare",
@@ -138,10 +140,10 @@ export default function ShopPage() {
   const merchantGif = MERCHANT_GIFS[merchantAnimation];
 
   const items = useMemo(() => shop?.items ?? [], [shop]);
-  const diceTrails = useMemo(() => items.filter((item) => item.type === "dice-trail"), [items]);
-  const nat20Effects = useMemo(() => items.filter((item) => item.type === "nat20-effect"), [items]);
-  const nat1Effects = useMemo(() => items.filter((item) => item.type === "nat1-effect"), [items]);
-  const turnStartEffects = useMemo(() => items.filter((item) => item.type === "turn-start-effect"), [items]);
+  const diceTrails = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "dice-trail"), [items]);
+  const nat20Effects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "nat20-effect"), [items]);
+  const nat1Effects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "nat1-effect"), [items]);
+  const turnStartEffects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "turn-start-effect"), [items]);
 
   const isEquipped = (item: ShopItem) => {
     if (!item.slot) return false;
@@ -481,6 +483,8 @@ export default function ShopPage() {
             )}
           </div>
         </section>
+
+        {!loading && <VividCache onChange={loadShop} />}
 
         {error && <div className="notice error">{error}</div>}
         {notice && <div className="notice">{notice}</div>}

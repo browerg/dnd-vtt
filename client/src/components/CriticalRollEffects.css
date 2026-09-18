@@ -273,3 +273,17 @@
     animation-duration: .01ms !important;
   }
 }
+
+/* First Flame: one brief warm flare, with no shake or repeated flashes. */
+.critical-roll-overlay.effect-first-flame { --critical-primary: #ffd36a; --critical-secondary: #ff982f; --critical-rgb: 255, 180, 65; animation: none; }
+.effect-first-flame .critical-screen-flash { background: radial-gradient(ellipse, #ffb12b55, transparent 65%); animation: first-flame-flare 900ms ease-out both; }
+.effect-first-flame .critical-emblem { filter: drop-shadow(0 0 24px #ffab34); }
+.effect-first-flame .critical-emblem-frame { background: #120e12; border-color: #ffd36a; box-shadow: inset 0 0 30px #f99b2955; }
+.effect-first-flame .critical-particles span { background: #ffd36a; box-shadow: 0 0 9px #ff8b27; }
+.effect-first-flame .critical-scan { display: none; }
+.effect-first-flame .critical-banner h2 { color: #ffe09a; text-shadow: 0 0 18px #ffb22c66; }
+@keyframes first-flame-flare { from { opacity: 0; } 25% { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .effect-first-flame, .effect-first-flame * { animation: none !important; transition: none !important; }
+  .effect-first-flame .critical-screen-flash, .effect-first-flame .critical-particles, .effect-first-flame .critical-rings { display: none; }
+}

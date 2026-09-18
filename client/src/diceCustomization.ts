@@ -118,6 +118,20 @@ let glassTestBrightness = 1;
 // Emissive strength applied through the face texture, so the numbers light up
 // rather than the whole die washing out. 0 disables it.
 let glassTestGlow = 0;
+let firstFlame = false;
+let flameMaterials: MutableMaterial[] = [];
+export function setFirstFlameMode(active: boolean) { firstFlame = active; flameMaterials = []; }
+export function animateFirstFlameGlow(): () => void {
+  if (!firstFlame || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
+  let frame = 0;
+  const tick = (time: number) => {
+    for (const material of flameMaterials) material.emissiveIntensity = 0.65 + Math.sin(time / 480) * 0.18;
+    frame = requestAnimationFrame(tick);
+  };
+  frame = requestAnimationFrame(tick);
+  return () => { cancelAnimationFrame(frame); for (const material of flameMaterials) material.emissiveIntensity = 0.4; };
+}
+
 
 export function setGlassTestMode(mode: GlassTestMode): void {
   glassTestMode = mode;
@@ -213,7 +227,7 @@ function applyGlassTest(material: unknown): void {
   // avoids caring which class the minified bundle actually uses.
   const supportsTransmission = "transmission" in m;
 
-  switch (glassTestMode) {
+  switch (firstFlame ? "off" : glassTestMode) {
     case "tinted":
       m.transparent = true;
       m.opacity = 0.65;
@@ -260,23 +274,33 @@ function applyGlassTest(material: unknown): void {
 
   // Brightness and glow apply to every mode, including the untouched baseline,
   // so the current finish can be brightened without going translucent at all.
-  m.envMapIntensity = glassTestBrightness;
+  m.envMapIntensity = firstFlame ? 1 : glassTestBrightness;
 
-  if (glassTestGlow > 0) {
+  if (glassTestGlow > 0 || firstFlame) {
     // Glow only the digits. Feeding the composited face straight in lights the
     // body too, which just washes the die out — so mask it down to the glyphs
     // first. Cloning the existing texture keeps its wrapping and colour space
     // without needing the Texture constructor out of the minified bundle.
-    const map = m.map as { clone?: () => { image: unknown; needsUpdate: boolean }; image?: unknown } | undefined;
+    const map = m.map as {
+      clone?: () => { image: unknown; needsUpdate: boolean; source?: unknown };
+      image?: unknown;
+      source?: { constructor: new (image: unknown) => unknown };
+    } | undefined;
     if (map && typeof map.clone === "function") {
       const mask = map.clone();
-      mask.image = makeGlyphMask(map.image, glassTestTextColor);
+      const maskImage = makeGlyphMask(map.image, firstFlame ? "#ffd36a" : glassTestTextColor);
+      // Three's Texture.clone shares Source. Assigning mask.image directly
+      // would also overwrite the original face and repeatedly darken cached
+      // textures as more dice are built. Give the glow its own Source instead.
+      if (map.source) mask.source = new map.source.constructor(maskImage);
+      else mask.image = maskImage;
       mask.needsUpdate = true;
       m.emissiveMap = mask;
     }
     const emissive = m.emissive as { setHex?: (hex: number) => void } | undefined;
-    if (emissive && typeof emissive.setHex === "function") emissive.setHex(0xffffff);
-    m.emissiveIntensity = glassTestGlow;
+    if (emissive && typeof emissive.setHex === "function") emissive.setHex(firstFlame ? 0xffb52e : 0xffffff);
+    m.emissiveIntensity = firstFlame ? 0.6 : glassTestGlow;
+    if (firstFlame) flameMaterials.push(m);
   }
 
   m.needsUpdate = true;
@@ -551,4 +575,30 @@ export async function applyDiceBoxCustomization(
 
   // TEMPORARY — see the glass experiment block above.
   wrapGlassTest(factory);
+}
+
+/** An original canvas texture; no fetched or generated image assets. */
+export async function applyFirstFlameDice(box: DiceBoxCustomizationTarget): Promise<void> {
+  await applyDiceBoxCustomization(box, { ...DEFAULT_DICE_CUSTOMIZATION,
+    baseColor: "#100e13", edgeColor: "#a66a25", textColor: "#ffd36a",
+    finish: "metallic", pattern: "none", numberStyle: "outlined", outlineColor: "#100e13" });
+  const canvas = document.createElement("canvas"); canvas.width = canvas.height = 512;
+  const ctx = canvas.getContext("2d")!;
+  // Fixed branching seams keep appearance stable across rolls and clients.
+  for (let branch = 0; branch < 7; branch++) {
+    ctx.beginPath();
+    let x = (branch * 83 + 19) % 512;
+    ctx.moveTo(x, 0);
+    for (let y = 48; y <= 560; y += 48) {
+      x += Math.sin(branch * 7 + y * .08) * 43;
+      ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "#ff8c28"; ctx.shadowColor = "#ff961e"; ctx.shadowBlur = 14; ctx.lineWidth = 5; ctx.stroke();
+    ctx.strokeStyle = "#ffd36a"; ctx.lineWidth = 1.7; ctx.stroke();
+  }
+  const factory = box.DiceFactory as InternalDiceFactory | undefined;
+  if (factory) {
+    factory.dice_texture = { name: "first-flame-procedural", texture: canvas, bump: "", composite: "source-over", material: "metal" };
+    factory.materials_cache = {};
+  }
 }
