@@ -709,11 +709,11 @@ shopRouter.get("/critical-effect", (req, res) => {
     .get(campaignId, userName) as { user_id: number } | undefined;
 
   if (!roller) {
-    return res.json({ effect: kind === "nat20" ? "golden" : "fracture" });
+    return res.json({ effect: kind === "nat20" ? "golden" : "fracture", equipped: false });
   }
 
   const effects = criticalEffectsForUser(roller.user_id);
-  res.json({ effect: effects[kind] });
+  res.json({ effect: effects[kind], equipped: Boolean(equippedCriticalIds(roller.user_id)[kind]) });
 });
 
 // Resolve a player's equipped turn-start cosmetic for a viewer in the same campaign.

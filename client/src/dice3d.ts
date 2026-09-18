@@ -1,6 +1,7 @@
 ﻿import DiceBox from "@3d-dice/dice-box-threejs";
 import type { RollDetail } from "./api";
-import { applyDiceBoxCustomization, decodeDiceCustomization, applyFirstFlameDice, setFirstFlameMode, animateFirstFlameGlow } from "./diceCustomization";
+import { applyDiceBoxCustomization, decodeDiceCustomization } from "./diceCustomization";
+import { applyDiceCosmetic, DICE_COSMETICS, type CosmeticAnimation } from "./diceCosmetics";
 
 // 3D dice are pure theater: the server already decided the results, and the
 // notation's "@" suffix forces the dice to land on exactly those faces.
@@ -156,9 +157,9 @@ function isTrailStyle(value: string | null): value is DiceTrailStyle {
   return !!value && value in TRAIL_LABELS;
 }
 
-export function getDiceTrailStyle(): DiceTrailStyle {
+export function getDiceTrailStyle(fallback = "aura"): DiceTrailStyle {
   const saved = localStorage.getItem(TRAIL_STYLE_STORAGE_KEY);
-  return isTrailStyle(saved) ? saved : "aura";
+  return isTrailStyle(saved) ? saved : isTrailStyle(fallback) ? fallback : "aura";
 }
 
 export function setDiceTrailStyle(style: DiceTrailStyle): void {
@@ -318,6 +319,8 @@ function spawnTrailSprites(
         style,
       });
     }
+    const limit = style === "first-flame" ? 80 : 420;
+    if (particles.length > limit) particles.splice(0, particles.length - limit);
     return;
   }
 
@@ -455,9 +458,10 @@ function drawTrailSprites(
 
   return visible;
 }
-function startDiceTrail(diceBox: DiceBox): () => void {
+function startDiceTrail(diceBox: DiceBox, defaultTrail?: string): () => void {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
-  const style = getDiceTrailStyle();
+  const style = getDiceTrailStyle(defaultTrail);
+  const lifetime = style === "first-flame" ? 260 : TRAIL_LIFETIME_MS;
   const internals = diceBox as unknown as DiceBoxTrailInternals;
   const canvas = getTrailCanvas();
   const rendererCanvas = internals.renderer?.domElement;
@@ -504,7 +508,7 @@ function startDiceTrail(diceBox: DiceBox): () => void {
     let hasVisibleTrail = false;
 
     for (const [die, points] of trails) {
-      while (points.length && now - points[0].bornAt > TRAIL_LIFETIME_MS) points.shift();
+      while (points.length && now - points[0].bornAt > lifetime) points.shift();
       if (points.length < 2) {
         if (!points.length) trails.delete(die);
         continue;
@@ -515,12 +519,12 @@ function startDiceTrail(diceBox: DiceBox): () => void {
       for (let i = 1; i < points.length; i++) {
         const a = points[i - 1];
         const b = points[i];
-        const alpha = Math.max(0, 1 - (now - b.bornAt) / TRAIL_LIFETIME_MS);
+        const alpha = Math.max(0, 1 - (now - b.bornAt) / lifetime);
         if (alpha <= 0) continue;
 
         // Sprite-driven effects carry most of the look now. Keep a subtle
         // connecting ribbon for readability at high dice speeds.
-        drawSegment(context, style, a, b, alpha * (style === "shadow" ? 0.38 : 0.62));
+        drawSegment(context, style, a, b, alpha * (style === "first-flame" ? 0.28 : style === "shadow" ? 0.38 : 0.62));
       }
     }
 
@@ -633,6 +637,7 @@ function announceCritical(entry: QueueEntry) {
     new CustomEvent(CRITICAL_EVENT, {
       detail: {
         kind: entry.critical,
+        defaultEffect: entry.critical === "nat20" ? DICE_COSMETICS[entry.theme]?.nat20EffectId : undefined,
         userName: entry.meta.userName,
         label: entry.meta.label,
       },
@@ -697,12 +702,13 @@ async function drain(): Promise<void> {
     let entry: QueueEntry | undefined;
 
     while ((entry = queue.shift())) {
+      let cosmetic: CosmeticAnimation | undefined;
       try {
-        setFirstFlameMode(entry.theme === "first-flame");
-        if (entry.theme !== currentAppearance || entry.theme === "first-flame") {
+        const definition = DICE_COSMETICS[entry.theme];
+        if (entry.theme !== currentAppearance || definition) {
           const customization = decodeDiceCustomization(entry.theme);
-          if (entry.theme === "first-flame") {
-            await applyFirstFlameDice(box!);
+          if (definition) {
+            cosmetic = await applyDiceCosmetic(box!, definition);
           } else if (customization) {
             await applyDiceBoxCustomization(box!, customization);
           } else {
@@ -716,22 +722,24 @@ async function drain(): Promise<void> {
 
         // If the tab loses visibility mid-roll the physics stalls; don't let
         // one stuck animation wedge the queue forever.
+        cosmetic?.setState("rolling");
         const rollPromise = box!.roll(entry.notation);
-        const stopTrail = startDiceTrail(box!);
-        const stopGlow = animateFirstFlameGlow();
+        const stopTrail = startDiceTrail(box!, definition?.trailId);
+        let timeout: ReturnType<typeof setTimeout> | undefined;
 
         try {
           await Promise.race([
             rollPromise,
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("animation timeout")), ANIMATION_TIMEOUT_MS)
+              timeout = setTimeout(() => reject(new Error("animation timeout")), ANIMATION_TIMEOUT_MS)
             ),
           ]);
         } finally {
           stopTrail();
-          stopGlow();
+          clearTimeout(timeout);
         }
 
+        cosmetic?.setState(entry.critical === "nat20" ? "nat20" : "landed");
         announceCritical(entry);
         entry.onLanded();
         await new Promise((resolve) => setTimeout(resolve, LINGER_MS));
@@ -741,14 +749,13 @@ async function drain(): Promise<void> {
         entry.onLanded();
       }
 
-      box!.clearDice();
+      try {
+        box!.clearDice();
+      } finally {
+        cosmetic?.dispose();
+      }
     }
   } finally {
     running = false;
   }
 }
-
-
-
-
-

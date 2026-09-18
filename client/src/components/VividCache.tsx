@@ -4,6 +4,8 @@ import { useAuth } from "../App";
 import { createCacheTickPlayer } from "../cacheSound";
 import { playCoinSound } from "../emporiumAudio";
 import { buildCacheReel, CACHE_WINNER_INDEX, CACHE_SPIN_DURATION_MS } from "../../../shared/vividCacheReel";
+import { previewDice } from "../dice3d";
+import { FIRST_FLAME } from "../diceCosmetics";
 import "./VividCache.css";
 
 type Rarity = "common" | "rare" | "epic" | "legendary" | "mythic";
@@ -131,7 +133,7 @@ export default function VividCache({ onChange }: { onChange: () => Promise<void>
       <p>{result.duplicate ? `Already owned · ${result.refund} VCoins refunded` : "Added to your collection"}</p>
       <button type="button" ref={continueButton} onClick={dismiss}>Continue</button>
     </div>}
-    {ownsRelic && <p className="cache-relic-owned">◆ Relic Owner <button type="button" onClick={equipDice}>Equip First Flame dice</button></p>}
+    {ownsRelic && <p className="cache-relic-owned">◆ Relic Owner <button type="button" onClick={equipDice}>Equip First Flame dice</button> <button type="button" onClick={() => void previewDice(FIRST_FLAME.id)}>Preview {FIRST_FLAME.label}</button></p>}
     <ul className="cache-legend" aria-label="Rarity odds and duplicate refunds">{rarities.map(rarity => <li key={rarity} className={`rarity-${rarity}`}><strong>{rarity}</strong><span>{((catalog?.rewards.filter(r => r.rarity === rarity).reduce((n, r) => n + r.weight, 0) ?? 0) / total * 100).toFixed(1)}%</span><small>Duplicate: {catalog?.refunds[rarity] ?? "—"} VCoins</small></li>)}</ul>
       <details><summary>Reward collection & how it works</summary>
       <p>Each opening uses the same odds. Duplicate cosmetics become a partial refund. Reel neighbors are decorative random draws and do not change your reward.</p>

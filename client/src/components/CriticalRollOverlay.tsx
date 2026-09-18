@@ -17,6 +17,7 @@ export interface CriticalRollEventDetail {
   userName?: string;
   label?: string;
   effect?: string;
+  defaultEffect?: string;
 }
 
 interface ActiveCritical extends CriticalRollEventDetail {
@@ -57,7 +58,7 @@ async function resolveEffect(detail: CriticalRollEventDetail): Promise<CriticalE
 
   const campaignId = campaignIdFromPath();
   const userName = detail.userName?.trim();
-  if (!campaignId || !userName) return normalizeEffect(detail.kind);
+  if (!campaignId || !userName) return normalizeEffect(detail.kind, detail.defaultEffect);
 
   const query = new URLSearchParams({
     campaignId: String(campaignId),
@@ -67,11 +68,11 @@ async function resolveEffect(detail: CriticalRollEventDetail): Promise<CriticalE
 
   try {
     const response = await fetch(`/api/shop/critical-effect?${query.toString()}`);
-    if (!response.ok) return normalizeEffect(detail.kind);
-    const body = (await response.json()) as { effect?: string };
-    return normalizeEffect(detail.kind, body.effect);
+    if (!response.ok) return normalizeEffect(detail.kind, detail.defaultEffect);
+    const body = (await response.json()) as { effect?: string; equipped?: boolean };
+    return normalizeEffect(detail.kind, body.equipped === false ? detail.defaultEffect ?? body.effect : body.effect);
   } catch {
-    return normalizeEffect(detail.kind);
+    return normalizeEffect(detail.kind, detail.defaultEffect);
   }
 }
 
