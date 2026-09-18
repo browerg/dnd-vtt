@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { markEntranceDone } from "../entranceGate";
 import "./Entrance.css";
 
 const SESSION_KEY = "vivid-realms-entrance-v1";
@@ -30,6 +31,11 @@ export default function Entrance({ children }: { children: ReactNode }) {
     try { sessionStorage.setItem(SESSION_KEY, "seen"); } catch { /* Storage can be disabled. */ }
     setPhase("leaving");
   }, []);
+
+  // Anything that would talk over the intro's soundtrack waits on this.
+  useEffect(() => {
+    if (phase === "done") markEntranceDone();
+  }, [phase]);
 
   useEffect(() => {
     if (phase === "ready") enter.current?.focus({ preventScroll: true });
