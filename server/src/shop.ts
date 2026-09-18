@@ -72,7 +72,7 @@ export const BUNDLES: CosmeticBundle[] = [
     kicker: "Mythic Dice Set",
     quote: "Some dice do not merely roll… they remember.",
     tagline: "A cosmetic legend. A story with every roll.",
-    art: null,
+    art: "/assets/bundles/first-flame.webp",
     rarity: "mythic",
     source: { kind: "cache", price: CACHE_COST },
     releasedAt: "2026-09-11",

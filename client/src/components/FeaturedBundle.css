@@ -403,6 +403,17 @@ button.featured-card:focus-visible {
     min-height: 180px;
   }
 
+  /* Once the page is allowed to scroll the art has no height to fit into, so
+     it would otherwise render at full width and push everything else far
+     below the fold. */
+  .featured-art img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 52vh;
+    justify-self: center;
+  }
+
   .featured-previews {
     grid-auto-rows: auto;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
