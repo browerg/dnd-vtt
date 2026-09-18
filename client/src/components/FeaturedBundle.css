@@ -180,23 +180,56 @@
 }
 
 .featured-art {
+  position: relative;
   display: grid;
   width: 100%;
   flex: 1;
   min-height: 0;
   margin: clamp(8px, 1.6vh, 16px) 0 clamp(8px, 1.4vh, 14px);
-}
-
-/* Key art fits the space it is given rather than dictating it, so the page
-   still fits the viewport whatever the artwork's aspect ratio is. */
-.featured-art img {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  object-fit: contain;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--fb-gold) 32%, transparent);
   border-radius: 12px;
 }
+
+/* Fill the frame edge to edge, cropping around the dice rather than adding
+   empty side bars. The frame still takes only the available viewport space. */
+.featured-art img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  object-position: 50% 43%;
+}
+
+.featured-dice-preview {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--fb-gold);
+  border-radius: 9px;
+  background: #1a0d08ed;
+  box-shadow: 0 4px 20px #0008;
+  color: var(--fb-gold-pale);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.featured-dice-preview svg { width: 22px; height: 22px; flex: none; }
+.featured-dice-preview:hover { background: #38220f; }
+.featured-dice-preview:focus-visible { outline: 3px solid #fff0c4; outline-offset: 3px; }
+.featured-dice-preview:disabled { cursor: wait; opacity: .75; }
 
 .featured-art-empty {
   display: grid;
@@ -404,15 +437,10 @@ button.featured-card:focus-visible {
     min-height: 180px;
   }
 
-  /* Once the page is allowed to scroll the art has no height to fit into, so
-     it would otherwise render at full width and push everything else far
-     below the fold. */
-  .featured-art img {
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    max-height: 52vh;
-    justify-self: center;
+  /* Give the scrolling layout a stable frame with the artwork's own ratio. */
+  .featured-art {
+    flex: none;
+    aspect-ratio: 3 / 2;
   }
 
   .featured-previews {

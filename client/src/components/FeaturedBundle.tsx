@@ -70,6 +70,8 @@ export default function FeaturedBundle({
   onOpenCache,
   onPreviewTrail,
   onPreviewCrit,
+  onPreviewDice,
+  dicePreviewing = false,
   trailPreview,
   critPreview,
 }: {
@@ -79,6 +81,8 @@ export default function FeaturedBundle({
   onOpenCache?: () => void;
   onPreviewTrail?: () => void;
   onPreviewCrit?: () => void;
+  onPreviewDice?: () => void;
+  dicePreviewing?: boolean;
   /** The shop's own renderPreview output, so these stay in sync with the grid. */
   trailPreview?: ReactNode;
   critPreview?: ReactNode;
@@ -143,6 +147,16 @@ export default function FeaturedBundle({
               <p>Key art pending</p>
             </div>
           )}
+          {onPreviewDice && <button
+            type="button"
+            className="featured-dice-preview"
+            onClick={onPreviewDice}
+            disabled={dicePreviewing}
+            title="Free preview — no unlock required"
+          >
+            <Icon name="dice" />
+            {dicePreviewing ? "Rolling…" : "Preview dice roll"}
+          </button>}
         </div>
 
         <p className="featured-tagline">{bundle.tagline}</p>

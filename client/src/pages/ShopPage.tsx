@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { previewDice, setDiceTrailStyle, type DiceTrailStyle } from "../dice3d";
@@ -11,6 +11,7 @@ import FeaturedBundle, { type CosmeticBundle } from "../components/FeaturedBundl
 import ShopDialog from "../components/ShopDialog";
 import { emporiumDoor, emporiumMusic, EMPORIUM_MUSIC_KEY, playCoinSound, primeCoinSound } from "../emporiumAudio";
 import { useBackgroundMusic } from "../useBackgroundMusic";
+import { DICE_COSMETICS } from "../diceCosmetics";
 
 type CosmeticSlot = "nat20" | "nat1" | "turnStart";
 type ShopItemType = "dice-trail" | "nat20-effect" | "nat1-effect" | "turn-start-effect";
@@ -95,6 +96,8 @@ export default function ShopPage() {
   const music = useBackgroundMusic(emporiumMusic, EMPORIUM_MUSIC_KEY);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [cacheOpen, setCacheOpen] = useState(false);
+  const [dicePreviewing, setDicePreviewing] = useState(false);
+  const dicePreviewLock = useRef(false);
 
   const loadShop = async () => {
     const response = await api<ShopResponse>("/api/shop");
@@ -163,6 +166,24 @@ export default function ShopPage() {
 
   // The newest bundle leads the page; the server already sorts them.
   const featured = shop?.bundles?.[0] ?? null;
+  const featuredDice = featured ? DICE_COSMETICS[featured.id] : undefined;
+
+  const previewFeaturedDice = async () => {
+    if (!featuredDice || dicePreviewLock.current) return;
+    dicePreviewLock.current = true;
+    setDicePreviewing(true);
+    setError("");
+    setNotice("");
+    try {
+      // Local visual demo only: no purchase, equip request, or saved selection.
+      await previewDice(featuredDice.id);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not preview these dice.");
+    } finally {
+      dicePreviewLock.current = false;
+      setDicePreviewing(false);
+    }
+  };
 
   const diceTrails = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "dice-trail"), [items]);
   const nat20Effects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "nat20-effect"), [items]);
@@ -557,6 +578,8 @@ export default function ShopPage() {
             critPreview={featuredCrit ? renderPreview(featuredCrit) : undefined}
             onPreviewTrail={featuredTrail ? () => void preview(featuredTrail) : undefined}
             onPreviewCrit={featuredCrit ? () => void preview(featuredCrit) : undefined}
+            onPreviewDice={featuredDice ? () => void previewFeaturedDice() : undefined}
+            dicePreviewing={dicePreviewing}
           />
         )}
 
