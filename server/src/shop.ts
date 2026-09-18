@@ -28,6 +28,113 @@ export type TurnStartEffectStyle =
   | "lightning"
   | "rose";
 
+/**
+ * A themed set of cosmetics sold and shown as one thing. COSMETICS stays the
+ * flat catalogue; a bundle groups some of those ids, adds the presentation
+ * around them, and is what the Emporium's front page is built from.
+ *
+ * A feature marked "upcoming" is deliberately NOT part of what a buyer gets —
+ * it is a teaser for a cosmetic type that does not exist yet, and the client
+ * renders it as such. Never give an upcoming feature a cosmeticId.
+ */
+export type BundleIcon = "dice" | "trail" | "burst" | "fracture" | "ring" | "chat" | "crown";
+
+export interface BundleFeature {
+  title: string;
+  blurb: string;
+  icon: BundleIcon;
+  status: "included" | "upcoming";
+  /** Present only on "included" rows; must match a COSMETICS id. */
+  cosmeticId?: string;
+  /** Where the client sends someone who clicks the row. */
+  target?: string;
+}
+
+export interface CosmeticBundle {
+  id: string;
+  name: string;
+  kicker: string;
+  quote: string;
+  tagline: string;
+  /** Key art. Null until the art exists; the client draws a frame instead. */
+  art: string | null;
+  rarity: "legendary" | "mythic";
+  source: { kind: "cache"; price: number } | { kind: "shop" };
+  features: BundleFeature[];
+  /** Newest wins the front page. ISO date. */
+  releasedAt: string;
+}
+
+export const BUNDLES: CosmeticBundle[] = [
+  {
+    id: "first-flame",
+    name: "Relic of the First Flame",
+    kicker: "Mythic Dice Set",
+    quote: "Some dice do not merely roll… they remember.",
+    tagline: "A cosmetic legend. A story with every roll.",
+    art: null,
+    rarity: "mythic",
+    source: { kind: "cache", price: CACHE_COST },
+    releasedAt: "2026-09-11",
+    features: [
+      {
+        title: "Animated dice model",
+        blurb: "Obsidian and gold. Alive.",
+        icon: "dice",
+        status: "included",
+        target: "/customize",
+      },
+      {
+        title: "Exclusive trail",
+        blurb: "A path of burning legacy.",
+        icon: "trail",
+        status: "included",
+        cosmeticId: "trail-first-flame",
+        target: "category:dice-trail",
+      },
+      {
+        title: "Nat 20 animation",
+        blurb: "The First Flame ignites.",
+        icon: "burst",
+        status: "included",
+        cosmeticId: "crit20-first-flame",
+        target: "category:nat20-effect",
+      },
+      {
+        title: "Nat 1 animation",
+        blurb: "Even failure burns brightly.",
+        icon: "fracture",
+        status: "included",
+        target: "category:nat1-effect",
+      },
+      {
+        title: "Token border",
+        blurb: "Carry the flame with you.",
+        icon: "ring",
+        status: "upcoming",
+      },
+      {
+        title: "Chat effect",
+        blurb: "Your name leaves a mark.",
+        icon: "chat",
+        status: "upcoming",
+      },
+      {
+        title: "Profile title",
+        blurb: "◆ Relic Owner ◆",
+        icon: "crown",
+        status: "included",
+        target: "/profile",
+      },
+    ],
+  },
+];
+
+/** Newest first; the Emporium features the head of this list. */
+export function bundlesNewestFirst(): CosmeticBundle[] {
+  return [...BUNDLES].sort((a, b) => b.releasedAt.localeCompare(a.releasedAt));
+}
+
 export const COSMETICS = [
   { id: "trail-first-flame", type: "dice-trail", effect: "first-flame", name: "First Flame Trail", description: "Cache-exclusive molten gold and fading embers.", price: 1, rarity: "mythic" },
   { id: "crit20-first-flame", type: "nat20-effect", slot: "nat20", effect: "first-flame", name: "First Flame", description: "Cache-exclusive ancient gold flare.", price: 1, rarity: "mythic" },
@@ -512,6 +619,7 @@ shopRouter.get("/", (req, res) => {
     },
     previewCharacter: shopPreviewCharacter(user.id),
     items: COSMETICS.map((item) => presentItem(user.id, item, bypass.active)),
+    bundles: bundlesNewestFirst(),
   });
 });
 

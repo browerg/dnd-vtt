@@ -6,6 +6,11 @@ import TurnStartEffect from "../components/TurnStartEffect";
 import "./ShopPage.css";
 import VividCache from "../components/VividCache";
 import "./CriticalEffectShop.css";
+import MusicToggle from "../components/MusicToggle";
+import FeaturedBundle, { type CosmeticBundle } from "../components/FeaturedBundle";
+import ShopDialog from "../components/ShopDialog";
+import { emporiumDoor, emporiumMusic, EMPORIUM_MUSIC_KEY, playCoinSound, primeCoinSound } from "../emporiumAudio";
+import { useBackgroundMusic } from "../useBackgroundMusic";
 
 type CosmeticSlot = "nat20" | "nat1" | "turnStart";
 type ShopItemType = "dice-trail" | "nat20-effect" | "nat1-effect" | "turn-start-effect";
@@ -37,6 +42,7 @@ interface ShopResponse {
     imageKind: "token" | "portrait" | null;
   } | null;
   items: ShopItem[];
+  bundles: CosmeticBundle[];
 }
 
 const RARITY_LABEL: Record<ShopItem["rarity"], string> = {
@@ -86,6 +92,9 @@ export default function ShopPage() {
   const [turnPreview, setTurnPreview] = useState<{ effect: string; name: string; nonce: number } | null>(null);
   const [merchantAnimation, setMerchantAnimation] = useState<MerchantAnimation>("idle");
   const [merchantNonce, setMerchantNonce] = useState(0);
+  const music = useBackgroundMusic(emporiumMusic, EMPORIUM_MUSIC_KEY);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const [cacheOpen, setCacheOpen] = useState(false);
 
   const loadShop = async () => {
     const response = await api<ShopResponse>("/api/shop");
@@ -110,6 +119,17 @@ export default function ShopPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // The door on the way in, under the music fading up behind it. Landing here
+  // by refresh has no user gesture yet, so the browser refuses the sound and
+  // the shop simply opens quietly — a door heard a click later would be worse
+  // than no door at all.
+  useEffect(() => {
+    emporiumDoor.play();
+    // Warm the till too, so the first purchase is not silent while its sample
+    // is still decoding.
+    primeCoinSound();
   }, []);
 
   const playMerchant = (animation: Exclude<MerchantAnimation, "idle">) => {
@@ -140,10 +160,45 @@ export default function ShopPage() {
   const merchantGif = MERCHANT_GIFS[merchantAnimation];
 
   const items = useMemo(() => shop?.items ?? [], [shop]);
+
+  // The newest bundle leads the page; the server already sorts them.
+  const featured = shop?.bundles?.[0] ?? null;
+
   const diceTrails = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "dice-trail"), [items]);
   const nat20Effects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "nat20-effect"), [items]);
   const nat1Effects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "nat1-effect"), [items]);
   const turnStartEffects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "turn-start-effect"), [items]);
+
+  // The bottom strip. Counts come straight from the catalogue, so a card can
+  // never advertise a category that has nothing in it.
+  const catalogue = useMemo(
+    () =>
+      [
+        { id: "dice-trail", label: "Dice trails", caption: "Cosmetic VFX that follow every roll.", blurb: "Cosmetic VFX that follow your dice through every roll.", list: diceTrails },
+        { id: "nat20-effect", label: "Nat 20 effects", caption: "The celebration everyone sees.", blurb: "Equip the celebration everyone sees when you land a natural 20.", list: nat20Effects },
+        { id: "nat1-effect", label: "Nat 1 effects", caption: "Fail with some style.", blurb: "When the dice betray you, at least fail with style.", list: nat1Effects },
+        { id: "turn-start-effect", label: "Turn start", caption: "Your entrance, every round.", blurb: "A short token-centered entrance that fires when initiative reaches your character.", list: turnStartEffects },
+      ].filter((category) => category.list.length > 0),
+    [diceTrails, nat20Effects, nat1Effects, turnStartEffects]
+  );
+
+  const categories = useMemo(
+    () =>
+      catalogue.map(({ id, label, caption, list }) => ({
+        id,
+        label,
+        caption,
+        owned: list.filter((item) => item.owned).length,
+        total: list.length,
+      })),
+    [catalogue]
+  );
+
+  const shownCategory = catalogue.find((category) => category.id === openCategory) ?? null;
+
+  // Reuse the shop's own preview paths so the panels show the real effect.
+  const featuredTrail = useMemo(() => items.find((item) => item.id === "trail-first-flame"), [items]);
+  const featuredCrit = useMemo(() => items.find((item) => item.id === "crit20-first-flame"), [items]);
 
   const isEquipped = (item: ShopItem) => {
     if (!item.slot) return false;
@@ -205,6 +260,7 @@ export default function ShopPage() {
         body: JSON.stringify({ cosmeticId: item.id }),
       });
       await loadShop();
+      playCoinSound();
       playMerchant("money");
       setNotice(shop?.wallet.bypass ? `${item.name} is available to you.` : `Unlocked ${item.name}!`);
     } catch (cause) {
@@ -318,7 +374,11 @@ export default function ShopPage() {
     description: string,
     sectionItems: ShopItem[]
   ) => (
-    <section className={`emporium-section-block section-${sectionItems[0]?.type ?? "default"}`}>
+    <section
+      // Anchors the featured bundle's rail and category cards jump to.
+      id={`shop-${sectionItems[0]?.type ?? "default"}`}
+      className={`emporium-section-block section-${sectionItems[0]?.type ?? "default"}`}
+    >
       <div className="emporium-section-heading">
         <div>
           <h3>{title}</h3>
@@ -409,7 +469,7 @@ export default function ShopPage() {
   );
 
   return (
-    <div className="shell">
+    <div className="shell emporium-shell">
       {turnPreview && (
         <div className="turn-start-preview-stage" role="status" aria-live="polite">
           <div
@@ -444,94 +504,89 @@ export default function ShopPage() {
         <Link to="/" className="ghost link">
           ← Campaigns
         </Link>
-        <span className="brand">The Emporium</span>
-        <span className="spacer" />
-        <Link to="/customize" className="ghost link">
-          Customize Dice
-        </Link>
-      </header>
+        {/* Kept as one unit so the bar cannot wrap the shopkeeper away from
+            the name he belongs to. */}
+        <span className="emporium-title">
+          <span className="brand">The Emporium</span>
 
-      <main className="content emporium-page">
-        <section className="card emporium-hero">
-          <div>
-            <span className="emporium-kicker">VIVID REALMS COSMETICS</span>
-            <h2>The Emporium</h2>
-            <p className="muted">
-              Earn VCoins while you play, then spend them on completely unnecessary,
-              extremely important cosmetics.
-            </p>
-          </div>
-
-          <div className="emporium-merchant" aria-hidden="true">
+          <span className="emporium-merchant" aria-hidden="true">
             <img
               key={`${merchantAnimation}-${merchantNonce}`}
               src={merchantGif}
               alt=""
               className={`emporium-merchant-sprite is-${merchantAnimation}`}
             />
-          </div>
+          </span>
+        </span>
 
-          <div className="emporium-wallet">
-            <span>YOUR BALANCE</span>
-            <strong>VCoins {shop?.wallet.balance ?? 0}</strong>
-            {shop?.wallet.bypass && (
-              <small>
-                {shop.wallet.bypassReason === "dev"
-                  ? "Development mode · all cosmetics unlocked"
-                  : "Game Master · all cosmetics unlocked"}
-              </small>
-            )}
-          </div>
-        </section>
+        <span className="spacer" />
 
-        {!loading && <VividCache onChange={loadShop} />}
+        <MusicToggle music={music} className="emporium-music" />
 
-        {error && <div className="notice error">{error}</div>}
-        {notice && <div className="notice">{notice}</div>}
+        <div className="emporium-wallet">
+          <span>YOUR BALANCE</span>
+          <strong>VCoins {shop?.wallet.balance ?? 0}</strong>
+          {shop?.wallet.bypass && (
+            <small>
+              {shop.wallet.bypassReason === "dev"
+                ? "Development mode · all unlocked"
+                : "Game Master · all unlocked"}
+            </small>
+          )}
+        </div>
 
-        {loading ? (
+        <Link to="/customize" className="ghost link">
+          Customize Dice
+        </Link>
+      </header>
+
+      <main className="content emporium-page is-single-screen">
+        {loading && (
           <section className="card">
             <p className="muted">Opening the shop…</p>
           </section>
-        ) : (
-          <>
-            {renderSection(
-              "Dice Trails",
-              "Cosmetic VFX that follow your dice through every roll.",
-              diceTrails
-            )}
-
-            {renderSection(
-              "Natural 20 Effects",
-              "Equip the celebration everyone sees when you land a natural 20.",
-              nat20Effects
-            )}
-
-            {renderSection(
-              "Natural 1 Effects",
-              "When the dice betray you, at least fail with style.",
-              nat1Effects
-            )}
-
-            {renderSection(
-              "Turn Start Effects",
-              "A short token-centered entrance that fires when initiative reaches your character.",
-              turnStartEffects
-            )}
-          </>
         )}
 
-        <section className="card emporium-coming-soon">
-          <span>COMING TO THE SHELVES</span>
-          <div>
-            <strong>Landing Effects</strong>
-            <strong>Token Frames</strong>
-            <strong>Name Flair</strong>
-            <strong>Table Felts</strong>
-            <strong>Pet Grimm</strong>
+        {!loading && featured && (
+          <FeaturedBundle
+            bundle={featured}
+            categories={categories}
+            onOpenCategory={setOpenCategory}
+            onOpenCache={() => setCacheOpen(true)}
+            trailPreview={featuredTrail ? renderPreview(featuredTrail) : undefined}
+            critPreview={featuredCrit ? renderPreview(featuredCrit) : undefined}
+            onPreviewTrail={featuredTrail ? () => void preview(featuredTrail) : undefined}
+            onPreviewCrit={featuredCrit ? () => void preview(featuredCrit) : undefined}
+          />
+        )}
+
+        {/* Notices float over the panel: the page has no room to grow. */}
+        {(error || notice) && (
+          <div className="emporium-toasts" role="status">
+            {error && <div className="notice error">{error}</div>}
+            {notice && <div className="notice">{notice}</div>}
           </div>
-        </section>
+        )}
       </main>
+
+      <ShopDialog
+        open={!!shownCategory}
+        title={shownCategory?.label ?? ""}
+        subtitle={shownCategory?.blurb}
+        meta={shownCategory && `${shownCategory.list.filter((item) => item.owned).length} / ${shownCategory.list.length} owned`}
+        onClose={() => setOpenCategory(null)}
+      >
+        {shownCategory && renderSection(shownCategory.label, shownCategory.blurb, shownCategory.list)}
+      </ShopDialog>
+
+      <ShopDialog
+        open={cacheOpen}
+        title="Vivid Cache"
+        subtitle="One cache. One cosmetic. A chance at the First Flame."
+        onClose={() => setCacheOpen(false)}
+      >
+        <VividCache onChange={loadShop} />
+      </ShopDialog>
     </div>
   );
 }

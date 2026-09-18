@@ -1,0 +1,152 @@
+/* Catalogue popups. The Emporium page itself never scrolls; all the scrolling
+   in the shop happens inside these. */
+
+.shop-dialog {
+  width: min(1080px, calc(100vw - 48px));
+  max-width: none;
+  max-height: min(84dvh, 860px);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--burrow-gold, #e8c169) 34%, transparent);
+  border-radius: 16px;
+  background: linear-gradient(170deg, var(--burrow-velvet, #2a0f16) 0%, var(--burrow-velvet-deep, #1a080d) 64%, #120508 100%);
+  color: #e9dcc6;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .6), inset 0 0 70px rgba(0, 0, 0, .5);
+  overflow: hidden;
+}
+
+.shop-dialog::backdrop {
+  background: rgba(6, 3, 5, .72);
+  backdrop-filter: blur(3px);
+}
+
+.shop-dialog[open] {
+  animation: shop-dialog-in .22s cubic-bezier(.2, .8, .3, 1);
+}
+
+.shop-dialog[open]::backdrop {
+  animation: shop-dialog-fade .22s ease-out;
+}
+
+.shop-dialog-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: min(84dvh, 860px);
+}
+
+.shop-dialog-panel > header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--burrow-gold, #e8c169) 18%, transparent);
+}
+
+.shop-dialog-panel > header > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-dialog-panel h2 {
+  margin: 0;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 22px;
+  letter-spacing: .02em;
+  color: var(--burrow-gold-pale, #fff0c4);
+}
+
+.shop-dialog-panel header p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #b9a68f;
+}
+
+.shop-dialog-meta {
+  flex: none;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--burrow-gold, #e8c169);
+  opacity: .7;
+}
+
+.shop-dialog-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid color-mix(in srgb, var(--burrow-gold, #e8c169) 30%, transparent);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, .3);
+  color: var(--burrow-gold-pale, #fff0c4);
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+
+.shop-dialog-close:hover {
+  border-color: color-mix(in srgb, var(--burrow-gold, #e8c169) 60%, transparent);
+  background: rgba(232, 193, 105, .14);
+}
+
+.shop-dialog-close:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--burrow-gold, #e8c169) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.shop-dialog-close svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* The one scrolling region in the shop. */
+.shop-dialog-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 20px 22px;
+  scrollbar-color: color-mix(in srgb, var(--burrow-gold, #e8c169) 45%, transparent) transparent;
+}
+
+/* Section blocks lose their own card chrome in here — the dialog is the card. */
+.shop-dialog-body .emporium-section-block {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.shop-dialog-body .emporium-section-heading {
+  display: none;
+}
+
+@keyframes shop-dialog-in {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes shop-dialog-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-dialog[open],
+  .shop-dialog[open]::backdrop {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .shop-dialog {
+    width: calc(100vw - 20px);
+    max-height: 90dvh;
+  }
+
+  .shop-dialog-panel {
+    max-height: 90dvh;
+  }
+
+  .shop-dialog-body {
+    padding: 14px 14px 18px;
+  }
+}

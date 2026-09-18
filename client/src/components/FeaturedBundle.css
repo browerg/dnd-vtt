@@ -1,0 +1,420 @@
+/* The Emporium's single screen. Borrows the Gilded Burrow palette from
+   ShopPage.css so it reads as the same room, with fallbacks in case this ever
+   renders outside .emporium-page.
+
+   Nothing here scrolls: the panel is sized to the viewport and the catalogue
+   opens in ShopDialog popups, which is where all the shop's scrolling lives. */
+
+.featured-bundle {
+  --fb-gold: var(--burrow-gold, #e8c169);
+  --fb-gold-pale: var(--burrow-gold-pale, #fff0c4);
+  --fb-velvet: var(--burrow-velvet, #2a0f16);
+  --fb-velvet-deep: var(--burrow-velvet-deep, #1a080d);
+
+  display: grid;
+  grid-template-columns: minmax(190px, 0.85fr) minmax(0, 2.4fr) minmax(200px, 0.95fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "rail  hero previews"
+    "strip strip strip";
+  gap: clamp(10px, 1.6vh, 20px) clamp(18px, 3vw, 44px);
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* ---- left rail --------------------------------------------------------- */
+
+.featured-rail {
+  grid-area: rail;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.featured-kicker {
+  margin: 0 0 clamp(6px, 1.2vh, 14px);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--fb-gold);
+  opacity: .7;
+}
+
+.featured-rail ul {
+  display: grid;
+  flex: 1;
+  align-content: space-evenly;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  list-style: none;
+}
+
+.featured-feature > button,
+.featured-feature > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: clamp(5px, .9vh, 9px) 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.featured-feature > button {
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+
+.featured-feature > button:hover {
+  border-color: color-mix(in srgb, var(--fb-gold) 40%, transparent);
+  background: rgba(232, 193, 105, .08);
+}
+
+.featured-feature > button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--fb-gold) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.featured-feature-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  color: var(--fb-gold);
+}
+
+.featured-feature-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.featured-feature-text {
+  min-width: 0;
+}
+
+.featured-feature strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--fb-gold-pale);
+}
+
+.featured-feature small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: #b9a68f;
+}
+
+/* Upcoming rows are teasers for types that do not exist yet: dimmed, inert
+   and labelled, so nobody reads one as part of what they are buying. */
+.featured-feature.is-upcoming {
+  opacity: .45;
+}
+
+.featured-soon {
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--fb-gold) 45%, transparent);
+  border-radius: 999px;
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: .12em;
+  color: var(--fb-gold);
+}
+
+/* ---- centre hero ------------------------------------------------------- */
+
+.featured-hero {
+  grid-area: hero;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  text-align: center;
+}
+
+.featured-hero h2 {
+  margin: 0;
+  font-family: Cinzel, Georgia, serif;
+  font-size: clamp(22px, 3.1vw, 42px);
+  line-height: 1.06;
+  letter-spacing: .01em;
+  background: linear-gradient(104deg, #f7dfa2 8%, var(--fb-gold) 36%, #fff6dd 52%, var(--fb-gold) 68%, #a87c2c 94%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.featured-sub {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .34em;
+  text-indent: .34em;
+  text-transform: uppercase;
+  color: var(--fb-gold-pale);
+  opacity: .72;
+}
+
+.featured-hero blockquote {
+  margin: clamp(6px, 1.2vh, 12px) 0 0;
+  max-width: 46ch;
+  font-style: italic;
+  font-size: 12.5px;
+  color: #c3b096;
+}
+
+.featured-art {
+  display: grid;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  margin: clamp(8px, 1.6vh, 16px) 0 clamp(8px, 1.4vh, 14px);
+}
+
+/* Key art fits the space it is given rather than dictating it, so the page
+   still fits the viewport whatever the artwork's aspect ratio is. */
+.featured-art img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.featured-art-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 16px;
+  min-height: 0;
+  padding: 20px;
+  border: 1px dashed color-mix(in srgb, var(--fb-gold) 32%, transparent);
+  border-radius: 12px;
+  background: radial-gradient(60% 70% at 50% 100%, rgba(255, 186, 94, .12), transparent 70%);
+}
+
+.featured-art-empty p {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--fb-gold);
+  opacity: .55;
+}
+
+/* A lit plinth: staging for art that has not arrived, rather than a gap. */
+.featured-plinth {
+  width: 128px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 42%, rgba(255, 196, 110, .34), transparent 68%);
+  box-shadow: 0 -16px 46px rgba(255, 176, 74, .16);
+}
+
+.featured-tagline {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: #8e7f6b;
+}
+
+/* ---- right previews ---------------------------------------------------- */
+
+.featured-previews {
+  grid-area: previews;
+  display: grid;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: clamp(8px, 1.4vh, 14px);
+  min-height: 0;
+}
+
+.featured-previews article {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  padding: 11px;
+  border: 1px solid color-mix(in srgb, var(--fb-gold) 22%, transparent);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, .28);
+}
+
+.featured-previews h3 {
+  margin: 0 0 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--fb-gold);
+  opacity: .8;
+}
+
+.featured-preview-stage {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 9px;
+  background: radial-gradient(60% 70% at 50% 50%, rgba(255, 186, 94, .12), transparent 70%), #0d0609;
+}
+
+/* The stage hosts the shop's own preview markup, which brings its own sizing. */
+.featured-preview-stage > * {
+  transform: scale(.82);
+}
+
+.featured-previews button {
+  width: 100%;
+  min-height: 32px;
+  margin-top: 8px;
+  border: 1px solid color-mix(in srgb, var(--fb-gold) 45%, transparent);
+  border-radius: 8px;
+  background: rgba(232, 193, 105, .1);
+  color: var(--fb-gold-pale);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.featured-previews button:hover {
+  background: rgba(232, 193, 105, .2);
+}
+
+/* ---- bottom strip ------------------------------------------------------ */
+
+.featured-strip {
+  grid-area: strip;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  padding-top: clamp(8px, 1.4vh, 16px);
+  border-top: 1px solid color-mix(in srgb, var(--fb-gold) 18%, transparent);
+}
+
+.featured-card {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  padding: clamp(8px, 1.3vh, 13px) 13px;
+  border: 1px solid color-mix(in srgb, var(--fb-gold) 20%, transparent);
+  border-radius: 11px;
+  background: rgba(0, 0, 0, .26);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, transform .16s ease, background-color .16s ease;
+}
+
+button.featured-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--fb-gold) 55%, transparent);
+  background: rgba(232, 193, 105, .09);
+}
+
+button.featured-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--fb-gold) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.featured-card-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--fb-gold-pale);
+}
+
+.featured-card-caption {
+  font-size: 11.5px;
+  color: #b9a68f;
+}
+
+.featured-card-count {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--fb-gold);
+  opacity: .6;
+}
+
+.featured-card-source {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--fb-gold) 40%, transparent);
+  background: radial-gradient(70% 90% at 50% 120%, rgba(255, 186, 94, .14), transparent 70%), rgba(0, 0, 0, .26);
+}
+
+/* ---- responsive -------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .featured-bundle {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 0.75fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "hero  previews"
+      "rail  rail"
+      "strip strip";
+  }
+
+  .featured-rail ul {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+}
+
+/* Below this the screen cannot hold everything at a readable size, so the page
+   is allowed to scroll rather than crushing the content. */
+@media (max-width: 720px), (max-height: 620px) {
+  .emporium-page.is-single-screen {
+    height: auto;
+    overflow: auto;
+  }
+
+  .featured-bundle {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: "hero" "previews" "rail" "strip";
+    padding: 16px;
+  }
+
+  .featured-art-empty {
+    min-height: 180px;
+  }
+
+  .featured-previews {
+    grid-auto-rows: auto;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .featured-preview-stage {
+    min-height: 88px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.featured-card:hover {
+    transform: none;
+  }
+}

@@ -413,13 +413,7 @@
    =================================================================== */
 
 .emporium-page {
-  /* Its own room, independent of whichever campaign theme is active. */
-  --burrow-gold: #e8c169;
-  --burrow-gold-pale: #fff0c4;
-  --burrow-brass: linear-gradient(145deg, #f7dfa2 0%, #d0a049 28%, #8a5f1c 52%, #e3c176 74%, #a87c2c 100%);
-  --burrow-velvet: #2a0f16;
-  --burrow-velvet-deep: #1a080d;
-  --burrow-candle: rgba(255, 186, 94, .22);
+  /* Palette moved up to .emporium-shell so the top bar inherits it too. */
   gap: 22px;
   position: relative;
   isolation: isolate;
@@ -821,4 +815,192 @@
   .emporium-item:hover::after { animation: none; opacity: 0; }
   .emporium-item { transition: border-color .2s ease; }
   .emporium-item:hover { transform: none; }
+}
+
+/* Music control placement; the look lives in MusicToggle.css. */
+.emporium-music {
+  margin-top: 12px;
+}
+
+/* ===================================================================
+   SINGLE SCREEN
+   The Emporium is one panel sized to the viewport. Nothing on this page
+   scrolls; the catalogue opens in ShopDialog popups, and those scroll.
+   =================================================================== */
+
+/* The shell owns the height so the panel takes exactly what the header
+   leaves, whatever that turns out to be — no magic number to drift. dvh so
+   mobile browser chrome appearing or hiding cannot push the panel out. */
+.emporium-shell {
+  /* Its own room, independent of whichever campaign theme is active. */
+  --burrow-gold: #e8c169;
+  --burrow-gold-pale: #fff0c4;
+  --burrow-brass: linear-gradient(145deg, #f7dfa2 0%, #d0a049 28%, #8a5f1c 52%, #e3c176 74%, #a87c2c 100%);
+  --burrow-velvet: #2a0f16;
+  --burrow-velvet-deep: #1a080d;
+  --burrow-candle: rgba(255, 186, 94, .22);
+
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(70% 55% at 50% 12%, rgba(255, 186, 94, .10), transparent 70%),
+    linear-gradient(170deg, var(--burrow-velvet, #2a0f16) 0%, var(--burrow-velvet-deep, #1a080d) 58%, #120508 100%);
+}
+
+/* The navigation belongs to the room: no bar of its own, just a hairline. */
+.emporium-shell .topbar {
+  padding-left: clamp(16px, 3vw, 46px);
+  padding-right: clamp(16px, 3vw, 46px);
+  border-bottom: 1px solid color-mix(in srgb, var(--burrow-gold, #e8c169) 16%, transparent);
+  background: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.emporium-shell .topbar .brand {
+  color: var(--burrow-gold-pale, #fff0c4);
+}
+
+/* In the bar the wallet is a one-line readout, not a stacked card: the bar is
+   only as tall as a row of links and a stacked card gets clipped. */
+.emporium-shell .topbar .emporium-wallet {
+  flex: none;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 14px;
+  border-color: color-mix(in srgb, var(--burrow-gold, #e8c169) 26%, transparent);
+  background: rgba(0, 0, 0, .25);
+}
+
+.emporium-shell .topbar .emporium-wallet strong {
+  font-size: 16px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* The bypass note has nowhere to sit on one line; the shop page still says it. */
+.emporium-shell .topbar .emporium-wallet small {
+  display: none;
+}
+
+.emporium-shell .emporium-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* The shopkeeper stands beside the name. The base rule sizes him for the old
+   150px hero slot — bottom-aligned with a negative bottom margin so he could
+   overhang its edge — so every part of that has to be undone here or he hangs
+   out of the bar. */
+.emporium-shell .topbar .emporium-merchant {
+  flex: none;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  align-self: center;
+  margin: 0;
+  filter: none;
+}
+
+/* A contact shadow sized for a 150px sprite; meaningless at 44px. */
+.emporium-shell .topbar .emporium-merchant::after {
+  display: none;
+}
+
+.emporium-shell .topbar .emporium-merchant-sprite {
+  width: 100%;
+  height: 100%;
+  object-position: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .45));
+}
+
+.emporium-shell .topbar .emporium-music {
+  margin-top: 0;
+}
+
+.emporium-page.is-single-screen {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: clamp(12px, 2vh, 26px) clamp(16px, 3vw, 46px) clamp(14px, 2.2vh, 26px);
+  overflow: hidden;
+}
+
+.emporium-bar-brand {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.emporium-bar-brand strong {
+  font-family: Cinzel, Georgia, serif;
+  font-size: clamp(17px, 2vw, 24px);
+  line-height: 1;
+  color: var(--burrow-gold-pale, #fff0c4);
+}
+
+/* In the bar the wallet is a readout, not a card. */
+.is-single-screen .emporium-wallet {
+  flex: none;
+  min-width: 0;
+  padding: 8px 14px;
+  gap: 1px;
+}
+
+.is-single-screen .emporium-wallet strong {
+  font-size: clamp(16px, 1.8vw, 21px);
+}
+
+.is-single-screen .emporium-merchant {
+  flex: none;
+}
+
+.is-single-screen .emporium-music {
+  flex: none;
+  margin-top: 0;
+}
+
+/* Notices have nowhere to push to on a fixed-height page, so they float. */
+.emporium-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  width: min(560px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.emporium-toasts .notice {
+  margin: 0;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
+}
+
+@media (max-width: 720px), (max-height: 620px) {
+  .emporium-shell {
+    height: auto;
+    overflow: visible;
+  }
+
+  .emporium-page.is-single-screen {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
 }
