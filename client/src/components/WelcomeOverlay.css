@@ -1,0 +1,199 @@
+/* The greeting between the gateway and the table. Palette is the gateway's, so
+   the sign-in page appears to dissolve rather than to be replaced. */
+
+.welcome-veil {
+  --welcome-gold: #d2aa58;
+  --welcome-cyan: #70d5ea;
+  position: fixed;
+  inset: 0;
+  z-index: 90000;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(112, 213, 234, .13), transparent 42%),
+    radial-gradient(circle at 50% 54%, rgba(210, 170, 88, .11), transparent 48%),
+    #060912;
+  /* Opaque from the first frame. Fading it in let the dashboard show through
+     underneath before the greeting had covered it. */
+  opacity: 1;
+  transition:
+    opacity .9s cubic-bezier(.33, 0, .2, 1) .2s,
+    transform .9s cubic-bezier(.33, 0, .2, 1) .2s;
+}
+
+/* Opening outward as it clears reads as a door, not a dropped curtain. The
+   copy leaves first, so the veil is already empty when it dissolves. */
+.welcome-veil.is-leaving {
+  opacity: 0;
+  transform: scale(1.045);
+}
+
+.welcome-copy {
+  transition: opacity .42s ease-in, transform .42s ease-in;
+}
+
+.welcome-veil.is-leaving .welcome-copy {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.welcome-veil.is-leaving .welcome-rings {
+  opacity: 0;
+  transition: opacity .35s ease-in;
+}
+
+.welcome-rings {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.welcome-rings span {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border: 1px solid rgba(112, 213, 234, .2);
+  border-radius: 50%;
+  opacity: 0;
+  animation: welcome-ring 2.4s cubic-bezier(.16, .8, .3, 1) both;
+}
+
+.welcome-rings span:nth-child(2) {
+  border-color: rgba(210, 170, 88, .22);
+  animation-delay: .22s;
+}
+
+.welcome-rings span:nth-child(3) {
+  border-color: rgba(112, 213, 234, .12);
+  animation-delay: .44s;
+}
+
+.welcome-copy {
+  position: relative;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.welcome-eyebrow {
+  margin: 0;
+  font-size: clamp(11px, 1.5vw, 13px);
+  font-weight: 800;
+  letter-spacing: .42em;
+  text-indent: .42em; /* balances the trailing letter-space */
+  text-transform: uppercase;
+  color: var(--welcome-cyan);
+  opacity: .82;
+  animation: welcome-eyebrow-in .8s ease-out .12s both;
+}
+
+.welcome-name {
+  margin: 10px 0 0;
+  font-family: Cinzel, Georgia, serif;
+  font-size: clamp(34px, 7vw, 76px);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  background: linear-gradient(104deg, #f6e6bd 12%, var(--welcome-gold) 38%, #fff6dd 52%, var(--welcome-gold) 66%, #b98f3f 88%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation:
+    welcome-name-in 1s cubic-bezier(.16, .84, .28, 1) .26s both,
+    welcome-name-sheen 2.6s ease-in-out .5s both;
+}
+
+.welcome-rule {
+  display: block;
+  width: min(360px, 62vw);
+  height: 1px;
+  margin: 20px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(210, 170, 88, .75), transparent);
+  transform: scaleX(0);
+  animation: welcome-rule-in .9s cubic-bezier(.16, .84, .28, 1) .5s both;
+}
+
+.welcome-sub {
+  margin: 14px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: #8da2b4;
+  animation: welcome-eyebrow-in .9s ease-out .7s both;
+}
+
+@keyframes welcome-veil-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes welcome-ring {
+  0% { opacity: 0; transform: scale(.35); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: scale(2.6); }
+}
+
+@keyframes welcome-eyebrow-in {
+  from { opacity: 0; letter-spacing: .68em; }
+  to { opacity: .82; letter-spacing: .42em; }
+}
+
+@keyframes welcome-name-in {
+  from { opacity: 0; transform: translateY(16px) scale(.965); }
+  to { opacity: 1; transform: none; }
+}
+
+/* A single pass of light across the lettering, like a nameplate catching a
+   torch. Runs once; it is not a loop. */
+@keyframes welcome-name-sheen {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+@keyframes welcome-rule-in {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-veil,
+  .welcome-veil.is-leaving {
+    transition: opacity .6s ease;
+    transform: none;
+  }
+
+  .welcome-veil.is-leaving .welcome-copy {
+    transform: none;
+  }
+
+  .welcome-rings {
+    display: none;
+  }
+
+  .welcome-eyebrow,
+  .welcome-name,
+  .welcome-rule,
+  .welcome-sub {
+    animation: welcome-veil-in .3s ease-out both;
+    letter-spacing: normal;
+    transform: none;
+  }
+
+  .welcome-eyebrow {
+    letter-spacing: .42em;
+  }
+
+  .welcome-name {
+    letter-spacing: .04em;
+    background-position: 0 0;
+  }
+
+  .welcome-rule {
+    transform: scaleX(1);
+  }
+}

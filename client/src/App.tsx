@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { api, type User } from "./api";
 import { applyBackground, getBackground } from "./background";
@@ -17,10 +17,16 @@ import ProfilePage from "./pages/ProfilePage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
 import AchievementNotifications from "./components/AchievementNotifications";
 import CriticalRollOverlay from "./components/CriticalRollOverlay";
+import WelcomeOverlay from "./components/WelcomeOverlay";
 
 interface AuthState {
   user: User | null;
   setUser: (u: User | null) => void;
+  /**
+   * A session that begins with a deliberate sign-in, as opposed to setUser's
+   * quiet updates and the restore on load. Only this one is greeted.
+   */
+  signIn: (u: User, returning: boolean) => void;
   logout: () => Promise<void>;
 }
 
@@ -29,6 +35,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [greeting, setGreeting] = useState<{ name: string; returning: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -43,22 +50,34 @@ export default function App() {
     applyBackground(getBackground());
   }, []);
 
+  const signIn = (signedIn: User, returning: boolean) => {
+    setUser(signedIn);
+    setGreeting({ name: signedIn.display_name, returning });
+  };
+
+  const endGreeting = useCallback(() => setGreeting(null), []);
+
   const logout = async () => {
     await api("/api/auth/logout", { method: "POST" });
     setUser(null);
+    setGreeting(null);
     navigate("/login");
   };
 
   if (loading) return <div className="page-center muted">Loading…</div>;
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, signIn, logout }}>
       {/* The chosen backdrop, behind everything (driven by the --app-bg var). */}
       <div className="app-bg" aria-hidden />
       {/* Lives outside the routes so the 3D dice canvas survives navigation. */}
       <div id="dice-overlay" className="dice-overlay" />
       <CriticalRollOverlay />
       {user && <AchievementNotifications key={user.id} />}
+      {/* Above the routes: the destination mounts and paints behind it. */}
+      {greeting && (
+        <WelcomeOverlay name={greeting.name} returning={greeting.returning} onDone={endGreeting} />
+      )}
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

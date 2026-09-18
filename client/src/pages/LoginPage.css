@@ -973,3 +973,33 @@
 .gateway-reset-footer a:hover {
   color: var(--gateway-cyan);
 }
+
+/* Music control placement; the look lives in MusicToggle.css. */
+.gateway-music {
+  align-self: flex-start;
+  margin-top: 1.25rem;
+  color: var(--gateway-muted);
+}
+
+.gateway-music .music-toggle {
+  border-color: rgba(112, 213, 234, 0.18);
+  background: rgba(6, 9, 18, 0.55);
+}
+
+.gateway-music .music-toggle:hover {
+  border-color: rgba(210, 170, 88, 0.5);
+  background: rgba(210, 170, 88, 0.1);
+  color: var(--gateway-text);
+}
+
+.gateway-music .music-toggle[data-state="playing"] {
+  border-color: rgba(210, 170, 88, 0.36);
+}
+
+.gateway-music .music-toggle[data-state="playing"] svg {
+  color: var(--gateway-gold);
+}
+
+.gateway-music input[type="range"] {
+  accent-color: var(--gateway-gold);
+}

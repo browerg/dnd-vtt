@@ -1,6 +1,10 @@
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { api, type User } from "../api";
 import { useAuth } from "../App";
+import MusicToggle from "../components/MusicToggle";
+import { gatewayMusic, GATEWAY_MUSIC_KEY } from "../loginAudio";
+import { useBackgroundMusic } from "../useBackgroundMusic";
+import { useEntranceDone } from "../useEntranceDone";
 import "./LoginPage.css";
 
 interface DevUser {
@@ -10,7 +14,7 @@ interface DevUser {
 }
 
 export default function LoginPage() {
-  const { setUser } = useAuth();
+  const { signIn } = useAuth();
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -21,6 +25,10 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [devBusyId, setDevBusyId] = useState<number | null>(null);
   const [devUsers, setDevUsers] = useState<DevUser[]>([]);
+
+  // Held until the opening video is gone, so the two soundtracks never
+  // overlap. On a repeat visit the entrance is skipped and this is true at once.
+  const music = useBackgroundMusic(gatewayMusic, GATEWAY_MUSIC_KEY, useEntranceDone());
 
   const displayNameId = useId();
   const emailId = useId();
@@ -48,7 +56,7 @@ export default function LoginPage() {
         method: "POST",
         body: JSON.stringify({ userId }),
       });
-      setUser(user);
+      signIn(user, true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -77,7 +85,7 @@ export default function LoginPage() {
         method: "POST",
         body: JSON.stringify(body),
       });
-      setUser(user);
+      signIn(user, mode === "login");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -348,6 +356,8 @@ export default function LoginPage() {
               </div>
             </details>
           )}
+
+          <MusicToggle music={music} className="gateway-music" />
 
           <p className="gateway-footnote">
             One account. Every campaign. Your table remains yours.
