@@ -194,6 +194,7 @@
   height: 100%;
   min-height: 0;
   object-fit: contain;
+  border: 1px solid color-mix(in srgb, var(--fb-gold) 32%, transparent);
   border-radius: 12px;
 }
 

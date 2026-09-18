@@ -190,6 +190,14 @@
 .emporium-petal-preview i:nth-child(4) { left: 45px; top: 43px; transform: rotate(18deg); animation-delay: -1.1s; }
 .emporium-petal-preview i:nth-child(5) { left: 9px; top: 49px; transform: rotate(-58deg); animation-delay: -1.5s; }
 
+/* First Flame has no trail sprite of its own, so it lands on the petal shape
+   above — which is coloured for Rose Petals. Molten gold instead, or the
+   mythic previews itself as somebody else's cosmetic. */
+.trail-first-flame .emporium-petal-preview i {
+  background: linear-gradient(135deg, #fff3cf, #f0a92c 58%, #8a4a10);
+  box-shadow: 0 0 9px rgba(255, 176, 60, .7);
+}
+
 @keyframes emporium-vfx-float {
   0%, 100% { transform: translateY(2px) rotate(-3deg) scale(.96); }
   50% { transform: translateY(-3px) rotate(4deg) scale(1.05); }
