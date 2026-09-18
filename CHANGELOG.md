@@ -9,6 +9,44 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ---
 
+## 18 September 2026
+
+### The Emporium, rebuilt
+
+- The shop is one screen now, built around the newest bundle, instead of a long
+  scroll of grids. Relic of the First Flame leads it, with its key art.
+- Everything on that screen is a door. Click any feature in the list on the left,
+  or any card along the bottom, and that part of the catalogue opens over the top.
+  Close it with the X or the Escape key.
+- The Vivid Cache opens the same way, from the card on the bottom right.
+- Token borders and chat effects are listed but marked Soon. They are not part of
+  the bundle yet, and nothing charges you for them.
+
+### Sound at the table
+
+- The sign-in page and the Emporium both have music. It fades in, loops quietly,
+  and stops when you leave the page.
+- Hover the Music button to reveal a volume slider. Each page remembers its own
+  level, and the button mutes that page entirely.
+- The Emporium door opens as you walk in, and coins change hands when you unlock
+  a cosmetic or buy a cache opening.
+- Everything starts quiet and obeys the same sound mute as the critical roll
+  effects, so silencing the table silences all of it.
+- Music waits for the opening video to finish, so the two never talk over each
+  other.
+
+### Welcome back
+
+- Signing in greets you by name before the table appears. Your campaigns are
+  already loading behind the greeting, so it clears onto a page that is ready.
+
+### The Vivid Cache, slowed down
+
+- The reel runs for about eleven seconds with a long slowdown, instead of ending
+  almost as soon as it starts.
+- Quiet ticks follow the cards as they pass and slow down with them. The sound
+  mute silences them, and reduced motion skips them.
+
 ## 11 September 2026
 
 ### Rulers calibrated by the GM
