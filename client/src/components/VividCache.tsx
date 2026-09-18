@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { api } from "../api";
 import { useAuth } from "../App";
-import { buildCacheReel, CACHE_WINNER_INDEX } from "../../../shared/vividCacheReel";
+import { createCacheTickPlayer } from "../cacheSound";
+import { playCoinSound } from "../emporiumAudio";
+import { buildCacheReel, CACHE_WINNER_INDEX, CACHE_SPIN_DURATION_MS } from "../../../shared/vividCacheReel";
 import "./VividCache.css";
 
 type Rarity = "common" | "rare" | "epic" | "legendary" | "mythic";
@@ -22,6 +24,7 @@ export default function VividCache({ onChange }: { onChange: () => Promise<void>
   const [phase, setPhase] = useState<"idle" | "request" | "spin" | "reveal">("idle");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const sound = useRef<ReturnType<typeof createCacheTickPlayer>>(null);
   const lock = useRef(false);
   const strip = useRef<HTMLDivElement>(null);
   const continueButton = useRef<HTMLButtonElement>(null);
@@ -37,7 +40,7 @@ export default function VividCache({ onChange }: { onChange: () => Promise<void>
         setResult(data.pending); setReel(buildCacheReel(data.rewards, data.pending.reward)); setPhase("reveal");
       }
     }).catch(e => { if (active) setError(e.message); });
-    return () => { active = false; };
+    return () => { active = false; sound.current?.dispose(); sound.current = null; };
   }, []);
 
   useEffect(() => {
@@ -45,12 +48,26 @@ export default function VividCache({ onChange }: { onChange: () => Promise<void>
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const animation = strip.current.animate([
       { transform: position(2) }, { transform: position(CACHE_WINNER_INDEX) },
-    ], { duration: reduced.matches ? 0 : 6200, easing: "cubic-bezier(.08,.65,.12,1)", fill: "forwards" });
+    ], { duration: reduced.matches ? 0 : CACHE_SPIN_DURATION_MS, easing: "cubic-bezier(.12,.52,.18,1)", fill: "forwards" });
     const finish = () => animation.finish();
     reduced.addEventListener("change", finish);
     let active = true;
+    let frame = 0;
+    let previousCard = 2;
+    const followReel = () => {
+      const progress = Number(animation.effect?.getComputedTiming().progress ?? 0);
+      const card = Math.floor(2 + (CACHE_WINNER_INDEX - 2) * progress);
+      // createCacheTickPlayer checks the table's sound mute on every tick.
+      if (card !== previousCard && !reduced.matches) sound.current?.tick();
+      previousCard = card;
+      frame = requestAnimationFrame(followReel);
+    };
+    if (!reduced.matches) frame = requestAnimationFrame(followReel);
     animation.finished.then(() => { if (active) { lock.current = false; setPhase("reveal"); } }).catch(() => {});
-    return () => { active = false; reduced.removeEventListener("change", finish); animation.cancel(); };
+    return () => {
+      active = false; cancelAnimationFrame(frame); reduced.removeEventListener("change", finish); animation.cancel();
+      sound.current?.dispose(); sound.current = null;
+    };
   }, [phase, reel]);
   useEffect(() => {
     if (phase !== "reveal") return;
@@ -63,15 +80,18 @@ export default function VividCache({ onChange }: { onChange: () => Promise<void>
   const open = async () => {
     if (lock.current || phase !== "idle" || !catalog) return;
     lock.current = true; setPhase("request"); setError(""); setNotice("");
+    sound.current?.dispose();
+    sound.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? null : createCacheTickPlayer();
     try {
       requestId.current ||= localStorage.getItem(storageKey) || crypto.randomUUID();
       // Persist before sending: ambiguous network failures must retry this key.
       localStorage.setItem(storageKey, requestId.current);
       const selected = await api<Result>("/api/shop/cache/open", { method: "POST", body: JSON.stringify({ requestId: requestId.current }) });
+      playCoinSound(); // the spin is a purchase too — pay the merchant first
       setResult(selected); setCatalog({ ...catalog, balance: selected.balance });
       setReel(buildCacheReel(catalog.rewards, selected.reward)); setPhase("spin");
       void onChange().catch(() => {});
-    } catch (e) { setError((e as Error).message + " Retry to recover the same opening safely."); setPhase("idle"); lock.current = false; }
+    } catch (e) { sound.current?.dispose(); sound.current = null; setError((e as Error).message + " Retry to recover the same opening safely."); setPhase("idle"); lock.current = false; }
   };
   const dismiss = async () => {
     if (!result || lock.current) return;

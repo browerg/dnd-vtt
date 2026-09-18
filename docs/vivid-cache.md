@@ -62,6 +62,12 @@ it with no conditional rare neighbors or near-miss adjustments. Fixed card spaci
 centers the selected card at every viewport width. Reduced motion skips the reel
 animation and disables the new particles and animated material glow.
 
+The reel runs for 11 seconds with 56 card positions of travel and a gradual
+slowdown. Quiet procedural ticks follow actual card crossings, slowing with the
+reel. Ticks have no control of their own: the table's existing critical-roll
+sound mute suppresses them, and reduced-motion and recovered reveals are silent
+either way. Timing is configured in `shared/vividCacheReel.ts`.
+
 Run `npm run test --workspace=server`, `npm run typecheck --workspace=server`,
 and `npm run build`. Cache tests use isolated in-memory SQLite databases and cover
 insufficient balance, debit/grants, exact weighted selection, duplicate refunds,

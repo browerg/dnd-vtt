@@ -108,7 +108,7 @@ test("reel preserves the committed winner with unbiased neighbors on both sides"
   const winner = CACHE_REWARDS.at(-1)!;
   const reel = buildCacheReel(CACHE_REWARDS, winner, () => 0);
   assert.equal(reel[CACHE_WINNER_INDEX], winner);
-  assert.equal(reel.length, 39);
+  assert.equal(reel.length - CACHE_WINNER_INDEX - 1, 6);
   assert.ok(reel.slice(0, CACHE_WINNER_INDEX).every(r => r === CACHE_REWARDS[0]));
   assert.ok(reel.slice(CACHE_WINNER_INDEX + 1).every(r => r === CACHE_REWARDS[0]));
 });
