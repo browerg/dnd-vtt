@@ -11,6 +11,28 @@ a group inside it, and `- ` is a bullet. Newest at the top.
 
 ## 18 September 2026
 
+### Relic of the First Flame
+
+- The bundle's dice are here. Obsidian, with molten cracks running through them:
+  they breathe slowly while they sit on the table, burn hotter as they tumble,
+  and cool again once they land.
+- Embers trail behind them through the air, and a natural 20 sets the whole roll
+  alight for a moment.
+- Equipping the relic does not overwrite a trail or a celebration you already
+  chose — yours still wins. The relic's own only fill in where you have not
+  picked something.
+- Reduced motion holds the glow steady and skips the embers.
+- None of this changes what you roll. Results are still decided by the server,
+  exactly as before.
+
+### A closer look before you buy
+
+- The key art fills its frame in the Emporium now, instead of sitting in the
+  middle with empty bars down either side.
+- There is a Preview dice roll button on the artwork, and it is free. Anyone can
+  watch the relic roll before deciding to unlock it — no VCoins are spent,
+  nothing is equipped, and the dice you already use stay exactly as they were.
+
 ### The Emporium, rebuilt
 
 - The shop is one screen now, built around the newest bundle, instead of a long
