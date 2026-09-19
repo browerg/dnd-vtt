@@ -70,6 +70,7 @@ export interface ChatReplyPreview {
 }
 
 export interface ChatMessage {
+  chatFlair?: string;
   id: number;
   campaignId: number;
   userId: number;

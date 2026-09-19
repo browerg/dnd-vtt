@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ChatMessage, Member } from "../api";
 import type { CharacterSummary } from "../sheet";
 import { Avatar } from "./Avatar";
+import "./RelicAppearance.css";
 import { chatSoundEnabled, playChatSound, setChatSoundEnabled } from "../chatSound";
 
 type Tab = "ic" | "ooc" | "whisper";
@@ -223,7 +224,7 @@ export default function ChatPanel({
                 size={18}
               />
             )}
-            <span className="chat-author">
+            <span className={`chat-author${m.chatFlair === "chat-first-flame" ? " relic-chat-name" : ""}`}>
               {m.channel === "ic" && m.speaker ? (
                 <>
                   {m.speaker} <span className="muted">({m.userName})</span>

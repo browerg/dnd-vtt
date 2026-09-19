@@ -60,6 +60,20 @@ test("same and different request IDs share one pending result, including after r
     assert.equal(duplicate.duplicate, true); assert.equal(duplicate.refund, 100); assert.equal(f.balance(), 600);
   } finally { f.db.close(); }
 });
+test("original five-piece Relic owners still receive the Mythic duplicate refund", () => {
+  const f = fixture(1000, () => CACHE_REWARDS.at(-1)!);
+  try {
+    for (const id of ["relic-first-flame", "dice-first-flame", "trail-first-flame", "crit20-first-flame", "title-relic-owner"]) {
+      f.db.prepare("INSERT INTO cosmetic_unlocks VALUES (1, ?)").run(id);
+    }
+    assert.ok(RELIC_UNLOCKS.every(id => f.store.owned(1, id)));
+    const result = f.store.open(1, key);
+    assert.equal(result.duplicate, true);
+    assert.equal(result.refund, 400);
+    assert.equal(f.balance(), 900);
+  } finally { f.db.close(); }
+});
+
 test("mythic grants every bundle component; duplicates refund without extra copies", () => {
   const f = fixture(2000, () => CACHE_REWARDS.at(-1)!);
   try {

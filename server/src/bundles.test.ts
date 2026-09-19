@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { BUNDLES, COSMETICS, bundlesNewestFirst } from "./shop.js";
+import { BUNDLES, COSMETICS, bundlesNewestFirst } from "./shopCatalog.js";
 
 // COSMETICS is a literal-typed array; widen so a bundle id can be checked.
 const ids = new Set<string>(COSMETICS.map((item) => item.id));

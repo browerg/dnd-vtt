@@ -18,7 +18,7 @@ interface Catalog { cost: number; balance: number; rewards: Reward[]; refunds: R
 const rarities: Rarity[] = ["common", "rare", "epic", "legendary", "mythic"];
 const position = (index: number) => `translateX(calc(50% - ${index * 160 + 74}px))`;
 
-export default function VividCache({ onChange }: { onChange: () => Promise<void> }) {
+export default function VividCache({ onChange, onPreviewDice }: { onChange: () => Promise<void>; onPreviewDice?: () => void }) {
   const { user, setUser } = useAuth();
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -111,7 +111,7 @@ export default function VividCache({ onChange }: { onChange: () => Promise<void>
     try {
       await api("/api/auth/me/dice", { method: "PUT", body: JSON.stringify({ theme: "first-flame" }) });
       if (user) setUser({ ...user, diceTheme: "first-flame", relicOwner: true });
-      setNotice("First Flame dice equipped. Choose its trail and Nat 20 effect below; your other selections stay yours.");
+      setNotice("First Flame dice equipped. Open the bundle's features in the Emporium to equip its other pieces separately.");
     } catch (e) { setError((e as Error).message); }
   };
   const mythic = phase === "reveal" && result?.reward.rarity === "mythic";
@@ -133,7 +133,7 @@ export default function VividCache({ onChange }: { onChange: () => Promise<void>
       <p>{result.duplicate ? `Already owned · ${result.refund} VCoins refunded` : "Added to your collection"}</p>
       <button type="button" ref={continueButton} onClick={dismiss}>Continue</button>
     </div>}
-    {ownsRelic && <p className="cache-relic-owned">◆ Relic Owner <button type="button" onClick={equipDice}>Equip First Flame dice</button> <button type="button" onClick={() => void previewDice(FIRST_FLAME.id)}>Preview {FIRST_FLAME.label}</button></p>}
+    {ownsRelic && <p className="cache-relic-owned">◆ Relic Owner <button type="button" onClick={equipDice}>Equip First Flame dice</button> <button type="button" disabled={phase === "spin" || phase === "request"} onClick={() => onPreviewDice ? onPreviewDice() : void previewDice(FIRST_FLAME.id)}>Preview {FIRST_FLAME.label}</button></p>}
     <ul className="cache-legend" aria-label="Rarity odds and duplicate refunds">{rarities.map(rarity => <li key={rarity} className={`rarity-${rarity}`}><strong>{rarity}</strong><span>{((catalog?.rewards.filter(r => r.rarity === rarity).reduce((n, r) => n + r.weight, 0) ?? 0) / total * 100).toFixed(1)}%</span><small>Duplicate: {catalog?.refunds[rarity] ?? "—"} VCoins</small></li>)}</ul>
       <details><summary>Reward collection & how it works</summary>
       <p>Each opening uses the same odds. Duplicate cosmetics become a partial refund. Reel neighbors are decorative random draws and do not change your reward.</p>

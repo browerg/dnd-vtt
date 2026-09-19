@@ -101,6 +101,10 @@ export default function CampaignPage() {
     socket.on("character:delete", (msg: { campaignId: number }) => {
       if (msg.campaignId === campaignId) loadCharacters();
     });
+    socket.on("appearance:update", (msg: { campaignId: number; userId: number; chatFlair: string }) => {
+      if (msg.campaignId === campaignId) setMessages(previous => previous.map(message =>
+        message.userId === msg.userId ? { ...message, chatFlair: msg.chatFlair } : message));
+    });
     socket.on("chat", (msg: ChatMessage) => {
       if (msg.campaignId === campaignId) setMessages((prev) => [...prev.slice(-199), msg]);
     });

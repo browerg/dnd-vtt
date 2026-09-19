@@ -12,9 +12,10 @@ import ShopDialog from "../components/ShopDialog";
 import { emporiumDoor, emporiumMusic, EMPORIUM_MUSIC_KEY, playCoinSound, primeCoinSound } from "../emporiumAudio";
 import { useBackgroundMusic } from "../useBackgroundMusic";
 import { DICE_COSMETICS } from "../diceCosmetics";
+import "../components/RelicAppearance.css";
 
-type CosmeticSlot = "nat20" | "nat1" | "turnStart";
-type ShopItemType = "dice-trail" | "nat20-effect" | "nat1-effect" | "turn-start-effect";
+type CosmeticSlot = "nat20" | "nat1" | "turnStart" | "tokenBorder" | "chatFlair";
+type ShopItemType = "dice-trail" | "nat20-effect" | "nat1-effect" | "turn-start-effect" | "token-border" | "chat-flair";
 
 interface ShopItem {
   id: string;
@@ -185,10 +186,10 @@ export default function ShopPage() {
     }
   };
 
-  const diceTrails = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "dice-trail"), [items]);
-  const nat20Effects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "nat20-effect"), [items]);
-  const nat1Effects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "nat1-effect"), [items]);
-  const turnStartEffects = useMemo(() => items.filter((item) => (item.rarity !== "mythic" || item.owned) && item.type === "turn-start-effect"), [items]);
+  const diceTrails = useMemo(() => items.filter((item) => item.type === "dice-trail"), [items]);
+  const nat20Effects = useMemo(() => items.filter((item) => item.type === "nat20-effect"), [items]);
+  const nat1Effects = useMemo(() => items.filter((item) => item.type === "nat1-effect"), [items]);
+  const turnStartEffects = useMemo(() => items.filter((item) => item.type === "turn-start-effect"), [items]);
 
   // The bottom strip. Counts come straight from the catalogue, so a card can
   // never advertise a category that has nothing in it.
@@ -199,13 +200,15 @@ export default function ShopPage() {
         { id: "nat20-effect", label: "Nat 20 effects", caption: "The celebration everyone sees.", blurb: "Equip the celebration everyone sees when you land a natural 20.", list: nat20Effects },
         { id: "nat1-effect", label: "Nat 1 effects", caption: "Fail with some style.", blurb: "When the dice betray you, at least fail with style.", list: nat1Effects },
         { id: "turn-start-effect", label: "Turn start", caption: "Your entrance, every round.", blurb: "A short token-centered entrance that fires when initiative reaches your character.", list: turnStartEffects },
+        { id: "token-border", label: "Token border", caption: "Carry the flame.", blurb: "Preview freely. Relic owners can equip a border for their character tokens or remove it here.", list: items.filter(item => item.type === "token-border") },
+        { id: "chat-flair", label: "Chat effect", caption: "A mark of the First Flame.", blurb: "A gold accent for your campaign chat name. Equipping is optional and requires ownership.", list: items.filter(item => item.type === "chat-flair") },
       ].filter((category) => category.list.length > 0),
-    [diceTrails, nat20Effects, nat1Effects, turnStartEffects]
+    [items, diceTrails, nat20Effects, nat1Effects, turnStartEffects]
   );
 
   const categories = useMemo(
     () =>
-      catalogue.map(({ id, label, caption, list }) => ({
+      catalogue.filter(category => category.id !== "token-border" && category.id !== "chat-flair").map(({ id, label, caption, list }) => ({
         id,
         label,
         caption,
@@ -232,9 +235,14 @@ export default function ShopPage() {
     setError("");
 
     try {
+      if (item.type === "token-border" || item.type === "chat-flair") {
+        setNotice("This is a free preview. Your equipped appearance has not changed.");
+        return;
+      }
+      // Native dialogs sit above the shared dice and critical overlays.
+      setOpenCategory(null);
       if (isDiceTrail(item)) {
-        setDiceTrailStyle(item.effect);
-        await previewDice("white");
+        await previewDice("white", item.effect);
         setNotice(`Previewed ${item.name}.`);
       } else if (isTurnStartEffect(item)) {
         if (item.effect === "none") {
@@ -315,7 +323,27 @@ export default function ShopPage() {
     }
   };
 
+  const clearAppearance = async (item: ShopItem) => {
+    setBusyId(item.id); setError("");
+    try {
+      await api("/api/shop/appearance/clear", { method: "POST", body: JSON.stringify({ slot: item.slot }) });
+      await loadShop();
+      setNotice(`Removed ${item.name}.`);
+    } catch (cause) { setError((cause as Error).message); }
+    finally { setBusyId(null); }
+  };
+
   const renderPreview = (item: ShopItem) => {
+    if (item.type === "token-border") return <div className="relic-appearance-preview" aria-label="First Flame token border preview">
+      <span className="relic-preview-token">
+        {shop?.previewCharacter?.imageUrl ? <img src={shop.previewCharacter.imageUrl} alt="Character token" /> : <strong>PC</strong>}
+        <span className="relic-token-ring" aria-hidden="true" />
+      </span>
+    </div>;
+    if (item.type === "chat-flair") return <div className="relic-appearance-preview relic-preview-chat" aria-label="First Flame chat preview">
+      <strong className="relic-chat-name">{shop?.previewCharacter?.name || "Your name"}</strong>
+      <p>Ready for the next adventure.</p>
+    </div>;
     if (isDiceTrail(item)) {
       return (
         <span className={`emporium-effect-preview trail-${item.effect}`} aria-hidden>
@@ -410,6 +438,7 @@ export default function ShopPage() {
         </span>
       </div>
 
+      {shownCategory && (error || notice) && <p role="status" className="notice">{error || notice}</p>}
       <div className="emporium-grid">
         {sectionItems.map((item) => {
           const busy = busyId === item.id;
@@ -442,6 +471,8 @@ export default function ShopPage() {
                   <span className="emporium-equipped">EQUIPPED</span>
                 ) : item.owned ? (
                   <span className="emporium-owned">OWNED</span>
+                ) : item.rarity === "mythic" ? (
+                  <span className="emporium-rarity">Vivid Cache exclusive</span>
                 ) : (
                   // A brass tag on a string, hung off the shelf edge.
                   <span className="emporium-pricetag">
@@ -466,11 +497,13 @@ export default function ShopPage() {
                   <button
                     type="button"
                     className="primary"
-                    disabled={busy || equipped}
-                    onClick={() => void equip(item)}
+                    disabled={busy || (equipped && item.type !== "token-border" && item.type !== "chat-flair")}
+                    onClick={() => void (equipped ? clearAppearance(item) : equip(item))}
                   >
-                    {equipped ? "Equipped" : "Equip"}
+                    {equipped ? (item.type === "token-border" || item.type === "chat-flair" ? "Remove" : "Equipped") : "Equip"}
                   </button>
+                ) : item.rarity === "mythic" ? (
+                  <span className="muted small">Unlock the Relic in Vivid Cache to equip.</span>
                 ) : (
                   <button
                     type="button"
@@ -584,7 +617,7 @@ export default function ShopPage() {
         )}
 
         {/* Notices float over the panel: the page has no room to grow. */}
-        {(error || notice) && (
+        {!shownCategory && (error || notice) && (
           <div className="emporium-toasts" role="status">
             {error && <div className="notice error">{error}</div>}
             {notice && <div className="notice">{notice}</div>}
@@ -608,7 +641,7 @@ export default function ShopPage() {
         subtitle="One cache. One cosmetic. A chance at the First Flame."
         onClose={() => setCacheOpen(false)}
       >
-        <VividCache onChange={loadShop} />
+        <VividCache onChange={loadShop} onPreviewDice={() => { setCacheOpen(false); void previewFeaturedDice(); }} />
       </ShopDialog>
     </div>
   );

@@ -30,7 +30,7 @@ const EVENT_NAME = "tabletop:critical-roll";
 let eventId = 0;
 
 const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame"]);
-const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris"]);
+const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris", "first-flame"]);
 
 function currentSystem(): "remnant" | "dnd5e" {
   const system = document.querySelector<HTMLElement>("[data-system]")?.dataset.system;

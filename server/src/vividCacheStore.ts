@@ -1,9 +1,10 @@
 import { randomInt } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
+import { ownsCosmetic, RELIC_ID, RELIC_ADDITIONS } from "./relicOwnership.js";
+export { RELIC_ID } from "./relicOwnership.js";
 
 export const CACHE_COST = 500;
-export const RELIC_ID = "relic-first-flame";
-export const RELIC_UNLOCKS = [RELIC_ID, "dice-first-flame", "trail-first-flame", "crit20-first-flame", "title-relic-owner"];
+export const RELIC_UNLOCKS = [RELIC_ID, "dice-first-flame", "trail-first-flame", "crit20-first-flame", "title-relic-owner", ...RELIC_ADDITIONS];
 export const DUPLICATE_REFUNDS = { common: 100, rare: 150, epic: 200, legendary: 300, mythic: 400 };
 export type CacheRarity = keyof typeof DUPLICATE_REFUNDS;
 export interface CacheReward {
@@ -20,7 +21,7 @@ export const CACHE_REWARDS: CacheReward[] = [
   { id: "lightning", name: "Lightning Trail", rarity: "rare", weight: 1100, cosmeticType: "dice-trail", unlockIds: ["trail-lightning"], duplicateBehavior: "refund", preview: { symbol: "ϟ", description: "Electric arcs around the dice." } },
   { id: "storm", name: "Lightning Strike", rarity: "epic", weight: 600, cosmeticType: "nat20-effect", unlockIds: ["crit20-lightning"], duplicateBehavior: "refund", preview: { symbol: "ϟ", description: "A critical-success electrical surge." } },
   { id: "rose", name: "Rose Burst", rarity: "legendary", weight: 180, cosmeticType: "nat20-effect", unlockIds: ["crit20-rose"], duplicateBehavior: "refund", preview: { symbol: "❋", description: "Crimson petals celebrate a natural 20." } },
-  { id: RELIC_ID, name: "Relic of the First Flame", rarity: "mythic", weight: 20, cosmeticType: "bundle", unlockIds: RELIC_UNLOCKS, duplicateBehavior: "refund", preview: { symbol: "◆", description: "Obsidian dice, molten trail, First Flame critical and Relic Owner title." } },
+  { id: RELIC_ID, name: "Relic of the First Flame", rarity: "mythic", weight: 20, cosmeticType: "bundle", unlockIds: RELIC_UNLOCKS, duplicateBehavior: "refund", preview: { symbol: "◆", description: "Obsidian dice, molten trail, Nat 20 and Nat 1 effects, token border, gold chat name and Relic Owner title." } },
 ];
 
 export function selectCacheReward(ticket = randomInt(CACHE_REWARDS.reduce((n, r) => n + r.weight, 0))) {
@@ -52,7 +53,7 @@ export function createVividCacheStore(db: DatabaseSync, startingBalance: number,
     UNIQUE(user_id, request_id)
   );
   CREATE UNIQUE INDEX IF NOT EXISTS vivid_cache_one_pending ON vivid_cache_openings(user_id) WHERE acknowledged_at IS NULL;`);
-  const owned = (userId: number, id: string) => !!db.prepare("SELECT 1 FROM cosmetic_unlocks WHERE user_id = ? AND cosmetic_id = ?").get(userId, id);
+  const owned = (userId: number, id: string) => ownsCosmetic(db, userId, id);
   const pending = (userId: number): CacheResult | null => {
     const row = db.prepare("SELECT result_json FROM vivid_cache_openings WHERE user_id = ? AND acknowledged_at IS NULL").get(userId);
     return row ? JSON.parse(String(row.result_json)) : null;

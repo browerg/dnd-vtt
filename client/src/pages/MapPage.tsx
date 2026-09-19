@@ -1,3 +1,4 @@
+import "../components/RelicAppearance.css";
 import CampaignThemeBrand from "../components/CampaignThemeBrand";
 import CampaignThemePicker from "../components/CampaignThemePicker";
 import { useCampaignTheme, type ThemeId } from "../theme";
@@ -86,7 +87,9 @@ interface RulerLine {
   y2: number;
 }
 
+
 interface Token {
+  tokenBorder?: string;
   id: number;
   mapId: number;
   characterId: number | null;
@@ -786,6 +789,10 @@ export default function MapPage() {
         const midpoint = sentAt + (receivedAt - sentAt) / 2;
         serverClockOffsetRef.current = serverNow - midpoint;
       });
+    });
+    socket.on("appearance:update", (m: { campaignId: number; userId: number; tokenBorder: string }) => {
+      if (m.campaignId === campaignId) setTokens(previous => previous.map(token =>
+        token.ownerId === m.userId ? { ...token, tokenBorder: m.tokenBorder } : token));
     });
     socket.on("map:update", (m: { campaignId: number }) => {
       if (m.campaignId === campaignId) loadAll();
@@ -2442,6 +2449,7 @@ Choose Cancel to permanently delete it instead.`
                     }}
                     title={t.name}
                   >
+                    {t.tokenBorder === "border-first-flame" && <span className="relic-token-ring" aria-hidden="true" />}
                     {t.auraMax != null && t.aura != null && t.aura > 0 && (
                       <span className="token-aura-shell" aria-hidden="true" />
                     )}

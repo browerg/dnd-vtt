@@ -21,7 +21,8 @@ server results, ownership rules, or gameplay.
   the theme's default; equipping the dice does not overwrite that selection.
 - `CriticalRollOverlay` handles `tabletop:critical-roll`. The theme supplies a
   default Nat 20 effect; `/api/shop/critical-effect` indicates whether the roller
-  explicitly equipped another effect, which takes precedence. Nat 1 is unchanged.
+  explicitly equipped another effect, which takes precedence. Nat 1 defaults are
+  unchanged; owners can separately equip First Flame · Ashfall in the Emporium.
 
 The controller pulses slowly at idle, strengthens during rolls, settles after
 landing, and adds one 650ms Nat 20 flare. The engine stops rendering after landing,
@@ -35,8 +36,11 @@ pulse settings, and trail/critical IDs through `DiceCosmetic`.
 
 ## Selection and validation
 
-Relic owners can equip and preview the dice in Vivid Cache. Trail and critical
-effect components remain available through the existing cosmetic selectors.
+Everyone can preview the dice using the center artwork's Preview dice roll button.
+Relic owners equip the dice in Vivid Cache. Trails and both critical effects use
+the existing cosmetic selectors; token borders and chat accents have their own
+Equip/Remove panels accessed from the bundle's feature list. Previewing a trail
+uses a queue-entry override, never a temporary change to saved preferences.
 
 Run `npm run typecheck --workspace=server`, `npx tsc --noEmit -p client/tsconfig.json`,
 `npm test --workspace=server`, and `npm run build`.

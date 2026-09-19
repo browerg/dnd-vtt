@@ -1,3 +1,4 @@
+import { appearance } from "./appearance.js";
 import { Router, type Request } from "express";
 import { readRulerCalibration, validateRulerCalibration } from "../../shared/mapRuler.js";
 import multer from "multer";
@@ -73,7 +74,9 @@ const mapAudioUpload = multer({
   fileFilter: (_req, file, cb) => cb(null, file.mimetype in MAP_AUDIO_TYPES),
 });
 
+
 export interface TokenPayload {
+  tokenBorder: string;
   id: number;
   mapId: number;
   characterId: number | null;
@@ -112,6 +115,7 @@ const TOKEN_SELECT = `SELECT ${TOKEN_COLS}
   FROM tokens t LEFT JOIN characters c ON c.id = t.character_id`;
 
 const toToken = (r: any): TokenPayload => ({
+  tokenBorder: r.owner_id ? appearance.equipped(r.owner_id).tokenBorder : "",
   id: r.id,
   mapId: r.map_id,
   characterId: r.character_id,

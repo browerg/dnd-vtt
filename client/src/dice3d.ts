@@ -22,6 +22,7 @@ interface RollAnimationMeta {
 interface QueueEntry {
   notation: string;
   theme: string;
+  previewTrail?: DiceTrailStyle;
   critical: CriticalRollKind | null;
   meta: RollAnimationMeta;
   onLanded: () => void;
@@ -458,9 +459,9 @@ function drawTrailSprites(
 
   return visible;
 }
-function startDiceTrail(diceBox: DiceBox, defaultTrail?: string): () => void {
+function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: DiceTrailStyle): () => void {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
-  const style = getDiceTrailStyle(defaultTrail);
+  const style = previewTrail ?? getDiceTrailStyle(defaultTrail);
   const lifetime = style === "first-flame" ? 260 : TRAIL_LIFETIME_MS;
   const internals = diceBox as unknown as DiceBoxTrailInternals;
   const canvas = getTrailCanvas();
@@ -679,7 +680,7 @@ export function animateRoll(
 }
 
 // Customize page: throw a themed set with random results, just to look at.
-export function previewDice(theme: string): Promise<void> {
+export function previewDice(theme: string, previewTrail?: DiceTrailStyle): Promise<void> {
   if (document.hidden) return Promise.resolve();
   if (queue.length >= 3) return Promise.resolve();
 
@@ -687,6 +688,7 @@ export function previewDice(theme: string): Promise<void> {
     queue.push({
       notation: "2d10+1d6",
       theme: theme || "white",
+      previewTrail,
       critical: null,
       meta: {},
       onLanded,
@@ -724,7 +726,7 @@ async function drain(): Promise<void> {
         // one stuck animation wedge the queue forever.
         cosmetic?.setState("rolling");
         const rollPromise = box!.roll(entry.notation);
-        const stopTrail = startDiceTrail(box!, definition?.trailId);
+        const stopTrail = startDiceTrail(box!, definition?.trailId, entry.previewTrail);
         let timeout: ReturnType<typeof setTimeout> | undefined;
 
         try {

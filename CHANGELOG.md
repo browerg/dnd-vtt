@@ -20,6 +20,10 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **The complete First Flame set** — Relic owners can now equip a molten-gold
+  token border, a subtle gold chat name, and Ashfall, an exclusive natural-1 effect.
+  Open each feature on the Emporium's left rail to preview it or equip it.
+  Earlier Relic winners receive access too; nothing replaces your current choices.
 - **Relic of the First Flame** — the bundle's dice are here. Obsidian, with molten
   cracks that breathe while the dice sit on the table, burn hotter as they tumble,
   and cool once they land. Embers trail behind them, and a natural 20 sets the roll
@@ -29,8 +33,8 @@ is the one piece of markup the launcher renders.
 - **The Emporium, rebuilt** — one screen built around the newest bundle instead of
   a long scroll of grids. Everything on it is a door: click any feature on the left
   or any card along the bottom and that part of the catalogue opens over the top,
-  closing with X or Escape. The Vivid Cache opens the same way. Token borders and
-  chat effects are listed but marked Soon, and nothing charges you for them.
+  closing with X or Escape. The Vivid Cache opens the same way. Bundle pieces can
+  be previewed freely, and cache-exclusive pieces require the Relic to equip.
 - **Sound at the table** — the sign-in page and the Emporium have music that fades
   in, loops quietly and stops when you leave. Hover the Music button for a volume
   slider; each page remembers its own level. The Emporium door opens as you walk in
@@ -39,6 +43,8 @@ is the one piece of markup the launcher renders.
 
 ### Minor changes
 
+- **Safe trail previews** — trying a dice trail no longer changes your saved
+  selection. Use Equip when you want to keep it.
 - **A closer look before you buy** — the key art fills its frame now instead of
   sitting between empty bars, and there's a free Preview dice roll button on it.
   Anyone can watch the relic roll before unlocking it: no VCoins spent, nothing

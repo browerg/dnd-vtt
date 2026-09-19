@@ -1,0 +1,65 @@
+/* An inset ring leaves token art, condition markers, HP and Aura readable. */
+.relic-token-ring {
+  position: absolute;
+  inset: 1px;
+  z-index: 4;
+  border: 2px solid #ffc66d;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 5px #ff9d3880, inset 0 0 4px #ffb84d80;
+  animation: relic-ring-breathe 4s ease-in-out infinite;
+}
+.relic-token-ring::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2px solid transparent;
+  border-top-color: #fff0bf;
+  border-bottom-color: #ce701e;
+  border-radius: inherit;
+  transform: rotate(-32deg);
+}
+.relic-chat-name,
+.campaign-themed .chat-author.relic-chat-name {
+  color: #ffe0a0;
+  text-shadow: 0 0 7px #ed9e343d;
+}
+.relic-chat-name::before {
+  content: "◆";
+  color: #f8b951;
+  font-size: .7em;
+  margin-right: .45em;
+  text-shadow: none;
+}
+.campaign-themed:is([data-theme="beacon-daybreak"], [data-theme="atlas-skyglass"], [data-theme="mistral-bloom"], [data-theme="vacuo-sunburst"], [data-theme="aura-pop"]) .chat-author.relic-chat-name {
+  color: #805008;
+  text-shadow: none;
+}
+.relic-appearance-preview {
+  display: grid;
+  place-items: center;
+  min-height: 100px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #191318;
+}
+.relic-preview-token {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #302c3d;
+  color: #fff2d1;
+}
+.relic-preview-token img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.relic-preview-chat { color: #eee5d8; text-align: left; }
+.relic-preview-chat p { margin: 8px 0 0; color: #eee5d8; text-shadow: none; }
+@keyframes relic-ring-breathe {
+  0%, 100% { box-shadow: 0 0 4px #ff9d3860, inset 0 0 3px #ffb84d60; }
+  50% { box-shadow: 0 0 8px #ff9d3890, inset 0 0 5px #ffb84d80; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .relic-token-ring { animation: none; }
+}

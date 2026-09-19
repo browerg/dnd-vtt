@@ -1,5 +1,6 @@
 import { Router, type Request } from "express";
 import { db } from "./db.js";
+import { appearance } from "./appearance.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
@@ -10,6 +11,7 @@ const MAX_BODY = 4000;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
 
 export interface ChatMessage {
+  chatFlair: string;
   id: number;
   campaignId: number;
   userId: number;
@@ -48,9 +50,14 @@ chatRouter.get("/:id/messages", (req, res) => {
        WHERE m.campaign_id = ? ORDER BY m.id DESC LIMIT 200`
     )
     .all(campaignId) as any[];
+  const flairByUser = new Map<number, string>();
+  for (const row of rows) {
+    if (!flairByUser.has(row.user_id)) flairByUser.set(row.user_id, appearance.equipped(row.user_id).chatFlair);
+  }
   const messages = rows
     .map(
       (r): ChatMessage => ({
+        chatFlair: flairByUser.get(r.user_id) ?? "",
         id: r.id,
         campaignId: r.campaign_id,
         userId: r.user_id,
@@ -132,6 +139,7 @@ chatRouter.post("/:id/messages", (req, res) => {
     .run(campaignId, user(req).id, channel, targetUserId, speaker, body, replyToId);
 
   const message: ChatMessage = {
+    chatFlair: appearance.equipped(user(req).id).chatFlair,
     id: Number(info.lastInsertRowid),
     campaignId,
     userId: user(req).id,

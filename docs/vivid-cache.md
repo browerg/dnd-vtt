@@ -39,8 +39,9 @@ admin/debug endpoint.
 ## Relic of the First Flame
 
 The bundle grants `relic-first-flame`, `dice-first-flame`, `trail-first-flame`,
-`crit20-first-flame`, and `title-relic-owner` in the existing unlock table. It is
-excluded from normal purchases, including GM/free-cosmetics bypasses. An authorized administrator can explicitly grant all five IDs in a database
+`crit20-first-flame`, `title-relic-owner`, `crit1-first-flame`,
+`border-first-flame`, and `chat-first-flame` in the existing unlock table. It is
+excluded from normal purchases, including GM/free-cosmetics bypasses. An authorized administrator can explicitly grant the bundle IDs in a database
 transaction if needed; there is no player-facing grant endpoint.
 
 Players equip dice from the cache collection, and choose the trail and Nat 20
@@ -52,8 +53,19 @@ firelight while rolling. The trail uses small canvas embers. Nat 20 uses a brief
 warm flare and existing ring/particle geometry with no new audio. The earned title
 appears on the player's profile and profiles visible to campaign members.
 
-The four priority pieces are implemented. Token borders and chat flair remain
-future work because those cosmetic systems are not implemented in this repository.
+All pieces are implemented. The token border is an unobtrusive CSS molten ring;
+chat flair accents only the speaker's name, including a darker gold for daylight
+themes. Both have independent Equip/Remove controls in their Emporium feature
+panels. They use `appearance_loadout`, alongside the existing slot-restricted
+critical and turn-start loadouts. Map and chat payloads resolve the owner's
+server-checked selection; campaign socket updates synchronize changes live.
+The exclusive Nat 1 effect, Ashfall, uses the existing critical-effect selector.
+
+Earlier Relic winners automatically qualify for the three additions through
+their `relic-first-flame` entitlement. This is a read-time ownership rule, not
+an inventory backfill or automatic equip. Original complete bundles still
+qualify for the normal Mythic duplicate refund. Existing selections remain intact.
+Trail previews use a per-roll override and never write saved trail preferences.
 
 ## Presentation and verification
 
@@ -73,4 +85,5 @@ and `npm run build`. Cache tests use isolated in-memory SQLite databases and cov
 insufficient balance, debit/grants, exact weighted selection, duplicate refunds,
 Mythic/partial bundles, rollback, pending recovery, account isolation, replay
 protection, and reel positioning. Browser verification uses mocked API responses,
-never the live player database.
+never the live player database. Catalogue tests import the pure `shopCatalog.ts`
+module so they cannot initialize the application database or its startup migrations.

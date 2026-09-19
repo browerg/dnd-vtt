@@ -292,6 +292,19 @@
 .effect-first-flame .critical-scan { display: none; }
 .effect-first-flame .critical-banner h2 { color: #ffe09a; text-shadow: 0 0 18px #ffb22c66; }
 @keyframes first-flame-flare { from { opacity: 0; } 25% { opacity: 1; } to { opacity: 0; } }
+.nat1.effect-first-flame .critical-screen-flash { display: none; }
+.nat1.effect-first-flame .critical-rings { display: none; }
+.nat1.effect-first-flame .critical-fractures span {
+  background: linear-gradient(90deg, transparent, #ffba57, #ff742b, transparent);
+  box-shadow: 0 0 8px #ff8b2755;
+}
+.nat1.effect-first-flame .critical-particles span { animation: first-flame-ashfall 1100ms ease-out both; }
+.nat1.effect-first-flame .critical-banner h2 { color: #ffd3a0; }
+@keyframes first-flame-ashfall {
+  from { opacity: 0; transform: rotate(var(--particle-angle)) translateY(-65px); }
+  20% { opacity: .7; }
+  to { opacity: 0; transform: translateY(115px) rotate(var(--particle-angle)); }
+}
 @media (prefers-reduced-motion: reduce) {
   .effect-first-flame, .effect-first-flame * { animation: none !important; transition: none !important; }
   .effect-first-flame .critical-screen-flash, .effect-first-flame .critical-particles, .effect-first-flame .critical-rings { display: none; }
