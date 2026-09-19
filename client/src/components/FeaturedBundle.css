@@ -12,7 +12,7 @@
   --fb-velvet-deep: var(--burrow-velvet-deep, #1a080d);
 
   display: grid;
-  grid-template-columns: minmax(275px, 1.1fr) minmax(0, 2.15fr) minmax(200px, 0.95fr);
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr) minmax(280px, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
     "rail  hero previews"
@@ -62,9 +62,9 @@
   gap: 11px;
   width: 100%;
   padding: clamp(5px, .9vh, 9px) 10px;
-  border: 1px solid transparent;
+  border: 1px solid color-mix(in srgb, var(--fb-gold) 18%, transparent);
   border-radius: 10px;
-  background: none;
+  background: rgba(0, 0, 0, .2);
   color: inherit;
   font: inherit;
   text-align: left;
@@ -320,6 +320,8 @@
 }
 
 .featured-preview-stage {
+  container-type: size;
+  container-name: featured-effect;
   display: grid;
   place-items: center;
   min-height: 0;
@@ -328,9 +330,21 @@
   background: radial-gradient(60% 70% at 50% 50%, rgba(255, 186, 94, .12), transparent 70%), #0d0609;
 }
 
-/* The stage hosts the shop's own preview markup, which brings its own sizing. */
+/* Scale the catalogue's 76px samples to the actual space in each panel. */
 .featured-preview-stage > * {
-  transform: scale(.82);
+  transform: scale(1.25);
+}
+
+@container featured-effect (min-height: 130px) and (min-width: 160px) {
+  .featured-preview-stage > * { transform: scale(1.65); }
+}
+
+@container featured-effect (min-height: 165px) and (min-width: 195px) {
+  .featured-preview-stage > * { transform: scale(2.1); }
+}
+
+@container featured-effect (min-height: 205px) and (min-width: 230px) {
+  .featured-preview-stage > * { transform: scale(2.6); }
 }
 
 .featured-previews button {
@@ -421,9 +435,15 @@ button.featured-card:focus-visible {
 /* ---- responsive -------------------------------------------------------- */
 
 @media (max-width: 1100px) {
+  .emporium-page.is-single-screen {
+    height: auto;
+    overflow: visible;
+  }
+
   .featured-bundle {
+    height: auto;
     grid-template-columns: minmax(0, 1fr) minmax(180px, 0.75fr);
-    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-rows: minmax(450px, auto) auto auto;
     grid-template-areas:
       "hero  previews"
       "rail  rail"
@@ -467,7 +487,7 @@ button.featured-card:focus-visible {
   }
 
   .featured-preview-stage {
-    min-height: 88px;
+    min-height: 180px;
   }
 }
 
