@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DatabaseSync } from "node:sqlite";
 import { CACHE_REWARDS, RELIC_UNLOCKS, createVividCacheStore, selectCacheReward } from "./vividCacheStore.js";
-import { buildCacheReel, CACHE_WINNER_INDEX } from "../../shared/vividCacheReel.js";
+import { buildCacheReel, buildSpinPath, CACHE_SPIN_DURATION_MS, CACHE_WINNER_INDEX } from "../../shared/vividCacheReel.js";
 
 const key = "11111111-1111-4111-8111-111111111111";
 const next = "22222222-2222-4222-8222-222222222222";
@@ -125,4 +125,21 @@ test("reel preserves the committed winner with unbiased neighbors on both sides"
   assert.equal(reel.length - CACHE_WINNER_INDEX - 1, 6);
   assert.ok(reel.slice(0, CACHE_WINNER_INDEX).every(r => r === CACHE_REWARDS[0]));
   assert.ok(reel.slice(CACHE_WINNER_INDEX + 1).every(r => r === CACHE_REWARDS[0]));
+});
+test("the spin curve winds up, overshoots once, and lands exactly on the winner", () => {
+  const { positions, tickTimes, settleAt } = buildSpinPath(CACHE_SPIN_DURATION_MS);
+  assert.equal(positions[0], 2);
+  assert.equal(positions.at(-1), CACHE_WINNER_INDEX);
+  // The wind-up pulls back against the launch before anything moves forward.
+  assert.ok(Math.min(...positions) < 2 - 0.4, "strip pulls back first");
+  // It drifts past the winner exactly once and eases back onto it.
+  const past = positions.filter(index => index > CACHE_WINNER_INDEX);
+  assert.ok(past.length > 0 && Math.max(...past) - CACHE_WINNER_INDEX < 0.35, "a small settle, not a second pass");
+  // Ticks come from the same curve, so they thin out as the strip slows: the
+  // first half of the run has to carry far more of them than the last half.
+  const half = CACHE_SPIN_DURATION_MS / 2;
+  const early = tickTimes.filter(time => time < half).length;
+  assert.ok(early > tickTimes.length - early, "ticks slow down with the strip");
+  assert.ok(tickTimes.every((time, i) => i === 0 || time >= tickTimes[i - 1]), "ticks are ordered");
+  assert.ok(settleAt > half && settleAt < CACHE_SPIN_DURATION_MS, "settles late, but before the end");
 });

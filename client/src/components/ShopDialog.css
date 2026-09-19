@@ -19,6 +19,16 @@
   backdrop-filter: blur(3px);
 }
 
+/* Blurring the backdrop means re-blurring the whole page behind the dialog on
+   every frame that anything in front of it moves. For a static catalogue that
+   cost is paid once; for the cache reel it is paid for eleven seconds, and it
+   measured at double the frame time (24ms vs 12ms per frame). Nobody is
+   looking through the backdrop mid-spin, so drop the blur while it runs and
+   keep the dimming. Browsers without :has() simply keep the blur. */
+.shop-dialog:has(.cache-reel.is-spinning)::backdrop {
+  backdrop-filter: none;
+}
+
 .shop-dialog[open] {
   animation: shop-dialog-in .22s cubic-bezier(.2, .8, .3, 1);
 }

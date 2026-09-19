@@ -3,7 +3,7 @@ import { api } from "../api";
 import { useAuth } from "../App";
 import { createCacheTickPlayer } from "../cacheSound";
 import { playCoinSound } from "../emporiumAudio";
-import { buildCacheReel, CACHE_WINNER_INDEX, CACHE_SPIN_DURATION_MS } from "../../../shared/vividCacheReel";
+import { buildCacheReel, buildSpinPath, CACHE_WINNER_INDEX, CACHE_SPIN_DURATION_MS } from "../../../shared/vividCacheReel";
 import { previewDice } from "../dice3d";
 import { FIRST_FLAME } from "../diceCosmetics";
 import "./VividCache.css";
@@ -30,6 +30,7 @@ export default function VividCache({ onChange, onPreviewDice }: { onChange: () =
   const lock = useRef(false);
   const strip = useRef<HTMLDivElement>(null);
   const continueButton = useRef<HTMLButtonElement>(null);
+  const reveal = useRef<HTMLDivElement>(null);
   const requestId = useRef<string | null>(null);
   const storageKey = `vivid-cache-request:${user?.id}`;
 
@@ -48,35 +49,69 @@ export default function VividCache({ onChange, onPreviewDice }: { onChange: () =
   useEffect(() => {
     if (phase !== "spin" || !strip.current) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const animation = strip.current.animate([
-      { transform: position(2) }, { transform: position(CACHE_WINNER_INDEX) },
-    ], { duration: reduced.matches ? 0 : CACHE_SPIN_DURATION_MS, easing: "cubic-bezier(.12,.52,.18,1)", fill: "forwards" });
+    const reelEl = strip.current;
+    const windowEl = reelEl.parentElement;
+    // The strip, the ticks and the "still fast" window all read the same curve.
+    const path = buildSpinPath();
+    const animation = reelEl.animate(
+      path.positions.map(index => ({ transform: position(index), easing: "linear" })),
+      { duration: reduced.matches ? 0 : CACHE_SPIN_DURATION_MS, fill: "forwards" },
+    );
     const finish = () => animation.finish();
     reduced.addEventListener("change", finish);
     let active = true;
     let frame = 0;
-    let previousCard = 2;
+    let nextTick = 0;
+    const started = performance.now();
+    // Classes rather than state: a re-render per frame of an eleven-second
+    // animation over a 65-tile strip is exactly what this is trying to avoid.
     const followReel = () => {
-      const progress = Number(animation.effect?.getComputedTiming().progress ?? 0);
-      const card = Math.floor(2 + (CACHE_WINNER_INDEX - 2) * progress);
+      const elapsed = performance.now() - started;
+      let crossed = false;
+      while (nextTick < path.tickTimes.length && path.tickTimes[nextTick] <= elapsed) { nextTick++; crossed = true; }
       // createCacheTickPlayer checks the table's sound mute on every tick.
-      if (card !== previousCard && !reduced.matches) sound.current?.tick();
-      previousCard = card;
+      if (crossed) sound.current?.tick();
+      if (elapsed >= path.settleAt) windowEl?.classList.remove("is-fast");
       frame = requestAnimationFrame(followReel);
     };
-    if (!reduced.matches) frame = requestAnimationFrame(followReel);
-    animation.finished.then(() => { if (active) { lock.current = false; setPhase("reveal"); } }).catch(() => {});
+    if (!reduced.matches) {
+      reelEl.classList.add("is-spinning");
+      windowEl?.classList.add("is-fast");
+      frame = requestAnimationFrame(followReel);
+    }
+    animation.finished.then(() => {
+      if (!active) return;
+      lock.current = false;
+      reelEl.classList.remove("is-spinning");
+      windowEl?.classList.remove("is-fast");
+      if (!reduced.matches) {
+        windowEl?.classList.add("is-hit");
+        window.setTimeout(() => windowEl?.classList.remove("is-hit"), 520);
+      }
+      setPhase("reveal");
+    }).catch(() => {});
     return () => {
       active = false; cancelAnimationFrame(frame); reduced.removeEventListener("change", finish); animation.cancel();
+      reelEl.classList.remove("is-spinning"); windowEl?.classList.remove("is-fast", "is-hit");
       sound.current?.dispose(); sound.current = null;
     };
   }, [phase, reel]);
   useEffect(() => {
     if (phase !== "reveal") return;
-    continueButton.current?.focus();
+    // Focusing Continue scrolls it into view, which jumps the panel past the
+    // reel just as the winning tile pops — the payoff played off-screen. Take
+    // the focus without the scroll, let the tile land, then follow the eye
+    // down to the reward.
+    continueButton.current?.focus({ preventScroll: true });
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const followUp = window.setTimeout(
+      () => reveal.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }),
+      reduced ? 0 : 560,
+    );
     if (result?.reward.rarity === "mythic") {
       void api<{ user: typeof user }>("/api/auth/me").then(data => setUser(data.user)).catch(() => {});
     }
+    return () => window.clearTimeout(followUp);
   }, [phase]);
 
   const open = async () => {
@@ -120,14 +155,14 @@ export default function VividCache({ onChange, onPreviewDice }: { onChange: () =
   return <section className={`vivid-cache ${mythic ? "is-mythic" : ""}`} aria-labelledby="cache-heading">
     <div className="cache-heading"><div><span className="cache-eyebrow">A SPARK OF SOMETHING ANCIENT</span><h2 id="cache-heading">Vivid Cache</h2><p>One cache. One cosmetic. A chance at the First Flame.</p></div>
       <div className="cache-wallet"><strong>{catalog?.balance ?? "—"} VCoins</strong><span>{catalog?.cost ?? 500} VCoins per opening</span></div></div>
-    <div className="cache-reel-window" aria-hidden="true"><span className="cache-pointer" />
+    <div className="cache-reel-window" aria-hidden="true"><span className="cache-pointer" /><span className="cache-fade" />
       <div className="cache-reel" ref={strip} style={{ transform: position(reel.length && phase !== "spin" ? CACHE_WINNER_INDEX : 2) }}>
-        {(reel.length ? reel : catalog?.rewards ?? []).map((reward, i) => <div key={i} className={`cache-tile rarity-${reward.rarity}`}><span className="cache-symbol">{reward.preview.symbol}</span><small>{reward.rarity}</small><strong>{reward.name}</strong></div>)}
+        {(reel.length ? reel : catalog?.rewards ?? []).map((reward, i) => <div key={i} className={`cache-tile rarity-${reward.rarity}${reel.length && phase === "reveal" && i === CACHE_WINNER_INDEX ? " is-winner" : ""}`}><span className="cache-symbol">{reward.preview.symbol}</span><small>{reward.rarity}</small><strong>{reward.name}</strong></div>)}
       </div>
     </div>
     <div className="cache-controls"><button type="button" onClick={open} disabled={!catalog || phase !== "idle" || catalog.balance < catalog.cost}>{phase === "request" ? "Confirming…" : phase === "spin" ? "Opening…" : `Open Cache · ${catalog?.cost ?? 500} VCoins`}</button><span role="status">{phase === "spin" ? "Your reward is secured. Revealing…" : "Fictional rewards · No cash value"}</span></div>
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
-    {phase === "reveal" && result && <div className={`cache-reveal rarity-${result.reward.rarity}`} role="status">
+    {phase === "reveal" && result && <div ref={reveal} className={`cache-reveal rarity-${result.reward.rarity}`} role="status">
       {mythic && <div className="cache-embers" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ "--i": i } as CSSProperties} />)}</div>}
       <span className="cache-eyebrow">{result.reward.rarity.toUpperCase()}</span><h3>{result.reward.name}</h3><p>{result.reward.preview.description}</p>
       <p>{result.duplicate ? `Already owned · ${result.refund} VCoins refunded` : "Added to your collection"}</p>
