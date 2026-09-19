@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import "./CriticalRollOverlay.css";
 import "./CriticalRollEffects.css";
 
@@ -187,7 +187,7 @@ export default function CriticalRollOverlay() {
     if (active.effect !== "first-flame") playCriticalSound(active.kind, active.effect);
     const timer = window.setTimeout(
       () => setActive(null),
-      active.effect === "first-flame" ? 2200 : active.kind === "nat20" ? 3300 : 2900
+      active.effect === "first-flame" ? 3800 : active.kind === "nat20" ? 3300 : 2900
     );
     return () => window.clearTimeout(timer);
   }, [active]);
@@ -210,6 +210,15 @@ export default function CriticalRollOverlay() {
       role="status"
       aria-live="assertive"
     >
+      {active.effect === "first-flame" && <div className="flame-spectacle" aria-hidden="true">
+        <div className="flame-eclipse" />
+        <div className="flame-shockwave" /><div className="flame-shockwave second" />
+        <div className="flame-rays">{Array.from({ length: 24 }, (_, i) => <i key={i} style={{ "--angle": `${i * 15}deg`, "--delay": `${(i % 5) * 45}ms` } as CSSProperties} />)}</div>
+        <svg className="flame-faults" viewBox="0 0 1000 700" preserveAspectRatio="none">
+          <path pathLength="1" d="M500 350 L420 300 395 215 315 190 280 95 150 0 M420 300 L280 325 200 260 0 290 M395 215 L445 100 415 0 M500 350 L610 275 650 185 770 155 840 0 M650 185 L860 245 1000 180 M500 350 L630 390 680 485 810 520 900 700 M680 485 L620 580 655 700 M500 350 L420 440 330 465 280 570 130 700 M330 465 L135 435 0 520" />
+        </svg>
+        <div className="flame-shards">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ "--angle": `${i * 22.5}deg`, "--delay": `${(i % 4) * 70}ms` } as CSSProperties} />)}</div>
+      </div>}
       <div className="critical-screen-flash" aria-hidden />
       <div className="critical-vignette" aria-hidden />
       <div className="critical-scan" aria-hidden />

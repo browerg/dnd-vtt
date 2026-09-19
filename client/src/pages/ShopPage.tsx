@@ -613,6 +613,7 @@ export default function ShopPage() {
             onPreviewCrit={featuredCrit ? () => void preview(featuredCrit) : undefined}
             onPreviewDice={featuredDice ? () => void previewFeaturedDice() : undefined}
             dicePreviewing={dicePreviewing}
+            tokenImage={shop?.previewCharacter?.imageUrl}
           />
         )}
 

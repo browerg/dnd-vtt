@@ -12,7 +12,7 @@
   --fb-velvet-deep: var(--burrow-velvet-deep, #1a080d);
 
   display: grid;
-  grid-template-columns: minmax(190px, 0.85fr) minmax(0, 2.4fr) minmax(200px, 0.95fr);
+  grid-template-columns: minmax(275px, 1.1fr) minmax(0, 2.15fr) minmax(200px, 0.95fr);
   grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas:
     "rail  hero previews"
@@ -103,13 +103,31 @@
   min-width: 0;
 }
 
+.featured-feature-sample {
+  flex: 0 0 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #b77a334d;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 50% 90%, #a65c2433, transparent 75%), #120e15;
+}
+.featured-token-sample { position: relative; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #302738; color: #fff0cb; font-size: 13px; }
+.featured-token-sample img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.featured-feature-sample .relic-chat-name { font-size: 21px; font-family: Georgia, serif; }
+.featured-feature-sample .relic-chat-name::before { font-size: 9px; margin-right: 3px; }
+.featured-critical-sample { font: bold 28px Georgia, serif; color: #ffe2a0; text-shadow: 0 0 12px #ff9b35; }
+.sample-fracture { background: linear-gradient(125deg, transparent 48%, #ff7a32 49%, #ffcf75 50%, transparent 52%), #160e14; }
+.sample-burst { background: radial-gradient(circle, #ffbd434d, #120e15 75%); }
+.sample-trail svg { filter: drop-shadow(0 0 5px #ff9b35); }
+
 .featured-feature strong {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: 16px;
   font-weight: 800;
-  letter-spacing: .09em;
+  letter-spacing: .035em;
   text-transform: uppercase;
   color: var(--fb-gold-pale);
 }
@@ -117,7 +135,7 @@
 .featured-feature small {
   display: block;
   margin-top: 2px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: #b9a68f;
 }
 

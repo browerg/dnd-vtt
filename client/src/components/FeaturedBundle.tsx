@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import "./FeaturedBundle.css";
+import "./RelicAppearance.css";
 
 type BundleIcon = "dice" | "trail" | "burst" | "fracture" | "ring" | "chat" | "crown";
 
@@ -74,6 +75,7 @@ export default function FeaturedBundle({
   dicePreviewing = false,
   trailPreview,
   critPreview,
+  tokenImage,
 }: {
   bundle: CosmeticBundle;
   categories: CategoryCard[];
@@ -86,6 +88,7 @@ export default function FeaturedBundle({
   /** The shop's own renderPreview output, so these stay in sync with the grid. */
   trailPreview?: ReactNode;
   critPreview?: ReactNode;
+  tokenImage?: string;
 }) {
   const navigate = useNavigate();
 
@@ -107,7 +110,14 @@ export default function FeaturedBundle({
             const interactive = feature.status === "included" && !!feature.target;
             const body = (
               <>
-                <span className="featured-feature-icon"><Icon name={feature.icon} /></span>
+                <span className={`featured-feature-sample sample-${feature.icon}`} aria-hidden="true">
+                  {bundle.id === "first-flame" && feature.icon === "ring" ? <span className="featured-token-sample">
+                    {tokenImage ? <img src={tokenImage} alt="" /> : <span>PC</span>}
+                    <span className="relic-token-ring" />
+                  </span> : bundle.id === "first-flame" && feature.icon === "chat" ? <span className="relic-chat-name">Aa</span>
+                    : feature.icon === "burst" || feature.icon === "fracture" ? <span className="featured-critical-sample">{feature.icon === "burst" ? "20" : "1"}</span>
+                    : <span className="featured-feature-icon"><Icon name={feature.icon} /></span>}
+                </span>
                 <span className="featured-feature-text">
                   <strong>
                     {feature.title}

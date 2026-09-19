@@ -16,6 +16,21 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 19 September 2026
+
+### Major changes
+
+- **First Flame critical rolls** — natural 20s erupt into golden shockwaves,
+  rays and flying embers. Natural 1s fracture the screen with molten cracks and
+  falling obsidian shards. Both effects have a longer, dramatic reveal, with a
+  still, readable version for reduced motion.
+
+### Minor changes
+
+- **Clearer Emporium features** — larger text on the left-side buttons, plus
+  visual samples of the exclusive token ring, gold chat name and critical dice.
+  The token sample uses your character's artwork when available.
+
 ## 18 September 2026
 
 ### Major changes

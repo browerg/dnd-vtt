@@ -274,38 +274,73 @@
   }
 }
 
-/* First Flame: one brief warm flare, with no shake or repeated flashes. */
-.critical-roll-overlay.effect-first-flame { --critical-primary: #ffd36a; --critical-secondary: #ff982f; --critical-rgb: 255, 180, 65; animation: none; }
-.effect-first-flame .critical-screen-flash { background: radial-gradient(ellipse, #ffb12b55, transparent 65%); animation: first-flame-flare 900ms ease-out both; }
-.effect-first-flame .critical-emblem { filter: drop-shadow(0 0 24px #ffab34); }
-.effect-first-flame .critical-emblem-frame { background: #120e12; border-color: #ffd36a; box-shadow: inset 0 0 30px #f99b2955; }
-.effect-first-flame .critical-particles span { width: 3px; height: 5px; background: #ffd36a; box-shadow: 0 0 9px #ff8b27; animation: first-flame-ember 850ms ease-out both; }
-.effect-first-flame .critical-rings span { width: min(34vw, 340px); animation-duration: 900ms; }
-.effect-first-flame .critical-rings span:nth-child(n+2),
-.effect-first-flame .critical-vignette { display: none; }
-.effect-first-flame .critical-emblem-frame { animation: none; }
-@keyframes first-flame-ember {
-  from { opacity: 0; transform: rotate(var(--particle-angle)) translateY(-35px); }
-  20% { opacity: .85; }
-  to { opacity: 0; transform: rotate(var(--particle-angle)) translateY(-150px); }
+/* First Flame: cinematic scale and one deliberate impact, never a strobe. */
+.critical-roll-overlay.effect-first-flame {
+  --critical-primary: #ffda82;
+  --critical-secondary: #ff8d28;
+  --critical-rgb: 255, 177, 64;
+  animation: flame-scene 3.8s ease-out both;
+  background: radial-gradient(ellipse at 50% 42%, #33130566, #09050dcc 85%);
 }
-.effect-first-flame .critical-scan { display: none; }
-.effect-first-flame .critical-banner h2 { color: #ffe09a; text-shadow: 0 0 18px #ffb22c66; }
-@keyframes first-flame-flare { from { opacity: 0; } 25% { opacity: 1; } to { opacity: 0; } }
-.nat1.effect-first-flame .critical-screen-flash { display: none; }
-.nat1.effect-first-flame .critical-rings { display: none; }
-.nat1.effect-first-flame .critical-fractures span {
-  background: linear-gradient(90deg, transparent, #ffba57, #ff742b, transparent);
-  box-shadow: 0 0 8px #ff8b2755;
+.flame-spectacle { position: absolute; inset: 0; z-index: -2; }
+.flame-eclipse {
+  position: absolute; left: 50%; top: 43%; width: min(60vw, 65vh); aspect-ratio: 1;
+  border: 3px solid #fff0ab; border-radius: 50%;
+  background: radial-gradient(circle, #171019 48%, #301308 65%, #ffc455 69%, transparent 72%);
+  box-shadow: 0 0 55px #ff8f26, inset 0 0 35px #ffab38;
+  animation: flame-eclipse 3.5s cubic-bezier(.16,.8,.22,1) both;
 }
-.nat1.effect-first-flame .critical-particles span { animation: first-flame-ashfall 1100ms ease-out both; }
-.nat1.effect-first-flame .critical-banner h2 { color: #ffd3a0; }
-@keyframes first-flame-ashfall {
-  from { opacity: 0; transform: rotate(var(--particle-angle)) translateY(-65px); }
-  20% { opacity: .7; }
-  to { opacity: 0; transform: translateY(115px) rotate(var(--particle-angle)); }
+.flame-shockwave {
+  position: absolute; left: 50%; top: 43%; width: 35vmin; aspect-ratio: 1;
+  border: 7px solid #ffdc85; border-radius: 50%;
+  box-shadow: 0 0 35px #ff902b, inset 0 0 22px #ffa93d;
+  animation: flame-impact 1.5s .3s ease-out both;
 }
+.flame-shockwave.second { animation-delay: .5s; border-width: 2px; }
+.flame-rays, .flame-shards { position: absolute; left: 50%; top: 43%; }
+.flame-rays i {
+  position: absolute; width: 3px; height: 46vmax;
+  transform-origin: 50% 0;
+  background: linear-gradient(#fff3bd, #ff9b3788 35%, transparent 80%);
+  animation: flame-ray 2.5s calc(.2s + var(--delay)) ease-out both;
+}
+.flame-shards i {
+  position: absolute; width: 22px; height: 45px;
+  background: linear-gradient(130deg, #fff1a8, #ff972f 22%, #291624 26%, #090810 85%);
+  clip-path: polygon(45% 0, 100% 28%, 68% 100%, 0 67%);
+  animation: flame-shard 2.7s calc(.35s + var(--delay)) cubic-bezier(.15,.65,.35,1) both;
+}
+.flame-faults { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+.flame-faults path { fill: none; stroke: #ffc56a; stroke-width: 3; stroke-linejoin: bevel; stroke-dasharray: 1; filter: drop-shadow(0 0 8px #ff671b); animation: flame-fault 3.4s ease-out both; }
+.effect-first-flame .critical-screen-flash { background: radial-gradient(ellipse at 50% 43%, #ffd77b77, transparent 70%); animation: flame-single-flare 1.1s .25s ease-out both; }
+.effect-first-flame .critical-vignette, .effect-first-flame .critical-scan, .effect-first-flame .critical-rings, .effect-first-flame .critical-fractures { display: none; }
+.effect-first-flame .critical-emblem { filter: drop-shadow(0 0 30px #ffae42); animation: flame-number 3.6s cubic-bezier(.16,.8,.22,1) both; }
+.effect-first-flame .critical-emblem-frame { background: #130d17; border-color: #ffdf8e; box-shadow: inset 0 0 35px #f99b294d; animation: none; }
+.effect-first-flame .critical-emblem strong { color: #fff1b8; background: linear-gradient(#fff9da, #ffb747); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.effect-first-flame .critical-banner { width: min(94vw, 1000px); animation: flame-banner 3.7s ease-out both; background: linear-gradient(90deg, transparent, #100b16f2 18% 82%, transparent); }
+.effect-first-flame .critical-banner h2 { font-size: clamp(28px, 4.5vw, 64px); letter-spacing: .025em; color: #ffe3a7; text-shadow: 0 0 25px #ff9f4055; }
+.effect-first-flame .critical-particles span { width: 4px; height: 12px; background: #ffe196; box-shadow: 0 0 12px #ff9b32; animation: flame-ember 2.7s .3s ease-out both; }
+.nat1.effect-first-flame { --critical-primary: #ffb060; background: radial-gradient(ellipse at center, #300e0d99, #050309ed 85%); }
+.nat1.effect-first-flame .flame-faults { display: block; }
+.nat1.effect-first-flame .flame-eclipse { border-radius: 12%; border-color: #e87532; animation-name: flame-collapse; box-shadow: 0 0 40px #ce481c, inset 0 0 55px #d0591c; }
+.nat1.effect-first-flame .flame-rays { display: none; }
+.nat1.effect-first-flame .flame-shockwave { border-color: #f58a48; border-radius: 12%; }
+.nat1.effect-first-flame .flame-shards i { width: 35px; height: 70px; animation-name: flame-ruin; }
+.nat1.effect-first-flame .critical-particles span { animation-name: flame-ash; background: #fda158; }
+@keyframes flame-scene { 0% { opacity: 0; } 8%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes flame-eclipse { 0% { transform: translate(-50%,-50%) scale(.25) rotate(-35deg); opacity: 0; } 18% { opacity: 1; } 65% { opacity: .8; } 100% { transform: translate(-50%,-50%) scale(1.25) rotate(30deg); opacity: 0; } }
+@keyframes flame-impact { from { transform: translate(-50%,-50%) scale(.2); opacity: .9; } to { transform: translate(-50%,-50%) scale(6); opacity: 0; } }
+@keyframes flame-ray { 0% { opacity: 0; transform: rotate(var(--angle)) scaleY(.1); } 14% { opacity: .8; } 100% { opacity: 0; transform: rotate(var(--angle)) scaleY(1.2); } }
+@keyframes flame-shard { 0% { opacity: 0; transform: rotate(var(--angle)) translateY(-45px) scale(.2); } 12% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--angle)) translateY(-55vmin) rotate(130deg); } }
+@keyframes flame-single-flare { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes flame-number { 0% { opacity: 0; transform: scale(.3); } 18%, 80% { opacity: 1; transform: scale(1.12); } 100% { opacity: 0; transform: scale(1.18); } }
+@keyframes flame-banner { 0%, 10% { opacity: 0; transform: translate(-50%,25px); } 22%, 87% { opacity: 1; transform: translate(-50%,0); } 100% { opacity: 0; } }
+@keyframes flame-ember { from { opacity: 0; transform: rotate(var(--particle-angle)) translateY(-50px); } 15% { opacity: 1; } to { opacity: 0; transform: rotate(var(--particle-angle)) translateY(-65vmin); } }
+@keyframes flame-collapse { 0% { opacity: 0; transform: translate(-50%,-50%) rotate(45deg) scale(1.8); } 16% { opacity: 1; transform: translate(-50%,-50%) rotate(45deg) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(65deg) scale(.4); } }
+@keyframes flame-fault { 0% { stroke-dashoffset: 1; opacity: 0; } 12% { opacity: 1; } 34%, 70% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes flame-ruin { 0% { opacity: 0; transform: rotate(var(--angle)) translateY(-40px); } 18% { opacity: 1; transform: rotate(var(--angle)) translateY(-30vmin) rotate(30deg); } 100% { opacity: 0; transform: translateY(70vh) rotate(var(--angle)) translateX(25vmin) rotate(180deg); } }
+@keyframes flame-ash { from { opacity: 0; transform: rotate(var(--particle-angle)) translateY(-30vmin); } 20% { opacity: .85; } to { opacity: 0; transform: translateY(65vh) rotate(var(--particle-angle)) translateX(25vmin); } }
 @media (prefers-reduced-motion: reduce) {
-  .effect-first-flame, .effect-first-flame * { animation: none !important; transition: none !important; }
-  .effect-first-flame .critical-screen-flash, .effect-first-flame .critical-particles, .effect-first-flame .critical-rings { display: none; }
+  .critical-roll-overlay.effect-first-flame, .effect-first-flame * { animation: none !important; transition: none !important; }
+  .effect-first-flame .flame-spectacle, .effect-first-flame .critical-screen-flash, .effect-first-flame .critical-particles { display: none; }
 }
