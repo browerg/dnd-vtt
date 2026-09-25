@@ -16,6 +16,25 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 24 September 2026
+
+### Major changes
+
+- **Mystery dice** — discover Event Horizon, Chronos Engine and Prismatic Echo
+  in the Emporium. Their names are visible, but each set stays hidden behind a
+  black silhouette and question mark until you preview it. Roll all six dice
+  sizes with animated singularity rings, clockwork light or shifting crystal
+  colors. These sets are preview-only for now.
+
+### Minor changes
+
+- **A closer look** — mystery previews dim the shop, keep the numbers illuminated
+  and linger after landing before returning to the collection. Previews are free
+  and leave your equipped dice and saved preferences untouched. Reduced motion
+  holds the special surface effects still.
+
+---
+
 ## 19 September 2026
 
 ### Major changes

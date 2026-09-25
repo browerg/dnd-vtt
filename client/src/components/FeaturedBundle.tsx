@@ -34,6 +34,7 @@ export interface CategoryCard {
   caption: string;
   owned: number;
   total: number;
+  countLabel?: string;
 }
 
 const ICONS: Record<BundleIcon, JSX.Element> = {
@@ -195,7 +196,7 @@ export default function FeaturedBundle({
           >
             <span className="featured-card-label">{category.label}</span>
             <span className="featured-card-caption">{category.caption}</span>
-            <span className="featured-card-count">{category.owned} / {category.total} owned</span>
+            <span className="featured-card-count">{category.countLabel ?? `${category.owned} / ${category.total} owned`}</span>
           </button>
         ))}
 

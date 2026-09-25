@@ -1,0 +1,38 @@
+.special-dice-catalogue {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  padding: 12px 0 24px;
+}
+.special-die { text-align: center; min-width: 0; }
+.special-die-mystery {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  background: #09070c;
+  border: 1px solid #382d3e;
+  border-radius: 10px;
+}
+.special-die-mystery svg { width: 136px; height: 148px; }
+.special-die h3 { margin: 20px 0 6px; font-family: Cinzel, Georgia, serif; font-size: 18px; color: #fff0c4; }
+.special-die p, .special-dice-note { color: #c4b6a6; font-size: 14px; line-height: 1.5; }
+.special-die p { margin: 0 0 16px; }
+.special-die button { min-height: 44px; width: 100%; }
+.special-die button:focus-visible { outline: 3px solid #fff0c4; outline-offset: 4px; }
+.special-dice-note { max-width: 65ch; margin: 0; }
+.special-dice-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgba(6, 5, 10, .96);
+  pointer-events: auto;
+  text-align: center;
+  padding: 48px 24px;
+}
+.special-dice-stage h2 { color: #fff0c4; font-family: Cinzel, Georgia, serif; font-size: clamp(24px, 3vw, 38px); margin: 0 0 8px; }
+.special-dice-stage p { color: #c4b6a6; font-size: 14px; margin: 0; }
+@media (max-width: 620px) {
+  .special-dice-catalogue { grid-template-columns: 1fr; gap: 32px; }
+  .special-die-mystery { min-height: 164px; }
+  .special-die h3 { margin-top: 14px; }
+}

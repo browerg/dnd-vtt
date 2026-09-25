@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { previewDice, setDiceTrailStyle, type DiceTrailStyle } from "../dice3d";
@@ -12,6 +12,8 @@ import ShopDialog from "../components/ShopDialog";
 import { emporiumDoor, emporiumMusic, EMPORIUM_MUSIC_KEY, playCoinSound, primeCoinSound } from "../emporiumAudio";
 import { useBackgroundMusic } from "../useBackgroundMusic";
 import { DICE_COSMETICS } from "../diceCosmetics";
+import { SPECIAL_DICE } from "../specialDice";
+import SpecialDiceCatalogue from "../components/SpecialDiceCatalogue";
 import "../components/RelicAppearance.css";
 
 type CosmeticSlot = "nat20" | "nat1" | "turnStart" | "tokenBorder" | "chatFlair";
@@ -99,6 +101,47 @@ export default function ShopPage() {
   const [cacheOpen, setCacheOpen] = useState(false);
   const [dicePreviewing, setDicePreviewing] = useState(false);
   const dicePreviewLock = useRef(false);
+  const [specialDiceOpen, setSpecialDiceOpen] = useState(false);
+  const [specialDiceError, setSpecialDiceError] = useState("");
+  const [specialDiceName, setSpecialDiceName] = useState("");
+  const shopHeader = useRef<HTMLElement>(null);
+  const shopMain = useRef<HTMLElement>(null);
+  const specialStage = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const content = [shopHeader.current, shopMain.current];
+    for (const element of content) if (element) element.inert = !!specialDiceName;
+    if (specialDiceName) specialStage.current?.focus({ preventScroll: true });
+    return () => { for (const element of content) if (element) element.inert = false; };
+  }, [specialDiceName]);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  const previewSpecialDice = async (id: string) => {
+    const dice = SPECIAL_DICE.find(die => die.id === id);
+    if (!dice || dicePreviewLock.current) return;
+    dicePreviewLock.current = true;
+    setDicePreviewing(true);
+    setSpecialDiceError("");
+    // Native modal top layers obscure the global dice canvas; close for the roll.
+    setSpecialDiceOpen(false);
+    setSpecialDiceName(dice.label);
+    try {
+      await previewDice(dice.id, dice.trailId as DiceTrailStyle, true);
+    } catch (cause) {
+      if (mounted.current) setSpecialDiceError(cause instanceof Error ? cause.message : "Could not preview these dice. Try again.");
+    } finally {
+      dicePreviewLock.current = false;
+      if (mounted.current) {
+        setDicePreviewing(false);
+        setNotice("");
+        setSpecialDiceName("");
+        setSpecialDiceOpen(true);
+      }
+    }
+  };
 
   const loadShop = async () => {
     const response = await api<ShopResponse>("/api/shop");
@@ -554,7 +597,7 @@ export default function ShopPage() {
           </div>
         </div>
       )}
-      <header className="topbar">
+      <header className="topbar" ref={shopHeader}>
         <Link to="/" className="ghost link">
           ← Campaigns
         </Link>
@@ -594,7 +637,7 @@ export default function ShopPage() {
         </Link>
       </header>
 
-      <main className="content emporium-page is-single-screen">
+      <main className="content emporium-page is-single-screen" ref={shopMain}>
         {loading && (
           <section className="card">
             <p className="muted">Opening the shop…</p>
@@ -604,8 +647,8 @@ export default function ShopPage() {
         {!loading && featured && (
           <FeaturedBundle
             bundle={featured}
-            categories={categories}
-            onOpenCategory={setOpenCategory}
+            categories={[...categories, { id: "special-dice", label: "Mystery dice", caption: "Three extraordinary sets. Take a look.", owned: 0, total: SPECIAL_DICE.length, countLabel: "Free previews" }]}
+            onOpenCategory={id => id === "special-dice" ? setSpecialDiceOpen(true) : setOpenCategory(id)}
             onOpenCache={() => setCacheOpen(true)}
             trailPreview={featuredTrail ? renderPreview(featuredTrail) : undefined}
             critPreview={featuredCrit ? renderPreview(featuredCrit) : undefined}
@@ -634,6 +677,20 @@ export default function ShopPage() {
         onClose={() => setOpenCategory(null)}
       >
         {shownCategory && renderSection(shownCategory.label, shownCategory.blurb, shownCategory.list)}
+      </ShopDialog>
+
+      {specialDiceName && <div className="special-dice-stage" ref={specialStage} tabIndex={-1} role="status" aria-live="polite">
+        <h2>{specialDiceName}</h2>
+        <p>Free preview · Returning to the collection after the roll</p>
+      </div>}
+
+      <ShopDialog
+        open={specialDiceOpen}
+        title="Mystery dice"
+        subtitle="Names revealed. Appearances concealed. Roll a set to discover it."
+        onClose={() => setSpecialDiceOpen(false)}
+      >
+        <SpecialDiceCatalogue onPreview={id => void previewSpecialDice(id)} busy={dicePreviewing} error={specialDiceError} />
       </ShopDialog>
 
       <ShopDialog

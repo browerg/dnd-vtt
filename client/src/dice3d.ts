@@ -26,6 +26,8 @@ interface QueueEntry {
   critical: CriticalRollKind | null;
   meta: RollAnimationMeta;
   onLanded: () => void;
+  onError?: (error: unknown) => void;
+  previewLingerMs?: number;
 }
 
 let box: DiceBox | null = null;
@@ -680,18 +682,20 @@ export function animateRoll(
 }
 
 // Customize page: throw a themed set with random results, just to look at.
-export function previewDice(theme: string, previewTrail?: DiceTrailStyle): Promise<void> {
-  if (document.hidden) return Promise.resolve();
-  if (queue.length >= 3) return Promise.resolve();
+export function previewDice(theme: string, previewTrail?: DiceTrailStyle, showcase = false): Promise<void> {
+  if (document.hidden) return showcase ? Promise.reject(new Error("Keep this tab visible to preview dice.")) : Promise.resolve();
+  if (queue.length >= 3) return showcase ? Promise.reject(new Error("The dice tray is busy. Try again after the current rolls.")) : Promise.resolve();
 
-  return new Promise((onLanded) => {
+  return new Promise((onLanded, onError) => {
     queue.push({
-      notation: "2d10+1d6",
+      notation: showcase ? "1d4+1d6+1d8+1d10+1d12+1d20" : "2d10+1d6",
       theme: theme || "white",
       previewTrail,
       critical: null,
       meta: {},
       onLanded,
+      onError: showcase ? onError : undefined,
+      previewLingerMs: showcase ? 2600 : undefined,
     });
     if (!running) void drain();
   });
@@ -743,12 +747,14 @@ async function drain(): Promise<void> {
 
         cosmetic?.setState(entry.critical === "nat20" ? "nat20" : "landed");
         announceCritical(entry);
-        entry.onLanded();
-        await new Promise((resolve) => setTimeout(resolve, LINGER_MS));
+        if (!entry.previewLingerMs) entry.onLanded();
+        const linger = entry.previewLingerMs ?? LINGER_MS;
+        await new Promise((resolve) => setTimeout(resolve, linger));
       } catch (error) {
         console.error("dice animation failed", error);
         announceCritical(entry);
-        entry.onLanded();
+        if (entry.onError) entry.onError(error);
+        else entry.onLanded();
       }
 
       try {
@@ -756,7 +762,15 @@ async function drain(): Promise<void> {
       } finally {
         cosmetic?.dispose();
       }
+      if (entry.previewLingerMs) entry.onLanded();
     }
+  } catch (error) {
+    // Engine startup failures must release queued previews and their UI locks.
+    for (const pending of queue.splice(0)) {
+      if (pending.onError) pending.onError(error);
+      else pending.onLanded();
+    }
+    console.error("dice engine unavailable", error);
   } finally {
     running = false;
   }

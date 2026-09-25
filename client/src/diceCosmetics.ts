@@ -1,4 +1,5 @@
 import { applyDiceBoxCustomization, DEFAULT_DICE_CUSTOMIZATION } from "./diceCustomization.js";
+import { SPECIAL_DICE, SPECIAL_SURFACE_GLSL, type SpecialDiceSurface } from "./specialDice.js";
 
 export interface DiceCosmetic {
   id: string;
@@ -15,6 +16,9 @@ export interface DiceCosmetic {
   nat20EffectId: string;
   createTexture: () => HTMLCanvasElement;
   emissionStrength: (r: number, g: number, b: number) => number;
+  surface?: SpecialDiceSurface;
+  roughness?: number;
+  metalness?: number;
 }
 
 export const FIRST_FLAME: DiceCosmetic = {
@@ -36,6 +40,7 @@ export const FIRST_FLAME: DiceCosmetic = {
 
 export const DICE_COSMETICS: Readonly<Record<string, DiceCosmetic>> = {
   [FIRST_FLAME.id]: FIRST_FLAME,
+  ...Object.fromEntries(SPECIAL_DICE.map(dice => [dice.id, dice])),
 };
 
 export type CosmeticState = "idle" | "rolling" | "landed" | "nat20";
@@ -108,6 +113,8 @@ interface Material {
   roughness?: number;
   metalness?: number;
   needsUpdate?: boolean;
+  onBeforeCompile?: (shader: { uniforms: Record<string, { value: number }>; fragmentShader: string }) => void;
+  customProgramCacheKey?: () => string;
 }
 interface Factory {
   createMaterials: (...args: unknown[]) => Material[];
@@ -208,6 +215,7 @@ export async function applyDiceCosmetic(box: CosmeticBox, config: DiceCosmetic):
   let frame = 0;
   let disposed = false;
   const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const timeUniform = { value: 0 };
   factory.__vividCosmeticActive = true;
   hook.active = (built) => {
     for (const material of built) {
@@ -216,14 +224,36 @@ export async function applyDiceCosmetic(box: CosmeticBox, config: DiceCosmetic):
       material.emissiveMap = masks.get(material.map);
       material.emissive.setHex(config.emissiveColor);
       material.emissiveIntensity = config.emissiveIntensityIdle;
-      material.roughness = 0.82;
-      material.metalness = 0.22;
+      material.roughness = config.roughness ?? 0.82;
+      material.metalness = config.metalness ?? 0.22;
+      if (config.surface) {
+        const surface = config.surface;
+        material.customProgramCacheKey = () => `vivid-special-${surface}-v1`;
+        material.onBeforeCompile = (shader) => {
+          shader.uniforms.vividTime = timeUniform;
+          shader.fragmentShader = `uniform float vividTime;\n${shader.fragmentShader}`.replace(
+            "#include <emissivemap_fragment>",
+            `#include <emissivemap_fragment>
+             #ifdef USE_MAP
+             vec2 p = vUv - vec2(0.5);
+             vec3 vividLight = vec3(0.0);
+             ${SPECIAL_SURFACE_GLSL[surface]}
+             // White / pale printed numbers remain untouched, including d4 corners.
+             vec3 ink = texture2D(map, vUv).rgb;
+             float glyphGuard = 1.0 - smoothstep(0.55, 0.85, min(ink.r, min(ink.g, ink.b)));
+             totalEmissiveRadiance += vividLight * glyphGuard * smoothstep(0.13, 0.23, length(p));
+             totalEmissiveRadiance += ink * (1.0 - glyphGuard) * 0.85;
+             #endif`
+          );
+        };
+      }
       material.needsUpdate = true;
       materials.add(material);
     }
   };
   const tick = (now: number) => {
     if (disposed) return;
+    timeUniform.value = motion.matches ? 0 : now / 1000;
     const intensity = cosmeticIntensity(config, state, now / 1000, Math.max(0, (now - landedAt) / 1000), motion.matches);
     for (const material of materials) material.emissiveIntensity = intensity;
     // Physics already renders rolling frames; 0.0.12 stops rendering at rest.
