@@ -8,7 +8,9 @@ import { getSessionUser } from "./auth.js";
 import { achievements, notifyAchievementUnlocks } from "./achievements.js";
 import { reconcileAccountAchievements } from "./achievementTracking.js";
 
-import { CACHE_COST, CACHE_REWARDS, DUPLICATE_REFUNDS, CacheError, createVividCacheStore } from "./vividCacheStore.js";
+import { CACHE_COST, CACHE_REWARDS, cacheRefunds, CacheError, createVividCacheStore } from "./vividCacheStore.js";
+import { MYTHIC_DICE } from "../../shared/mythicDice.js";
+import { ownsMythicDice } from "./diceOwnership.js";
 
 import { COSMETICS, bundlesNewestFirst, type CriticalSlot, type CriticalEffectStyle, type TurnStartEffectStyle } from "./shopCatalog.js";
 export { COSMETICS, BUNDLES, bundlesNewestFirst } from "./shopCatalog.js";
@@ -298,6 +300,7 @@ shopRouter.get("/", (req, res) => {
     previewCharacter: shopPreviewCharacter(user.id),
     items: COSMETICS.map((item) => presentItem(user.id, item, bypass.active)),
     bundles: bundlesNewestFirst(),
+    specialDice: MYTHIC_DICE.filter(dice => dice.theme !== "first-flame").map(dice => ({ ...dice, owned: ownsMythicDice(db, user.id, dice.theme) })),
   });
 });
 
@@ -549,7 +552,7 @@ const vividCache = createVividCacheStore(db, STARTING_BALANCE);
 shopRouter.get("/cache", (req, res) => {
   const user = getSessionUser(req);
   if (!user) return res.status(401).json({ error: "Not logged in" });
-  res.json({ cost: CACHE_COST, balance: walletBalance(user.id), refunds: DUPLICATE_REFUNDS,
+  res.json({ cost: CACHE_COST, balance: walletBalance(user.id), refunds: cacheRefunds(CACHE_COST),
     rewards: CACHE_REWARDS.map(reward => ({ ...reward, owned: reward.unlockIds.every(id => vividCache.owned(user.id, id)) })),
     pending: vividCache.pending(user.id) });
 });

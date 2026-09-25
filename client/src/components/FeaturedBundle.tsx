@@ -203,7 +203,7 @@ export default function FeaturedBundle({
         {bundle.source.kind === "cache" && (
           <button type="button" className="featured-card featured-card-source" onClick={onOpenCache}>
             <span className="featured-card-label">Only in the Vivid Cache</span>
-            <span className="featured-card-caption">{bundle.source.price} VCoins per opening</span>
+            <span className="featured-card-caption">{bundle.source.price ? `${bundle.source.price} VCoins per opening` : "Free to open"}</span>
             <span className="featured-card-count">Open the cache</span>
           </button>
         )}

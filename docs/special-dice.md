@@ -1,8 +1,15 @@
 # Mystery dice previews
 
-The Emporium's **Mystery dice** catalogue contains three preview-only sets.
-Their names remain visible alongside black silhouettes and question marks, even
-after previewing. They are not purchases, cache rewards, or selectable loadouts.
+The Emporium's **Mystery dice** catalogue contains three sets. Their names
+remain visible alongside black silhouettes and question marks, even after
+previewing -- in the catalogue, the Vivid Cache reel and the cache reveal alike.
+They are not purchases.
+
+**Since 2026-09-25 they are Vivid Cache rewards at mythic rarity** (weight 5 each,
+the same as the Relic, keeping the mythic tier at 20 of 10,000), and a winner can
+equip them. `shared/mythicDice.ts` maps each theme to its unlock id;
+`server/src/diceOwnership.ts` checks the unlock, and both the equip gate in
+`server/src/auth.ts` and the cache reveal's Equip button go through it.
 
 - **Event Horizon:** obsidian-purple star fields, accretion rings, and moving
   spiral light around a dark center.

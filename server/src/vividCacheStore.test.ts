@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DatabaseSync } from "node:sqlite";
 import { CACHE_REWARDS, RELIC_UNLOCKS, createVividCacheStore, selectCacheReward } from "./vividCacheStore.js";
-import { buildCacheReel, buildSpinPath, CACHE_SPIN_DURATION_MS, CACHE_WINNER_INDEX } from "../../shared/vividCacheReel.js";
+import { buildCacheReel, buildSpinPath, CACHE_SHOWCASE_SLOTS, CACHE_SPIN_DURATION_MS, CACHE_WINNER_INDEX } from "../../shared/vividCacheReel.js";
 
 const key = "11111111-1111-4111-8111-111111111111";
 const next = "22222222-2222-4222-8222-222222222222";
-function fixture(balance = 1000, choose = () => CACHE_REWARDS[0]) {
+function fixture(balance = 1000, choose = () => CACHE_REWARDS[0], cost = 500) {
   const db = new DatabaseSync(":memory:");
   db.exec(`PRAGMA foreign_keys = ON;
     CREATE TABLE users (id INTEGER PRIMARY KEY);
@@ -16,7 +16,7 @@ function fixture(balance = 1000, choose = () => CACHE_REWARDS[0]) {
     CREATE TABLE vcoin_transactions (user_id INTEGER, amount INTEGER, reason TEXT, reference TEXT);
   `);
   db.prepare("INSERT INTO user_wallets VALUES (1, ?), (2, ?)").run(balance, balance);
-  const store = createVividCacheStore(db, 100, choose);
+  const store = createVividCacheStore(db, 100, choose, cost);
   return { db, store, balance: () => Number(db.prepare("SELECT balance FROM user_wallets WHERE user_id=1").get()!.balance) };
 }
 test("insufficient funds and invalid keys cannot select or grant rewards", () => {
@@ -47,7 +47,7 @@ test("same and different request IDs share one pending result, including after r
     const result = f.store.open(1, key);
     assert.deepEqual(f.store.open(1, key), result);
     assert.deepEqual(f.store.open(1, next), result);
-    const restarted = createVividCacheStore(f.db, 100);
+    const restarted = createVividCacheStore(f.db, 100, undefined, 500);
     assert.deepEqual(restarted.pending(1), result);
     assert.deepEqual(restarted.open(1, next), result);
     restarted.acknowledge(2, key); // Another account cannot dismiss it.
@@ -118,13 +118,67 @@ test("weighted selection covers every ticket exactly with configured rarity coun
   assert.deepEqual(counts, { common: 7000, rare: 2200, epic: 600, legendary: 180, mythic: 20 });
   assert.throws(() => selectCacheReward(10000)); assert.throws(() => selectCacheReward(-1));
 });
-test("reel preserves the committed winner with unbiased neighbors on both sides", () => {
-  const winner = CACHE_REWARDS.at(-1)!;
-  const reel = buildCacheReel(CACHE_REWARDS, winner, () => 0);
-  assert.equal(reel[CACHE_WINNER_INDEX], winner);
-  assert.equal(reel.length - CACHE_WINNER_INDEX - 1, 6);
-  assert.ok(reel.slice(0, CACHE_WINNER_INDEX).every(r => r === CACHE_REWARDS[0]));
-  assert.ok(reel.slice(CACHE_WINNER_INDEX + 1).every(r => r === CACHE_REWARDS[0]));
+// Small seeded generator so the theatre tests are deterministic.
+function seeded(seed: number) { return () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648); }
+test("the showcase and the near miss never touch the committed winner", () => {
+  const random = seeded(7);
+  for (let i = 0; i < 2000; i++) {
+    const winner = CACHE_REWARDS[i % CACHE_REWARDS.length];
+    const reel = buildCacheReel(CACHE_REWARDS, winner, random);
+    assert.equal(reel[CACHE_WINNER_INDEX], winner);
+    assert.equal(reel.length - CACHE_WINNER_INDEX - 1, 6);
+  }
+});
+test("mythics pass the pointer on every spin, slowest last", () => {
+  const reel = buildCacheReel(CACHE_REWARDS, CACHE_REWARDS[0], seeded(3));
+  for (const slot of CACHE_SHOWCASE_SLOTS) assert.equal(reel[slot].rarity, "mythic");
+});
+test("a near miss sits beside the winner about half the time, and never beside a mythic win", () => {
+  const nearMiss = (winner: (typeof CACHE_REWARDS)[number], random: () => number) => {
+    let hits = 0;
+    for (let i = 0; i < 4000; i++) {
+      const reel = buildCacheReel(CACHE_REWARDS, winner, random);
+      const big = (r: { rarity: string }) => r.rarity === "mythic" || r.rarity === "legendary";
+      if (big(reel[CACHE_WINNER_INDEX - 1]) || big(reel[CACHE_WINNER_INDEX + 1])) hits++;
+    }
+    return hits / 4000;
+  };
+  const common = nearMiss(CACHE_REWARDS[0], seeded(11));
+  assert.ok(common > 0.5 && common < 0.62, `common win near-miss rate ${common}`);
+  // Only the ordinary random fill can put a big tile there when the win is already mythic.
+  const mythic = nearMiss(CACHE_REWARDS.find(r => r.rarity === "mythic")!, seeded(11));
+  assert.ok(mythic < 0.06, `mythic win near-miss rate ${mythic}`);
+});
+test("the three new dice sit in the mythic tier and the tier keeps its 0.2% share", () => {
+  for (const theme of ["event-horizon", "chronos-engine", "prismatic-echo"]) {
+    const reward = CACHE_REWARDS.find(r => r.id === theme);
+    assert.ok(reward, theme);
+    assert.equal(reward.rarity, "mythic");
+    assert.deepEqual(reward.unlockIds, [`dice-${theme}`]);
+    assert.equal(reward.diceTheme, theme);
+  }
+  const total = CACHE_REWARDS.reduce((n, r) => n + r.weight, 0);
+  const mythic = CACHE_REWARDS.filter(r => r.rarity === "mythic").reduce((n, r) => n + r.weight, 0);
+  assert.equal(total, 10000);
+  assert.equal(mythic, 20);
+});
+test("a free opening grants the reward, moves no VCoins, and refunds nothing on a duplicate", () => {
+  const dice = CACHE_REWARDS.find(r => r.id === "event-horizon")!;
+  const f = fixture(0, () => dice, 0);
+  try {
+    const first = f.store.open(1, key);
+    assert.equal(first.cost, 0);
+    assert.equal(first.reward.id, "event-horizon");
+    assert.equal(f.balance(), 0);
+    assert.equal(f.db.prepare("SELECT count(*) n FROM cosmetic_unlocks WHERE user_id=1 AND cosmetic_id='dice-event-horizon'").get()!.n, 1);
+    f.store.acknowledge(1, key);
+    const again = f.store.open(1, next);
+    assert.equal(again.duplicate, true);
+    assert.equal(again.refund, 0);
+    assert.equal(f.balance(), 0);
+    assert.equal(f.db.prepare("SELECT count(*) n FROM vcoin_transactions").get()!.n, 0, "no ledger rows for free openings");
+    assert.equal(f.db.prepare("SELECT count(*) n FROM vivid_cache_openings WHERE user_id=1").get()!.n, 2);
+  } finally { f.db.close(); }
 });
 test("the spin curve winds up, overshoots once, and lands exactly on the winner", () => {
   const { positions, tickTimes, settleAt } = buildSpinPath(CACHE_SPIN_DURATION_MS);

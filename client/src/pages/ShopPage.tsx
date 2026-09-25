@@ -119,7 +119,7 @@ export default function ShopPage() {
     return () => { mounted.current = false; };
   }, []);
 
-  const previewSpecialDice = async (id: string) => {
+  const previewSpecialDice = async (id: string, reopenCatalogue = true) => {
     const dice = SPECIAL_DICE.find(die => die.id === id);
     if (!dice || dicePreviewLock.current) return;
     dicePreviewLock.current = true;
@@ -138,9 +138,26 @@ export default function ShopPage() {
         setDicePreviewing(false);
         setNotice("");
         setSpecialDiceName("");
-        setSpecialDiceOpen(true);
+        if (reopenCatalogue) setSpecialDiceOpen(true);
       }
     }
+  };
+
+  // "Roll them" from a cache reveal. The dialog's top layer hides the dice
+  // canvas, so the cache closes for the roll and reopens on the same reveal
+  // (an unacknowledged opening is restored from the server).
+  const previewCacheDice = async (theme: string) => {
+    if (dicePreviewLock.current) return;
+    setCacheOpen(false);
+    if (SPECIAL_DICE.some(die => die.id === theme)) await previewSpecialDice(theme, false);
+    else {
+      dicePreviewLock.current = true;
+      setDicePreviewing(true);
+      try { await previewDice(theme); }
+      catch (cause) { if (mounted.current) setError(cause instanceof Error ? cause.message : "Could not preview these dice."); }
+      finally { dicePreviewLock.current = false; if (mounted.current) setDicePreviewing(false); }
+    }
+    if (mounted.current) setCacheOpen(true);
   };
 
   const loadShop = async () => {
@@ -699,7 +716,7 @@ export default function ShopPage() {
         subtitle="One cache. One cosmetic. A chance at the First Flame."
         onClose={() => setCacheOpen(false)}
       >
-        <VividCache onChange={loadShop} onPreviewDice={() => { setCacheOpen(false); void previewFeaturedDice(); }} />
+        <VividCache onChange={loadShop} onPreviewDice={(theme) => void previewCacheDice(theme)} />
       </ShopDialog>
     </div>
   );

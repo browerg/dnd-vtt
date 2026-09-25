@@ -16,6 +16,32 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 25 September 2026
+
+### Major changes
+
+- **The Vivid Cache is free** — open it as often as you like, no VCoins needed.
+  Every reward is real and goes straight into your collection. While it's free,
+  duplicates don't refund VCoins.
+- **Win the mystery dice** — Event Horizon, Chronos Engine and Prismatic Echo are
+  now in the Vivid Cache at mythic rarity, alongside the Relic of the First
+  Flame. Win one and equip it straight from the reveal, or roll it to see it in
+  action. Every mythic die you own stays listed in the cache so you can switch
+  between them later.
+- **A spin worth watching** — the reel launches harder, and every rare and mythic
+  reward lights the pointer in its own colour as it flies past. The last few
+  tiles crawl in slowly enough to hold your breath. Landings hit harder the rarer
+  they are, with a shockwave for legendary and mythic pulls, and the reveal tells
+  you exactly how rare yours was.
+
+### Minor changes
+
+- **Straight odds** — the rewards flying past are there for show; yours is
+  decided before the reel moves, and the odds listed are the real ones. Mythic is
+  still 0.2% overall, now shared between four rewards, so each one is 1 in 2,000.
+
+---
+
 ## 24 September 2026
 
 ### Major changes

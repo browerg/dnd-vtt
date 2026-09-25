@@ -4,6 +4,8 @@ import path from "node:path";
 import { db } from "./db.js";
 import { DEFAULT_PROFILE_STYLE, isProfileStyle } from "./profileStyles.js";
 import { reconcileAccountAchievements } from "./achievementTracking.js";
+import { mythicDiceForTheme } from "../../shared/mythicDice.js";
+import { ownsMythicDice } from "./diceOwnership.js";
 
 const SESSION_DAYS = 30;
 
@@ -81,7 +83,7 @@ const isCustomDiceTheme = (theme: string) => {
 };
 
 const isValidDiceTheme = (theme: string) =>
-  theme === "first-flame" || theme === "" || DICE_THEMES.has(theme) || isCustomDiceTheme(theme);
+  !!mythicDiceForTheme(theme) || theme === "" || DICE_THEMES.has(theme) || isCustomDiceTheme(theme);
 
 const presentDicePreset = (row: any) => ({
   id: Number(row.id),
@@ -429,8 +431,9 @@ authRouter.put("/me/dice", (req, res) => {
   if (!isValidDiceTheme(theme)) {
     return res.status(400).json({ error: "That dice appearance isn't valid." });
   }
-  if (theme === "first-flame" && !db.prepare("SELECT 1 FROM cosmetic_unlocks WHERE user_id = ? AND cosmetic_id = 'dice-first-flame'").get(user.id)) {
-    return res.status(403).json({ error: "Unlock Relic of the First Flame before equipping it." });
+  const mythic = mythicDiceForTheme(theme);
+  if (mythic && !ownsMythicDice(db, user.id, theme)) {
+    return res.status(403).json({ error: `Unlock ${mythic.name} before equipping it.` });
   }
   db.prepare("UPDATE users SET dice_theme = ? WHERE id = ?").run(theme, user.id);
   res.json({ ok: true, diceTheme: theme });
