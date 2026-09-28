@@ -547,17 +547,17 @@ export default function DiceCustomizer() {
   // players saw a "DEV · ALL UNLOCKED" badge whenever the table was hosted in
   // dev — and the picker never checked ownership at all, so the prices were
   // decorative.
-  const [trailShop, setTrailShop] = useState<Record<string, { owned: boolean; price: number }>>({});
+  const [trailShop, setTrailShop] = useState<Record<string, { owned: boolean; price: number; cacheExclusive?: boolean }>>({});
 
   useEffect(() => {
     let cancelled = false;
-    api<{ items?: { type: string; effect: string; price: number; owned: boolean }[] }>("/api/shop")
+    api<{ items?: { type: string; effect: string; price: number; owned: boolean; cacheExclusive?: boolean }[] }>("/api/shop")
       .then((response) => {
         if (cancelled) return;
-        const owned: Record<string, { owned: boolean; price: number }> = {};
+        const owned: Record<string, { owned: boolean; price: number; cacheExclusive?: boolean }> = {};
         for (const item of response.items ?? []) {
           if (item.type === "dice-trail") {
-            owned[item.effect] = { owned: !!item.owned, price: Number(item.price) || 0 };
+            owned[item.effect] = { owned: !!item.owned, price: Number(item.price) || 0, cacheExclusive: item.cacheExclusive };
           }
         }
         setTrailShop(owned);
@@ -585,7 +585,7 @@ export default function DiceCustomizer() {
     const label = trailOptions.find((option) => option.value === style)?.label ?? "This dice trail";
     if (!trailOwned(style)) {
       setNotice("");
-      setError(`${label} is an Emporium cosmetic. Unlock it in the shop to equip it.`);
+      setError(trailEntry(style)?.cacheExclusive ? `Win ${label} in Vivid Cache to equip it.` : `${label} is an Emporium cosmetic. Unlock it in the shop to equip it.`);
       return;
     }
     setTrailStyle(style);
@@ -901,17 +901,17 @@ export default function DiceCustomizer() {
                 className={`dice-trail-shop-card${selected ? " selected" : ""}${owned ? "" : " locked"}`}
                 onClick={() => selectTrail(option.value)}
                 aria-pressed={selected}
-                title={owned ? undefined : `Unlock ${option.label} in the Emporium`}
+                title={owned ? undefined : trailEntry(option.value)?.cacheExclusive ? `Win ${option.label} in Vivid Cache` : `Unlock ${option.label} in the Emporium`}
               >
                 <span className={`dice-trail-orb dice-trail-orb-${option.value}`} aria-hidden />
                 <span className="dice-trail-shop-copy">
                   <strong>{option.label}</strong>
                   <small>
-                    {price === 0 ? "Starter cosmetic" : owned ? "Unlocked" : "Emporium cosmetic"}
+                    {owned ? "Unlocked" : trailEntry(option.value)?.cacheExclusive ? "Vivid Cache exclusive" : price === 0 ? "Starter cosmetic" : "Emporium cosmetic"}
                   </small>
                 </span>
                 <span className={`dice-trail-status${selected ? " selected" : ""}`}>
-                  {selected ? "EQUIPPED" : owned ? (price === 0 ? "FREE" : "OWNED") : `${price} VC`}
+                  {selected ? "EQUIPPED" : owned ? (price === 0 ? "FREE" : "OWNED") : trailEntry(option.value)?.cacheExclusive ? "CACHE" : `${price} VC`}
                 </span>
               </button>
             );

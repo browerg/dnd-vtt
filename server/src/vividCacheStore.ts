@@ -1,6 +1,8 @@
+import { SPECIAL_CRITICALS } from "../../shared/specialCriticals.js";
 import { randomInt } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { MYTHIC_DICE } from "../../shared/mythicDice.js";
+import { SPECIAL_TRAILS } from "../../shared/specialTrails.js";
 import { ownsCosmetic, RELIC_ID, RELIC_ADDITIONS } from "./relicOwnership.js";
 export { RELIC_ID } from "./relicOwnership.js";
 
@@ -26,8 +28,12 @@ export const CACHE_REWARDS: CacheReward[] = [
   { id: "frost", name: "Frost Trail", rarity: "common", weight: 3500, cosmeticType: "dice-trail", unlockIds: ["trail-frost"], duplicateBehavior: "refund", preview: { symbol: "❄", description: "Cold motes and icy stars." } },
   { id: "shadow", name: "Shadow Trail", rarity: "rare", weight: 1100, cosmeticType: "dice-trail", unlockIds: ["trail-shadow"], duplicateBehavior: "refund", preview: { symbol: "☾", description: "Violet smoke in your wake." } },
   { id: "lightning", name: "Lightning Trail", rarity: "rare", weight: 1100, cosmeticType: "dice-trail", unlockIds: ["trail-lightning"], duplicateBehavior: "refund", preview: { symbol: "ϟ", description: "Electric arcs around the dice." } },
-  { id: "storm", name: "Lightning Strike", rarity: "epic", weight: 600, cosmeticType: "nat20-effect", unlockIds: ["crit20-lightning"], duplicateBehavior: "refund", preview: { symbol: "ϟ", description: "A critical-success electrical surge." } },
-  { id: "rose", name: "Rose Burst", rarity: "legendary", weight: 180, cosmeticType: "nat20-effect", unlockIds: ["crit20-rose"], duplicateBehavior: "refund", preview: { symbol: "❋", description: "Crimson petals celebrate a natural 20." } },
+  { id: "storm", name: "Lightning Strike", rarity: "epic", weight: 150, cosmeticType: "nat20-effect", unlockIds: ["crit20-lightning"], duplicateBehavior: "refund", preview: { symbol: "ϟ", description: "A critical-success electrical surge." } },
+  { id: "rose", name: "Rose Burst", rarity: "legendary", weight: 45, cosmeticType: "nat20-effect", unlockIds: ["crit20-rose"], duplicateBehavior: "refund", preview: { symbol: "❋", description: "Crimson petals celebrate a natural 20." } },
+  ...SPECIAL_CRITICALS.map(effect => ({ id: effect.effect, name: effect.name, rarity: effect.rarity, weight: 150, cosmeticType: "nat20-effect", unlockIds: [effect.id], duplicateBehavior: "refund" as const, preview: { symbol: "✦", description: effect.description } })),
+  ...SPECIAL_TRAILS.map(trail => ({ id: trail.effect, name: trail.name, rarity: trail.rarity, weight: 45,
+    cosmeticType: "dice-trail", unlockIds: [trail.id], duplicateBehavior: "refund" as const,
+    preview: { symbol: "✦", description: trail.description } })),
   ...MYTHIC_DICE.filter(dice => dice.theme !== "first-flame").map(dice => ({
     id: dice.theme, name: dice.name, rarity: "mythic" as const, weight: 5,
     cosmeticType: "dice", diceTheme: dice.theme, unlockIds: [dice.unlockId], duplicateBehavior: "refund" as const,

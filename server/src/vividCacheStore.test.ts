@@ -110,6 +110,22 @@ test("grant or persistence failures roll back the debit, unlock and ledger", () 
     assert.equal(f.store.pending(1), null);
   } finally { f.db.close(); }
 });
+test("new Legendary trails grant their own entitlement on a free opening without minting duplicate coins", () => {
+  for (const id of ["riftwake", "astral-script", "prism-shatter"]) {
+    const reward = CACHE_REWARDS.find(item => item.id === id)!;
+    const f = fixture(0, () => reward, 0);
+    try {
+      const first = f.store.open(1, key);
+      assert.equal(first.reward.id, id); assert.equal(first.reward.rarity, "legendary");
+      assert.equal(first.duplicate, false); assert.ok(f.store.owned(1, `trail-${id}`));
+      assert.equal(f.store.owned(2, `trail-${id}`), false);
+      f.store.acknowledge(1, key);
+      const again = f.store.open(1, next);
+      assert.equal(again.duplicate, true); assert.equal(again.refund, 0); assert.equal(f.balance(), 0);
+    } finally { f.db.close(); }
+  }
+});
+
 test("weighted selection covers every ticket exactly with configured rarity counts", () => {
   const counts: Record<string, number> = {};
   for (let ticket = 0; ticket < 10000; ticket++) {
@@ -119,7 +135,7 @@ test("weighted selection covers every ticket exactly with configured rarity coun
   assert.throws(() => selectCacheReward(10000)); assert.throws(() => selectCacheReward(-1));
 });
 // Small seeded generator so the theatre tests are deterministic.
-function seeded(seed: number) { return () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648); }
+function seeded(seed: number) { return () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296); }
 test("the showcase and the near miss never touch the committed winner", () => {
   const random = seeded(7);
   for (let i = 0; i < 2000; i++) {
@@ -196,4 +212,21 @@ test("the spin curve winds up, overshoots once, and lands exactly on the winner"
   assert.ok(early > tickTimes.length - early, "ticks slow down with the strip");
   assert.ok(tickTimes.every((time, i) => i === 0 || time >= tickTimes[i - 1]), "ticks are ordered");
   assert.ok(settleAt > half && settleAt < CACHE_SPIN_DURATION_MS, "settles late, but before the end");
+});
+
+test("new critical rewards grant independently and preserve the 6% Epic tier", () => {
+  assert.equal(CACHE_REWARDS.filter(r => r.rarity === "epic").reduce((n,r) => n+r.weight,0),600);
+  for (const effect of ["void-collapse", "heavens-lance", "chronobreak"]) {
+    const reward = CACHE_REWARDS.find(r => r.id === effect)!;
+    assert.equal(reward.weight,150);
+    const f = fixture(0, () => reward, 0);
+    try {
+      const result = f.store.open(1,key);
+      assert.equal(result.balance,0);
+      assert.ok(f.store.owned(1,`crit20-${effect}`));
+      assert.equal(f.store.owned(2,`crit20-${effect}`),false);
+      f.store.acknowledge(1,key);
+      assert.equal(f.store.open(1,next).refund,0);
+    } finally { f.db.close(); }
+  }
 });

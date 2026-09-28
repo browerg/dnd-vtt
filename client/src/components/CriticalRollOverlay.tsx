@@ -1,9 +1,12 @@
+import { SPECIAL_CRITICALS, type SpecialCriticalStyle } from "../../../shared/specialCriticals";
+import SpecialCriticalSpectacle from "./SpecialCriticalSpectacle";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import "./CriticalRollOverlay.css";
 import "./CriticalRollEffects.css";
 
 export type CriticalRollKind = "nat20" | "nat1";
 export type CriticalEffectStyle =
+  | SpecialCriticalStyle
   | "first-flame"
   | "golden"
   | "rose"
@@ -29,7 +32,7 @@ interface ActiveCritical extends CriticalRollEventDetail {
 const EVENT_NAME = "tabletop:critical-roll";
 let eventId = 0;
 
-const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame"]);
+const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame", ...SPECIAL_CRITICALS.map(effect => effect.effect)]);
 const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris", "first-flame"]);
 
 function currentSystem(): "remnant" | "dnd5e" {
@@ -102,6 +105,9 @@ function playCriticalSound(kind: CriticalRollKind, effect: CriticalEffectStyle) 
     let frequencies =
       kind === "nat20" ? [392, 523.25, 659.25, 783.99] : [196, 130.81, 82.41];
 
+    if (effect === "void-collapse") frequencies = [130.81, 196, 392, 783.99];
+    if (effect === "heavens-lance") frequencies = [523.25, 659.25, 783.99, 1046.5];
+    if (effect === "chronobreak") frequencies = [783.99, 392, 523.25, 1046.5];
     if (effect === "rose") frequencies = [349.23, 440, 523.25, 698.46];
     if (effect === "lightning") frequencies = [523.25, 783.99, 1046.5, 1318.51];
     if (effect === "smoke") frequencies = [146.83, 110, 73.42];
@@ -210,6 +216,7 @@ export default function CriticalRollOverlay() {
       role="status"
       aria-live="assertive"
     >
+      <SpecialCriticalSpectacle effect={active.effect} />
       {active.effect === "first-flame" && <div className="flame-spectacle" aria-hidden="true">
         <div className="flame-eclipse" />
         <div className="flame-shockwave" /><div className="flame-shockwave second" />

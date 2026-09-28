@@ -3,7 +3,20 @@ export default function CacheRewardArt({ id }: { id: string }) {
   if (id === "relic-first-flame") return <img className="cache-reward-art cache-relic-art" src="/assets/bundles/first-flame.webp" alt="" />;
   const mystery = ["event-horizon", "chronos-engine", "prismatic-echo"].includes(id);
   return <svg className={`cache-reward-art art-${id}`} viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-    {mystery ? <>
+    {id === "void-collapse" ? <><circle cx="60" cy="60" r="27" fill="#080310" stroke="#c49aff" /><ellipse cx="60" cy="60" rx="50" ry="16" stroke="#9affe0" transform="rotate(-30 60 60)" /><ellipse cx="60" cy="60" rx="46" ry="19" stroke="#c49aff" transform="rotate(40 60 60)" /></> : id === "heavens-lance" ? <><path d="M60 8v95m-8-16 8 17 8-17M60 40 15 24l19 29-23-7 36 30M60 40l45-16-19 29 23-7-36 30" stroke="#ffe3a5" strokeWidth="3" /><path d="m60 22 33 38-33 38-33-38Z" stroke="#c4f3ff" /></> : id === "chronobreak" ? <><circle cx="60" cy="60" r="40" stroke="#94ffda" strokeDasharray="17 5" /><path d="M60 28v32l22 13M15 15l12 8-5 13M96 81l11 15-17 8" stroke="#ffdf9f" strokeWidth="3" /></> : id === "riftwake" ? <>
+      <ellipse cx="60" cy="60" rx="23" ry="43" stroke="#ca9bff" strokeWidth="3" transform="rotate(-25 60 60)" />
+      <ellipse cx="60" cy="60" rx="34" ry="47" stroke="#77ffe0" strokeDasharray="30 12 4 12" transform="rotate(25 60 60)" />
+      <path d="m60 8 3 9M16 58l10 2M93 90l9 6" stroke="#eee1ff" />
+    </> : id === "astral-script" ? <>
+      <path d="M60 24v72M37 38l46 44M37 82l46-44" stroke="#ffe19c" strokeWidth="3" />
+      <path d="m17 27 15 4M87 90l16 6M23 89l-4-14M99 26l-9 10" stroke="#92dfff" />
+      {[ [17,27],[23,89],[99,26],[103,96] ].map(([x,y]) => <circle key={x} cx={x} cy={y} r="3" fill="#d1f5ff" stroke="none" />)}
+    </> : id === "prism-shatter" ? <>
+      <path d="m62 13 23 48-27 47-26-46Z" fill="#787cff" fillOpacity=".4" stroke="#b3eaff" />
+      <path d="m62 13-4 95M32 62l53-1" stroke="#fdc0ff" />
+      <path d="m19 25 10 14-12 22-6-17Z" fill="#6fffe2" fillOpacity=".6" />
+      <path d="m102 69 9 10-10 25-10-13Z" fill="#ff83ce" fillOpacity=".6" />
+    </> : mystery ? <>
       <path d="M60 9 104 34 104 86 60 111 16 86 16 34Z" fill="#09080e" />
       <path d="m60 9 22 34 22-9M82 43l6 37 16 6M88 80l-28 31-28-31-16 6M32 80l6-37-22-9M38 43 60 9M38 43h44l6 37H32Z" opacity=".3" />
       <text x="60" y="81" textAnchor="middle" stroke="none" fill="currentColor" fontFamily="Cinzel, Georgia, serif" fontSize="51">?</text>

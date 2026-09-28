@@ -12,7 +12,7 @@ import { CACHE_COST, CACHE_REWARDS, cacheRefunds, CacheError, createVividCacheSt
 import { MYTHIC_DICE } from "../../shared/mythicDice.js";
 import { ownsMythicDice } from "./diceOwnership.js";
 
-import { COSMETICS, bundlesNewestFirst, type CriticalSlot, type CriticalEffectStyle, type TurnStartEffectStyle } from "./shopCatalog.js";
+import { COSMETICS, bundlesNewestFirst, equipAllowed, isCacheExclusive, type CriticalSlot, type CriticalEffectStyle, type TurnStartEffectStyle } from "./shopCatalog.js";
 export { COSMETICS, BUNDLES, bundlesNewestFirst } from "./shopCatalog.js";
 export type { CriticalSlot, CosmeticSlot, CriticalEffectStyle, TurnStartEffectStyle } from "./shopCatalog.js";
 
@@ -157,8 +157,9 @@ function bypassFor(userId: number): { active: boolean; reason: "dev" | "gm" | nu
 }
 
 function presentItem(userId: number, item: Cosmetic, bypass: boolean) {
-  const owned = item.rarity === "mythic" ? hasUnlock(userId, item.id) : item.price === 0 || bypass || hasUnlock(userId, item.id);
-  return { ...item, owned };
+  const cacheExclusive = isCacheExclusive(item);
+  const owned = cacheExclusive ? hasUnlock(userId, item.id) : item.price === 0 || bypass || hasUnlock(userId, item.id);
+  return { ...item, owned, cacheExclusive };
 }
 
 function isCriticalCosmetic(item: Cosmetic): item is CriticalCosmetic {
@@ -315,7 +316,7 @@ shopRouter.post("/equip", (req, res) => {
   }
 
   const bypass = bypassFor(user.id);
-  if (item.price > 0 && (item.rarity === "mythic" || !bypass.active) && !hasUnlock(user.id, item.id)) {
+  if (!equipAllowed(item, bypass.active, hasUnlock(user.id, item.id))) {
     return res.status(403).json({ error: "Unlock that effect before equipping it." });
   }
 
@@ -463,7 +464,7 @@ shopRouter.post("/purchase", (req, res) => {
   const cosmeticId = String(req.body?.cosmeticId ?? "");
   const item = COSMETICS.find((candidate) => candidate.id === cosmeticId);
   if (!item) return res.status(404).json({ error: "That cosmetic does not exist." });
-  if (item.rarity === "mythic") return res.status(403).json({ error: "This cosmetic is exclusive to Vivid Cache." });
+  if (isCacheExclusive(item)) return res.status(403).json({ error: "This cosmetic is exclusive to Vivid Cache." });
 
   ensureWallet(user.id);
   const bypass = bypassFor(user.id);

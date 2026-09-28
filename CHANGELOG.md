@@ -16,6 +16,32 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 28 September 2026
+
+### Major changes
+
+- **Three extraordinary dice trails** — Riftwake opens collapsing violet portals,
+  Astral Script writes golden runes joined by starlight, and Prism Shatter scatters
+  tumbling rainbow crystals. Preview them freely in the Emporium's Dice trails
+  catalogue, then equip them after winning them in Vivid Cache.
+- **Three new critical-success spectacles** — Void Collapse tears open a violet
+  singularity, Heaven’s Lance unfolds celestial wings, and Chronobreak shatters a
+  rewinding clock. Preview them in Nat 20 effects; unlock them as Epic Vivid Cache
+  rewards.
+
+### Minor changes
+
+- **Epic collection** — the three new effects share the Epic tier with Lightning
+  Strike, at 1.5% each per opening. The tier remains 6% overall.
+- **Legendary collection** — the three trails share the Legendary tier with Rose
+  Burst, at 0.45% each per opening. The tier remains 1.8% overall; Mythic dice odds
+  and free spins are unchanged.
+- **Trail previews** — a dark backdrop makes each effect easier to see, and the
+  catalogue returns after the roll. Your equipped trail stays untouched. Reduced
+  motion skips the trails; moving between rolls clears the previous effect.
+
+---
+
 ## 25 September 2026
 
 ### Major changes

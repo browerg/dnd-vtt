@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import { previewDice, setDiceTrailStyle, type DiceTrailStyle } from "../dice3d";
+import { previewDice, getDiceTrailStyle, setDiceTrailStyle, type DiceTrailStyle } from "../dice3d";
 import TurnStartEffect from "../components/TurnStartEffect";
 import "./ShopPage.css";
 import VividCache from "../components/VividCache";
@@ -13,6 +13,8 @@ import { emporiumDoor, emporiumMusic, EMPORIUM_MUSIC_KEY, playCoinSound, primeCo
 import { useBackgroundMusic } from "../useBackgroundMusic";
 import { DICE_COSMETICS } from "../diceCosmetics";
 import { SPECIAL_DICE } from "../specialDice";
+import { isSpecialTrail } from "../specialTrails";
+import CacheRewardArt from "../components/CacheRewardArt";
 import SpecialDiceCatalogue from "../components/SpecialDiceCatalogue";
 import "../components/RelicAppearance.css";
 
@@ -29,6 +31,7 @@ interface ShopItem {
   price: number;
   rarity: "starter" | "uncommon" | "rare" | "legendary" | "mythic";
   owned: boolean;
+  cacheExclusive?: boolean;
 }
 
 interface ShopResponse {
@@ -285,6 +288,7 @@ export default function ShopPage() {
   const featuredCrit = useMemo(() => items.find((item) => item.id === "crit20-first-flame"), [items]);
 
   const isEquipped = (item: ShopItem) => {
+    if (isDiceTrail(item)) return item.owned && getDiceTrailStyle() === item.effect;
     if (!item.slot) return false;
     return shop?.equipped[item.slot] === item.id;
   };
@@ -302,7 +306,11 @@ export default function ShopPage() {
       // Native dialogs sit above the shared dice and critical overlays.
       setOpenCategory(null);
       if (isDiceTrail(item)) {
-        await previewDice("white", item.effect);
+        if (isSpecialTrail(item.effect)) {
+          setSpecialDiceName(item.name);
+          try { await previewDice("black", item.effect, true); }
+          finally { if (mounted.current) { setSpecialDiceName(""); setOpenCategory("dice-trail"); } }
+        } else await previewDice("white", item.effect);
         setNotice(`Previewed ${item.name}.`);
       } else if (isTurnStartEffect(item)) {
         if (item.effect === "none") {
@@ -394,6 +402,7 @@ export default function ShopPage() {
   };
 
   const renderPreview = (item: ShopItem) => {
+    if (isDiceTrail(item) && isSpecialTrail(item.effect)) return <span className="special-trail-swatch" aria-hidden="true"><CacheRewardArt id={item.effect} /></span>;
     if (item.type === "token-border") return <div className="relic-appearance-preview" aria-label="First Flame token border preview">
       <span className="relic-preview-token">
         {shop?.previewCharacter?.imageUrl ? <img src={shop.previewCharacter.imageUrl} alt="Character token" /> : <strong>PC</strong>}
@@ -459,6 +468,7 @@ export default function ShopPage() {
       );
     }
 
+    if (["void-collapse", "heavens-lance", "chronobreak"].includes(item.effect ?? "")) return <div className="special-trail-swatch"><CacheRewardArt id={item.effect!} /></div>;
     const kind = criticalKind(item);
     return (
       <span
@@ -531,7 +541,7 @@ export default function ShopPage() {
                   <span className="emporium-equipped">EQUIPPED</span>
                 ) : item.owned ? (
                   <span className="emporium-owned">OWNED</span>
-                ) : item.rarity === "mythic" ? (
+                ) : item.rarity === "mythic" || item.cacheExclusive ? (
                   <span className="emporium-rarity">Vivid Cache exclusive</span>
                 ) : (
                   // A brass tag on a string, hung off the shelf edge.
@@ -562,8 +572,8 @@ export default function ShopPage() {
                   >
                     {equipped ? (item.type === "token-border" || item.type === "chat-flair" ? "Remove" : "Equipped") : "Equip"}
                   </button>
-                ) : item.rarity === "mythic" ? (
-                  <span className="muted small">Unlock the Relic in Vivid Cache to equip.</span>
+                ) : item.rarity === "mythic" || item.cacheExclusive ? (
+                  <span className="muted small">Win in Vivid Cache to equip.</span>
                 ) : (
                   <button
                     type="button"

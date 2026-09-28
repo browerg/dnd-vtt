@@ -2,6 +2,7 @@
 import type { RollDetail } from "./api";
 import { applyDiceBoxCustomization, decodeDiceCustomization } from "./diceCustomization";
 import { applyDiceCosmetic, DICE_COSMETICS, type CosmeticAnimation } from "./diceCosmetics";
+import { createSpecialTrail, isSpecialTrail } from "./specialTrails";
 
 // 3D dice are pure theater: the server already decided the results, and the
 // notation's "@" suffix forces the dice to land on exactly those faces.
@@ -65,6 +66,7 @@ interface DiceBoxTrailInternals {
 }
 
 export type DiceTrailStyle =
+  | "riftwake" | "astral-script" | "prism-shatter"
   | "first-flame"
   | "aura"
   | "ember"
@@ -79,6 +81,7 @@ const TRAIL_MAX_POINTS = 28;
 const TRAIL_SAMPLE_MS = 18;
 
 const TRAIL_LABELS: Record<DiceTrailStyle, string> = {
+  "riftwake": "Riftwake", "astral-script": "Astral Script", "prism-shatter": "Prism Shatter",
   "first-flame": "First Flame",
   aura: "Aura Glow",
   ember: "Ember",
@@ -89,6 +92,9 @@ const TRAIL_LABELS: Record<DiceTrailStyle, string> = {
 };
 
 const TRAIL_COLORS: Record<DiceTrailStyle, { core: string; glow: string }> = {
+  "riftwake": { core: "210, 160, 255", glow: "130, 70, 255" },
+  "astral-script": { core: "255, 225, 156", glow: "255, 189, 73" },
+  "prism-shatter": { core: "210, 245, 255", glow: "130, 190, 255" },
   "first-flame": { core: "255, 221, 115", glow: "255, 139, 32" },
   aura: { core: "235, 252, 255", glow: "116, 231, 255" },
   ember: { core: "255, 238, 190", glow: "255, 105, 45" },
@@ -461,9 +467,13 @@ function drawTrailSprites(
 
   return visible;
 }
+let clearPreviousTrail: (() => void) | undefined;
 function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: DiceTrailStyle): () => void {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
+  clearPreviousTrail?.();
+  const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  if (motion.matches) return () => {};
   const style = previewTrail ?? getDiceTrailStyle(defaultTrail);
+  const special = isSpecialTrail(style) ? createSpecialTrail(style) : null;
   const lifetime = style === "first-flame" ? 260 : TRAIL_LIFETIME_MS;
   const internals = diceBox as unknown as DiceBoxTrailInternals;
   const canvas = getTrailCanvas();
@@ -478,6 +488,13 @@ function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: 
   const particles: TrailSpriteParticle[] = [];
   let active = true;
   let lastSampleAt = 0;
+  let frame = 0;
+  const clear = () => {
+    active = false; cancelAnimationFrame(frame); special?.clear(); trails.clear(); particles.length = 0;
+    context.setTransform(1, 0, 0, 1, 0, 0); context.clearRect(0, 0, canvas.width, canvas.height);
+    if (clearPreviousTrail === clear) clearPreviousTrail = undefined;
+  };
+  clearPreviousTrail = clear;
 
   const drawFrame = (now: number) => {
     const dpr = sizeTrailCanvas(canvas);
@@ -486,6 +503,7 @@ function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: 
 
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, overlayRect.width, overlayRect.height);
+    if (motion.matches || !canvas.isConnected) { clear(); return; }
 
     const dice = internals.diceList || [];
 
@@ -503,7 +521,8 @@ function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: 
           points.push({ ...projected, bornAt: now });
           while (points.length > TRAIL_MAX_POINTS) points.shift();
           trails.set(die, points);
-          spawnTrailSprites(style, projected, now, particles);
+          if (special) special.sample(die, projected, now);
+          else spawnTrailSprites(style, projected, now, particles);
         }
       }
     }
@@ -527,21 +546,22 @@ function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: 
 
         // Sprite-driven effects carry most of the look now. Keep a subtle
         // connecting ribbon for readability at high dice speeds.
-        drawSegment(context, style, a, b, alpha * (style === "first-flame" ? 0.28 : style === "shadow" ? 0.38 : 0.62));
+        if (!special) drawSegment(context, style, a, b, alpha * (style === "first-flame" ? 0.28 : style === "shadow" ? 0.38 : 0.62));
       }
     }
 
     context.shadowBlur = 0;
     const hasVisibleSprites = drawTrailSprites(context, now, particles);
+    const hasSpecial = special?.draw(context, now) ?? false;
 
-    if (active || hasVisibleTrail || hasVisibleSprites) {
-      requestAnimationFrame(drawFrame);
+    if (active || hasVisibleTrail || hasVisibleSprites || hasSpecial) {
+      frame = requestAnimationFrame(drawFrame);
     } else {
-      context.clearRect(0, 0, overlayRect.width, overlayRect.height);
+      clear();
     }
   };
 
-  requestAnimationFrame(drawFrame);
+  frame = requestAnimationFrame(drawFrame);
   return () => { active = false; };
 }
 function ensureBox(): Promise<void> {
