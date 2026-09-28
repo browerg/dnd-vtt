@@ -28,6 +28,11 @@ is the one piece of markup the launcher renders.
   singularity, Heaven’s Lance unfolds celestial wings, and Chronobreak shatters a
   rewinding clock. Preview them in Nat 20 effects; unlock them as Epic Vivid Cache
   rewards.
+- **Three new critical-failure spectacles** — Severed Fate cuts your golden thread
+  of fate and splits the screen in two, It Was a Mimic snaps a treasure chest's
+  jaws shut on you and spits your 1 back out, and Eye of the Abyss opens a vast
+  eye that hunts for you while smaller eyes open to watch. Each has its own sound.
+  Preview them free in Nat 1 effects; unlock them in the Emporium for 150 VCoins.
 
 ### Minor changes
 

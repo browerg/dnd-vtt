@@ -468,7 +468,7 @@ export default function ShopPage() {
       );
     }
 
-    if (["void-collapse", "heavens-lance", "chronobreak"].includes(item.effect ?? "")) return <div className="special-trail-swatch"><CacheRewardArt id={item.effect!} /></div>;
+    if (["void-collapse", "heavens-lance", "chronobreak", "severed-fate", "mimic", "abyssal-gaze"].includes(item.effect ?? "")) return <div className="special-trail-swatch"><CacheRewardArt id={item.effect!} /></div>;
     const kind = criticalKind(item);
     return (
       <span

@@ -1,5 +1,9 @@
 import { SPECIAL_CRITICALS, type SpecialCriticalStyle } from "../../../shared/specialCriticals";
 import SpecialCriticalSpectacle from "./SpecialCriticalSpectacle";
+import SeveredFateSpectacle from "./SeveredFateSpectacle";
+import MimicSpectacle from "./MimicSpectacle";
+import AbyssalGazeSpectacle from "./AbyssalGazeSpectacle";
+import { playAbyssalGazeSound, playMimicSound, playSeveredFateSound } from "../criticalSounds";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import "./CriticalRollOverlay.css";
 import "./CriticalRollEffects.css";
@@ -13,7 +17,10 @@ export type CriticalEffectStyle =
   | "lightning"
   | "fracture"
   | "smoke"
-  | "debris";
+  | "debris"
+  | "severed-fate"
+  | "mimic"
+  | "abyssal-gaze";
 
 export interface CriticalRollEventDetail {
   kind: CriticalRollKind;
@@ -33,7 +40,17 @@ const EVENT_NAME = "tabletop:critical-roll";
 let eventId = 0;
 
 const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame", ...SPECIAL_CRITICALS.map(effect => effect.effect)]);
-const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris", "first-flame"]);
+const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris", "first-flame", "severed-fate", "mimic", "abyssal-gaze"]);
+
+/**
+ * The premium Natural 1s take over the whole screen with their own scene,
+ * score, length and line. Adding one is an entry here plus its component.
+ */
+const NAT1_SPECTACLES: Partial<Record<CriticalEffectStyle, { scene: () => JSX.Element; sound: () => void; duration: number; message: string }>> = {
+  "severed-fate": { scene: SeveredFateSpectacle, sound: playSeveredFateSound, duration: 4000, message: "Fate has cut your thread." },
+  mimic: { scene: MimicSpectacle, sound: playMimicSound, duration: 4200, message: "It was a mimic." },
+  "abyssal-gaze": { scene: AbyssalGazeSpectacle, sound: playAbyssalGazeSound, duration: 4400, message: "Something has noticed you." },
+};
 
 function currentSystem(): "remnant" | "dnd5e" {
   const system = document.querySelector<HTMLElement>("[data-system]")?.dataset.system;
@@ -81,6 +98,8 @@ async function resolveEffect(detail: CriticalRollEventDetail): Promise<CriticalE
 
 function playCriticalSound(kind: CriticalRollKind, effect: CriticalEffectStyle) {
   if (localStorage.getItem("critical-roll-sound") === "off") return;
+  const spectacle = NAT1_SPECTACLES[effect];
+  if (spectacle) return spectacle.sound();
 
   try {
     const AudioContextClass =
@@ -193,7 +212,7 @@ export default function CriticalRollOverlay() {
     if (active.effect !== "first-flame") playCriticalSound(active.kind, active.effect);
     const timer = window.setTimeout(
       () => setActive(null),
-      active.effect === "first-flame" ? 3800 : active.kind === "nat20" ? 3300 : 2900
+      active.effect === "first-flame" ? 3800 : NAT1_SPECTACLES[active.effect]?.duration ?? (active.kind === "nat20" ? 3300 : 2900)
     );
     return () => window.clearTimeout(timer);
   }, [active]);
@@ -208,6 +227,8 @@ export default function CriticalRollOverlay() {
   const success = active.kind === "nat20";
   const userName = active.userName?.trim() || "A player";
   const remnant = active.system === "remnant";
+  const spectacle = NAT1_SPECTACLES[active.effect];
+  const Spectacle = spectacle?.scene;
 
   return (
     <div
@@ -217,6 +238,7 @@ export default function CriticalRollOverlay() {
       aria-live="assertive"
     >
       <SpecialCriticalSpectacle effect={active.effect} />
+      {Spectacle && <Spectacle />}
       {active.effect === "first-flame" && <div className="flame-spectacle" aria-hidden="true">
         <div className="flame-eclipse" />
         <div className="flame-shockwave" /><div className="flame-shockwave second" />
@@ -269,7 +291,9 @@ export default function CriticalRollOverlay() {
               ? remnant
                 ? "Combat performance: exceptional."
                 : "The table erupts in celebration."
-              : remnant
+              : spectacle
+                ? spectacle.message
+                : remnant
                 ? "Combat performance: compromised."
                 : "The dice have made their decision."}
           </span>

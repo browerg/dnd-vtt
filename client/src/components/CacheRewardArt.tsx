@@ -3,7 +3,28 @@ export default function CacheRewardArt({ id }: { id: string }) {
   if (id === "relic-first-flame") return <img className="cache-reward-art cache-relic-art" src="/assets/bundles/first-flame.webp" alt="" />;
   const mystery = ["event-horizon", "chronos-engine", "prismatic-echo"].includes(id);
   return <svg className={`cache-reward-art art-${id}`} viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-    {id === "void-collapse" ? <><circle cx="60" cy="60" r="27" fill="#080310" stroke="#c49aff" /><ellipse cx="60" cy="60" rx="50" ry="16" stroke="#9affe0" transform="rotate(-30 60 60)" /><ellipse cx="60" cy="60" rx="46" ry="19" stroke="#c49aff" transform="rotate(40 60 60)" /></> : id === "heavens-lance" ? <><path d="M60 8v95m-8-16 8 17 8-17M60 40 15 24l19 29-23-7 36 30M60 40l45-16-19 29 23-7-36 30" stroke="#ffe3a5" strokeWidth="3" /><path d="m60 22 33 38-33 38-33-38Z" stroke="#c4f3ff" /></> : id === "chronobreak" ? <><circle cx="60" cy="60" r="40" stroke="#94ffda" strokeDasharray="17 5" /><path d="M60 28v32l22 13M15 15l12 8-5 13M96 81l11 15-17 8" stroke="#ffdf9f" strokeWidth="3" /></> : id === "riftwake" ? <>
+    {id === "mimic" ? <>
+      <path d="M14 30h92v22H14Z" fill="#4d2e15" stroke="#f0c668" />
+      <path d="M14 76h92v22H14Z" fill="#4d2e15" stroke="#f0c668" />
+      <rect x="54" y="38" width="12" height="14" rx="3" fill="#f0c668" stroke="none" />
+      <path d="M14 52h92M14 76h92" stroke="#b3283c" strokeWidth="3" />
+      <path d="M16 53l6 11 6-11 6 13 6-13 6 10 6-10 6 13 6-13 6 10 6-10 6 13 6-13 6 11 6-11" fill="#fffbe9" stroke="#a88c55" strokeWidth="1" />
+      <path d="M16 75l6-10 6 10 6-12 6 12 6-9 6 9 6-12 6 12 6-9 6 9 6-12 6 12 6-10 6 10" fill="#fffbe9" stroke="#a88c55" strokeWidth="1" />
+      <path d="M40 66v9M80 66v12" stroke="#d7ebff" strokeWidth="1.5" opacity=".8" />
+    </> : id === "abyssal-gaze" ? <>
+      <path d="M8 60C30 30 90 30 112 60 90 90 30 90 8 60Z" fill="#e9dfc4" stroke="#b98cff" strokeWidth="2" />
+      <circle cx="60" cy="60" r="22" fill="#6fd12e" stroke="#0a1a03" strokeWidth="2" />
+      <ellipse cx="60" cy="60" rx="3.5" ry="19" fill="#000" stroke="none" />
+      <circle cx="52" cy="52" r="3" fill="#fff" stroke="none" opacity=".8" />
+      <path d="M4 20c10 4 14 0 20 8M116 22c-10 4-12 0-20 8M8 104c10-6 14-2 22-10M112 102c-8-4-12 0-20-8" stroke="#9b4dff" />
+    </> : id === "severed-fate" ? <>
+      <path d="M8 88 112 32" stroke="#ff4a5c" strokeWidth="9" opacity=".25" />
+      <path d="M8 88 112 32" stroke="#ffd6c4" strokeWidth="1.5" />
+      <path d="M8 64 C30 63 50 62 60 62" stroke="#f1c46b" strokeWidth="3" />
+      <path d="M72 58 C86 60 100 66 112 72" stroke="#ff5b6c" strokeWidth="3" />
+      <path d="M84 14 A46 46 0 0 1 58 104 A40 43 0 0 0 84 14Z" fill="#f4eaff" stroke="none" opacity=".85" />
+      {[ [66,50],[70,68],[54,52],[78,56] ].map(([x,y]) => <circle key={x+"-"+y} cx={x} cy={y} r="1.8" fill="#ffc24f" stroke="none" />)}
+    </> : id === "void-collapse" ? <><circle cx="60" cy="60" r="27" fill="#080310" stroke="#c49aff" /><ellipse cx="60" cy="60" rx="50" ry="16" stroke="#9affe0" transform="rotate(-30 60 60)" /><ellipse cx="60" cy="60" rx="46" ry="19" stroke="#c49aff" transform="rotate(40 60 60)" /></> : id === "heavens-lance" ? <><path d="M60 8v95m-8-16 8 17 8-17M60 40 15 24l19 29-23-7 36 30M60 40l45-16-19 29 23-7-36 30" stroke="#ffe3a5" strokeWidth="3" /><path d="m60 22 33 38-33 38-33-38Z" stroke="#c4f3ff" /></> : id === "chronobreak" ? <><circle cx="60" cy="60" r="40" stroke="#94ffda" strokeDasharray="17 5" /><path d="M60 28v32l22 13M15 15l12 8-5 13M96 81l11 15-17 8" stroke="#ffdf9f" strokeWidth="3" /></> : id === "riftwake" ? <>
       <ellipse cx="60" cy="60" rx="23" ry="43" stroke="#ca9bff" strokeWidth="3" transform="rotate(-25 60 60)" />
       <ellipse cx="60" cy="60" rx="34" ry="47" stroke="#77ffe0" strokeDasharray="30 12 4 12" transform="rotate(25 60 60)" />
       <path d="m60 8 3 9M16 58l10 2M93 90l9 6" stroke="#eee1ff" />

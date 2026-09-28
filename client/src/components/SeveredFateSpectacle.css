@@ -1,0 +1,154 @@
+/* Severed Fate — timeline is 4.0s; the cut lands at 1.05s (26%). */
+.critical-roll-overlay.nat1.effect-severed-fate {
+  --critical-primary: #ff4a5c;
+  --critical-secondary: #f1c46b;
+  --critical-rgb: 255, 74, 92;
+  background: transparent;
+}
+.critical-roll-overlay.effect-severed-fate :is(.critical-rings, .critical-particles, .critical-scan, .critical-screen-flash, .critical-fractures, .critical-emblem-frame) { display: none; }
+.critical-roll-overlay.effect-severed-fate .critical-emblem::before,
+.critical-roll-overlay.effect-severed-fate .critical-emblem::after { display: none; }
+.critical-roll-overlay.effect-severed-fate .critical-emblem { animation: sf-emblem 0.9s 1.05s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.critical-roll-overlay.effect-severed-fate .critical-emblem strong {
+  background: linear-gradient(180deg, #fff1ea 0%, #ff4a5c 45%, #6d0716 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 0 18px rgba(255, 60, 80, 0.7)) drop-shadow(0 0 2px #fff3);
+}
+.critical-roll-overlay.effect-severed-fate .critical-emblem-shadow { -webkit-text-stroke-color: rgba(241, 196, 107, 0.16); }
+.critical-roll-overlay.effect-severed-fate .critical-banner { animation: sf-banner 0.7s 1.4s cubic-bezier(0.16, 0.8, 0.2, 1) both; }
+.critical-roll-overlay.effect-severed-fate .critical-banner h2 { animation: critical-text-glitch 0.42s 1.7s steps(2, end) 1; }
+.critical-roll-overlay.effect-severed-fate .critical-kicker { color: var(--critical-secondary); }
+.critical-roll-overlay.effect-severed-fate .critical-vignette { box-shadow: inset 0 0 180px 60px rgba(120, 0, 20, 0.35); animation-delay: 1s; }
+
+.severed-fate-scene { position: absolute; inset: 0; z-index: -1; overflow: hidden; animation: sf-scene 4s both; }
+.severed-fate-scene * { position: absolute; }
+.sf-backdrop { inset: 0; }
+.sf-shake { inset: 0; animation: sf-shake 0.5s 1.05s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.sf-rift, .sf-veil, .sf-slash, .sf-embers { inset: 0; }
+
+/* The rift only shows through the gap the veils open. */
+.sf-rift { width: 100%; height: 100%; overflow: visible; }
+.sf-rift path { fill: none; vector-effect: non-scaling-stroke; }
+.sf-rift-glow { stroke: #c0102a; stroke-width: 90; filter: blur(18px); animation: sf-rift-pulse 4s both; }
+.sf-rift-core { stroke: #ffd6c4; stroke-width: 3; filter: drop-shadow(0 0 8px #ff3048) drop-shadow(0 0 22px #ff3048); animation: sf-rift-pulse 4s both; }
+
+.sf-backdrop, .sf-veil {
+  background:
+    radial-gradient(ellipse at 56% 40%, rgba(90, 20, 40, 0.28), transparent 55%),
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(241, 196, 107, 0.045) 22px 23px, transparent 23px 47px, rgba(241, 196, 107, 0.03) 47px 48px),
+    radial-gradient(ellipse at center, #0e0a14 0%, #050308 75%);
+}
+.sf-veil.top { clip-path: polygon(0 0, 100% 0, 100% 26%, 0 58%); animation: sf-veil-top 4s both; }
+.sf-veil.bottom { clip-path: polygon(0 58%, 100% 26%, 100% 100%, 0 100%); animation: sf-veil-bottom 4s both; }
+
+/* The thread: two halves that meet at the cut point, so one draw reads as one line. */
+.sf-thread { left: 0; right: 0; top: calc(40% - 1.5px); height: 3px; animation: sf-tremble 0.07s 0.5s linear 8 alternate; }
+.sf-thread-half { top: 0; height: 100%; border-radius: 3px; background: #ffe39a; box-shadow: 0 0 8px #ffc24f, 0 0 24px #f1a53a, 0 0 60px #f1a53a88; }
+.sf-thread-half.left { left: 0; width: 56%; transform-origin: 0 50%; animation: sf-thread-left 4s both; }
+.sf-thread-half.right { right: 0; width: 44%; transform-origin: 100% 50%; animation: sf-thread-right 4s both; }
+
+.sf-slash { width: 100%; height: 100%; overflow: visible; }
+.sf-slash { clip-path: inset(0 0 0 100%); animation: sf-slash-reveal 4s both; }
+.sf-slash path { fill: none; stroke: #fff; stroke-width: 4; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 18px #ff6d80); animation: sf-slash 4s both; }
+
+.sf-blade { left: calc(56% - min(34vmin, 300px)); top: calc(40% - min(34vmin, 300px)); width: min(68vmin, 600px); height: min(68vmin, 600px); }
+.sf-blade svg { inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0; filter: drop-shadow(0 0 6px #e6d4ff) drop-shadow(0 0 22px #b98cff); animation: sf-blade 4s both; animation-delay: calc(var(--ghost) * 22ms); }
+.sf-blade svg path { fill: #fbf7ff; }
+.sf-blade svg:nth-child(2) { filter: none; }
+.sf-blade svg:nth-child(2) path { fill: rgba(190, 160, 255, 0.28); }
+.sf-blade svg:nth-child(3) { filter: none; }
+.sf-blade svg:nth-child(3) path { fill: rgba(255, 90, 118, 0.14); }
+
+.sf-sparks { left: 56%; top: 40%; }
+.sf-sparks i { left: 0; top: 0; width: 3px; height: 16px; border-radius: 2px; background: linear-gradient(#fff6d0, #ffb347 50%, transparent); transform-origin: 50% 0; opacity: 0; animation: sf-spark 1.2s 1.05s cubic-bezier(0.1, 0.8, 0.3, 1) both; }
+
+.sf-embers i { left: var(--x); top: var(--y); width: 4px; height: 4px; border-radius: 50%; background: #ff6a5a; box-shadow: 0 0 8px #ff2e4a, 0 0 2px #ffd9a8; opacity: 0; animation: sf-ember 2.4s var(--delay) ease-out both; }
+.sf-embers i:nth-child(3n) { width: 3px; height: 3px; background: #c9b9b2; box-shadow: 0 0 4px #ffffff55; }
+
+@keyframes sf-scene { 0% { opacity: 0; } 5%, 84% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes sf-shake {
+  0%, 100% { transform: none; }
+  10% { transform: translate(-1.6vmin, 1.1vmin) rotate(-0.4deg); }
+  25% { transform: translate(1.3vmin, -0.9vmin) rotate(0.3deg); }
+  45% { transform: translate(-0.8vmin, 0.5vmin); }
+  70% { transform: translate(0.3vmin, -0.2vmin); }
+}
+@keyframes sf-tremble { from { transform: translateY(-1.5px); } to { transform: translateY(1.5px); } }
+@keyframes sf-thread-left {
+  0%, 3% { transform: scaleX(0); }
+  15%, 26% { transform: scaleX(1); background: #ffe39a; }
+  27% { background: #fff; }
+  31% { transform: scaleX(0.9) rotate(5deg); background: #ff5b6c; box-shadow: 0 0 10px #ff2e4a, 0 0 30px #ff2e4a88; }
+  38% { transform: scaleX(0.93) rotate(3deg); }
+  70% { transform: scaleX(0.8) rotate(10deg); background: #6c5f66; box-shadow: none; opacity: 0.7; }
+  100% { transform: scaleX(0.74) rotate(14deg); background: #4a4046; box-shadow: none; opacity: 0; }
+}
+@keyframes sf-thread-right {
+  0%, 3% { transform: scaleX(0); }
+  15%, 26% { transform: scaleX(1); background: #ffe39a; }
+  27% { background: #fff; }
+  31% { transform: scaleX(0.86) rotate(-7deg); background: #ff5b6c; box-shadow: 0 0 10px #ff2e4a, 0 0 30px #ff2e4a88; }
+  38% { transform: scaleX(0.9) rotate(-4deg); }
+  70% { transform: scaleX(0.76) rotate(-12deg); background: #6c5f66; box-shadow: none; opacity: 0.7; }
+  100% { transform: scaleX(0.7) rotate(-16deg); background: #4a4046; box-shadow: none; opacity: 0; }
+}
+@keyframes sf-blade {
+  0%, 21% { opacity: 0; transform: rotate(-150deg) scale(0.9); }
+  22% { opacity: 1; }
+  26.5% { opacity: 1; transform: rotate(40deg) scale(1.05); }
+  32%, 100% { opacity: 0; transform: rotate(70deg) scale(1.1); }
+}
+@keyframes sf-slash-reveal {
+  0%, 24.5% { clip-path: inset(0 0 0 100%); }
+  27%, 100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes sf-slash {
+  0%, 24.5% { opacity: 1; stroke-width: 4; }
+  27% { stroke-width: 7; }
+  34% { opacity: 1; stroke-width: 2; }
+  42%, 100% { opacity: 0; }
+}
+@keyframes sf-rift-pulse {
+  0%, 26% { opacity: 0; }
+  30% { opacity: 1; }
+  50% { opacity: 0.75; }
+  62% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+/* The veils stay put and their clip opens, so the screen edges never show a seam. */
+@keyframes sf-veil-top {
+  0%, 26% { clip-path: polygon(0 0, 100% 0, 100% 26%, 0 58%); }
+  34% { clip-path: polygon(0 0, 100% 0, 100% calc(26% - 3.4vmin), 0 calc(58% - 3.4vmin)); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% calc(26% - 5vmin), 0 calc(58% - 5vmin)); }
+}
+@keyframes sf-veil-bottom {
+  0%, 26% { clip-path: polygon(0 58%, 100% 26%, 100% 100%, 0 100%); }
+  34% { clip-path: polygon(0 calc(58% + 3.4vmin), 100% calc(26% + 3.4vmin), 100% 100%, 0 100%); }
+  100% { clip-path: polygon(0 calc(58% + 5vmin), 100% calc(26% + 5vmin), 100% 100%, 0 100%); }
+}
+@keyframes sf-spark {
+  0% { opacity: 0; transform: rotate(var(--angle)) translateY(0) scaleY(1.6); }
+  4% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateY(var(--reach)) scaleY(0.4); }
+}
+@keyframes sf-ember {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--drift), -22vmin) scale(0.4); }
+}
+@keyframes sf-emblem {
+  0% { opacity: 0; transform: scale(1.6) translate(3%, -3%); filter: blur(8px); }
+  35% { opacity: 1; filter: blur(0); }
+  55% { transform: scale(0.96) translate(-1%, 1%); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes sf-banner {
+  0% { opacity: 0; transform: translate(-50%, 14px); clip-path: inset(0 50% 0 50%); }
+  100% { opacity: 1; transform: translate(-50%, 0); clip-path: inset(0 0 0 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .severed-fate-scene { display: none; }
+  .critical-roll-overlay.effect-severed-fate { background: #07050af0; }
+}

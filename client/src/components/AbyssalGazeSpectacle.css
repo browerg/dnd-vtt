@@ -1,0 +1,173 @@
+/* Eye of the Abyss — timeline is 4.4s: eye open by 1.1s (25%), lock at 1.9s (43.2%), blink at 3.7s (84%). */
+.critical-roll-overlay.nat1.effect-abyssal-gaze {
+  --critical-primary: #b8ff5a;
+  --critical-secondary: #c792ff;
+  --critical-rgb: 184, 255, 90;
+  background: transparent;
+}
+.critical-roll-overlay.effect-abyssal-gaze :is(.critical-rings, .critical-particles, .critical-scan, .critical-screen-flash, .critical-fractures, .critical-emblem-frame) { display: none; }
+.critical-roll-overlay.effect-abyssal-gaze .critical-emblem::before,
+.critical-roll-overlay.effect-abyssal-gaze .critical-emblem::after { display: none; }
+.critical-roll-overlay.effect-abyssal-gaze .critical-emblem { animation: ag-emblem 0.8s 1.92s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.critical-roll-overlay.effect-abyssal-gaze .critical-emblem strong {
+  background: linear-gradient(180deg, #ffffff 0%, #e2ffb0 40%, #b8ff5a 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  filter: drop-shadow(0 0 10px #b8ff5a) drop-shadow(0 0 30px #6cff2a88);
+}
+.critical-roll-overlay.effect-abyssal-gaze .critical-emblem-shadow { -webkit-text-stroke-color: rgba(199, 146, 255, 0.18); }
+.critical-roll-overlay.effect-abyssal-gaze .critical-banner { animation: sf-banner 0.7s 2.2s cubic-bezier(0.16, 0.8, 0.2, 1) both; }
+.critical-roll-overlay.effect-abyssal-gaze .critical-banner h2 { animation: critical-text-glitch 0.42s 2.5s steps(2, end) 1; }
+.critical-roll-overlay.effect-abyssal-gaze .critical-vignette { box-shadow: inset 0 0 200px 70px rgba(40, 0, 70, 0.55); }
+
+.abyssal-gaze-scene { position: absolute; inset: 0; z-index: -1; overflow: hidden; animation: ag-scene 4.4s both; }
+.abyssal-gaze-scene * { position: absolute; }
+.ag-backdrop {
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, #2a0d3d 0%, #12051c 45%, #050109 80%);
+}
+.ag-shake { inset: 0; animation: ag-shake 4.4s both; }
+
+.ag-veins { inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 0 2px #9b4dff) drop-shadow(0 0 8px #5b1a9e); }
+.ag-veins path {
+  fill: none; stroke: #7a34c4; stroke-width: 0.55; stroke-linecap: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: ag-vein-draw 1.3s calc(var(--i) * 45ms) cubic-bezier(0.3, 0, 0.2, 1) both, ag-vein-pulse 4.4s both;
+}
+
+/* The great eye, centred on the result numeral (same maths as .critical-emblem's placement). */
+.ag-eye-wrap {
+  left: 50%; top: calc(50% - clamp(150px, 21vh, 205px) / 2);
+  width: min(94vw, 1100px); height: min(46vmin, 420px);
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 14px #9b4dff) drop-shadow(0 0 48px #5b1a9e);
+}
+.ag-eye {
+  inset: 0; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 50%, #f1ead6 0%, #d3c29a 40%, #7a4a5e 78%, #2a0d1e 100%);
+  clip-path: ellipse(50% 0% at 50% 50%);
+  animation: ag-lid 4.4s both;
+}
+.ag-bloodshot {
+  inset: 0;
+  background: repeating-conic-gradient(from 4deg at 50% 50%, transparent 0 6deg, rgba(170, 20, 50, 0.45) 6deg 6.5deg, transparent 6.5deg 13deg, rgba(170, 20, 50, 0.3) 13deg 13.4deg);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 30%, #000 75%);
+  mask-image: radial-gradient(ellipse at center, transparent 30%, #000 75%);
+}
+.ag-lid-shade { inset: 0; background: radial-gradient(ellipse 50% 50% at 50% 50%, transparent 62%, rgba(20, 3, 26, 0.9) 100%); }
+.ag-iris-track { left: 50%; top: 50%; width: 0; height: 0; animation: ag-dart 4.4s both; }
+.ag-iris {
+  left: 0; top: 0; width: min(42vmin, 386px); aspect-ratio: 1; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle, transparent 0 66%, #081402 70%, transparent 71%),
+    repeating-conic-gradient(from 0deg, rgba(10, 30, 0, 0.55) 0 1.4deg, transparent 1.4deg 4deg),
+    radial-gradient(circle, #f4ff9a 0%, #b8ff5a 26%, #4fb81f 50%, #174d07 66%, #050a02 71%);
+  box-shadow: 0 0 40px rgba(150, 255, 80, 0.35);
+}
+.ag-iris::after {
+  content: ""; position: absolute; left: 24%; top: 18%; width: 16%; height: 10%; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75); filter: blur(2px); transform: rotate(-25deg);
+}
+.ag-pupil {
+  left: 50%; top: 50%; width: 44%; height: 44%; border-radius: 50%;
+  background: radial-gradient(ellipse at center, #000 60%, #0b1a02 100%);
+  box-shadow: 0 0 18px 4px rgba(0, 0, 0, 0.8);
+  transform: translate(-50%, -50%);
+  animation: ag-pupil 4.4s both;
+}
+.ag-lock-ring {
+  left: 50%; top: 50%; width: min(42vmin, 386px); aspect-ratio: 1; border-radius: 50%;
+  border: 2px solid #b8ff5a; box-shadow: 0 0 24px #b8ff5a, inset 0 0 24px #b8ff5a;
+  opacity: 0; transform: translate(-50%, -50%) scale(0.4);
+  animation: ag-ring 0.9s 1.9s cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+.ag-lock-ring.second { border-color: #c792ff; box-shadow: 0 0 24px #c792ff; animation-delay: 2.02s; }
+.ag-flash { inset: 0; background: radial-gradient(circle at 50% 40%, rgba(184, 255, 90, 0.5), transparent 55%); opacity: 0; animation: ag-flash 4.4s both; }
+
+/* The watchers: small eyes that open one by one and look at the roller. */
+.ag-watcher {
+  left: var(--x); top: var(--y); width: calc(var(--s) * 2); height: var(--s);
+  transform: translate(-50%, -50%) rotate(var(--tilt));
+  filter: drop-shadow(0 0 6px #9b4dff);
+}
+.ag-watcher-lid {
+  inset: 0;
+  background: radial-gradient(ellipse at center, #eee4cc 0%, #bda77f 55%, #4d2238 100%);
+  clip-path: ellipse(50% 0% at 50% 50%);
+  animation: ag-watcher-open 0.35s var(--at) cubic-bezier(0.2, 0.9, 0.3, 1.2) both, ag-watcher-close 0.2s 3.7s ease-in forwards;
+}
+.ag-watcher-lid i {
+  left: 50%; top: 50%; height: 88%; aspect-ratio: 1; border-radius: 50%;
+  transform: translate(calc(-50% + var(--lx)), calc(-50% + var(--ly)));
+  background: radial-gradient(circle, #e9ff8a 0%, #8fe53a 35%, #2d7a0f 62%, #071402 70%);
+}
+.ag-watcher-lid i::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 16%; height: 80%; border-radius: 50%; background: #000;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes ag-scene { 0% { opacity: 0; } 6%, 91% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes ag-shake {
+  0%, 43% { transform: none; }
+  44% { transform: translate(-0.9vmin, 0.7vmin); }
+  45.2% { transform: translate(0.8vmin, -0.5vmin); }
+  46.4% { transform: translate(-0.4vmin, 0.3vmin); }
+  48%, 100% { transform: none; }
+}
+@keyframes ag-vein-draw { to { stroke-dashoffset: 0; } }
+@keyframes ag-vein-pulse {
+  0%, 40% { stroke: #7a34c4; }
+  44% { stroke: #d4ff8f; }
+  52% { stroke: #9b4dff; }
+  62% { stroke: #7a34c4; }
+  72% { stroke: #a45cf0; }
+  100% { stroke: #7a34c4; }
+}
+@keyframes ag-lid {
+  0%, 11% { clip-path: ellipse(50% 0% at 50% 50%); }
+  16% { clip-path: ellipse(50% 10% at 50% 50%); }
+  18.5% { clip-path: ellipse(50% 7% at 50% 50%); }
+  25% { clip-path: ellipse(50% 50% at 50% 50%); }
+  84% { clip-path: ellipse(50% 50% at 50% 50%); }
+  88.6%, 100% { clip-path: ellipse(50% 0% at 50% 50%); }
+}
+@keyframes ag-dart {
+  0%, 27% { transform: translate(0, 0); animation-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1); }
+  28.6% { transform: translate(-26vmin, 2vmin); }
+  33.8% { transform: translate(-26vmin, 2vmin); animation-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1); }
+  35.4% { transform: translate(22vmin, -1.5vmin); }
+  39.8% { transform: translate(22vmin, -1.5vmin); animation-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1); }
+  41.6% { transform: translate(-1vmin, 0); }
+  43.2%, 100% { transform: translate(0, 0); }
+}
+@keyframes ag-pupil {
+  0%, 27% { width: 40%; height: 40%; }
+  36% { width: 48%; height: 48%; }
+  42.4% { width: 50%; height: 50%; }
+  43.6% { width: 18%; height: 92%; }
+  46% { width: 27%; height: 88%; }
+  100% { width: 26%; height: 88%; }
+}
+@keyframes ag-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  6% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(3.2); }
+}
+@keyframes ag-flash { 0%, 42.8% { opacity: 0; } 43.6% { opacity: 1; } 55%, 100% { opacity: 0; } }
+@keyframes ag-watcher-open { from { clip-path: ellipse(50% 0% at 50% 50%); } to { clip-path: ellipse(50% 50% at 50% 50%); } }
+@keyframes ag-watcher-close { to { clip-path: ellipse(50% 0% at 50% 50%); } }
+@keyframes ag-emblem {
+  0% { opacity: 0; transform: scale(0.55); filter: blur(10px); }
+  60% { opacity: 1; filter: blur(0); transform: scale(1.06); }
+  100% { opacity: 1; transform: none; }
+}
+
+@media (max-width: 620px) {
+  .ag-eye-wrap { top: calc(50% - 82.5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .abyssal-gaze-scene { display: none; }
+  .critical-roll-overlay.effect-abyssal-gaze { background: #050109f0; }
+}

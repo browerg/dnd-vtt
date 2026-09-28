@@ -12,7 +12,10 @@ export type CriticalEffectStyle =
   | "lightning"
   | "fracture"
   | "smoke"
-  | "debris";
+  | "debris"
+  | "severed-fate"
+  | "mimic"
+  | "abyssal-gaze";
 
 export type TurnStartEffectStyle =
   | "none"
@@ -259,6 +262,36 @@ export const COSMETICS = [
     name: "Falling Debris",
     description: "The critical failure hits hard enough to bring the ceiling down.",
     price: 50,
+    rarity: "legendary",
+  },
+  {
+    id: "crit1-severed-fate",
+    type: "nat1-effect",
+    slot: "nat1",
+    effect: "severed-fate",
+    name: "Severed Fate",
+    description: "Your golden thread of fate draws taut — then a spectral blade cuts it, and the world splits in two.",
+    price: 150,
+    rarity: "legendary",
+  },
+  {
+    id: "crit1-mimic",
+    type: "nat1-effect",
+    slot: "nat1",
+    effect: "mimic",
+    name: "It Was a Mimic",
+    description: "The screen becomes a treasure chest's jaws — they snap shut on you, chew, and spit your 1 back out.",
+    price: 150,
+    rarity: "legendary",
+  },
+  {
+    id: "crit1-abyssal-gaze",
+    type: "nat1-effect",
+    slot: "nat1",
+    effect: "abyssal-gaze",
+    name: "Eye of the Abyss",
+    description: "A vast eye opens, hunts for you, and locks on — then the watchers along the edges open too.",
+    price: 150,
     rarity: "legendary",
   },
 
