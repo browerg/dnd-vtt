@@ -29,7 +29,7 @@ test("special trails have matching renderers, shop entitlements and Legendary re
 });
 
 test("trail particles expire, clean their canvas state and stop after disposal", () => {
-  for (const style of ["riftwake", "astral-script", "prism-shatter"] as const) {
+  for (const style of ["riftwake", "astral-script", "prism-shatter", "first-flame"] as const) {
     const trail = createSpecialTrail(style);
     const { context, depth } = recordingContext();
     const die = {};

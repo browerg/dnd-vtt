@@ -3,7 +3,14 @@ export default function CacheRewardArt({ id }: { id: string }) {
   if (id === "relic-first-flame") return <img className="cache-reward-art cache-relic-art" src="/assets/bundles/first-flame.webp" alt="" />;
   const mystery = ["event-horizon", "chronos-engine", "prismatic-echo"].includes(id);
   return <svg className={`cache-reward-art art-${id}`} viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-    {id === "mimic" ? <>
+    {id === "first-flame" ? <>
+      <path d="m13 94 22-21 8-17 21-4 12-24 28-16" stroke="#ff972b" strokeWidth="9" opacity=".3" />
+      <path d="m13 94 22-21 8-17 21-4 12-24 28-16" stroke="#ffe6a0" strokeWidth="2.5" />
+      <path d="m17 59 14-18 18-4-9 17-8 12Zm39 17 16-18 17-3-4 19-19 13ZM63 20l8-13 13 2-10 17" fill="#130d18" stroke="#c27d38" />
+      <path d="M49 73c-15-12-6-21-1-27-2 9 3 10 4 12 4-6 7-12 6-23 17 21 7 35-9 38Z" fill="#ff982c" />
+      <path d="M50 72c-6-7 1-12 3-19 7 12 4 16-3 19Z" fill="#fff1af" />
+      <path d="m31 23 2-6m61 35 2-5M14 79l-2-5" stroke="#ffdf85" strokeWidth="2" />
+    </> : id === "mimic" ? <>
       <path d="M14 30h92v22H14Z" fill="#4d2e15" stroke="#f0c668" />
       <path d="M14 76h92v22H14Z" fill="#4d2e15" stroke="#f0c668" />
       <rect x="54" y="38" width="12" height="14" rx="3" fill="#f0c668" stroke="none" />

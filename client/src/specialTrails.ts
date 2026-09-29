@@ -1,18 +1,18 @@
-export type SpecialTrailStyle = "riftwake" | "astral-script" | "prism-shatter";
+export type SpecialTrailStyle = "riftwake" | "astral-script" | "prism-shatter" | "first-flame";
 export const isSpecialTrail = (style: string): style is SpecialTrailStyle =>
-  style === "riftwake" || style === "astral-script" || style === "prism-shatter";
+  style === "first-flame" || style === "riftwake" || style === "astral-script" || style === "prism-shatter";
 
 interface Mark { x: number; y: number; born: number; angle: number; seed: number; from?: { x: number; y: number }; }
 /** One bounded collection per roll, sampled by distance so slow dice stay clean. */
 export function createSpecialTrail(style: SpecialTrailStyle) {
   const marks: Mark[] = [];
   const previous = new Map<object, { x: number; y: number }>();
-  const life = style === "astral-script" ? 1100 : style === "riftwake" ? 900 : 800;
+  const life = style === "first-flame" ? 1100 : style === "astral-script" ? 1100 : style === "riftwake" ? 900 : 800;
   let sequence = 0;
   return {
     sample(die: object, point: { x: number; y: number }, now: number) {
       const last = previous.get(die);
-      const spacing = style === "prism-shatter" ? 20 : 42;
+      const spacing = style === "first-flame" ? 26 : style === "prism-shatter" ? 20 : 42;
       if (last && Math.hypot(point.x - last.x, point.y - last.y) < spacing) return;
       marks.push({ ...point, born: now, angle: last ? Math.atan2(point.y - last.y, point.x - last.x) : 0, seed: sequence++, from: last });
       previous.set(die, point);
@@ -29,7 +29,47 @@ export function createSpecialTrail(style: SpecialTrailStyle) {
         }
         ctx.save(); ctx.translate(mark.x, mark.y); ctx.rotate(mark.angle);
         ctx.globalAlpha = fade; ctx.lineWidth = 1.6;
-        if (style === "riftwake") {
+        if (style === "first-flame") {
+          // A torn seam links the sampled path. Obsidian plates lift off each edge,
+          // exposing white-gold magma before cooling to a red hairline.
+          const heat = Math.max(0, 1 - t * 1.3);
+          const molten = heat > .55 ? "#fff0ae" : heat > .18 ? "#ffad36" : "#b83b19";
+          const distance = mark.from ? Math.hypot(mark.x-mark.from.x, mark.y-mark.from.y) : 26;
+          const length = Math.min(110, distance);
+          const jag = (mark.seed % 2 ? 1 : -1) * 5;
+          if (distance < 180) {
+            ctx.lineJoin = "round"; ctx.lineCap = "round";
+            ctx.beginPath(); ctx.moveTo(-length,0); ctx.lineTo(-length*.7,jag);
+            ctx.lineTo(-length*.4,-jag*.7); ctx.lineTo(0,0);
+            ctx.strokeStyle = "#661d0e"; ctx.lineWidth = 10*(1-t)+2; ctx.stroke();
+            ctx.strokeStyle = molten; ctx.lineWidth = 3.5*(1-t)+.5;
+            ctx.shadowColor = "#ff8b20"; ctx.shadowBlur = 12*heat; ctx.stroke();
+          }
+          for (const side of [-1,1]) {
+            ctx.save();
+            const lift = Math.sin(t*Math.PI)*13;
+            ctx.translate(-8,side*(6+lift)); ctx.rotate(side*(.15+t*.55));
+            ctx.shadowBlur = 0; ctx.fillStyle = "#100c15";
+            ctx.beginPath(); ctx.moveTo(-17,side*2); ctx.lineTo(-9,side*13);
+            ctx.lineTo(5,side*16); ctx.lineTo(14,side*5); ctx.lineTo(4,-side*3); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = "#50342e"; ctx.lineWidth = .8; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-17,side*2); ctx.lineTo(-3,0); ctx.lineTo(4,-side*3); ctx.lineTo(14,side*5);
+            ctx.strokeStyle = molten; ctx.shadowColor = "#ff9b29"; ctx.shadowBlur = 7*heat; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.restore();
+          }
+          // Every third seam vents a forked flame; no random flicker or flashing.
+          if (mark.seed % 3 === 0) {
+            ctx.save(); ctx.rotate(-mark.angle);
+            const rise = Math.sin(Math.min(1,t*1.7)*Math.PI)*36;
+            ctx.translate(0,-t*20); ctx.fillStyle = "#ff8c24"; ctx.shadowColor = "#ffb83f"; ctx.shadowBlur = 9*heat;
+            ctx.beginPath(); ctx.moveTo(-7,3); ctx.quadraticCurveTo(-15,-rise*.4,-4,-rise*.75);
+            ctx.lineTo(-2,-rise*.42); ctx.lineTo(3,-rise-9); ctx.quadraticCurveTo(16,-rise*.3,6,3); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = "#fff2ba"; ctx.beginPath(); ctx.moveTo(-3,2); ctx.lineTo(2,-rise*.6); ctx.lineTo(4,2); ctx.closePath(); ctx.fill();
+            ctx.globalAlpha = fade*(1-t); ctx.fillStyle = "#ffdf7c";
+            ctx.fillRect(-10+Math.sin(mark.seed)*7,-12-t*54,2,4); ctx.fillRect(12,-5-t*40,2,2);
+            ctx.restore();
+          }
+        } else if (style === "riftwake") {
           // A portal aperture opens sideways across the path, then pinches shut.
           const radius = 12 + Math.sin(t * Math.PI) * 21;
           ctx.rotate(Math.PI / 2); ctx.scale(1, .48 + .18 * Math.sin(t * 4));

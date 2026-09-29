@@ -20,6 +20,8 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **The First Flame leaves a faultline** — The Relic bundle’s trail now splits into glowing molten seams, lifting obsidian plates and small jets of ancient fire. Preview it with the matching Relic dice; existing owners receive the new look automatically.
+
 - **Three extraordinary dice trails** — Riftwake opens collapsing violet portals,
   Astral Script writes golden runes joined by starlight, and Prism Shatter scatters
   tumbling rainbow crystals. Preview them freely in the Emporium's Dice trails

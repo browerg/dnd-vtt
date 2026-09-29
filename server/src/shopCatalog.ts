@@ -84,7 +84,7 @@ export const BUNDLES: CosmeticBundle[] = [
       },
       {
         title: "Exclusive trail",
-        blurb: "A path of burning legacy.",
+        blurb: "Obsidian splits. The First Flame rises.",
         icon: "trail",
         status: "included",
         cosmeticId: "trail-first-flame",
@@ -144,7 +144,7 @@ export const COSMETICS = [
   { id: "crit1-first-flame", type: "nat1-effect", slot: "nat1", effect: "first-flame", name: "First Flame · Ashfall", description: "The flame gutters into molten cracks and falling embers on a natural 1.", price: 1, rarity: "mythic" },
   { id: "border-first-flame", type: "token-border", slot: "tokenBorder", effect: "first-flame", name: "First Flame Border", description: "A thin molten-gold ring around your character tokens, leaving their artwork clear.", price: 1, rarity: "mythic" },
   { id: "chat-first-flame", type: "chat-flair", slot: "chatFlair", effect: "first-flame", name: "First Flame Name", description: "A quiet gold accent on your name in campaign chat.", price: 1, rarity: "mythic" },
-  { id: "trail-first-flame", type: "dice-trail", effect: "first-flame", name: "First Flame Trail", description: "Cache-exclusive molten gold and fading embers.", price: 1, rarity: "mythic" },
+  { id: "trail-first-flame", type: "dice-trail", effect: "first-flame", name: "First Flame Trail", description: "An ancient molten faultline: lifting obsidian plates, white-gold seams and rising tongues of fire.", price: 1, rarity: "mythic" },
   { id: "crit20-first-flame", type: "nat20-effect", slot: "nat20", effect: "first-flame", name: "First Flame", description: "Cache-exclusive ancient gold flare.", price: 1, rarity: "mythic" },
   {
     id: "trail-aura",

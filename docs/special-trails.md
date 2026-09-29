@@ -35,3 +35,9 @@ checks desktop/mobile and reduced motion. It does not open player data.
 Run with `node --import tsx scripts/check-special-trails.mts`; `QA_URL` defaults
 to `http://127.0.0.1:5176/shop`, and `PLAYWRIGHT_MODULE` can point to a bundled
 Playwright `index.mjs`. Screenshots go to `../vtt-trails-qa` or `QA_OUTPUT`.
+
+## First Flame bundle trail
+
+The existing `first-flame` trail now uses the special renderer: distance-sampled molten seams, paired lifting obsidian plates and a forked flame vent every third sample. Gold cools through orange to crimson over 1.1 seconds. Marks are capped at 96; reduced motion, roll replacement and disposal share the special-trail cleanup. The existing bundle entitlement and Mythic rarity are unchanged.
+
+The Emporium's bundle and trail catalogue use matching faultline artwork. Free previews show the Relic dice with their trail and preserve saved preferences. `scripts/check-first-flame-trail.mts` checks preview, mobile layout, reduced motion and equip with synthetic ownership. The shared lifecycle test also covers First Flame expiration and canvas state balance.

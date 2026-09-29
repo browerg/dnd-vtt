@@ -308,7 +308,7 @@ export default function ShopPage() {
       if (isDiceTrail(item)) {
         if (isSpecialTrail(item.effect)) {
           setSpecialDiceName(item.name);
-          try { await previewDice("black", item.effect, true); }
+          try { await previewDice(item.effect === "first-flame" ? "first-flame" : "black", item.effect, true); }
           finally { if (mounted.current) { setSpecialDiceName(""); setOpenCategory("dice-trail"); } }
         } else await previewDice("white", item.effect);
         setNotice(`Previewed ${item.name}.`);
