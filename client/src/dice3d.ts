@@ -29,11 +29,16 @@ interface QueueEntry {
   onLanded: () => void;
   onError?: (error: unknown) => void;
   previewLingerMs?: number;
+  preview?: boolean;
 }
 
 let box: DiceBox | null = null;
 let ready: Promise<void> | null = null;
 let running = false;
+let previewActive = false;
+let cancelPreview: (() => void) | undefined;
+let soundsReady = false;
+let soundLoading: Promise<void> | undefined;
 let currentAppearance = "white";
 const queue: QueueEntry[] = [];
 interface DiceTrailPoint {
@@ -580,15 +585,17 @@ function ensureBox(): Promise<void> {
       baseScale: 100,
     });
     const engine = box;
-    ready = engine.initialize().then(() => {
-      // dice-box-threejs awaits 28 audio files sequentially during initialize.
-      // Keep collisions muted until its complete sound banks are available.
-      const audio = engine as unknown as { loadSounds: () => Promise<void>; sounds: boolean };
-      void audio.loadSounds().then(() => { audio.sounds = true; })
-        .catch(error => console.warn("dice sounds unavailable", error));
-    });
+    ready = engine.initialize();
   }
   return ready;
+}
+function enableGameplaySounds() {
+  const audio = box as unknown as { loadSounds: () => Promise<void>; sounds: boolean };
+  audio.sounds = soundsReady;
+  if (!soundLoading) soundLoading = audio.loadSounds().then(() => {
+    soundsReady = true;
+    audio.sounds = !previewActive;
+  }).catch(error => { soundLoading = undefined; console.warn("dice sounds unavailable", error); });
 }
 export function preloadDice(): Promise<void> {
   return ensureBox();
@@ -712,6 +719,8 @@ export function animateRoll(
 // Customize page: throw a themed set with random results, just to look at.
 export function previewDice(theme: string, previewTrail?: DiceTrailStyle, showcase = false): Promise<void> {
   if (document.hidden) return showcase ? Promise.reject(new Error("Keep this tab visible to preview dice.")) : Promise.resolve();
+  if (queue.some(entry => !entry.preview) || (running && !cancelPreview)) return Promise.reject(new Error("The dice tray is showing a gameplay roll. Try again when it finishes."));
+  cancelPreview?.();
   if (queue.length >= 3) return showcase ? Promise.reject(new Error("The dice tray is busy. Try again after the current rolls.")) : Promise.resolve();
 
   return new Promise((onLanded, onError) => {
@@ -719,11 +728,12 @@ export function previewDice(theme: string, previewTrail?: DiceTrailStyle, showca
       notation: showcase ? "1d4+1d6+1d8+1d10+1d12+1d20" : "2d10+1d6",
       theme: theme || "white",
       previewTrail,
+      preview: true,
       critical: null,
       meta: {},
       onLanded,
-      onError: showcase ? onError : undefined,
-      previewLingerMs: showcase ? 2600 : undefined,
+      onError,
+      previewLingerMs: showcase ? 1200 : 250,
     });
     if (!running) void drain();
   });
@@ -737,6 +747,11 @@ async function drain(): Promise<void> {
 
     while ((entry = queue.shift())) {
       let cosmetic: CosmeticAnimation | undefined;
+      previewActive = !!entry.preview;
+      const cancelled = new Promise<void>(resolve => { cancelPreview = entry!.preview ? resolve : undefined; });
+      const audio = box as unknown as { sounds: boolean };
+      if (entry.preview) audio.sounds = false;
+      else enableGameplaySounds();
       try {
         const definition = DICE_COSMETICS[entry.theme];
         if (entry.theme !== currentAppearance || definition) {
@@ -757,13 +772,22 @@ async function drain(): Promise<void> {
         // If the tab loses visibility mid-roll the physics stalls; don't let
         // one stuck animation wedge the queue forever.
         cosmetic?.setState("rolling");
-        const rollPromise = box!.roll(entry.notation);
+        // Unforced cosmetic previews don't need the engine's hidden physics
+        // rehearsal, which exists to remap authoritative gameplay results.
+        const engine = box as unknown as { simulateThrow: () => void };
+        const simulate = engine.simulateThrow;
+        let rollPromise: ReturnType<DiceBox["roll"]>;
+        try {
+          if (entry.preview) engine.simulateThrow = () => {};
+          rollPromise = box!.roll(entry.notation);
+        } finally { engine.simulateThrow = simulate; }
         const stopTrail = startDiceTrail(box!, definition?.trailId, entry.previewTrail);
         let timeout: ReturnType<typeof setTimeout> | undefined;
 
         try {
           await Promise.race([
             rollPromise,
+            ...(entry.preview ? [cancelled] : []),
             new Promise((_, reject) =>
               timeout = setTimeout(() => reject(new Error("animation timeout")), ANIMATION_TIMEOUT_MS)
             ),
@@ -777,7 +801,9 @@ async function drain(): Promise<void> {
         announceCritical(entry);
         if (!entry.previewLingerMs) entry.onLanded();
         const linger = entry.previewLingerMs ?? LINGER_MS;
-        await new Promise((resolve) => setTimeout(resolve, linger));
+        let lingerTimer: ReturnType<typeof setTimeout> | undefined;
+        try { await Promise.race([new Promise(resolve => { lingerTimer = setTimeout(resolve, linger); }), ...(entry.preview ? [cancelled] : [])]); }
+        finally { clearTimeout(lingerTimer); }
       } catch (error) {
         console.error("dice animation failed", error);
         announceCritical(entry);
@@ -789,6 +815,8 @@ async function drain(): Promise<void> {
         box!.clearDice();
       } finally {
         cosmetic?.dispose();
+        cancelPreview = undefined;
+        previewActive = false;
       }
       if (entry.previewLingerMs) entry.onLanded();
     }

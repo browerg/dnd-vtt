@@ -334,6 +334,7 @@ export default function ShopPage() {
               kind,
               effect: item.effect,
               userName: "Preview",
+              preview: true,
               label: item.name,
             },
           })

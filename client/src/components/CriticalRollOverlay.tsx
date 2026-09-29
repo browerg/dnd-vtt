@@ -28,6 +28,7 @@ export interface CriticalRollEventDetail {
   label?: string;
   effect?: string;
   defaultEffect?: string;
+  preview?: boolean;
 }
 
 interface ActiveCritical extends CriticalRollEventDetail {
@@ -181,6 +182,10 @@ export default function CriticalRollOverlay() {
 
       void resolveEffect(detail).then((effect) => {
         if (cancelled) return;
+        if (detail.preview) {
+          setActive({ ...detail, effect, id: ++eventId, system: currentSystem() });
+          return;
+        }
         setQueue((pending) => [
           ...pending.slice(-3),
           {
@@ -209,7 +214,7 @@ export default function CriticalRollOverlay() {
 
   useEffect(() => {
     if (!active) return;
-    if (active.effect !== "first-flame") playCriticalSound(active.kind, active.effect);
+    if (!active.preview && active.effect !== "first-flame") playCriticalSound(active.kind, active.effect);
     const timer = window.setTimeout(
       () => setActive(null),
       active.effect === "first-flame" ? 3800 : NAT1_SPECTACLES[active.effect]?.duration ?? (active.kind === "nat20" ? 3300 : 2900)

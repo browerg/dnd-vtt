@@ -141,10 +141,13 @@ export function flameEmission(r: number, g: number, b: number): number {
 function emissionMask(map: Texture, config: DiceCosmetic): Texture {
   const source = map.image as HTMLCanvasElement;
   const canvas = document.createElement("canvas");
-  canvas.width = source.width;
-  canvas.height = source.height;
+  // This is a soft lighting mask, not the visible face artwork. Bounding it
+  // avoids millions of synchronous per-pixel classifications per preview.
+  const scale = Math.min(1, 128 / Math.max(source.width, source.height));
+  canvas.width = Math.max(1, Math.round(source.width * scale));
+  canvas.height = Math.max(1, Math.round(source.height * scale));
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-  ctx.drawImage(source, 0, 0);
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
   const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
   for (let i = 0; i < pixels.data.length; i += 4) {
     const level = Math.round(255 * config.emissionStrength(pixels.data[i], pixels.data[i + 1], pixels.data[i + 2]));

@@ -25,6 +25,7 @@ import {
   getDiceTrailOptions,
   getDiceTrailStyle,
   previewDice,
+  preloadDice,
   setDiceTrailStyle,
   type DiceTrailStyle,
 } from "../dice3d";import "./DiceCustomizer.css";
@@ -198,6 +199,7 @@ export default function DiceCustomizer() {
 
   useEffect(() => {
     let disposed = false;
+    void preloadDice().catch(error => console.warn("dice preload failed", error));
     const preview = new DiceBox(`#${PREVIEW_ID}`, {
       assetPath: "/assets/dice/",
       sounds: false,

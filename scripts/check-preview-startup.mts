@@ -36,9 +36,7 @@ try {
   let releaseAudio!: () => void;
   const audioGate = new Promise<void>(resolve => { releaseAudio = resolve; });
   let audioRequests = 0;
-  let markRequested!: () => void;
-  const requested = new Promise<void>(resolve => { markRequested = resolve; });
-  await page.route("**/assets/dice/sounds/**", async route => { audioRequests++; markRequested(); await audioGate; await route.continue(); });
+  await page.route("**/assets/dice/sounds/**", async route => { audioRequests++; await audioGate; await route.continue(); });
   await page.goto(process.env.QA_URL ?? "http://127.0.0.1:5176/shop", { waitUntil: "domcontentloaded" });
   const elapsed = await page.evaluate(async () => {
     const { preloadDice } = await import("/src/dice3d.ts");
@@ -48,11 +46,8 @@ try {
     finally { clearTimeout(timer); }
     return performance.now()-start;
   });
-  let requestTimer: ReturnType<typeof setTimeout> | undefined;
-  try { await Promise.race([requested, new Promise((_,reject) => { requestTimer=setTimeout(()=>reject(new Error("No background audio request")),5000); })]); }
-  finally { clearTimeout(requestTimer); }
-  assert.ok(audioRequests > 0, "audio loads independently of visual readiness");
+  assert.equal(audioRequests, 0, "Preloading visuals must not fetch collision audio");
   releaseAudio();
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({readyMs:Math.round(elapsed),visualReadyWhileAudioHeld:true,errors}));
+  console.log(JSON.stringify({readyMs:Math.round(elapsed),silentVisualStartup:true,errors}));
 } finally { await browser.close(); }
