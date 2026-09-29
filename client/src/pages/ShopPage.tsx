@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import { previewDice, getDiceTrailStyle, setDiceTrailStyle, type DiceTrailStyle } from "../dice3d";
+import { preloadDice, previewDice, getDiceTrailStyle, setDiceTrailStyle, type DiceTrailStyle } from "../dice3d";
 import TurnStartEffect from "../components/TurnStartEffect";
 import "./ShopPage.css";
 import VividCache from "../components/VividCache";
@@ -119,6 +119,7 @@ export default function ShopPage() {
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
+    void preloadDice().catch(error => console.warn("dice preload failed", error));
     return () => { mounted.current = false; };
   }, []);
 

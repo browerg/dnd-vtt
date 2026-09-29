@@ -568,7 +568,8 @@ function ensureBox(): Promise<void> {
   if (!ready) {
     box = new DiceBox("#dice-overlay", {
       assetPath: "/assets/dice/",
-      sounds: true,
+      // Sound assets load in the background; they must never hold up the dice.
+      sounds: false,
       volume: 60,
       theme_surface: "green-felt",
       theme_colorset: "white",
@@ -578,7 +579,14 @@ function ensureBox(): Promise<void> {
       gravity_multiplier: 400,
       baseScale: 100,
     });
-    ready = box.initialize();
+    const engine = box;
+    ready = engine.initialize().then(() => {
+      // dice-box-threejs awaits 28 audio files sequentially during initialize.
+      // Keep collisions muted until its complete sound banks are available.
+      const audio = engine as unknown as { loadSounds: () => Promise<void>; sounds: boolean };
+      void audio.loadSounds().then(() => { audio.sounds = true; })
+        .catch(error => console.warn("dice sounds unavailable", error));
+    });
   }
   return ready;
 }

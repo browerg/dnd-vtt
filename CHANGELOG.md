@@ -38,6 +38,8 @@ is the one piece of markup the launcher renders.
 
 ### Minor changes
 
+- **Faster dice previews** — The Emporium prepares the dice engine ahead of your click. Collision sounds now load in the background instead of delaying the first roll.
+
 - **Epic collection** — the three new effects share the Epic tier with Lightning
   Strike, at 1.5% each per opening. The tier remains 6% overall.
 - **Legendary collection** — the three trails share the Legendary tier with Rose
