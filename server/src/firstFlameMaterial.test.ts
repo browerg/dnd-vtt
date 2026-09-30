@@ -84,7 +84,7 @@ test("per-box glow preserves artwork, renders landing, cleans up, and leaves oth
     assert.equal(texture.disposed, false);
     assert.equal(factory.createMaterials()[0].emissiveMap, undefined, "next ordinary theme has no flame map");
     const programKeys = new Set<string>();
-    for (const dice of SPECIAL_DICE) {
+    for (const dice of [FIRST_FLAME, ...SPECIAL_DICE]) {
       const special = await applyDiceCosmetic(box, { ...dice, id: `test-${dice.id}`, createTexture: () => face as HTMLCanvasElement });
       const material = factory.createMaterials()[0];
       const shader: Shader = { uniforms: {}, fragmentShader: "#include <emissivemap_fragment>" };
@@ -102,7 +102,7 @@ test("per-box glow preserves artwork, renders landing, cleans up, and leaves oth
       assert.equal(factory.createMaterials()[0].onBeforeCompile, undefined, "special shader cannot leak into subsequent ordinary dice");
       motion.matches = false;
     }
-    assert.equal(programKeys.size, 3, "each authored shader has its own program cache entry");
+    assert.equal(programKeys.size, 4, "each authored shader has its own program cache entry");
   } finally {
     for (const [key, descriptor] of saved) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor);

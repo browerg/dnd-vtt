@@ -1,6 +1,6 @@
 import type { DiceCosmetic } from "./diceCosmetics.js";
 
-export type SpecialDiceSurface = "singularity" | "clockwork" | "prism";
+export type SpecialDiceSurface = "singularity" | "clockwork" | "prism" | "first-flame";
 
 // These are authored materials, deliberately outside the customization encoder.
 // Catalogue visibility is not an entitlement or a new cache reward.
@@ -88,6 +88,35 @@ function createSpecialTexture(kind: SpecialDiceSurface): HTMLCanvasElement {
 
 /** Bounded per-fragment effects; no textures allocated or repainted per frame. */
 export const SPECIAL_SURFACE_GLSL: Record<SpecialDiceSurface, string> = {
+  "first-flame": `
+    // A fractured obsidian crust above a moving molten core. Fixed fault lines
+    // keep the stone stable while convection and embers move beneath it.
+    // Three warped fault families form stable irregular plates with no
+    // texture sampling or per-fragment neighbor search.
+    vec2 rock = p * 10.0;
+    float warp = sin(rock.x*.53 + rock.y*.37)*.65;
+    float seamA = abs(sin(rock.x + warp));
+    float seamB = abs(sin(rock.y*.92 - warp));
+    float seamC = abs(sin((rock.x+rock.y)*.64 + 1.7));
+    float gap = min(seamA,min(seamB,seamC))*.5;
+    float fissure = 1.0 - smoothstep(0.025,0.17,gap);
+    float convection = 0.5 + 0.5*sin(p.y*19.0 - vividTime*1.4 + sin(p.x*16.0+vividTime*.6)*2.0);
+    float surge = pow(0.5+0.5*sin(p.x*8.0+p.y*11.0-vividTime*2.0),5.0);
+    vec3 magma = mix(vec3(.68,.045,.003),vec3(1.0,.48,.055),convection);
+    vec3 whiteHeat = vec3(1.0,.88,.43) * pow(fissure,4.0) * surge;
+    vividLight = magma*fissure*(.5+convection*.7) + whiteHeat*.65;
+    // Thin hot edges give the black plates depth without washing them out.
+    vividLight += vec3(.35,.09,.018)*exp(-abs(gap-.12)*45.0)*(.35+convection*.4);
+    // Three staggered ember streams inside the face, not extra scene particles.
+    for (int i=0; i<3; i++) {
+      float lane=float(i);
+      float phase=fract(vividTime*.19+lane*.337);
+      vec2 ember=vec2(sin(lane*7.3)*.34+sin(phase*5.0+lane)*.035,phase*.9-.45);
+      vec2 delta=(p-ember)*vec2(1.0,.55);
+      vividLight += vec3(1.0,.53,.12)*exp(-dot(delta,delta)*9000.0)*sin(phase*3.14159)*.85;
+    }
+  `,
+
   singularity: `
     float radius = length(p);
     float angle = atan(p.y, p.x);

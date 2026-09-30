@@ -20,6 +20,8 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **Living volcanic Relic dice** — The First Flame now has an exclusive animated surface: black obsidian plates over flowing lava, white-hot seams and embers rising beneath the gold numbers. Existing owners receive the new material automatically.
+
 - **The First Flame awakens** — The Relic’s Nat 20 now breaks an obsidian seal, raises a molten crown and releases a golden shockwave through a rotating ring of ancient runes.
 
 - **The First Flame leaves a faultline** — The Relic bundle’s trail now splits into glowing molten seams, lifting obsidian plates and small jets of ancient fire. Preview it with the matching Relic dice; existing owners receive the new look automatically.

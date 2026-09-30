@@ -23,10 +23,13 @@ export interface DiceCosmetic {
 
 export const FIRST_FLAME: DiceCosmetic = {
   id: "first-flame",
+  surface: "first-flame",
+  roughness: 0.32,
+  metalness: 0.58,
   label: "Relic of the First Flame",
   baseColor: "#100e13",
   numberColor: "#ffd36a",
-  edgeColor: "#56351b",
+  edgeColor: "#b57835",
   emissiveColor: 0xffb52e,
   emissiveIntensityIdle: 0.4,
   emissiveIntensityRolling: 0.85,
@@ -45,56 +48,28 @@ export const DICE_COSMETICS: Readonly<Record<string, DiceCosmetic>> = {
 
 export type CosmeticState = "idle" | "rolling" | "landed" | "nat20";
 
-// Speckle and branching seams are deterministic and generated only once.
+// Subdued obsidian crust; the animated shader supplies the fire.
 function createObsidianTexture(): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 512;
-  let ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = FIRST_FLAME.baseColor;
-  ctx.fillRect(0, 0, 512, 512);
-  let seed = 17;
-  const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-  for (let i = 0; i < 6000; i++) {
-    const level = 12 + Math.floor(random() * 18);
-    ctx.fillStyle = `rgb(${level}, ${level}, ${level + 3})`;
-    ctx.fillRect(random() * 512, random() * 512, 1 + random() * 3, 1 + random() * 3);
-  }
-  const stone = ctx;
-  const seams = document.createElement("canvas");
-  seams.width = seams.height = 512;
-  ctx = seams.getContext("2d")!;
-  for (let branch = 0; branch < 3; branch++) {
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#09070d"; ctx.fillRect(0,0,512,512);
+  let seed=17;
+  const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+  for(let i=0;i<26;i++) {
+    const x=random()*512,y=random()*512,r=12+random()*38;
     ctx.beginPath();
-    let x = (branch * 197 + 19) % 512;
-    ctx.moveTo(x, 0);
-    for (let y = 40; y <= 560; y += 40) {
-      x += Math.sin(branch * 7 + y * 0.08) * 38;
-      ctx.lineTo(x, y);
-      if (y % 120 === 0) {
-        ctx.lineTo(x + 32, y + 16);
-        ctx.lineTo(x + 46, y + 47);
-        ctx.moveTo(x, y);
-      }
+    for(let j=0;j<5;j++) {
+      const angle=j*Math.PI*2/5;
+      const px=x+Math.cos(angle)*r,py=y+Math.sin(angle)*r*.7;
+      if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
     }
-    ctx.strokeStyle = "#ff8c28";
-    ctx.shadowColor = "#ff961e";
-    ctx.shadowBlur = 9;
-    ctx.lineWidth = 3.5;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = "#ffe6a0";
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
+    ctx.closePath();ctx.fillStyle=i%3===0?"#19131c":"#100c14";ctx.fill();
+    ctx.strokeStyle="#1e161b";ctx.lineWidth=.7;ctx.stroke();
   }
-  // Leave a softly faded quiet area behind the numbers, rather than letting
-  // bright seams cross their strokes on small d12/d20 faces.
-  ctx.globalCompositeOperation = "destination-out";
-  const quiet = ctx.createRadialGradient(256, 256, 65, 256, 256, 175);
-  quiet.addColorStop(0, "rgba(0,0,0,1)");
-  quiet.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = quiet;
-  ctx.fillRect(0, 0, 512, 512);
-  stone.drawImage(seams, 0, 0);
+  const quiet=ctx.createRadialGradient(256,256,42,256,256,150);
+  quiet.addColorStop(0,"#09070d");quiet.addColorStop(1,"transparent");
+  ctx.fillStyle=quiet;ctx.fillRect(0,0,512,512);
   return canvas;
 }
 
@@ -231,7 +206,7 @@ export async function applyDiceCosmetic(box: CosmeticBox, config: DiceCosmetic):
       material.metalness = config.metalness ?? 0.22;
       if (config.surface) {
         const surface = config.surface;
-        material.customProgramCacheKey = () => `vivid-special-${surface}-v1`;
+        material.customProgramCacheKey = () => `vivid-special-${surface}-v2`;
         material.onBeforeCompile = (shader) => {
           shader.uniforms.vividTime = timeUniform;
           shader.fragmentShader = `uniform float vividTime;\n${shader.fragmentShader}`.replace(
@@ -244,6 +219,7 @@ export async function applyDiceCosmetic(box: CosmeticBox, config: DiceCosmetic):
              // White / pale printed numbers remain untouched, including d4 corners.
              vec3 ink = texture2D(map, vUv).rgb;
              float glyphGuard = 1.0 - smoothstep(0.55, 0.85, min(ink.r, min(ink.g, ink.b)));
+             ${surface === "first-flame" ? "glyphGuard *= smoothstep(0.08, 0.32, distance(ink, vec3(1.0, 0.827, 0.416)));" : ""}
              totalEmissiveRadiance += vividLight * glyphGuard * smoothstep(0.13, 0.23, length(p));
              totalEmissiveRadiance += ink * (1.0 - glyphGuard) * 0.85;
              #endif`
