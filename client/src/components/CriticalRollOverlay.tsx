@@ -3,7 +3,12 @@ import SpecialCriticalSpectacle from "./SpecialCriticalSpectacle";
 import SeveredFateSpectacle from "./SeveredFateSpectacle";
 import MimicSpectacle from "./MimicSpectacle";
 import AbyssalGazeSpectacle from "./AbyssalGazeSpectacle";
-import { playAbyssalGazeSound, playMimicSound, playSeveredFateSound } from "../criticalSounds";
+import MainCharacterSpectacle from "./MainCharacterSpectacle";
+import JackpotSpectacle from "./JackpotSpectacle";
+import LegendForgedSpectacle from "./LegendForgedSpectacle";
+import {
+  playAbyssalGazeSound, playJackpotSound, playLegendForgedSound, playMainCharacterSound, playMimicSound, playSeveredFateSound,
+} from "../criticalSounds";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import "./CriticalRollOverlay.css";
 import "./CriticalRollEffects.css";
@@ -20,7 +25,10 @@ export type CriticalEffectStyle =
   | "debris"
   | "severed-fate"
   | "mimic"
-  | "abyssal-gaze";
+  | "abyssal-gaze"
+  | "main-character"
+  | "jackpot"
+  | "legend-forged";
 
 export interface CriticalRollEventDetail {
   kind: CriticalRollKind;
@@ -40,17 +48,21 @@ interface ActiveCritical extends CriticalRollEventDetail {
 const EVENT_NAME = "tabletop:critical-roll";
 let eventId = 0;
 
-const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame", ...SPECIAL_CRITICALS.map(effect => effect.effect)]);
+const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame", "main-character", "jackpot", "legend-forged", ...SPECIAL_CRITICALS.map(effect => effect.effect)]);
 const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris", "first-flame", "severed-fate", "mimic", "abyssal-gaze"]);
 
 /**
- * The premium Natural 1s take over the whole screen with their own scene,
- * score, length and line. Adding one is an entry here plus its component.
+ * The premium spectacles take over the whole screen with their own scene,
+ * score, length and line. Effect names are unique across Nat 20s and Nat 1s,
+ * so one table serves both. Adding one is an entry here plus its component.
  */
-const NAT1_SPECTACLES: Partial<Record<CriticalEffectStyle, { scene: () => JSX.Element; sound: () => void; duration: number; message: string }>> = {
+const SPECTACLES: Partial<Record<CriticalEffectStyle, { scene: (props: { userName: string }) => JSX.Element; sound: () => void; duration: number; message: string }>> = {
   "severed-fate": { scene: SeveredFateSpectacle, sound: playSeveredFateSound, duration: 4000, message: "Fate has cut your thread." },
   mimic: { scene: MimicSpectacle, sound: playMimicSound, duration: 4200, message: "It was a mimic." },
   "abyssal-gaze": { scene: AbyssalGazeSpectacle, sound: playAbyssalGazeSound, duration: 4400, message: "Something has noticed you." },
+  "main-character": { scene: MainCharacterSpectacle, sound: playMainCharacterSound, duration: 4000, message: "Main character energy." },
+  jackpot: { scene: JackpotSpectacle, sound: playJackpotSound, duration: 4400, message: "The dice pay out." },
+  "legend-forged": { scene: LegendForgedSpectacle, sound: playLegendForgedSound, duration: 4400, message: "A legend is forged." },
 };
 
 function currentSystem(): "remnant" | "dnd5e" {
@@ -99,7 +111,7 @@ async function resolveEffect(detail: CriticalRollEventDetail): Promise<CriticalE
 
 function playCriticalSound(kind: CriticalRollKind, effect: CriticalEffectStyle) {
   if (localStorage.getItem("critical-roll-sound") === "off") return;
-  const spectacle = NAT1_SPECTACLES[effect];
+  const spectacle = SPECTACLES[effect];
   if (spectacle) return spectacle.sound();
 
   try {
@@ -217,7 +229,7 @@ export default function CriticalRollOverlay() {
     if (!active.preview && active.effect !== "first-flame") playCriticalSound(active.kind, active.effect);
     const timer = window.setTimeout(
       () => setActive(null),
-      active.effect === "first-flame" ? 3800 : NAT1_SPECTACLES[active.effect]?.duration ?? (active.kind === "nat20" ? 3300 : 2900)
+      active.effect === "first-flame" ? 3800 : SPECTACLES[active.effect]?.duration ?? (active.kind === "nat20" ? 3300 : 2900)
     );
     return () => window.clearTimeout(timer);
   }, [active]);
@@ -232,7 +244,7 @@ export default function CriticalRollOverlay() {
   const success = active.kind === "nat20";
   const userName = active.userName?.trim() || "A player";
   const remnant = active.system === "remnant";
-  const spectacle = NAT1_SPECTACLES[active.effect];
+  const spectacle = SPECTACLES[active.effect];
   const Spectacle = spectacle?.scene;
 
   return (
@@ -243,7 +255,7 @@ export default function CriticalRollOverlay() {
       aria-live="assertive"
     >
       <SpecialCriticalSpectacle effect={active.effect} />
-      {Spectacle && <Spectacle />}
+      {Spectacle && <Spectacle userName={userName} />}
       {active.effect === "first-flame" && <div className="flame-spectacle" aria-hidden="true">
         {success && <div className="flame-awakening">
           <svg className="flame-seal" viewBox="0 0 600 600">
@@ -307,13 +319,13 @@ export default function CriticalRollOverlay() {
         <p className="critical-message">
           <strong>{userName}</strong>
           <span>
-            {success
+            {spectacle
+              ? spectacle.message
+              : success
               ? remnant
                 ? "Combat performance: exceptional."
                 : "The table erupts in celebration."
-              : spectacle
-                ? spectacle.message
-                : remnant
+              : remnant
                 ? "Combat performance: compromised."
                 : "The dice have made their decision."}
           </span>

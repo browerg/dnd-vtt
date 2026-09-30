@@ -20,6 +20,12 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **Three new critical-success spectacles** — Main Character turns your Nat 20 into
+  an anime cut-in with your name in giant type, Jackpot spins a gold slot machine
+  to 20-20-20 and showers the table in coins, and Legend Forged hammers your
+  white-hot 20 on the anvil before quenching it to gold. Each has its own sound.
+  Preview them free in Nat 20 effects; unlock them in the Emporium for 150 VCoins.
+
 - **Living volcanic Relic dice** — The First Flame now has an exclusive animated surface: black obsidian plates over flowing lava, white-hot seams and embers rising beneath the gold numbers. Existing owners receive the new material automatically.
 
 - **The First Flame awakens** — The Relic’s Nat 20 now breaks an obsidian seal, raises a molten crown and releases a golden shockwave through a rotating ring of ancient runes.

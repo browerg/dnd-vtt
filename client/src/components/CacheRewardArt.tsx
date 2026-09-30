@@ -10,6 +10,23 @@ export default function CacheRewardArt({ id }: { id: string }) {
       <path d="M49 73c-15-12-6-21-1-27-2 9 3 10 4 12 4-6 7-12 6-23 17 21 7 35-9 38Z" fill="#ff982c" />
       <path d="M50 72c-6-7 1-12 3-19 7 12 4 16-3 19Z" fill="#fff1af" />
       <path d="m31 23 2-6m61 35 2-5M14 79l-2-5" stroke="#ffdf85" strokeWidth="2" />
+    </> : id === "main-character" ? <>
+      <rect x="0" y="0" width="120" height="120" fill="#d7122a" stroke="none" />
+      <path d="M-5 30 125 14v26L-5 56Z" fill="#0b0b0b" stroke="none" />
+      <path d="M60 58l6 16 17-6-10 14 14 10-17 1 1 17-11-13-12 13 1-17-17-1 14-10-10-14 17 6Z" fill="#fff" stroke="none" />
+      <text x="62" y="90" textAnchor="middle" fill="#fff" stroke="#0b0b0b" strokeWidth="1.5" fontFamily="Arial Black, sans-serif" fontStyle="italic" fontWeight="900" fontSize="24">20</text>
+      <path d="M8 42h40" stroke="#fff" strokeWidth="5" />
+    </> : id === "jackpot" ? <>
+      <rect x="8" y="34" width="104" height="52" rx="9" fill="#c98f28" stroke="#fff0b0" strokeWidth="2" />
+      {[18, 48, 78].map(x => <rect key={x} x={x} y="44" width="24" height="32" rx="3" fill="#fffdf6" stroke="#3b2405" />)}
+      {[30, 60, 90].map(x => <text key={x} x={x} y="67" textAnchor="middle" fill="#b47414" stroke="none" fontFamily="Cinzel, Georgia, serif" fontWeight="700" fontSize="15">20</text>)}
+      <text x="60" y="26" textAnchor="middle" fill="#fff4fb" stroke="#ff5ec8" strokeWidth=".8" fontFamily="Arial Black, sans-serif" fontStyle="italic" fontSize="15">JACKPOT</text>
+      {[[20, 100], [40, 108], [84, 104], [102, 96]].map(([x, y]) => <circle key={x} cx={x} cy={y} r="6" fill="#ffd35a" stroke="#9a6010" />)}
+    </> : id === "legend-forged" ? <>
+      <circle cx="60" cy="62" r="44" stroke="#ffd27a" strokeDasharray="3 4" />
+      <text x="60" y="78" textAnchor="middle" fill="#fff1c8" stroke="#ff8a2e" strokeWidth="1" fontFamily="Cinzel, Georgia, serif" fontWeight="700" fontSize="40">20</text>
+      <g transform="rotate(-50 96 94)"><rect x="92" y="30" width="7" height="64" rx="3" fill="#5a3517" stroke="none" /><rect x="80" y="22" width="32" height="16" rx="3" fill="#3c3f47" stroke="#9aa2ad" /></g>
+      {[[44, 30], [36, 40], [52, 24], [30, 34]].map(([x, y]) => <path key={x} d={`M${x} ${y}l-5-6`} stroke="#ffb347" strokeWidth="2" />)}
     </> : id === "mimic" ? <>
       <path d="M14 30h92v22H14Z" fill="#4d2e15" stroke="#f0c668" />
       <path d="M14 76h92v22H14Z" fill="#4d2e15" stroke="#f0c668" />

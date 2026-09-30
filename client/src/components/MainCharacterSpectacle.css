@@ -1,0 +1,156 @@
+/* Main Character — timeline is 4.0s: panel in by 0.5s, the 20 stamps at 1.0s (25%). */
+.critical-roll-overlay.nat20.effect-main-character {
+  --critical-primary: #ffffff;
+  --critical-secondary: #ff2f45;
+  --critical-rgb: 255, 47, 69;
+  --mc-ey: calc(50% - clamp(150px, 21vh, 205px) / 2);
+  background: transparent;
+}
+.critical-roll-overlay.effect-main-character :is(.critical-rings, .critical-particles, .critical-scan, .critical-screen-flash, .critical-emblem-frame, .critical-vignette) { display: none; }
+.critical-roll-overlay.effect-main-character .critical-emblem::before,
+.critical-roll-overlay.effect-main-character .critical-emblem::after { display: none; }
+.critical-roll-overlay.effect-main-character .critical-emblem { animation: mc-stamp 0.55s 1s cubic-bezier(0.2, 0.9, 0.3, 1.25) both; }
+.critical-roll-overlay.effect-main-character :is(.critical-emblem strong, .critical-emblem-shadow) {
+  font-family: "Arial Black", "Segoe UI Black", Impact, sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+.critical-roll-overlay.effect-main-character .critical-emblem strong {
+  color: #fff;
+  background: none;
+  -webkit-text-stroke: 4px #0b0b0b;
+  filter: drop-shadow(8px 8px 0 #ff2f45) drop-shadow(0 0 1px #000);
+}
+.critical-roll-overlay.effect-main-character .critical-emblem-shadow { display: none; }
+.critical-roll-overlay.effect-main-character .critical-banner {
+  background: #0b0b0b;
+  clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+  animation: mc-banner 0.45s 1.3s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+.critical-roll-overlay.effect-main-character .critical-banner-line { background: #ff2f45; box-shadow: none; height: 3px; }
+.critical-roll-overlay.effect-main-character .critical-kicker { color: #ff2f45; }
+.critical-roll-overlay.effect-main-character .critical-banner h2 {
+  color: #fff;
+  font-family: "Arial Black", "Segoe UI Black", Impact, sans-serif;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  text-shadow: 4px 4px 0 #ff2f45;
+}
+
+.main-character-scene { position: absolute; inset: 0; z-index: -1; overflow: hidden; animation: mc-scene 4s both; }
+.main-character-scene * { position: absolute; }
+.mc-bg { inset: 0; background: radial-gradient(ellipse at 50% 40%, #ff3a4f 0%, #d7122a 45%, #6d0612 100%); }
+.mc-rays {
+  left: 50%; top: var(--mc-ey); width: 260vmax; height: 260vmax; transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, rgba(0, 0, 0, 0.42) 0 1.6deg, transparent 1.6deg 6deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 0 12vmin, #000 40vmin);
+  mask-image: radial-gradient(circle, transparent 0 12vmin, #000 40vmin);
+  animation: mc-rays 4s linear both;
+}
+.mc-halftone {
+  inset: 0; opacity: 0.35;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.55) 0 1.4px, transparent 1.8px) 0 0 / 9px 9px;
+  -webkit-mask-image: linear-gradient(160deg, #000, transparent 55%);
+  mask-image: linear-gradient(160deg, #000, transparent 55%);
+}
+.mc-streaks i {
+  top: var(--y); left: 110%; width: var(--w); height: 3px; background: linear-gradient(90deg, transparent, #fff);
+  animation: mc-streak 0.55s var(--d) linear infinite;
+}
+
+/* The white slash behind the 20, then the starburst it stamps onto. */
+.mc-slash {
+  left: -10%; right: -10%; top: calc(var(--mc-ey) - 9vmin); height: 18vmin; background: #fff;
+  clip-path: polygon(0 62%, 100% 8%, 100% 38%, 0 92%);
+  transform: scaleX(0); transform-origin: 100% 50%;
+  animation: mc-slash 4s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.mc-burst {
+  left: 50%; top: var(--mc-ey); width: min(52vmin, 470px); aspect-ratio: 1;
+  background: #fff;
+  clip-path: polygon(50% 0, 57% 30%, 80% 8%, 67% 35%, 98% 28%, 71% 47%, 100% 60%, 69% 61%, 86% 88%, 60% 70%, 55% 100%, 46% 72%, 22% 94%, 33% 66%, 2% 72%, 29% 54%, 0 38%, 31% 38%, 14% 12%, 42% 29%);
+  transform: translate(-50%, -50%) scale(0);
+  animation: mc-burst 4s both;
+}
+.mc-burst i {
+  inset: 16%; background: #0b0b0b;
+  clip-path: inherit;
+  animation: mc-burst-spin 4s linear both;
+}
+
+/* The name panel: a skewed black band that slams in from the right. */
+.mc-panel {
+  left: -8%; right: -8%; top: 5%; height: clamp(90px, 21vh, 190px);
+  background: #0b0b0b; overflow: hidden;
+  transform: skewY(-4deg) translateX(110%);
+  box-shadow: 0 1.2vmin 0 #fff, 0 2.4vmin 0 #ff2f45;
+  animation: mc-panel 4s cubic-bezier(0.15, 0.9, 0.2, 1) both;
+}
+.mc-tag {
+  left: 14%; top: 10%; padding: 0.2em 0.7em; background: #ff2f45; color: #fff;
+  font: italic 900 clamp(0.6rem, 1.4vw, 0.9rem) "Arial Black", "Segoe UI Black", Impact, sans-serif; letter-spacing: 0.18em;
+}
+.mc-name {
+  left: 14%; bottom: 4%; white-space: nowrap; color: #fff;
+  font: italic 900 clamp(2rem, calc(150vw / (var(--len) + 4)), 8rem) / 1 "Arial Black", "Segoe UI Black", Impact, sans-serif;
+  letter-spacing: -0.02em;
+  text-shadow: 0.06em 0.06em 0 #ff2f45;
+  animation: mc-name 4s cubic-bezier(0.15, 0.9, 0.2, 1) both;
+}
+
+.mc-tape {
+  left: -10%; right: -10%; bottom: 7%; height: clamp(26px, 4.4vh, 40px); background: #fff; overflow: hidden;
+  display: flex; align-items: center; transform: rotate(-3deg);
+  box-shadow: 0 0 0 3px #0b0b0b;
+  animation: mc-tape-in 4s both;
+}
+.mc-tape span {
+  position: relative; flex: none; white-space: nowrap; padding-right: 0.5em; color: #0b0b0b;
+  font: italic 900 clamp(0.8rem, 2vh, 1.1rem) "Arial Black", "Segoe UI Black", Impact, sans-serif; letter-spacing: 0.08em;
+  animation: mc-tape 6s linear infinite;
+}
+.mc-flash { inset: 0; background: #fff; animation: mc-flash 4s both; }
+
+@keyframes mc-scene { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes mc-flash { 0% { opacity: 1; } 5% { opacity: 0; } 24.5% { opacity: 0; } 25.5% { opacity: 0.85; } 30%, 100% { opacity: 0; } }
+@keyframes mc-rays { from { transform: translate(-50%, -50%) rotate(0); } to { transform: translate(-50%, -50%) rotate(40deg); } }
+@keyframes mc-streak { from { transform: translateX(0); } to { transform: translateX(-160vw); } }
+@keyframes mc-slash { 0%, 20% { transform: scaleX(0); } 25% { transform: scaleX(1); } 100% { transform: scaleX(1); } }
+@keyframes mc-burst {
+  0%, 24% { transform: translate(-50%, -50%) scale(0) rotate(-40deg); }
+  27% { transform: translate(-50%, -50%) scale(1.2) rotate(6deg); }
+  31% { transform: translate(-50%, -50%) scale(0.96) rotate(0); }
+  34%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0); }
+}
+@keyframes mc-burst-spin { from { transform: rotate(0); } to { transform: rotate(-30deg); } }
+@keyframes mc-panel {
+  0%, 3% { transform: skewY(-4deg) translateX(110%); }
+  12% { transform: skewY(-4deg) translateX(-2%); }
+  15%, 86% { transform: skewY(-4deg) translateX(0); }
+  96%, 100% { transform: skewY(-4deg) translateX(-115%); }
+}
+@keyframes mc-name {
+  0%, 8% { transform: translateX(60vw) skewX(-12deg); opacity: 0; }
+  16% { transform: translateX(-1vw) skewX(-12deg); opacity: 1; }
+  100% { transform: translateX(-3vw) skewX(-12deg); opacity: 1; }
+}
+@keyframes mc-tape-in { 0%, 30% { transform: rotate(-3deg) translateX(-110%); } 38%, 100% { transform: rotate(-3deg) translateX(0); } }
+@keyframes mc-tape { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes mc-stamp {
+  0% { opacity: 0; transform: scale(3.2) rotate(-14deg); }
+  55% { opacity: 1; transform: scale(0.9) rotate(-6deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-6deg); }
+}
+@keyframes mc-banner {
+  0% { opacity: 0; transform: translate(-50%, 0) translateX(40vw) skewX(-10deg); }
+  100% { opacity: 1; transform: translate(-50%, 0) skewX(0); }
+}
+
+@media (max-width: 620px) {
+  .critical-roll-overlay.nat20.effect-main-character { --mc-ey: calc(50% - 82.5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-character-scene { display: none; }
+  .critical-roll-overlay.nat20.effect-main-character { background: #6d0612f0; }
+}

@@ -1,0 +1,160 @@
+/* Legend Forged — timeline is 4.4s: strikes at 0.9s, 1.5s, 2.1s (20.45%, 34.1%, 47.7%), quench at 2.4s (54.5%). */
+.critical-roll-overlay.nat20.effect-legend-forged {
+  --critical-primary: #ffcf6b;
+  --critical-secondary: #ff8a2e;
+  --critical-rgb: 255, 170, 70;
+  --lf-ey: calc(50% - clamp(150px, 21vh, 205px) / 2);
+  background: transparent;
+}
+.critical-roll-overlay.effect-legend-forged :is(.critical-rings, .critical-particles, .critical-scan, .critical-screen-flash, .critical-emblem-frame) { display: none; }
+.critical-roll-overlay.effect-legend-forged .critical-emblem::before,
+.critical-roll-overlay.effect-legend-forged .critical-emblem::after { display: none; }
+.critical-roll-overlay.effect-legend-forged .critical-emblem { animation: lf-emblem 4.4s both; }
+.critical-roll-overlay.effect-legend-forged .critical-emblem strong {
+  background: linear-gradient(180deg, #fff6d6 0%, #ffcf6b 40%, #c9861c 75%, #7a4a0c 100%);
+  -webkit-background-clip: text; background-clip: text;
+  animation: lf-heat 4.4s both;
+}
+.critical-roll-overlay.effect-legend-forged .critical-banner { animation: sf-banner 0.7s 2.7s cubic-bezier(0.16, 0.8, 0.2, 1) both; }
+.critical-roll-overlay.effect-legend-forged .critical-vignette { box-shadow: inset 0 0 180px 60px rgba(0, 0, 0, 0.7); animation: none; }
+
+.legend-forged-scene { position: absolute; inset: 0; z-index: -1; overflow: hidden; animation: lf-scene 4.4s both; }
+.legend-forged-scene * { position: absolute; }
+.lf-bg { inset: 0; background: radial-gradient(ellipse at 50% 110%, #3a1606 0%, #150803 45%, #060302 80%); }
+.lf-forge-glow {
+  left: 50%; bottom: -30vh; width: 140vw; height: 70vh; transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 120, 30, 0.55), rgba(255, 80, 10, 0.18) 45%, transparent 70%);
+  animation: lf-flicker 0.9s ease-in-out infinite alternate;
+}
+.lf-embers i {
+  left: var(--x); bottom: -2vh; width: 0.6vmin; height: 0.6vmin; border-radius: 50%;
+  background: #ffc46b; box-shadow: 0 0 1vmin #ff8a2e;
+  opacity: 0; animation: lf-ember 3s var(--d) ease-out infinite;
+}
+.lf-shake { inset: 0; animation: lf-shake 4.4s both; }
+
+/* The hammer pivots on its handle end, down and right of the numeral; at -53deg its head lands on the 20's crown. */
+.lf-hammer {
+  left: calc(50% + 26vmin); top: calc(var(--lf-ey) - 31vmin); width: 10vmin; height: 40vmin;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 1vmin 1.5vmin rgba(0, 0, 0, 0.7));
+  animation: lf-swing 4.4s both;
+}
+.lf-hammer svg { inset: 0; width: 100%; height: 100%; }
+.lf-handle { fill: #5a3517; stroke: #2a1608; stroke-width: 3; }
+.lf-head { fill: #3c3f47; stroke: #16181c; stroke-width: 3; }
+.lf-face { fill: #9aa2ad; }
+.lf-band { fill: #b8832a; stroke: #5c3a08; stroke-width: 2; }
+
+.lf-strike { left: 50%; top: calc(var(--lf-ey) - 9vmin); width: 0; height: 0; }
+.lf-ring {
+  left: 0; top: 0; width: 30vmin; height: 12vmin; border-radius: 50%;
+  border: 3px solid #ffd27a; box-shadow: 0 0 2vmin #ff9a2e, inset 0 0 2vmin #ff9a2e;
+  opacity: 0; transform: translate(-50%, -50%) scale(0.2);
+  animation: lf-ring 0.6s var(--at) cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+.lf-sparks i {
+  left: -1.5px; top: 0; width: 3px; height: 2.4vmin; border-radius: 2px;
+  background: linear-gradient(#fffbe6, #ffb347 55%, transparent);
+  transform-origin: 50% 0; opacity: 0;
+  animation: lf-spark 0.75s var(--at) cubic-bezier(0.1, 0.8, 0.3, 1) both;
+}
+
+.lf-steam { left: 50%; top: var(--lf-ey); width: 0; height: 0; }
+.lf-steam i {
+  left: 0; top: 0; width: var(--s); height: var(--s); border-radius: 50%;
+  background: radial-gradient(circle, rgba(240, 236, 230, 0.75), rgba(240, 236, 230, 0) 68%);
+  filter: blur(4px); opacity: 0; transform: translate(-50%, -50%) scale(0.3);
+  animation: lf-steam 1.5s var(--d) ease-out both;
+}
+
+.lf-runes {
+  left: 50%; top: var(--lf-ey); width: min(62vmin, 540px); height: min(62vmin, 540px); overflow: visible;
+  transform: translate(-50%, -50%) scale(0.85); opacity: 0;
+  filter: drop-shadow(0 0 6px #ffb347) drop-shadow(0 0 18px #ff8a2e);
+  animation: lf-runes 4.4s both;
+}
+.lf-runes circle, .lf-runes path { fill: none; stroke: #ffd27a; stroke-width: 1.2; stroke-linecap: round; }
+.lf-runes circle:nth-of-type(2) { stroke-width: 0.6; stroke-dasharray: 3 5; }
+
+@keyframes lf-scene { 0% { opacity: 0; } 5%, 91% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes lf-flicker { from { opacity: 0.8; } to { opacity: 1; } }
+@keyframes lf-ember {
+  0% { opacity: 0; transform: translate(0, 0); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--drift), -70vh); }
+}
+@keyframes lf-shake {
+  0%, 20.3%, 24%, 34%, 37.5%, 47.6%, 51%, 100% { transform: none; }
+  21% { transform: translate(-0.8vmin, 1.1vmin); }
+  22.4% { transform: translate(0.5vmin, -0.4vmin); }
+  34.8% { transform: translate(0.7vmin, 1vmin); }
+  36.1% { transform: translate(-0.4vmin, -0.4vmin); }
+  48.4% { transform: translate(-1vmin, 1.4vmin); }
+  49.8% { transform: translate(0.6vmin, -0.5vmin); }
+}
+@keyframes lf-swing {
+  0% { opacity: 0; transform: rotate(14deg); }
+  8% { opacity: 1; transform: rotate(-2deg); }
+  16% { transform: rotate(6deg); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.6); }
+  20.45% { transform: rotate(-53deg); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  23% { transform: rotate(-45deg); }
+  29.5% { transform: rotate(4deg); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.6); }
+  34.1% { transform: rotate(-53deg); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  36.6% { transform: rotate(-45deg); }
+  43% { transform: rotate(8deg); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.6); }
+  47.7% { transform: rotate(-53deg); animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1); }
+  50.5% { transform: rotate(-43deg); opacity: 1; }
+  58%, 100% { transform: rotate(22deg); opacity: 0; }
+}
+@keyframes lf-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  8% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+}
+@keyframes lf-spark {
+  0% { opacity: 0; transform: rotate(var(--angle)) translateY(0) scaleY(1.8); }
+  6% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateY(calc(var(--reach) * -1)) scaleY(0.4); }
+}
+@keyframes lf-steam {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  20% { opacity: 0.85; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.7); }
+}
+@keyframes lf-runes {
+  0%, 57% { opacity: 0; transform: translate(-50%, -50%) scale(0.8) rotate(-20deg); }
+  66% { opacity: 1; transform: translate(-50%, -50%) scale(1.02) rotate(0); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(14deg); }
+}
+@keyframes lf-emblem {
+  0% { opacity: 0; transform: scale(0.9); }
+  5%, 20.3% { opacity: 1; transform: none; }
+  21% { transform: translateY(1vmin) scale(1.04, 0.95); }
+  24%, 34% { transform: none; }
+  34.8% { transform: translateY(1vmin) scale(1.04, 0.95); }
+  37.5%, 47.6% { transform: none; }
+  48.4% { transform: translateY(1.2vmin) scale(1.05, 0.94); }
+  51%, 100% { opacity: 1; transform: none; }
+}
+/* White-hot, flaring at each blow, then quenched through orange to gold. */
+@keyframes lf-heat {
+  0%, 18% { filter: brightness(2.3) saturate(0.35) drop-shadow(0 0 22px #ff9a2e); }
+  20.45% { filter: brightness(3.2) saturate(0.2) drop-shadow(0 0 40px #ffd27a); }
+  25%, 32% { filter: brightness(2.2) saturate(0.4) drop-shadow(0 0 22px #ff9a2e); }
+  34.1% { filter: brightness(3.2) saturate(0.2) drop-shadow(0 0 40px #ffd27a); }
+  39%, 45.5% { filter: brightness(2.1) saturate(0.45) drop-shadow(0 0 22px #ff9a2e); }
+  47.7% { filter: brightness(3.4) saturate(0.2) drop-shadow(0 0 48px #ffd27a); }
+  54.5% { filter: brightness(2) saturate(0.5) drop-shadow(0 0 22px #ff9a2e); }
+  61% { filter: brightness(1.25) saturate(1.5) hue-rotate(-18deg) drop-shadow(0 0 16px #ff5a1e); }
+  74%, 100% { filter: brightness(1.05) saturate(1.1) hue-rotate(0) drop-shadow(0 0 14px rgba(255, 190, 80, 0.75)); }
+}
+
+@media (max-width: 620px) {
+  .critical-roll-overlay.nat20.effect-legend-forged { --lf-ey: calc(50% - 82.5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .legend-forged-scene { display: none; }
+  .critical-roll-overlay.effect-legend-forged { background: #0a0503f0; }
+  .critical-roll-overlay.effect-legend-forged .critical-emblem strong { animation: none; }
+}

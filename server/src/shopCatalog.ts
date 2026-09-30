@@ -15,7 +15,10 @@ export type CriticalEffectStyle =
   | "debris"
   | "severed-fate"
   | "mimic"
-  | "abyssal-gaze";
+  | "abyssal-gaze"
+  | "main-character"
+  | "jackpot"
+  | "legend-forged";
 
 export type TurnStartEffectStyle =
   | "none"
@@ -230,6 +233,36 @@ export const COSMETICS = [
     name: "Rose Burst",
     description: "A dramatic crimson-pink bloom of petals celebrates the perfect roll.",
     price: 50,
+    rarity: "legendary",
+  },
+  {
+    id: "crit20-main-character",
+    type: "nat20-effect",
+    slot: "nat20",
+    effect: "main-character",
+    name: "Main Character",
+    description: "An anime cut-in: speed lines, your name in giant type, and a 20 stamped down like a finishing move.",
+    price: 150,
+    rarity: "legendary",
+  },
+  {
+    id: "crit20-jackpot",
+    type: "nat20-effect",
+    slot: "nat20",
+    effect: "jackpot",
+    name: "Jackpot",
+    description: "A gold slot machine spins — 20, 20… 20 — then the neon lights up and the coins pour out.",
+    price: 150,
+    rarity: "legendary",
+  },
+  {
+    id: "crit20-legend-forged",
+    type: "nat20-effect",
+    slot: "nat20",
+    effect: "legend-forged",
+    name: "Legend Forged",
+    description: "Your white-hot 20 is hammered three times on the anvil, quenched in steam, and cools to gold.",
+    price: 150,
     rarity: "legendary",
   },
 

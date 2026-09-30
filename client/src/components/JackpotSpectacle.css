@@ -1,0 +1,135 @@
+/* Jackpot — timeline is 4.4s: reels start at 0.25s and stop at 1.1s, 1.55s and 2.3s (52.3%). */
+.critical-roll-overlay.nat20.effect-jackpot {
+  --critical-primary: #ffd35a;
+  --critical-secondary: #ff5ec8;
+  --critical-rgb: 255, 211, 90;
+  --jp-ey: calc(50% - clamp(150px, 21vh, 205px) / 2);
+  --jp-mh: min(32vmin, 270px);
+  --jp-cell: calc(var(--jp-mh) - 7vmin);
+  background: transparent;
+}
+.critical-roll-overlay.effect-jackpot :is(.critical-rings, .critical-particles, .critical-scan, .critical-screen-flash, .critical-vignette) { display: none; }
+/* The reels are the result here; keep the numeral's box so the banner doesn't move. */
+.critical-roll-overlay.effect-jackpot .critical-emblem { visibility: hidden; }
+.critical-roll-overlay.effect-jackpot .critical-banner { animation: sf-banner 0.6s 2.5s cubic-bezier(0.16, 0.8, 0.2, 1) both; }
+.critical-roll-overlay.effect-jackpot .critical-banner h2 {
+  background: linear-gradient(180deg, #fff6cf, #ffd35a 50%, #c77d12);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+.jackpot-scene { position: absolute; inset: 0; z-index: -1; overflow: hidden; animation: jp-scene 4.4s both; }
+.jackpot-scene * { position: absolute; }
+.jp-bg {
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% var(--jp-ey), rgba(255, 190, 70, 0.28), transparent 45%),
+    radial-gradient(ellipse at 50% 40%, #2b0b3d 0%, #14051f 50%, #07020c 100%);
+}
+.jp-spot { bottom: -10vh; width: 40vmax; height: 130vh; background: linear-gradient(0deg, rgba(255, 94, 200, 0.28), transparent 85%); clip-path: polygon(45% 100%, 55% 100%, 100% 0, 0 0); transform-origin: 50% 100%; }
+.jp-spot.left { left: 5%; animation: jp-sweep-left 2.2s ease-in-out infinite alternate; }
+.jp-spot.right { right: 5%; background: linear-gradient(0deg, rgba(255, 211, 90, 0.26), transparent 85%); animation: jp-sweep-right 2.6s ease-in-out infinite alternate; }
+
+.jp-neon {
+  left: 50%; top: calc(var(--jp-ey) - var(--jp-mh) / 2 - 3vmin); transform: translate(-50%, -100%) rotate(-3deg);
+  font: italic 900 clamp(2.4rem, 9vmin, 5.5rem) / 1 "Arial Black", "Segoe UI Black", Impact, sans-serif; letter-spacing: 0.06em;
+  color: #fff4fb; white-space: nowrap;
+  text-shadow: 0 0 4px #fff, 0 0 12px #ff5ec8, 0 0 28px #ff5ec8, 0 0 60px #ff2ea8;
+  opacity: 0.08; animation: jp-neon 4.4s both;
+}
+
+/* The cabinet: gold frame, bulbs on the perimeter, three reels behind glass. */
+.jp-machine {
+  left: 50%; top: var(--jp-ey); width: min(88vw, 720px); height: var(--jp-mh);
+  transform: translate(-50%, -50%) scale(0.6); opacity: 0;
+  border-radius: 3vmin; padding: 3.5vmin 3vmin;
+  background: linear-gradient(180deg, #fff0b0, #e0a93a 22%, #8c5a12 60%, #e6b54a 100%);
+  box-shadow: 0 2vmin 5vmin rgba(0, 0, 0, 0.6), inset 0 0 0 0.6vmin #5c3a08;
+  animation: jp-machine 4.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.jp-bulbs { inset: 1.2vmin; }
+.jp-bulbs i {
+  left: var(--x); top: var(--y); width: 1.3vmin; height: 1.3vmin; border-radius: 50%; transform: translate(-50%, -50%);
+  background: #fff4c4; box-shadow: 0 0 1vmin #ffd35a, 0 0 2vmin #ffb020;
+  animation: jp-bulb 0.6s calc(var(--i) * -0.06s) steps(1, end) infinite;
+}
+.jp-machine .jp-bulbs { animation: jp-rainbow 0.6s 2.3s linear infinite; }
+.jp-reels { position: relative; display: flex; gap: 2vmin; height: 100%; }
+.jp-window {
+  position: relative; flex: 1 1 0; height: var(--jp-cell); overflow: hidden; border-radius: 1.2vmin;
+  background: linear-gradient(180deg, #d9d2c2, #fffdf6 30%, #fffdf6 70%, #d9d2c2);
+  box-shadow: inset 0 0 0 0.5vmin #3b2405;
+  animation: jp-land 0.35s calc(0.25s + var(--stop)) ease-out both;
+}
+.jp-strip {
+  position: relative; display: flex; flex-direction: column;
+  animation: jp-spin var(--stop) 0.25s cubic-bezier(0.3, 0, 0.12, 1) both, jp-blur var(--stop) 0.25s linear both;
+}
+.jp-strip b {
+  position: relative; flex: none; height: var(--jp-cell); display: grid; place-items: center;
+  font: 700 calc(var(--jp-cell) * 0.62) / 1 "Cinzel", Georgia, serif; color: #6d1a2a;
+}
+.jp-strip b.win {
+  color: transparent;
+  background: linear-gradient(180deg, #fff4c8 10%, #e6a52a 55%, #8b5a14 90%);
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 0.6vmin rgba(255, 180, 40, 0.9));
+}
+.jp-glass { inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.35)); }
+.jp-payline {
+  left: 2vmin; right: 2vmin; top: calc(3.5vmin + var(--jp-cell) / 2 - 2px); height: 4px; border-radius: 2px;
+  background: #ff2e5b; box-shadow: 0 0 1.2vmin #ff2e5b;
+  opacity: 0; animation: jp-payline 4.4s both;
+}
+
+.jp-coins { left: 50%; top: var(--jp-ey); width: 0; height: 0; }
+.jp-coins i {
+  left: 0; top: 0; opacity: 0;
+  animation: jp-coin 1.9s var(--d) both;
+}
+.jp-coins b {
+  left: -1.8vmin; top: -1.8vmin; width: 3.6vmin; height: 3.6vmin; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6c8, #ffd35a 40%, #b47414 75%);
+  box-shadow: inset 0 0 0 0.35vmin #9a6010, 0 0 1vmin rgba(255, 200, 60, 0.6);
+  animation: jp-flip var(--spin) linear infinite;
+}
+
+@keyframes jp-scene { 0% { opacity: 0; } 4%, 91% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes jp-sweep-left { from { transform: rotate(-24deg); } to { transform: rotate(18deg); } }
+@keyframes jp-sweep-right { from { transform: rotate(22deg); } to { transform: rotate(-16deg); } }
+@keyframes jp-machine {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  6% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+  9%, 52% { transform: translate(-50%, -50%) scale(1); }
+  54% { transform: translate(-50%, -50%) scale(1.06); box-shadow: 0 0 6vmin rgba(255, 211, 90, 0.9), inset 0 0 0 0.6vmin #5c3a08; }
+  60%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 3vmin rgba(255, 211, 90, 0.55), inset 0 0 0 0.6vmin #5c3a08; }
+}
+@keyframes jp-bulb { 0% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes jp-rainbow { from { filter: hue-rotate(0); } to { filter: hue-rotate(360deg); } }
+@keyframes jp-spin { from { transform: translateY(0); } to { transform: translateY(calc(var(--jp-cell) * -1 * var(--count))); } }
+@keyframes jp-blur { 0% { filter: blur(0); } 12% { filter: blur(3px); } 80% { filter: blur(1.5px); } 100% { filter: blur(0); } }
+@keyframes jp-land {
+  0% { transform: translateY(0); box-shadow: inset 0 0 0 0.5vmin #3b2405; }
+  35% { transform: translateY(0.8vmin); box-shadow: inset 0 0 0 0.5vmin #3b2405, 0 0 3vmin #ffd35a; }
+  100% { transform: translateY(0); box-shadow: inset 0 0 0 0.5vmin #3b2405, 0 0 1.2vmin rgba(255, 211, 90, 0.6); }
+}
+@keyframes jp-payline { 0%, 52% { opacity: 0; } 53%, 57% { opacity: 1; } 55% { opacity: 0.3; } 100% { opacity: 1; } }
+@keyframes jp-neon {
+  0%, 52% { opacity: 0.08; }
+  53% { opacity: 1; } 54% { opacity: 0.2; } 55.5% { opacity: 1; } 56.5% { opacity: 0.45; } 58%, 100% { opacity: 1; }
+}
+@keyframes jp-coin {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1); }
+  4% { opacity: 1; }
+  40% { transform: translate(calc(var(--dx) * 0.45), calc(var(--h) * -1)) scale(1); animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6); }
+  100% { opacity: 1; transform: translate(var(--dx), 80vh) scale(1.1); }
+}
+@keyframes jp-flip { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.12); } }
+
+@media (max-width: 620px) {
+  .critical-roll-overlay.nat20.effect-jackpot { --jp-ey: calc(50% - 82.5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jackpot-scene { display: none; }
+  .critical-roll-overlay.effect-jackpot { background: #14051ff0; }
+  .critical-roll-overlay.effect-jackpot .critical-emblem { visibility: visible; }
+}

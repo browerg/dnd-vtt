@@ -170,3 +170,62 @@ export const playAbyssalGazeSound = () => play(0.22, ({ t0, tone, noise }) => {
   noise(t0 + 3.7, 0.25, 0.25, "lowpass", 600, 200, 2);
   return 4.4;
 });
+
+/** A whoosh as the panel slams in, a punchy hit on the stamp at 1.0s, then a stabbing synth fanfare. */
+export const playMainCharacterSound = () => play(0.2, ({ t0, tone, noise }) => {
+  noise(t0 + 0.05, 0.4, 0.7, "bandpass", 600, 5000, 0.8);
+  const hit = t0 + 1.0;
+  tone("sine", 160, 42, hit, hit + 0.4, 1, 0.004);
+  noise(hit, 0.12, 0.8, "highpass", 3000, 1500);
+  const chord = [523.25, 659.25, 783.99, 987.77];
+  [0, 0.22, 0.44].forEach((offset, stab) => {
+    for (const note of chord) tone("sawtooth", note * (stab === 2 ? 2 : 1), note * (stab === 2 ? 2 : 1), hit + offset, hit + offset + 0.16, 0.05, 0.005);
+  });
+  [1046.5, 1318.51, 1567.98, 2093].forEach((note, i) => tone("square", note, note, hit + 0.7 + i * 0.07, hit + 0.7 + i * 0.07 + 0.12, 0.035, 0.005));
+  for (const note of chord) tone("sawtooth", note, note * 1.005, hit + 1.05, hit + 2.4, 0.04, 0.05);
+  return 3.6;
+});
+
+/** Reels ticking and slowing, a clunk at each stop (1.1s, 1.55s, 2.3s), then bells and coins. */
+export const playJackpotSound = () => play(0.2, ({ t0, tone, noise }) => {
+  const stops = [1.1, 1.55, 2.3];
+  let at = 0.25;
+  let gap = 0.05;
+  while (at < 2.28) {
+    tone("square", 1800, 1700, t0 + at, t0 + at + 0.02, 0.05, 0.002);
+    at += gap;
+    if (at > 1.6) gap = Math.min(0.16, gap * 1.08);
+  }
+  stops.forEach((stop, i) => {
+    tone("sine", 220 - i * 20, 90, t0 + stop, t0 + stop + 0.18, 0.7, 0.004);
+    noise(t0 + stop, 0.06, 0.4, "lowpass", 1500, 600);
+  });
+  const win = t0 + 2.3;
+  [1046.5, 1318.51, 1567.98, 2093, 1567.98, 2093, 2637].forEach((note, i) => {
+    tone("triangle", note, note, win + i * 0.09, win + i * 0.09 + 0.5, 0.12, 0.005);
+  });
+  for (let i = 0; i < 16; i += 1) {
+    const pitch = 2600 + ((i * 331) % 1800);
+    tone("sine", pitch, pitch * 0.98, win + 0.2 + i * 0.075, win + 0.2 + i * 0.075 + 0.14, 0.06, 0.002);
+  }
+  return 4.2;
+});
+
+/** Three anvil clangs (0.9s, 1.5s, 2.1s), the quench hiss at 2.4s, then a warm brass swell. */
+export const playLegendForgedSound = () => play(0.2, ({ t0, tone, noise }) => {
+  noise(t0, 1, 0.12, "lowpass", 300, 500, 0.7);
+  [0.9, 1.5, 2.1].forEach((strike, i) => {
+    const at = t0 + strike;
+    const lift = 1 + i * 0.04;
+    for (const [partial, peak, length] of [[1180, 0.3, 1.1], [2250, 0.16, 0.8], [3370, 0.1, 0.5], [5120, 0.05, 0.3]] as const) {
+      tone("sine", partial * lift, partial * lift * 0.995, at, at + length, peak, 0.002);
+    }
+    tone("sine", 120, 55, at, at + 0.25, 0.6, 0.003);
+    noise(at, 0.05, 0.6, "highpass", 4000, 2500);
+  });
+  noise(t0 + 2.4, 1.3, 0.55, "highpass", 6000, 2500, 0.6);
+  for (const note of [130.81, 196, 261.63, 329.63, 392]) {
+    tone("sawtooth", note, note, t0 + 2.55, t0 + 4.1, 0.045, 0.45);
+  }
+  return 4.2;
+});
