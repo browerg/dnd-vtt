@@ -145,7 +145,7 @@ export const COSMETICS = [
   { id: "border-first-flame", type: "token-border", slot: "tokenBorder", effect: "first-flame", name: "First Flame Border", description: "A thin molten-gold ring around your character tokens, leaving their artwork clear.", price: 1, rarity: "mythic" },
   { id: "chat-first-flame", type: "chat-flair", slot: "chatFlair", effect: "first-flame", name: "First Flame Name", description: "A quiet gold accent on your name in campaign chat.", price: 1, rarity: "mythic" },
   { id: "trail-first-flame", type: "dice-trail", effect: "first-flame", name: "First Flame Trail", description: "An ancient molten faultline: lifting obsidian plates, white-gold seams and rising tongues of fire.", price: 1, rarity: "mythic" },
-  { id: "crit20-first-flame", type: "nat20-effect", slot: "nat20", effect: "first-flame", name: "First Flame", description: "Cache-exclusive ancient gold flare.", price: 1, rarity: "mythic" },
+  { id: "crit20-first-flame", type: "nat20-effect", slot: "nat20", effect: "first-flame", name: "First Flame", description: "An obsidian seal breaks, a molten crown rises, and the First Flame awakens around your natural 20.", price: 1, rarity: "mythic" },
   {
     id: "trail-aura",
     type: "dice-trail",

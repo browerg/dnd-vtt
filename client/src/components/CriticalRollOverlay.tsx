@@ -245,6 +245,21 @@ export default function CriticalRollOverlay() {
       <SpecialCriticalSpectacle effect={active.effect} />
       {Spectacle && <Spectacle />}
       {active.effect === "first-flame" && <div className="flame-spectacle" aria-hidden="true">
+        {success && <div className="flame-awakening">
+          <svg className="flame-seal" viewBox="0 0 600 600">
+            <g className="flame-seal-half left"><path d="M300 55 90 170 70 400 300 540 280 420 315 350 280 260 320 180Z" /></g>
+            <g className="flame-seal-half right"><path d="M300 55 510 170 530 400 300 540 280 420 315 350 280 260 320 180Z" /></g>
+          </svg>
+          <svg className="flame-crown" viewBox="0 0 600 600">
+            <path className="flame-crown-body" d="m150 245-35-140 100 80 30-120 55 105 55-105 30 120 100-80-35 140-75-24-75 20-75-20Z" />
+            <path className="flame-crown-inlay" d="m158 211 62-7 26-68 54 63 54-63 26 68 62 7M225 221l-12-36M300 241v-42M375 221l12-36" />
+            <path className="flame-crown-jewel" d="m300 170 15 23-15 20-15-20Z" />
+          </svg>
+          <svg className="flame-script-ring" viewBox="0 0 600 600">
+            <circle cx="300" cy="300" r="256" />
+            {Array.from({ length: 12 }, (_, i) => <path key={i} transform={`rotate(${i*30} 300 300)`} d="M300 22v40m-9-27 18 14m-18 0 18-14" />)}
+          </svg>
+        </div>}
         <div className="flame-eclipse" />
         <div className="flame-shockwave" /><div className="flame-shockwave second" />
         <div className="flame-rays">{Array.from({ length: 24 }, (_, i) => <i key={i} style={{ "--angle": `${i * 15}deg`, "--delay": `${(i % 5) * 45}ms` } as CSSProperties} />)}</div>

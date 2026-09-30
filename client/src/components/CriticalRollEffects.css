@@ -344,3 +344,35 @@
   .critical-roll-overlay.effect-first-flame, .effect-first-flame * { animation: none !important; transition: none !important; }
   .effect-first-flame .flame-spectacle, .effect-first-flame .critical-screen-flash, .effect-first-flame .critical-particles { display: none; }
 }
+
+/* Relic Nat 20: sealed obsidian -> ignition -> coronation. Nat 1 stays intact. */
+.nat20.effect-first-flame { background: #09060ef2; }
+.flame-awakening { position: absolute; left: 50%; top: 40%; width: min(88vw,76vh,760px); aspect-ratio: 1; transform: translate(-50%,-50%); }
+.flame-awakening svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.flame-seal-half { fill: #110c17; stroke: #ffbf59; stroke-width: 2; transform-origin: center; animation: relic-seal-left 3.8s cubic-bezier(.16,1,.3,1) both; }
+.flame-seal-half.right { animation-name: relic-seal-right; }
+.flame-crown { filter: drop-shadow(0 0 14px #ff9d3566); animation: relic-coronation 3.8s cubic-bezier(.16,1,.3,1) both; }
+.flame-crown-body { fill: #25131a; stroke: #ffdc8a; stroke-width: 3; stroke-linejoin: bevel; }
+.flame-crown-inlay { fill: none; stroke: #ff962f; stroke-width: 2; }
+.flame-crown-jewel { fill: #fff1b8; stroke: #ffb13d; stroke-width: 2; }
+.flame-script-ring { fill: none; stroke: #ffc971; stroke-width: 1.2; transform-origin: center; animation: relic-script 3.8s ease-out both; }
+.flame-script-ring circle { stroke-dasharray: 80 12 4 12; opacity: .6; }
+.nat20.effect-first-flame .flame-eclipse { width: min(44vw,43vh); top: 40%; animation-delay: .18s; }
+.nat20.effect-first-flame .flame-rays, .nat20.effect-first-flame .flame-shards, .nat20.effect-first-flame .flame-shockwave { top: 40%; }
+.nat20.effect-first-flame .flame-shockwave { animation-delay: .75s; }
+.nat20.effect-first-flame .flame-shockwave.second { animation-delay: .9s; }
+.nat20.effect-first-flame .flame-rays i { animation-delay: calc(.7s + var(--delay)); opacity: .65; }
+.nat20.effect-first-flame .flame-shards i { animation-delay: calc(.75s + var(--delay)); }
+.nat20.effect-first-flame .critical-emblem { animation: relic-twenty 3.8s cubic-bezier(.16,1,.3,1) both; }
+.nat20.effect-first-flame .critical-emblem-frame { border: 0; background: none; box-shadow: none; }
+.nat20.effect-first-flame .critical-banner { animation-delay: .35s; animation-duration: 3.45s; }
+.nat20.effect-first-flame .critical-screen-flash { animation-delay: .7s; }
+@keyframes relic-seal-left { 0%,12% { transform: translateX(0); opacity: 1; } 45% { opacity: .9; } 75%,100% { transform: translate(-220px,55px) rotate(-28deg); opacity: 0; } }
+@keyframes relic-seal-right { 0%,12% { transform: translateX(0); opacity: 1; } 45% { opacity: .9; } 75%,100% { transform: translate(220px,55px) rotate(28deg); opacity: 0; } }
+@keyframes relic-coronation { 0%,16% { transform: translateY(100px) scale(.7); opacity: 0; } 40%,82% { transform: translateY(-10px) scale(1); opacity: 1; } 100% { transform: translateY(-30px) scale(1.04); opacity: 0; } }
+@keyframes relic-script { 0%,12% { transform: rotate(-40deg) scale(.7); opacity: 0; } 40%,80% { opacity: .85; } 100% { transform: rotate(30deg) scale(1.06); opacity: 0; } }
+@keyframes relic-twenty { 0%,15% { opacity: 0; transform: scale(.55); } 34%,83% { opacity: 1; transform: scale(1.08); } 100% { opacity: 0; transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) {
+  .flame-awakening { display: none; }
+  .nat20.effect-first-flame .critical-emblem, .nat20.effect-first-flame .critical-banner { animation: none !important; }
+}
