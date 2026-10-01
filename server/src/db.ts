@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { BOARD_SHOP_SCHEMA } from "./boardShopStore.js";
 
 export const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data");
 export const uploadsDir = path.join(dataDir, "uploads");
@@ -387,6 +388,10 @@ for (const ddl of [
   "ALTER TABLE maps ADD COLUMN music_path TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE maps ADD COLUMN youtube_audio INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE maps ADD COLUMN ruler_calibration TEXT DEFAULT NULL",
+  // A board's purpose: 'battle' (the default) or 'shop'.
+  "ALTER TABLE maps ADD COLUMN board_type TEXT NOT NULL DEFAULT 'battle'",
+  // A shopkeeper packed into the tray: dialogue + wares as JSON ('' = none).
+  "ALTER TABLE prepared_tokens ADD COLUMN shop_kit TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE map_objects ADD COLUMN interaction_label TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE map_objects ADD COLUMN trigger_message TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE map_objects ADD COLUMN trigger_state TEXT NOT NULL DEFAULT ''",
@@ -423,6 +428,9 @@ for (const ddl of [
     if (!String(e?.message).includes("duplicate column")) throw e;
   }
 }
+
+// Shop boards: shopkeepers, their wares and DM-approved purchase orders.
+db.exec(BOARD_SHOP_SCHEMA);
 
 // Convert the previous all-players NPC toggle into explicit assignments once.
 db.exec(`

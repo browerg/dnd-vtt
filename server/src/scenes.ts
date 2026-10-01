@@ -3,6 +3,7 @@ import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
+import { boardShopStore } from "./boardShop.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
@@ -101,6 +102,7 @@ type SceneEncounterMember = {
   imagePath: string;
   imageScale: number;
   conditions: string;
+  shopKit: string;
   offsetX: number;
   offsetY: number;
 };
@@ -108,7 +110,7 @@ type SceneEncounterMember = {
 function sceneEncounterMembers(groupId: number): SceneEncounterMember[] {
   return db.prepare(`
     SELECT p.id AS prepared_token_id, p.monster_id, p.name, p.color, p.size, p.hp, p.max_hp,
-           p.image_path, p.image_scale, p.conditions, i.offset_x, i.offset_y
+           p.image_path, p.image_scale, p.conditions, p.shop_kit, i.offset_x, i.offset_y
     FROM prepared_encounter_group_items i
     JOIN prepared_tokens p ON p.id = i.prepared_token_id
     WHERE i.group_id = ?
@@ -124,6 +126,7 @@ function sceneEncounterMembers(groupId: number): SceneEncounterMember[] {
     imagePath: String(row.image_path ?? ""),
     imageScale: Number(row.image_scale ?? 1),
     conditions: String(row.conditions ?? "[]"),
+    shopKit: String(row.shop_kit ?? ""),
     offsetX: Number(row.offset_x ?? 0),
     offsetY: Number(row.offset_y ?? 0),
   })) as SceneEncounterMember[];
@@ -409,6 +412,7 @@ const sceneEncounter = db.prepare(`
       VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
+    const newShopkeepers: { tokenId: number; shopKit: string }[] = [];
     db.exec("BEGIN");
     try {
       for (const member of members) {
@@ -430,6 +434,7 @@ const sceneEncounter = db.prepare(`
           );
           tokenId = Number(inserted.lastInsertRowid);
           insertDeployment.run(scene.id, member.preparedTokenId, tokenId);
+          if (member.shopKit) newShopkeepers.push({ tokenId, shopKit: member.shopKit });
         }
 
         const row = db.prepare("SELECT id FROM tokens WHERE id = ?").get(tokenId);
@@ -440,6 +445,8 @@ const sceneEncounter = db.prepare(`
       db.exec("ROLLBACK");
       throw error;
     }
+    // Outside the transaction: installKit runs its own.
+    for (const keeper of newShopkeepers) boardShopStore.installKit(keeper.tokenId, keeper.shopKit);
   }
 
   const io = getIo();

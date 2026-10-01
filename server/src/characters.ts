@@ -526,7 +526,7 @@ charactersRouter.post(
   }
 );
 
-function broadcastCharacter(campaignId: number, charId: number, updatedBy: number) {
+export function broadcastCharacter(campaignId: number, charId: number, updatedBy: number) {
   const fresh = getCharacter(charId, campaignId);
   if (!fresh) return;
   getIo().to(`campaign:${campaignId}`).emit("character:update", {

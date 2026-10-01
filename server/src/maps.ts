@@ -96,6 +96,7 @@ export interface TokenPayload {
   imageUrl: string;
   imageScale: number;
   conditions: string[];
+  isShopkeeper: boolean;
 }
 
 // Character tokens read HP from the sheet; monster/custom tokens carry their own.
@@ -110,6 +111,7 @@ const TOKEN_COLS = `
   COALESCE(json_extract(c.data, '$.auraMax'), t.aura_max) AS aura_max,
   COALESCE(json_extract(c.data, '$.auraColor'), t.aura_color, t.color, '#78e1ff') AS aura_color,
   c.portrait_path AS portrait_path,
+  EXISTS (SELECT 1 FROM shopkeepers s WHERE s.token_id = t.id) AS is_shopkeeper,
   COALESCE(json_extract(c.data, '$.conditions'), t.conditions) AS conditions`;
 const TOKEN_SELECT = `SELECT ${TOKEN_COLS}
   FROM tokens t LEFT JOIN characters c ON c.id = t.character_id`;
@@ -135,6 +137,7 @@ const toToken = (r: any): TokenPayload => ({
   imageUrl: r.image_path ? `/uploads/${path.basename(r.image_path)}` : "",
   imageScale: Number.isFinite(r.image_scale) ? r.image_scale : 1,
   conditions: parseConditions(r.conditions),
+  isShopkeeper: !!r.is_shopkeeper,
 });
 
 function parseConditions(raw: unknown): string[] {
@@ -186,6 +189,7 @@ const mapRow = (r: any) => ({
   gridSize: r.grid_size,
   rulerCalibration: readRulerCalibration(r.ruler_calibration),
   gridOn: !!r.grid_on,
+  boardType: r.board_type === "shop" ? "shop" : "battle",
   active: !!r.active,
   fogOn: !!r.fog_on,
   fogCells: JSON.parse(r.fog_data ?? "[]") as string[],
@@ -269,9 +273,10 @@ mapsRouter.put("/:id/maps/:mapId", (req, res) => {
   const youtubeAudio =
     typeof b.youtubeAudio === "boolean" ? (b.youtubeAudio ? 1 : 0) : map.youtube_audio;
   const name = typeof b.name === "string" && b.name.trim() ? b.name.trim() : map.name;
+  const boardType = b.boardType === "shop" || b.boardType === "battle" ? b.boardType : map.board_type;
   db.prepare(
-    "UPDATE maps SET name = ?, grid_size = ?, grid_on = ?, youtube_audio = ?, ruler_calibration = ? WHERE id = ?"
-  ).run(name, gridSize, gridOn, youtubeAudio, calibration, map.id);
+    "UPDATE maps SET name = ?, grid_size = ?, grid_on = ?, youtube_audio = ?, ruler_calibration = ?, board_type = ? WHERE id = ?"
+  ).run(name, gridSize, gridOn, youtubeAudio, calibration, boardType, map.id);
   if (b.active === true) {
     db.prepare("UPDATE maps SET active = 0 WHERE campaign_id = ?").run(campaignId);
     db.prepare("UPDATE maps SET active = 1 WHERE id = ?").run(map.id);

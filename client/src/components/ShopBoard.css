@@ -1,0 +1,705 @@
+/* Shop boards: shopkeeper dialogue + wares, the player's order tray, the DM's
+   purchase-request panel and the shopkeeper editor. Gold-on-violet to match
+   the map-object modals. */
+
+.bshop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 115;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(3, 3, 7, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.bshop-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(560px, 100%);
+  max-height: min(88vh, 760px);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid rgba(231, 203, 117, 0.5);
+  border-radius: 18px;
+  background: linear-gradient(150deg, rgba(30, 25, 42, 0.99), rgba(11, 9, 16, 0.99));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.7);
+}
+
+.bshop-dialog.is-wares {
+  width: min(680px, 100%);
+}
+
+.bshop-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text, #fff);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bshop-dialog-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 28px;
+}
+
+.bshop-dialog-head h2 {
+  margin: 2px 0 0;
+  font-family: var(--font-display, serif);
+}
+
+.bshop-keeper-portrait {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border: 2px solid rgba(231, 203, 117, 0.65);
+  border-radius: 50%;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  box-shadow: 0 0 0 4px rgba(231, 203, 117, 0.12);
+}
+
+.bshop-keeper-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bshop-eyebrow {
+  color: #d6b85f;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.bshop-muted {
+  color: var(--muted, #9d95b5);
+}
+
+.bshop-conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 340px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.bshop-conversation > div {
+  display: contents;
+}
+
+.bshop-line {
+  max-width: 85%;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.bshop-line.is-npc {
+  align-self: flex-start;
+  border: 1px solid rgba(231, 203, 117, 0.28);
+  border-bottom-left-radius: 4px;
+  background: rgba(231, 203, 117, 0.08);
+}
+
+.bshop-line.is-player {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: rgba(150, 120, 230, 0.22);
+  color: #e9e2ff;
+}
+
+.bshop-topics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Things the player can say — classic RPG dialogue options. */
+.bshop-topics .bshop-reply {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid rgba(231, 203, 117, 0.45);
+  border-radius: 10px;
+  background: rgba(150, 120, 230, 0.16);
+  color: #f4efff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.bshop-topics .bshop-reply::before {
+  content: "›";
+  color: #f3d77e;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.bshop-topics .bshop-reply:hover,
+.bshop-topics .bshop-reply:focus-visible {
+  border-color: #f3d77e;
+  background: rgba(150, 120, 230, 0.3);
+  transform: translateX(3px);
+}
+
+.bshop-topics .bshop-reply:focus-visible {
+  outline: 2px solid #f3d77e;
+  outline-offset: 2px;
+}
+
+.bshop-wares-button {
+  flex-basis: 100%;
+}
+
+.bshop-buyer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.bshop-buyer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.bshop-buyer small {
+  color: var(--muted, #9d95b5);
+}
+
+.bshop-purse {
+  padding: 3px 10px;
+  border: 1px solid rgba(231, 203, 117, 0.45);
+  border-radius: 999px;
+  color: #f3d77e;
+}
+
+.bshop-notice {
+  padding: 8px 12px;
+  border: 1px solid rgba(99, 200, 130, 0.45);
+  border-radius: 10px;
+  background: rgba(99, 200, 130, 0.1);
+  color: #bdf0cb;
+}
+
+.bshop-wares {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bshop-ware {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid rgba(231, 203, 117, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bshop-ware.is-sold-out {
+  opacity: 0.55;
+}
+
+.bshop-ware > img,
+.bshop-ware-glyph,
+.bshop-item-edit-row > img {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.bshop-ware-glyph {
+  display: grid;
+  place-items: center;
+  color: #d6b85f;
+  font-size: 22px;
+}
+
+.bshop-ware-body {
+  min-width: 0;
+}
+
+.bshop-ware-body p {
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.bshop-ware-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+
+.bshop-price {
+  color: #f3d77e;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bshop-ware-buy {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.bshop-ware-buy input {
+  width: 56px;
+}
+
+.bshop-ware-buy button {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .bshop-dialog {
+    padding: 18px 14px;
+  }
+
+  .bshop-ware {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .bshop-ware > img,
+  .bshop-ware-glyph {
+    width: 48px;
+    height: 48px;
+  }
+
+  .bshop-ware-buy {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .bshop-buyer {
+    margin-left: 0;
+  }
+}
+
+/* ---- order tray (players) and request panel (DM) ---- */
+
+.bshop-tray,
+.bshop-requests {
+  position: fixed;
+  z-index: 95;
+  width: min(360px, calc(100vw - 32px));
+  border: 1px solid rgba(231, 203, 117, 0.45);
+  border-radius: 14px;
+  background: rgba(13, 12, 19, 0.96);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+
+.bshop-tray {
+  left: 16px;
+  bottom: 88px;
+  width: auto;
+  max-width: min(360px, calc(100vw - 32px));
+}
+
+.bshop-tray.is-open {
+  width: min(360px, calc(100vw - 32px));
+}
+
+.bshop-tray-toggle,
+.bshop-requests-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text, #fff);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bshop-tray-toggle {
+  width: 100%;
+  padding: 10px 14px;
+}
+
+.bshop-requests {
+  top: 78px;
+  left: 50%;
+  max-height: calc(100vh - 200px);
+  overflow: auto;
+  padding: 10px 12px 12px;
+  transform: translateX(-50%);
+}
+
+.bshop-requests.is-collapsed {
+  width: auto;
+  padding-bottom: 10px;
+}
+
+.bshop-requests header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bshop-requests-title {
+  padding: 2px 0;
+}
+
+.bshop-badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #cfa64f;
+  color: #221a08;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bshop-order-list {
+  display: grid;
+  gap: 6px;
+  max-height: 50vh;
+  overflow: auto;
+  margin: 8px 0 0;
+  padding: 0 10px 10px;
+  list-style: none;
+}
+
+.bshop-requests .bshop-order-list {
+  padding: 0;
+}
+
+.bshop-order {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bshop-order > div:first-child {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.bshop-order small {
+  color: var(--muted, #9d95b5);
+}
+
+.bshop-order.is-short small {
+  color: #ff9a9a;
+}
+
+.bshop-order-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.bshop-status {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #9d95b5);
+}
+
+.bshop-order.is-pending .bshop-status {
+  color: #f3d77e;
+}
+
+.bshop-order.is-approved .bshop-status {
+  color: #7fe0a0;
+}
+
+.bshop-order.is-denied .bshop-status {
+  color: #ff8a8a;
+}
+
+.bshop-toast {
+  position: fixed;
+  top: 132px;
+  left: 50%;
+  z-index: 130;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 12px 18px;
+  border: 1px solid rgba(231, 203, 117, 0.65);
+  border-radius: 12px;
+  background: rgba(14, 12, 21, 0.97);
+  color: #fff3c2;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.58);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+/* ---- shopkeeper editor (DM) ---- */
+
+.bshop-editor {
+  position: fixed;
+  top: 78px;
+  right: 18px;
+  z-index: 100;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100vh - 110px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid rgba(231, 203, 117, 0.42);
+  border-radius: 14px;
+  background: rgba(13, 12, 19, 0.97);
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.58);
+}
+
+.bshop-editor h3 {
+  margin: 0;
+}
+
+.bshop-editor label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted, #9d95b5);
+  font-size: 12px;
+}
+
+.bshop-editor textarea {
+  resize: vertical;
+}
+
+.bshop-warning {
+  padding: 8px 10px;
+  border: 1px solid rgba(240, 178, 91, 0.5);
+  border-radius: 10px;
+  background: rgba(240, 178, 91, 0.1);
+  color: #ffd79e;
+  font-size: 13px;
+}
+
+.bshop-fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(231, 203, 117, 0.28);
+  border-radius: 10px;
+}
+
+.bshop-fieldset legend {
+  padding: 0 6px;
+  color: #d6b85f;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bshop-topic-edit,
+.bshop-item-edit {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.bshop-topic-edit > button {
+  justify-self: start;
+}
+
+.bshop-item-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bshop-item-edit-row > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.bshop-item-edit-row > img,
+.bshop-item-edit-row > .bshop-ware-glyph {
+  width: 40px;
+  height: 40px;
+  flex: none;
+}
+
+.bshop-item-edit-row > label {
+  flex: 1;
+}
+
+.bshop-item-edit-row > label input {
+  width: 100%;
+}
+
+.bshop-file {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  flex: none !important;
+  padding: 4px 10px;
+  border: 1px solid rgba(231, 203, 117, 0.35);
+  border-radius: 8px;
+  color: var(--text, #fff) !important;
+  cursor: pointer;
+}
+
+.bshop-file input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.bshop-item-edit-row > .danger {
+  margin-left: auto;
+}
+
+/* Shopkeeper tokens wear a small coin badge so players know they can talk. */
+.token .token-bshop-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(34, 26, 8, 0.6);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe9a3, #cfa64f 60%, #8a6a22);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.token.is-shopkeeper.can-talk {
+  cursor: pointer;
+}
+
+.bshop-board-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border: 1px solid rgba(231, 203, 117, 0.5);
+  border-radius: 999px;
+  background: rgba(13, 12, 19, 0.88);
+  color: #f3d77e;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* The app has no global .danger button style; keep removals quiet but red. */
+.bshop-editor button.danger {
+  border: 1px solid rgba(224, 92, 92, 0.55);
+  background: transparent;
+  color: #ff9a9a;
+}
+
+.bshop-editor button.danger:hover:not(:disabled) {
+  background: rgba(224, 92, 92, 0.14);
+}
+
+.bshop-saved-note {
+  margin: 0;
+  color: #bdf0cb;
+  font-size: 12px;
+}
+
+/* ---- tray shopkeeper editor (a modal, so it reuses the dialog shell) ---- */
+
+.bshop-editor-shell label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted, #9d95b5);
+  font-size: 12px;
+}
+
+.bshop-editor-shell textarea {
+  resize: vertical;
+}
+
+.bshop-editor-shell header h2 {
+  margin: 2px 0 4px;
+  font-family: var(--font-display, serif);
+}
+
+.bshop-editor-shell header p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.bshop-editor-shell button.danger {
+  border: 1px solid rgba(224, 92, 92, 0.55);
+  background: transparent;
+  color: #ff9a9a;
+}
+
+.bshop-kit-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Tray cards for packed shopkeepers. */
+.prepared-token-card.is-shopkeeper {
+  border-color: rgba(231, 203, 117, 0.55);
+}
+
+.prepared-token-shop-tag {
+  color: #f3d77e;
+  font-weight: 600;
+}
+
+.prepared-token-shop-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(231, 203, 117, 0.3);
+  border-radius: 10px;
+}
+
+.prepared-token-header-actions {
+  display: flex;
+  gap: 6px;
+}

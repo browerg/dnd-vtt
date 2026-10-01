@@ -162,3 +162,30 @@ chatRouter.post("/:id/messages", (req, res) => {
   }
   res.json({ message });
 });
+
+/**
+ * A public out-of-character line posted on someone's behalf by the server —
+ * e.g. a shop purchase the DM just approved. Everyone in the room sees it.
+ */
+export function postServerNotice(campaignId: number, userId: number, body: string) {
+  const author = db.prepare("SELECT display_name FROM users WHERE id = ?").get(userId) as any;
+  if (!author) return;
+  const info = db
+    .prepare("INSERT INTO messages (campaign_id, user_id, channel, speaker, body) VALUES (?, ?, 'ooc', '', ?)")
+    .run(campaignId, userId, body.slice(0, MAX_BODY));
+  const message: ChatMessage = {
+    chatFlair: appearance.equipped(userId).chatFlair,
+    id: Number(info.lastInsertRowid),
+    campaignId,
+    userId,
+    userName: author.display_name,
+    channel: "ooc",
+    targetUserId: null,
+    targetName: null,
+    speaker: "",
+    body: body.slice(0, MAX_BODY),
+    createdAt: new Date().toISOString(),
+    replyTo: null,
+  };
+  getIo().to(`campaign:${campaignId}`).emit("chat", message);
+}

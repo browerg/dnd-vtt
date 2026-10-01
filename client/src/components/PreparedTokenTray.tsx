@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { api } from "../api";
+import ShopKitEditor, { starterShopKit, type ShopKit } from "./ShopKitEditor";
 
 export interface MonsterPreparation {
   id: number;
@@ -24,6 +25,7 @@ interface PreparedToken {
   imageUrl: string;
   imageScale: number;
   conditions: string[];
+  shopKit: ShopKit | null;
 }
 
 interface EncounterGroup {
@@ -61,6 +63,8 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
   const [groupBusy, setGroupBusy] = useState<number | "create" | null>(null);
   const [busy, setBusy] = useState<number | "prepare" | null>(null);
   const [editing, setEditing] = useState<PreparedToken | null>(null);
+  const [kitEditing, setKitEditing] = useState<PreparedToken | null>(null);
+  const [creatingShopkeeper, setCreatingShopkeeper] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -190,6 +194,43 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
     await load();
   };
 
+  const saveShopKit = async (token: PreparedToken, shopKit: ShopKit | null) => {
+    await api(`/api/campaigns/${campaignId}/prepared-tokens/${token.id}/shop-kit`, {
+      method: "PUT",
+      body: JSON.stringify({ shopKit }),
+    });
+    await load();
+  };
+
+  // A shopkeeper built from scratch in the tray: an NPC token with a starter
+  // kit, opened straight into the shop editor.
+  const createShopkeeper = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    if (!(data.get("image") as File | null)?.size) data.delete("image");
+    data.set("hp", "10");
+    data.set("maxHp", "10");
+    setBusy("prepare");
+    setError("");
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/prepared-tokens`, { method: "POST", body: data });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? "Could not create the shopkeeper.");
+      const created = body.preparedTokens[0] as PreparedToken;
+      const result = await api<{ preparedToken: PreparedToken }>(
+        `/api/campaigns/${campaignId}/prepared-tokens/${created.id}/shop-kit`,
+        { method: "PUT", body: JSON.stringify({ shopKit: starterShopKit() }) }
+      );
+      setCreatingShopkeeper(false);
+      await load();
+      setKitEditing(result.preparedToken);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const saveEdit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!editing) return;
@@ -214,7 +255,12 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
       <section className="prepared-token-section">
         <div className="row-between">
           <h4>Prepared Tokens</h4>
-          <button className="ghost mini" onClick={() => void load()} title="Refresh tray">↻</button>
+          <span className="prepared-token-header-actions">
+            <button className="ghost mini" onClick={() => setCreatingShopkeeper(true)} title="Prepare a shopkeeper NPC">
+              🪙 + Shopkeeper
+            </button>
+            <button className="ghost mini" onClick={() => void load()} title="Refresh tray">↻</button>
+          </span>
         </div>
         {error && <p className="error small">{error}</p>}
         {groups.length > 0 && (
@@ -290,7 +336,7 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
         <div className="prepared-token-list">
           {tokens.map((token) => (
             <article
-              className="prepared-token-card"
+              className={`prepared-token-card${token.shopKit ? " is-shopkeeper" : ""}`}
               key={token.id}
               draggable={busy !== token.id}
               title="Drag onto the map for exact placement"
@@ -338,7 +384,13 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
                 )}
                 <span>
                   <strong>{token.name}</strong>
-                  <small>{token.size}×{token.size} · HP {token.hp}/{token.maxHp}</small>
+                  {token.shopKit ? (
+                    <small className="prepared-token-shop-tag">
+                      🪙 Shopkeeper · {token.shopKit.items.length} ware{token.shopKit.items.length === 1 ? "" : "s"}
+                    </small>
+                  ) : (
+                    <small>{token.size}×{token.size} · HP {token.hp}/{token.maxHp}</small>
+                  )}
                 </span>
               </div>
               <div className="prepared-token-actions">
@@ -347,6 +399,9 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
                 </button>
                 <span className="prepared-token-drag-hint">⋮⋮ Drag to map</span>
                 <button className="ghost mini" onClick={() => setEditing(token)}>Edit</button>
+                {token.shopKit && (
+                  <button className="ghost mini" onClick={() => setKitEditing(token)}>Shop</button>
+                )}
                 <button className="danger mini" onClick={() => remove(token)}>Delete</button>
               </div>
             </article>
@@ -463,7 +518,80 @@ export default function PreparedTokenTray({ campaignId, mapId, monster, onCloseM
               <label>Color<input name="color" type="color" defaultValue={editing.color} /></label>
               <label>Artwork scale<input name="imageScale" type="number" min=".5" max="2.5" step=".05" defaultValue={editing.imageScale} /></label>
             </div>
+            <div className="prepared-token-shop-row">
+              <span>
+                {editing.shopKit ? (
+                  <span className="prepared-token-shop-tag">🪙 Shopkeeper · {editing.shopKit.items.length} wares</span>
+                ) : (
+                  <span className="muted small">Not a shopkeeper</span>
+                )}
+              </span>
+              <button
+                type="button"
+                className="ghost mini"
+                onClick={() => {
+                  const token = editing;
+                  setEditing(null);
+                  setKitEditing(token.shopKit ? token : { ...token, shopKit: starterShopKit() });
+                }}
+              >
+                {editing.shopKit ? "Edit dialogue & wares" : "Make shopkeeper"}
+              </button>
+            </div>
             <button>Save changes</button>
+          </form>
+        </div>,
+        document.body
+      )}
+
+      {kitEditing && createPortal(
+        <ShopKitEditor
+          campaignId={campaignId}
+          name={kitEditing.name}
+          initial={kitEditing.shopKit ?? starterShopKit()}
+          onSave={(kit) => saveShopKit(kitEditing, kit)}
+          onClose={() => setKitEditing(null)}
+        />,
+        document.body
+      )}
+
+      {creatingShopkeeper && createPortal(
+        <div className="prepared-token-backdrop" onClick={() => setCreatingShopkeeper(false)}>
+          <form className="prepared-token-modal stack" onSubmit={createShopkeeper} onClick={(e) => e.stopPropagation()}>
+            <div className="row-between">
+              <div>
+                <span className="prepared-token-kicker">Prepared shopkeeper</span>
+                <h2>New shopkeeper</h2>
+              </div>
+              <button type="button" className="ghost mini" onClick={() => setCreatingShopkeeper(false)}>×</button>
+            </div>
+            <label>
+              Name
+              <input name="name" placeholder="Tukson" required autoFocus />
+            </label>
+            <div className="prepared-token-grid">
+              <label>
+                Size
+                <select name="size" defaultValue="1">
+                  <option value="1">1 × 1</option>
+                  <option value="2">2 × 2</option>
+                </select>
+              </label>
+              <label>
+                Fallback color
+                <input name="color" type="color" defaultValue="#7a4fd0" />
+              </label>
+            </div>
+            <label>
+              Token artwork (optional)
+              <input name="image" type="file" accept="image/png,image/jpeg,image/webp" />
+            </label>
+            <p className="muted small">
+              Next you'll write their dialogue and stock their shelves. They wait in Prepared Tokens until you
+              drag them onto a board.
+            </p>
+            {error && <div className="error">{error}</div>}
+            <button disabled={busy === "prepare"}>{busy === "prepare" ? "Creating..." : "Next: dialogue & wares"}</button>
           </form>
         </div>,
         document.body

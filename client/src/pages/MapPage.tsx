@@ -14,6 +14,7 @@ import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import MapObjects from "../components/MapObjects";
+import ShopBoard, { type ShopView } from "../components/ShopBoard";
 import SceneDirector from "../components/SceneDirector";
 import PreparedTokenTray, { type MonsterPreparation } from "../components/PreparedTokenTray";
 import YouTubeMapPlayer from "../components/YouTubeMapPlayer";
@@ -41,6 +42,7 @@ interface MapInfo {
   gridSize: number;
   rulerCalibration: RulerCalibration | null;
   gridOn: boolean;
+  boardType: "battle" | "shop";
   active: boolean;
   fogOn: boolean;
   fogCells: string[];
@@ -109,6 +111,7 @@ interface Token {
   imageUrl: string;
   imageScale: number;
   conditions: string[];
+  isShopkeeper?: boolean;
 }
 
 // vivid-aura-color-system
@@ -479,6 +482,7 @@ export default function MapPage() {
   const [monsterToPrepare, setMonsterToPrepare] = useState<MonsterPreparation | null>(null);
   const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
   const [statblock, setStatblock] = useState<MonsterDetail | null>(null);
+  const [shopView, setShopView] = useState<ShopView | null>(null);
 
   // vivid-turn-start-cosmetics
   useEffect(() => {
@@ -1091,6 +1095,11 @@ export default function MapPage() {
     if (tokenEl) {
       const tokenId = Number(tokenEl.getAttribute("data-token-id"));
       const token = tokens.find((t) => t.id === tokenId);
+      // Players talk to shopkeepers instead of panning past them.
+      if (token && !canMove(token) && token.isShopkeeper && map?.boardType === "shop") {
+        setShopView({ tokenId: token.id, mode: "talk" });
+        return;
+      }
       if (token && canMove(token)) {
         const p = toMapCoords(e.clientX, e.clientY);
         dragRef.current = {
@@ -1597,10 +1606,16 @@ export default function MapPage() {
 Choose Cancel to permanently delete it instead.`
       );
       if (returnToTray) {
-        await api(
-          `/api/campaigns/${campaignId}/maps/${map.id}/tokens/${tokenId}/return-to-tray`,
-          { method: "POST" }
-        );
+        try {
+          await api(
+            `/api/campaigns/${campaignId}/maps/${map.id}/tokens/${tokenId}/return-to-tray`,
+            { method: "POST" }
+          );
+        } catch (e: any) {
+          // e.g. a shopkeeper with orders still waiting on the DM
+          setError(e.message);
+          return;
+        }
         window.dispatchEvent(new Event("prepared-tokens:refresh"));
         return;
       }
@@ -1905,6 +1920,16 @@ Choose Cancel to permanently delete it instead.`
                 </button>
               </>
             )}
+            <select
+              className="board-type-select"
+              title="What this board is for"
+              aria-label="Board purpose"
+              value={map.boardType}
+              onChange={(e) => patchMap({ boardType: e.target.value })}
+            >
+              <option value="battle">Battle board</option>
+              <option value="shop">Shop board</option>
+            </select>
             <label className="grid-toggle">
               <input type="checkbox" checked={map.gridOn} onChange={(e) => patchMap({ gridOn: e.target.checked })} />
               Grid
@@ -2234,6 +2259,20 @@ Choose Cancel to permanently delete it instead.`
         </div>
       )}
 
+      {map && (
+        <ShopBoard
+          campaignId={campaignId}
+          mapId={map.id}
+          isShopBoard={map.boardType === "shop"}
+          isDM={isDM}
+          tokens={tokens}
+          view={shopView}
+          onClose={() => setShopView(null)}
+          preferredCharacterId={
+            tokens.find((t) => t.characterId != null && t.ownerId === user?.id)?.characterId ?? null
+          }
+        />
+      )}
       {map?.audioUrl && (
         <div className="battle-map-audio-dock">
           <audio
@@ -2339,6 +2378,12 @@ Choose Cancel to permanently delete it instead.`
           }}
           onDrop={onPreparedTokenDrop}
         >
+          {map?.boardType === "shop" && (
+            <div className="bshop-board-banner">
+              <span aria-hidden="true">🪙</span>
+              {isDM ? "Shop board — select an NPC token to set up a shopkeeper" : "Shop — click a shopkeeper to talk"}
+            </div>
+          )}
           {!map ? (
             <div className="page-center muted">
               {isDM ? "Upload a map to get started →" : "The DM hasn't set a map yet."}
@@ -2420,6 +2465,8 @@ Choose Cancel to permanently delete it instead.`
                     className={`token${hasCutout ? " image-token" : ""}${canMove(t) ? " movable" : ""}${
                       currentCombatant?.tokenId === t.id ? " current-turn" : ""
                     }${selectedTokenId === t.id ? " selected" : ""}${
+                      t.isShopkeeper ? ` is-shopkeeper${map.boardType === "shop" && !canMove(t) ? " can-talk" : ""}` : ""
+                    }${
                       t.auraMax != null && t.aura != null && t.aura > 0 ? " aura-active" : ""
                     }${
                       t.auraMax != null &&
@@ -2450,6 +2497,9 @@ Choose Cancel to permanently delete it instead.`
                     title={t.name}
                   >
                     {t.tokenBorder === "border-first-flame" && <span className="relic-token-ring" aria-hidden="true" />}
+                    {t.isShopkeeper && (isDM || map.boardType === "shop") && (
+                      <span className="token-bshop-badge" title="Shopkeeper" aria-hidden="true">🪙</span>
+                    )}
                     {t.auraMax != null && t.aura != null && t.aura > 0 && (
                       <span className="token-aura-shell" aria-hidden="true" />
                     )}
@@ -2660,6 +2710,37 @@ Choose Cancel to permanently delete it instead.`
           </button>
           <div className="encounter-sidebar-content">
           {error && <div className="error">{error}</div>}
+          {isDM &&
+            selectedToken &&
+            (selectedToken.ownerId == null || selectedToken.ownerId === user?.id) &&
+            (map?.boardType === "shop" || selectedToken.isShopkeeper) && (
+              <section className="token-art-panel">
+                <div className="row-between">
+                  <h4>{selectedToken.isShopkeeper ? "Shopkeeper" : "Shop"}</h4>
+                </div>
+                <p className="muted small">
+                  {selectedToken.isShopkeeper
+                    ? "Players click this token to talk and browse the wares."
+                    : "Turn this NPC into a shopkeeper with dialogue and wares to sell."}
+                </p>
+                <div className="map-object-actions">
+                  <button
+                    className="mini"
+                    onClick={() => setShopView({ tokenId: selectedToken.id, mode: "edit" })}
+                  >
+                    {selectedToken.isShopkeeper ? "Edit dialogue & wares" : "Make shopkeeper"}
+                  </button>
+                  {selectedToken.isShopkeeper && (
+                    <button
+                      className="ghost mini"
+                      onClick={() => setShopView({ tokenId: selectedToken.id, mode: "talk" })}
+                    >
+                      Preview as player
+                    </button>
+                  )}
+                </div>
+              </section>
+            )}
           {selectedToken && (isDM || canMove(selectedToken)) && (
             <section className="token-art-panel">
               <div className="row-between">

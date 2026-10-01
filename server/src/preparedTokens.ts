@@ -9,6 +9,8 @@ import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
 import { getToken } from "./maps.js";
+import { boardShopStore } from "./boardShop.js";
+import { sanitizeKit } from "./boardShopStore.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 // vivid-monster-library-completion-v1
@@ -42,8 +44,30 @@ const rowToPrepared = (row: any) => ({
   imageUrl: row.image_path ? `/uploads/${path.basename(row.image_path)}` : "",
   imageScale: row.image_scale,
   conditions: JSON.parse(row.conditions ?? "[]"),
+  shopKit: sanitizeKit(row.shop_kit ?? ""),
   createdAt: row.created_at,
 });
+
+// Placing a packed shopkeeper unpacks its dialogue and wares onto the new token.
+function unpackShopKit(campaignId: number, mapId: number, tokenId: number, shopKit: string) {
+  if (!boardShopStore.installKit(tokenId, shopKit)) return;
+  getIo().to(`campaign:${campaignId}`).emit("shop:update", { campaignId, mapId });
+}
+
+// Packs a token (and its shop, if it runs one) into a new prepared token.
+function packIntoTray(campaignId: number, tokenId: number) {
+  const row = db.prepare("SELECT * FROM tokens WHERE id = ?").get(tokenId) as any;
+  const kit = boardShopStore.exportKit(tokenId);
+  const result = db.prepare(`
+    INSERT INTO prepared_tokens
+      (campaign_id, monster_id, name, color, size, hp, max_hp, image_path, image_scale, conditions, shop_kit)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    campaignId, row.monster_id, row.name, row.color, row.size, row.hp, row.max_hp,
+    row.image_path, row.image_scale, row.conditions, kit ? JSON.stringify(kit) : ""
+  );
+  return db.prepare("SELECT * FROM prepared_tokens WHERE id = ?").get(Number(result.lastInsertRowid));
+}
 
 function campaignRole(req: Request, campaignId: number) {
   return memberRole(campaignId, user(req).id);
@@ -229,6 +253,7 @@ preparedTokensRouter.post("/:id/prepared-tokens/:preparedId/deploy", (req, res) 
   );
 
   db.prepare("DELETE FROM prepared_tokens WHERE id = ?").run(prepared.id);
+  unpackShopKit(campaignId, map.id, Number(result.lastInsertRowid), prepared.shop_kit);
   const token = getToken(Number(result.lastInsertRowid))!;
   getIo().to(`campaign:${campaignId}`).emit("token:create", { campaignId, token });
   res.json({ token });
@@ -247,21 +272,53 @@ preparedTokensRouter.post("/:id/maps/:mapId/tokens/:tokenId/return-to-tray", (re
   if (token.characterId != null) {
     return res.status(400).json({ error: "Player and character tokens cannot enter the prepared tray." });
   }
+  // Leaving would orphan orders for wares that no longer exist on the board.
+  const pending = boardShopStore.pendingForToken(token.id);
+  if (pending > 0) {
+    return res.status(409).json({
+      error: `${token.name} still has ${pending} pending order${pending === 1 ? "" : "s"} — approve or deny ${pending === 1 ? "it" : "them"} first.`,
+    });
+  }
 
-  const row = db.prepare("SELECT * FROM tokens WHERE id = ?").get(token.id) as any;
-  const result = db.prepare(`
-    INSERT INTO prepared_tokens
-      (campaign_id, monster_id, name, color, size, hp, max_hp, image_path, image_scale, conditions)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    campaignId, row.monster_id, row.name, row.color, row.size, row.hp, row.max_hp,
-    row.image_path, row.image_scale, row.conditions
-  );
-
+  const prepared = packIntoTray(campaignId, token.id);
   db.prepare("DELETE FROM tokens WHERE id = ?").run(token.id);
   getIo().to(`campaign:${campaignId}`).emit("token:delete", { campaignId, tokenId: token.id });
-  const prepared = db.prepare("SELECT * FROM prepared_tokens WHERE id = ?").get(Number(result.lastInsertRowid));
   res.json({ preparedToken: rowToPrepared(prepared) });
+});
+
+// Keeps the token on the board and saves a copy in the tray — for merchants
+// who turn up again somewhere else.
+preparedTokensRouter.post("/:id/maps/:mapId/tokens/:tokenId/copy-to-tray", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = campaignRole(req, campaignId);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can save tokens to the tray." });
+
+  const token = getToken(Number(req.params.tokenId));
+  if (!token || token.campaignId !== campaignId || token.mapId !== Number(req.params.mapId)) {
+    return res.status(404).json({ error: "Token not found." });
+  }
+  if (token.characterId != null) {
+    return res.status(400).json({ error: "Player and character tokens cannot enter the prepared tray." });
+  }
+  res.json({ preparedToken: rowToPrepared(packIntoTray(campaignId, token.id)) });
+});
+
+// Sets or clears the shopkeeper setup on a token still in the tray.
+preparedTokensRouter.put("/:id/prepared-tokens/:preparedId/shop-kit", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = campaignRole(req, campaignId);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM can edit prepared tokens." });
+
+  const existing = db.prepare(
+    "SELECT id FROM prepared_tokens WHERE id = ? AND campaign_id = ?"
+  ).get(Number(req.params.preparedId), campaignId) as any;
+  if (!existing) return res.status(404).json({ error: "Prepared token not found." });
+
+  const kit = req.body?.shopKit == null ? null : sanitizeKit(req.body.shopKit);
+  db.prepare("UPDATE prepared_tokens SET shop_kit = ? WHERE id = ?").run(kit ? JSON.stringify(kit) : "", existing.id);
+  res.json({ preparedToken: rowToPrepared(db.prepare("SELECT * FROM prepared_tokens WHERE id = ?").get(existing.id)) });
 });
 
 preparedTokensRouter.delete("/:id/prepared-tokens/:preparedId", async (req, res) => {
@@ -429,6 +486,7 @@ preparedTokensRouter.post("/:id/prepared-encounters/:groupId/deploy", (req, res)
     db.exec("ROLLBACK");
     throw error;
   }
+  members.forEach((member, index) => unpackShopKit(campaignId, map.id, tokenIds[index], member.shop_kit));
 
   const tokens = tokenIds.map((id) => getToken(id)!).filter(Boolean);
   for (const token of tokens) {

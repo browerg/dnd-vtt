@@ -16,6 +16,25 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 1 October 2026
+
+### Major changes
+
+- **Shop boards** — A board can now be a shop instead of a battlefield. Your GM sets
+  one up with shopkeeper NPCs: click one to chat, ask about what they sell, then
+  browse their wares and request what you want with your character's Lien (gold in
+  5e). Everyone can shop at once. Nothing is charged until the GM approves, and
+  approved items land straight in your inventory. Track your requests in My orders.
+
+### Minor changes
+
+- **For GMs** — switch a board between Battle and Shop from the map toolbar, select
+  an NPC token to write its greeting, topics and stock, and approve or deny
+  purchases one by one or all at once. Shop music uses the board's existing music.
+- **Prepared shopkeepers** — build a merchant straight in Prepared Tokens with
+  🪙 + Shopkeeper, or save a copy of one already on a board. Returning a shopkeeper
+  to the tray packs up their dialogue and wares, and they arrive ready on any board.
+
 ## 28 September 2026
 
 ### Major changes
