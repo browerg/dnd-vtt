@@ -1,0 +1,78 @@
+/* GM map workspace: navigation, preparation, and live map tools have distinct homes. */
+.map-shell .gm-map-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px 14px;
+  padding: 10px 16px;
+}
+.gm-map-header .campaign-back-link { grid-column: 1; grid-row: 1; }
+.gm-map-header .campaign-theme-brand { min-width: 0; }
+.gm-map-header > .spacer, .gm-map-header > .campaign-nav-link { display: none; }
+.gm-view-actions { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 8px; }
+.gm-workspace-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.gm-map-picker { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.gm-map-picker > span { color: var(--theme-muted, var(--muted)); white-space: nowrap; }
+.map-shell .gm-map-picker select { max-width: 240px; min-width: 150px; height: 36px; }
+.gm-action-group { display: flex; align-items: center; gap: 4px; }
+.gm-action-group button { min-height: 36px; padding: 6px 12px; font-size: 15px; white-space: nowrap; }
+.gm-scene-actions { border-left: 1px solid var(--theme-border, var(--border)); padding-left: 12px; }
+.map-tool-row { flex: 0 0 auto; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 16px; background: var(--theme-well, var(--bg-well)); border-bottom: 1px solid var(--theme-border, var(--border)); }
+.map-tool-row button { min-height: 32px; padding: 5px 12px; font-size: 14px; }
+.map-tool-row .grid-toggle { margin: 0 0 0 8px; font-size: 14px; }
+.gm-tool-hint { flex: 1; margin-left: 12px; color: var(--theme-muted, var(--muted)); font-size: 13px; }
+.map-tool-row .zoom-label { margin-left: auto; font-size: 13px; font-variant-numeric: tabular-nums; }
+.gm-panel-position { position: absolute; top: 12px; right: 278px; bottom: 24px; z-index: 90; width: min(540px, calc(100vw - 310px)); pointer-events: none; }
+.sidebar-is-collapsed .gm-panel-position { right: 48px; }
+.gm-workspace-panel.dm-top-panel { pointer-events: auto; width: 100%; max-height: 100%; padding: 20px; border-radius: 8px; background: var(--theme-panel, var(--bg-raised)); box-shadow: 0 16px 40px rgba(0, 0, 0, .35); }
+.gm-workspace-panel .dm-top-panel-heading { top: -20px; margin: -20px -20px 20px; padding: 16px 20px; background: var(--theme-panel, var(--bg-raised)); backdrop-filter: none; align-items: flex-start; gap: 12px; }
+.gm-workspace-panel .dm-top-panel-heading h2 { font-family: inherit; font-size: 22px; letter-spacing: 0; text-transform: none; }
+.gm-workspace-panel .dm-top-panel-heading p { margin: 5px 0 0; font-size: 14px; }
+.gm-workspace-panel section { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.gm-workspace-panel .dm-top-panel-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.gm-workspace-panel .dm-top-panel-grid > section + section { padding-top: 20px; border-top: 1px solid var(--theme-border, var(--border)); }
+.gm-workspace-panel h4 { font-family: inherit; font-size: 16px; letter-spacing: 0; text-transform: none; margin-bottom: 12px; }
+.gm-workspace-panel input, .gm-workspace-panel select { max-width: 100%; }
+.gm-board-settings { display: grid; gap: 18px; }
+.gm-setting-field { display: grid; gap: 6px; font-size: 15px; }
+.gm-setting-field .grid-size { width: 100%; }
+.gm-token-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--theme-border, var(--border)); padding-bottom: 8px; }
+.gm-token-tabs button { flex: 1; padding: 8px; font-size: 14px; }
+.gm-token-tabs button[aria-pressed="true"] { color: var(--theme-text, var(--text)); background: var(--theme-well, var(--bg-well)); box-shadow: inset 0 -2px var(--theme-accent, var(--gold)); }
+.gm-token-workspace .prepared-token-tray { margin: 0; }
+.gm-token-workspace .monster-hits { max-height: 45vh; }
+.gm-encounter-heading { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 0 16px; gap: 8px; }
+.gm-encounter-heading strong { font-size: 20px; }
+.gm-token-appearance > summary { cursor: pointer; padding: 10px 0; font-size: 15px; font-weight: 600; }
+.gm-token-appearance > summary span { display: block; font-size: 13px; font-weight: 400; margin-top: 4px; }
+.gm-token-appearance[open] > summary { margin-bottom: 12px; }
+.gm-map-header button:focus-visible, .map-tool-row button:focus-visible, .gm-workspace-panel :focus-visible, .gm-token-appearance > summary:focus-visible { outline: 2px solid var(--theme-accent, var(--gold)); outline-offset: 3px; }
+@media (max-width: 1050px) {
+  .gm-workspace-actions { gap: 8px; }
+  .gm-action-group button { padding-inline: 8px; }
+  .gm-map-picker > span { display: none; }
+  .gm-panel-position { top: 12px; right: 16px; width: min(520px, calc(100vw - 32px)); }
+  .gm-tool-hint { display: none; }
+}
+@media (max-width: 600px) {
+  .map-shell .gm-map-header { padding: 8px; gap: 8px; grid-template-columns: auto minmax(0, 1fr); }
+  .gm-view-actions { grid-column: 1 / -1; grid-row: auto; justify-content: flex-end; }
+  .gm-workspace-actions { gap: 6px; }
+  .gm-map-picker { width: 100%; }
+  .map-shell .gm-map-picker select { width: 100%; max-width: none; }
+  .gm-map-picker > span { display: inline; }
+  .gm-action-group { flex-wrap: wrap; gap: 2px; }
+  .gm-scene-actions { border: 0; padding: 0; }
+  .map-tool-row { padding: 6px 8px; gap: 4px; }
+  .map-tool-row button { padding-inline: 8px; }
+  .gm-panel-position, .sidebar-is-collapsed .gm-panel-position { top: 8px; right: 8px; bottom: 12px; width: calc(100vw - 16px); }
+  .gm-workspace-panel.dm-top-panel { padding: 16px; }
+  .gm-workspace-panel .dm-top-panel-heading { top: -16px; margin: -16px -16px 16px; padding: 12px 16px; }
+}
+
+.map-shell .map-layout { position: relative; }
+.gm-map-header .campaign-brand-block, .gm-map-header .campaign-brand-copy { min-width: 0; }
+
+@media (max-width: 900px) {
+  .map-shell .encounter-sidebar { position: absolute; right: 0; top: 0; bottom: 0; z-index: 40; width: min(290px, calc(100vw - 48px)); box-shadow: -8px 0 24px rgba(0, 0, 0, .2); }
+  .map-shell .encounter-sidebar.encounter-sidebar-collapsed { width: 36px; min-width: 36px; padding-inline: 4px; }
+}

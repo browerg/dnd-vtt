@@ -28,6 +28,7 @@ import "./DMTopPanels.css";
 import "./EncounterSidebar.css";
 import "./DMMapDock.css";
 import "./MapRulerCalibration.css";
+import "./GMMapWorkspace.css";
 import { rulerLabel as calibratedRulerLabel, rulerPixels, validateRulerCalibration, type RulerCalibration } from "../../../shared/mapRuler";
 
 interface MapInfo {
@@ -368,10 +369,29 @@ export default function MapPage() {
   const [preparedEncounterDropPreview, setPreparedEncounterDropPreview] =
     useState<PreparedEncounterDropPreview | null>(null);
   const [preparedTokenDropBusy, setPreparedTokenDropBusy] = useState(false);
-  const [dmPanel, setDmPanel] = useState<"maps" | "tokens" | "audio" | null>(null);
+  const [dmPanel, setDmPanel] = useState<"maps" | "tokens" | "audio" | "settings" | null>(null);
+  const [tokenPanelTab, setTokenPanelTab] = useState<"prepared" | "monsters" | "custom">("prepared");
+  const gmPanelRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!dmPanel) return;
+    const opener = document.activeElement as HTMLElement | null;
+    gmPanelRef.current?.focus();
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setDmPanel(null);
+        opener?.focus();
+      }
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [dmPanel]);
   const [sidebarRosterTab, setSidebarRosterTab] = useState<"characters" | "map">("characters");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    () => localStorage.getItem("encounter-sidebar-collapsed") === "1"
+    () => {
+      const saved = localStorage.getItem("encounter-sidebar-collapsed");
+      return saved == null ? window.matchMedia("(max-width: 600px)").matches : saved === "1";
+    }
   );
   const [sceneEncounterPlacement, setSceneEncounterPlacement] =
     useState<SceneEncounterPlacementRequest | null>(null);
@@ -447,7 +467,7 @@ export default function MapPage() {
         return;
       }
 
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.ctrlKey || event.metaKey || event.altKey || target?.closest("#gm-workspace-panel")) return;
 
       const key = event.key.toLowerCase();
       const shortcuts: Partial<Record<string, Tool>> = {
@@ -462,7 +482,7 @@ export default function MapPage() {
       const nextTool = shortcuts[key];
       if (!nextTool) return;
 
-      const viewerIsDM = role === "dm" || role === "co-dm";
+      const viewerIsDM = isDM;
       if ((nextTool === "reveal" || nextTool === "hide") && !viewerIsDM) return;
       if ((nextTool === "draw" || nextTool === "erase") && role === "spectator") return;
 
@@ -1798,8 +1818,8 @@ Choose Cancel to permanently delete it instead.`
         </div>
       )}
       {map && <SceneDirector campaignId={campaignId} mapId={map.id} isDM={isDM} />}
-      <header className="topbar campaign-topbar">
-        <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-back-link">{"\u2190"}</Link>
+      <header className="topbar campaign-topbar gm-map-header">
+        <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-back-link" aria-label="Back to campaign dashboard">{"\u2190"}</Link>
         <CampaignThemeBrand
           campaignName={campaignName}
           chapter={campaignChapter}
@@ -1807,34 +1827,78 @@ Choose Cancel to permanently delete it instead.`
           themeId={themeView.themeId}
           pageLabel={map?.name || (system === "remnant" ? "Tactical map" : "Battle map")}
         />
-        <span className="current-page-indicator" aria-current="page">
-          <span className="current-page-indicator-dot" />
-          {system === "remnant" ? "Tactical Map" : "Battle Map"}
-        </span>
         <span className="spacer" />
         <Link to={`/campaigns/${campaignId}`} className="ghost link campaign-nav-link">
           Dashboard
         </Link>
-        <Link
-          to={`/campaigns/${campaignId}/map`}
-          className="ghost link campaign-nav-link campaign-nav-link-active"
-          aria-current="page"
-        >
-          {system === "remnant" ? "Tactical Map" : "Battle Map"}
-        </Link>
-        {map && (
-          <div className="map-active-tool" role="status" aria-live="polite">
-            <span className="map-active-tool-kicker">Active tool</span>
-            <strong>
-              <span aria-hidden="true">{MAP_TOOL_META[tool].icon}</span>
-              {MAP_TOOL_META[tool].label}
-            </strong>
-            <span className="map-active-tool-hint">
-              {calibratingRuler ? "Drag to define this map's distances" : MAP_TOOL_META[tool].hint}
-              {tool !== "move" && " · Esc returns to Move"}
-            </span>
+
+        {isDM && <nav className="gm-workspace-actions" aria-label="GM workspace">
+          {map && <label className="gm-map-picker"><span>Live map</span>            <select
+              aria-label="Active map"
+              value={map.id}
+              onChange={(e) =>
+                api(`/api/campaigns/${campaignId}/maps/${e.target.value}`, {
+                  method: "PUT",
+                  body: JSON.stringify({ active: true }),
+                })
+              }
+            >
+              {maps.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select></label>}
+          <div className="gm-action-group">
+            {([['maps', 'Maps'], ['tokens', 'Tokens & NPCs'], ['audio', 'Audio'], ['settings', 'Board settings']] as const).map(([panel, label]) => (
+              <button key={panel} type="button" className={dmPanel === panel ? "ghost active-tool" : "ghost"}
+                disabled={panel !== 'maps' && !map} aria-expanded={dmPanel === panel} aria-controls="gm-workspace-panel"
+                onClick={() => setDmPanel(dmPanel === panel ? null : panel)}>{label}</button>
+            ))}
           </div>
+          {map && <div className="gm-action-group gm-scene-actions">
+            <button type="button" className="ghost" title="Save and activate encounters" onClick={() => { setDmPanel(null); window.dispatchEvent(new Event('dm-tools:open-scene-director')); }}>Scenes</button>
+            <button type="button" className="ghost" title="Add doors, chests, clues, and props" onClick={() => { setDmPanel(null); window.dispatchEvent(new Event('dm-tools:add-map-object')); }}>Add object</button>
+            <button type="button" className="ghost" aria-expanded={!sidebarCollapsed} aria-controls="map-encounter-panel" onClick={() => setSidebarCollapsed((collapsed) => { localStorage.setItem("encounter-sidebar-collapsed", collapsed ? "0" : "1"); return !collapsed; })}>Encounter</button>
+          </div>}
+        </nav>}
+        <div className="gm-view-actions">        {isGm && (
+          <button
+            type="button"
+            className={viewAsPlayer ? "ghost mini active-tool" : "ghost mini"}
+            aria-pressed={viewAsPlayer}
+            title={
+              viewAsPlayer
+                ? "You are seeing the table as a player. Click to return to the GM view."
+                : "Preview the table exactly as your players see it"
+            }
+            onClick={() => {
+              setViewAsPlayer((current) => {
+                const next = !current;
+                // The fog/draw tools are GM-only, so the toolbar disappears in
+                // player view. Drop back to Move or the cursor would keep
+                // showing a tool the player cannot actually have selected.
+                if (next) setTool("move");
+                return next;
+              });
+              setDmPanel(null); // a DM panel left open would hang over the preview
+            }}
+          >
+            {viewAsPlayer ? "👁️ Player view" : "👁️ View as player"}
+          </button>
         )}
+        <CampaignThemePicker
+          campaignId={campaignId}
+          role={role}
+          system={system}
+          campaignTheme={campaignTheme}
+          view={themeView}
+          onCampaignThemeChange={updateCampaignTheme}
+        />
+</div>
+      </header>
+      <div className="map-tool-row" aria-label="Map tools">
+        {map && <button className={tool === 'move' ? 'ghost mini active-tool' : 'ghost mini'} aria-pressed={tool === 'move'} title="Move (M) — pan the map or move tokens" onClick={() => setTool('move')}>Move</button>}
         {map && (
           <button
             className={tool === "ruler" ? "ghost mini active-tool" : "ghost mini"}
@@ -1843,7 +1907,7 @@ Choose Cancel to permanently delete it instead.`
             aria-pressed={tool === "ruler"}
             onClick={() => tool === "ruler" ? setTool("move") : activateRuler()}
           >
-            📏 {map.rulerCalibration ? "Ruler" : isDM ? "Set ruler distances" : "Ruler · GM setup required"}
+            {map.rulerCalibration ? "Ruler" : isDM ? "Set ruler distances" : "Ruler · GM setup required"}
           </button>
         )}
         {map && role !== "spectator" && (
@@ -1854,7 +1918,7 @@ Choose Cancel to permanently delete it instead.`
               aria-pressed={tool === "draw"}
               onClick={() => setTool(tool === "draw" ? "move" : "draw")}
             >
-              ✏️ Draw
+              Draw
             </button>
             {(tool === "draw" || tool === "erase") && (
               <>
@@ -1897,7 +1961,7 @@ Choose Cancel to permanently delete it instead.`
             </label>
             {map.fogOn && (
               <div className="seg" role="group" aria-label="Fog tool">
-                {(["move", "reveal", "hide"] as Tool[]).map((t) => (
+                {(["reveal", "hide"] as Tool[]).map((t) => (
                   <button
                     key={t}
                     className={tool === t ? "seg-btn active active-tool" : "seg-btn"}
@@ -1905,7 +1969,7 @@ Choose Cancel to permanently delete it instead.`
                     aria-pressed={tool === t}
                     onClick={() => setTool(t)}
                   >
-                    {t === "move" ? "Move" : t === "reveal" ? "Reveal" : "Hide"}
+                    {t === "reveal" ? "Reveal" : "Hide"}
                   </button>
                 ))}
               </div>
@@ -1920,89 +1984,13 @@ Choose Cancel to permanently delete it instead.`
                 </button>
               </>
             )}
-            <select
-              className="board-type-select"
-              title="What this board is for"
-              aria-label="Board purpose"
-              value={map.boardType}
-              onChange={(e) => patchMap({ boardType: e.target.value })}
-            >
-              <option value="battle">Battle board</option>
-              <option value="shop">Shop board</option>
-            </select>
-            <label className="grid-toggle">
-              <input type="checkbox" checked={map.gridOn} onChange={(e) => patchMap({ gridOn: e.target.checked })} />
-              Grid
-            </label>
-            <input
-              className="grid-size"
-              type="number"
-              title="Grid cell size (px)"
-              value={map.gridSize}
-              onChange={(e) => {
-                const gridSize = parseInt(e.target.value, 10);
-                if (gridSize >= 10) patchMap({ gridSize });
-              }}
-            />
-            <select
-              value={map.id}
-              onChange={(e) =>
-                api(`/api/campaigns/${campaignId}/maps/${e.target.value}`, {
-                  method: "PUT",
-                  body: JSON.stringify({ active: true }),
-                })
-              }
-            >
-              {maps.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+
           </>
         )}
-        {isDM && (
-          <div className="dm-top-panel-buttons">
-            <button type="button" className={dmPanel === "maps" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "maps" ? null : "maps")}>🗺️ Maps</button>
-            <button type="button" className={dmPanel === "tokens" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "tokens" ? null : "tokens")}>＋ Add Token</button>
-            <button type="button" className={dmPanel === "audio" ? "ghost mini active-tool" : "ghost mini"} onClick={() => setDmPanel(dmPanel === "audio" ? null : "audio")}>🔊 Audio</button>
-          </div>
-        )}
-        {isGm && (
-          <button
-            type="button"
-            className={viewAsPlayer ? "ghost mini active-tool" : "ghost mini"}
-            aria-pressed={viewAsPlayer}
-            title={
-              viewAsPlayer
-                ? "You are seeing the table as a player. Click to return to the GM view."
-                : "Preview the table exactly as your players see it"
-            }
-            onClick={() => {
-              setViewAsPlayer((current) => {
-                const next = !current;
-                // The fog/draw tools are GM-only, so the toolbar disappears in
-                // player view. Drop back to Move or the cursor would keep
-                // showing a tool the player cannot actually have selected.
-                if (next) setTool("move");
-                return next;
-              });
-              setDmPanel(null); // a DM panel left open would hang over the preview
-            }}
-          >
-            {viewAsPlayer ? "👁️ Player view" : "👁️ View as player"}
-          </button>
-        )}
-        <CampaignThemePicker
-          campaignId={campaignId}
-          role={role}
-          system={system}
-          campaignTheme={campaignTheme}
-          view={themeView}
-          onCampaignThemeChange={updateCampaignTheme}
-        />
+
+        {map && <span className="gm-tool-hint" role="status">{calibratingRuler ? "Drag to set distances" : MAP_TOOL_META[tool].hint}{tool !== 'move' && ' · Esc to move'}</span>}
         <span className="muted zoom-label">{Math.round(view.scale * 100)}%</span>
-      </header>
+      </div>
 
       {map && isDM && tool === "ruler" && !calibratingRuler && <div className="ruler-calibration-summary">
         <span>Distances calibrated for this map</span>
@@ -2024,240 +2012,6 @@ Choose Cancel to permanently delete it instead.`
           <button type="button" className="ghost" disabled={calibrationSaving} onClick={() => setTool("move")}>Cancel</button>
         </div>
       </section>}
-
-      {isDM && dmPanel && (
-        <div className="dm-top-panel-backdrop" onClick={() => setDmPanel(null)}>
-          <section className="dm-top-panel" onClick={(event) => event.stopPropagation()}>
-            <div className="row-between dm-top-panel-heading">
-              <div><span className="muted small">DM setup</span><h2>{dmPanel === "maps" ? "Maps" : dmPanel === "tokens" ? "Add Tokens" : "Audio & Atmosphere"}</h2></div>
-              <button type="button" className="ghost mini" onClick={() => setDmPanel(null)}>✕</button>
-            </div>
-            {error && <div className="error">{error}</div>}
-            {dmPanel === "maps" && <div className="dm-top-panel-grid">
-              <section>
-                <h4>Maps</h4>
-                {maps.map((m) => (
-                  <div key={m.id} className="row-between sidebar-row">
-                    <button
-                      className={`map-pick${m.active ? " active" : ""}`}
-                      onClick={() =>
-                        !m.active &&
-                        api(`/api/campaigns/${campaignId}/maps/${m.id}`, {
-                          method: "PUT",
-                          body: JSON.stringify({ active: true }),
-                        })
-                      }
-                    >
-                      {m.active ? "▶ " : ""}
-                      {m.name}
-                      {m.youtubeId ? " ▶️" : m.isVideo ? " 🎞️" : ""}
-                    </button>
-                    <button
-                      className="ghost mini"
-                      title="Delete map"
-                      onClick={async () => {
-                        if (!window.confirm(`Delete "${m.name}"? Its tokens and fog go with it.`)) return;
-                        setError("");
-                        try {
-                          await api(`/api/campaigns/${campaignId}/maps/${m.id}`, { method: "DELETE" });
-                        } catch (e: any) {
-                          setError(e.message);
-                        }
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </section>
-              <section>
-                <h4>Upload map</h4>
-                <form onSubmit={uploadMap} className="stack">
-                  <input name="mapname" placeholder="Map name" />
-                  <input
-                    name="image"
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
-                    required
-                  />
-                  <button className="ghost">Upload</button>
-                </form>
-                <form
-                  className="stack yt-form"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const form = e.target as HTMLFormElement;
-                    const url = (form.elements.namedItem("yturl") as HTMLInputElement).value;
-                    setError("");
-                    try {
-                      await api(`/api/campaigns/${campaignId}/maps`, {
-                        method: "POST",
-                        body: JSON.stringify({
-                          youtubeUrl: url,
-                          name: (form.elements.namedItem("ytname") as HTMLInputElement).value,
-                        }),
-                      });
-                      form.reset();
-                    } catch (err: any) {
-                      setError(err.message);
-                    }
-                  }}
-                >
-                  <input name="ytname" placeholder="Map name" />
-                  <input name="yturl" placeholder="…or paste a YouTube link" required />
-                  <button className="ghost">Add YouTube map</button>
-                </form>
-                <p className="muted small">
-                  Heads up: YouTube maps can show ads mid-session — uploaded files never do.
-                </p>
-              </section>
-            </div>}
-            {dmPanel === "tokens" && map && <div className="dm-token-panel-grid">
-              {map && (
-                <PreparedTokenTray
-                  campaignId={campaignId}
-                  mapId={map.id}
-                  monster={monsterToPrepare}
-                  onCloseMonster={() => setMonsterToPrepare(null)}
-                />
-              )}
-              {map && (
-                <section>
-                  <h4>Monsters</h4>
-                  <input
-                    placeholder="Search monsters (SRD + custom)…"
-                    value={monsterQuery}
-                    onChange={(e) => setMonsterQuery(e.target.value)}
-                  />
-                  <Link to={`/campaigns/${campaignId}/bestiary`} className="muted small">
-                    Open bestiary — create &amp; edit monsters
-                  </Link>
-                  <div className="monster-hits">
-                    {monsterHits.map((m) => (
-                      <div key={m.id} className="row-between sidebar-row">
-                        <span className="mon-hit">
-                          {m.name}{" "}
-                          <span className="muted">
-                            {m.system === "remnant" ? `Threat ${m.threat}` : `CR ${fmtCr(m.cr)}`}
-                          </span>
-                        </span>
-                        <button className="ghost mini" onClick={() => prepareMonster(m)}>
-                          Prepare
-                        </button>
-                      </div>
-                    ))}
-                    {monsterQuery.trim() && monsterHits.length === 0 && (
-                      <p className="muted small">No monsters match.</p>
-                    )}
-                  </div>
-                </section>
-              )}
-              {map && (
-                <section>
-                  <h4>Custom actor</h4>
-                  <form onSubmit={placeCustom} className="stack custom-token-form">
-                    <div className="row-between">
-                      <input
-                        placeholder="Bandit, summon, NPC..."
-                        value={customName}
-                        onChange={(e) => setCustomName(e.target.value)}
-                        required
-                      />
-                      <input
-                        type="color"
-                        className="color-pick"
-                        value={customColor}
-                        onChange={(e) => setCustomColor(e.target.value)}
-                        title="Fallback token color"
-                      />
-                    </div>
-                    <label className="small">
-                      Footprint
-                      <select name="tokenSize" defaultValue="1">
-                        <option value="1">1 square</option>
-                        <option value="2">2 x 2</option>
-                        <option value="3">3 x 3</option>
-                        <option value="4">4 x 4</option>
-                      </select>
-                    </label>
-                    <label className="custom-token-image-pick small">
-                      Transparent PNG or image (optional)
-                      <input
-                        name="tokenImage"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        onChange={(event) => chooseCustomImage(event.target.files?.[0])}
-                      />
-                    </label>
-                    {customImagePreview && (
-                      <div className="custom-token-preview">
-                        <img src={customImagePreview} alt="New token preview" />
-                        <span>Cutout preview</span>
-                      </div>
-                    )}
-                    <button className="ghost">Place actor</button>
-                  </form>
-                </section>
-              )}
-            </div>}
-            {dmPanel === "audio" && map && <div className="dm-top-panel-grid dm-audio-panel">
-              {map && (
-                <section className="map-audio-settings">
-                  <h4>Map audio</h4>
-                  <form className="stack" onSubmit={uploadMapMusic}>
-                    <label className="small">
-                      Looping music or ambience
-                      <input
-                        name="mapAudio"
-                        type="file"
-                        accept="audio/mpeg,audio/ogg,audio/wav,audio/webm,audio/mp4"
-                        required
-                      />
-                    </label>
-                    <button className="ghost mini" disabled={mapAudioBusy}>
-                      {mapAudioBusy ? "Uploading..." : map.audioUrl ? "Replace music" : "Upload music"}
-                    </button>
-                  </form>
-                  {map.audioUrl && (
-                    <button
-                      type="button"
-                      className="ghost mini map-audio-remove"
-                      disabled={mapAudioBusy}
-                      onClick={removeMapMusic}
-                    >
-                      Remove uploaded music
-                    </button>
-                  )}
-                  {map.youtubeId && (
-                    <label className="map-youtube-audio-toggle">
-                      <input
-                        type="checkbox"
-                        checked={map.youtubeAudio}
-                        onChange={(event) => {
-                          const youtubeAudio = event.target.checked;
-                          setMap((current) => (current ? { ...current, youtubeAudio } : current));
-                          setYoutubeSoundEnabled(false);
-                          patchMap({ youtubeAudio });
-                        }}
-                      />
-                      Use audio from this YouTube map
-                    </label>
-                  )}
-                  <p className="muted small map-audio-note">
-                    Each player must click once before their browser allows sound.
-                  </p>
-                </section>
-              )}
-              <section>
-                <h4>Playback</h4>
-                {map.audioUrl && <button type="button" className="ghost" onClick={toggleMapMusic}>{audioPlaying ? "Pause uploaded audio" : "Play uploaded audio"}</button>}
-                {map.audioUrl && <label className="dm-panel-slider"><span>Uploaded volume</span><input type="range" min="0" max="1" step="0.01" value={audioVolume} onChange={(event) => setAudioVolume(Number(event.target.value))} /></label>}
-                {map.youtubeId && map.youtubeAudio && <label className="dm-panel-slider"><span>YouTube volume</span><input type="range" min="0" max="1" step="0.01" value={youtubeVolume} onChange={(event) => setYoutubeVolume(Number(event.target.value))} /></label>}
-              </section>
-            </div>}
-          </section>
-        </div>
-      )}
 
       {map && (
         <ShopBoard
@@ -2347,6 +2101,274 @@ Choose Cancel to permanently delete it instead.`
         </div>
       )}
       <div className="map-layout">
+      {isDM && dmPanel && (
+        <div className="gm-panel-position">
+          <section className="dm-top-panel gm-workspace-panel" id="gm-workspace-panel" ref={gmPanelRef} tabIndex={-1} aria-labelledby="gm-panel-title">
+            <div className="row-between dm-top-panel-heading">
+              <div><h2 id="gm-panel-title">{dmPanel === "maps" ? "Maps" : dmPanel === "tokens" ? "Tokens & NPCs" : dmPanel === "settings" ? "Board settings" : "Audio & atmosphere"}</h2><p className="muted small">{dmPanel === "tokens" ? "Prepare your cast, then drag tokens onto the map." : dmPanel === "maps" ? "Choose the live map or add your next location." : dmPanel === "settings" ? "Set up this board for the table." : "Choose the soundtrack for this map."}</p></div>
+              <button type="button" className="ghost mini" onClick={() => setDmPanel(null)} aria-label="Close GM panel">Close</button>
+            </div>
+            {error && <div className="error">{error}</div>}
+            {dmPanel === "settings" && map && <div className="gm-board-settings">
+            <label className="gm-setting-field">Board purpose<select
+              className="board-type-select"
+              title="What this board is for"
+              aria-label="Board purpose"
+              value={map.boardType}
+              onChange={(e) => patchMap({ boardType: e.target.value })}
+            >
+              <option value="battle">Battle board</option>
+              <option value="shop">Shop board</option>
+            </select></label>
+            <label className="grid-toggle">
+              <input type="checkbox" checked={map.gridOn} onChange={(e) => patchMap({ gridOn: e.target.checked })} />
+              Grid
+            </label>
+            <label className="gm-setting-field">Grid cell size (pixels)<input
+              className="grid-size"
+              min="10"
+              type="number"
+              title="Grid cell size (px)"
+              value={map.gridSize}
+              onChange={(e) => {
+                const gridSize = parseInt(e.target.value, 10);
+                if (gridSize >= 10) patchMap({ gridSize });
+              }}
+            /></label>
+
+              <p className="muted small">Shop boards let players talk to shopkeepers and request purchases. Select an NPC on the map to edit its dialogue and wares.</p>
+              <button className="ghost" onClick={() => { setDmPanel(null); beginRulerCalibration(); }}>Calibrate ruler distances</button>
+            </div>}
+            {dmPanel === "maps" && <div className="dm-top-panel-grid">
+              <section>
+                <h4>Maps</h4>
+                {maps.map((m) => (
+                  <div key={m.id} className="row-between sidebar-row">
+                    <button
+                      className={`map-pick${m.active ? " active" : ""}`}
+                      onClick={() =>
+                        !m.active &&
+                        api(`/api/campaigns/${campaignId}/maps/${m.id}`, {
+                          method: "PUT",
+                          body: JSON.stringify({ active: true }),
+                        })
+                      }
+                    >
+                      {m.active ? "▶ " : ""}
+                      {m.name}
+                      {m.youtubeId ? " ▶️" : m.isVideo ? " 🎞️" : ""}
+                    </button>
+                    <button
+                      className="ghost mini"
+                      title="Delete map"
+                      onClick={async () => {
+                        if (!window.confirm(`Delete "${m.name}"? Its tokens and fog go with it.`)) return;
+                        setError("");
+                        try {
+                          await api(`/api/campaigns/${campaignId}/maps/${m.id}`, { method: "DELETE" });
+                        } catch (e: any) {
+                          setError(e.message);
+                        }
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </section>
+              <section>
+                <h4>Upload map</h4>
+                <form onSubmit={uploadMap} className="stack">
+                  <input name="mapname" placeholder="Map name" />
+                  <input
+                    name="image"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
+                    required
+                  />
+                  <button className="ghost">Upload</button>
+                </form>
+                <form
+                  className="stack yt-form"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const url = (form.elements.namedItem("yturl") as HTMLInputElement).value;
+                    setError("");
+                    try {
+                      await api(`/api/campaigns/${campaignId}/maps`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                          youtubeUrl: url,
+                          name: (form.elements.namedItem("ytname") as HTMLInputElement).value,
+                        }),
+                      });
+                      form.reset();
+                    } catch (err: any) {
+                      setError(err.message);
+                    }
+                  }}
+                >
+                  <input name="ytname" placeholder="Map name" />
+                  <input name="yturl" placeholder="…or paste a YouTube link" required />
+                  <button className="ghost">Add YouTube map</button>
+                </form>
+                <p className="muted small">
+                  Heads up: YouTube maps can show ads mid-session — uploaded files never do.
+                </p>
+              </section>
+            </div>}
+            {dmPanel === "tokens" && map && <div className="gm-token-workspace">
+              <div className="gm-token-tabs" role="group" aria-label="Token source">
+                {([["prepared", "Prepared tokens"], ["monsters", "Find monsters"], ["custom", "Create NPC"]] as const).map(([tab, label]) => <button key={tab} className="ghost" aria-pressed={tokenPanelTab === tab} onClick={() => setTokenPanelTab(tab)}>{label}</button>)}
+              </div>
+              <div hidden={tokenPanelTab !== "prepared"}>
+                <PreparedTokenTray
+                  campaignId={campaignId}
+                  mapId={map.id}
+                  monster={monsterToPrepare}
+                  onCloseMonster={() => setMonsterToPrepare(null)}
+                />
+              </div>
+              <div hidden={tokenPanelTab !== "monsters"}>
+                <section>
+                  <h4>Monsters</h4>
+                  <input
+                    placeholder="Search monsters (SRD + custom)…"
+                    value={monsterQuery}
+                    onChange={(e) => setMonsterQuery(e.target.value)}
+                  />
+                  <Link to={`/campaigns/${campaignId}/bestiary`} className="muted small">
+                    Open bestiary — create &amp; edit monsters
+                  </Link>
+                  <div className="monster-hits">
+                    {monsterHits.map((m) => (
+                      <div key={m.id} className="row-between sidebar-row">
+                        <span className="mon-hit">
+                          {m.name}{" "}
+                          <span className="muted">
+                            {m.system === "remnant" ? `Threat ${m.threat}` : `CR ${fmtCr(m.cr)}`}
+                          </span>
+                        </span>
+                        <button className="ghost mini" onClick={() => { prepareMonster(m); setTokenPanelTab("prepared"); }}>
+                          Prepare
+                        </button>
+                      </div>
+                    ))}
+                    {monsterQuery.trim() && monsterHits.length === 0 && (
+                      <p className="muted small">No monsters match.</p>
+                    )}
+                  </div>
+                </section>
+              </div>
+              <div hidden={tokenPanelTab !== "custom"}>
+                <section>
+                  <h4>Custom actor</h4>
+                  <form onSubmit={placeCustom} className="stack custom-token-form">
+                    <div className="row-between">
+                      <input
+                        placeholder="Bandit, summon, NPC..."
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        required
+                      />
+                      <input
+                        type="color"
+                        className="color-pick"
+                        value={customColor}
+                        onChange={(e) => setCustomColor(e.target.value)}
+                        title="Fallback token color"
+                      />
+                    </div>
+                    <label className="small">
+                      Footprint
+                      <select name="tokenSize" defaultValue="1">
+                        <option value="1">1 square</option>
+                        <option value="2">2 x 2</option>
+                        <option value="3">3 x 3</option>
+                        <option value="4">4 x 4</option>
+                      </select>
+                    </label>
+                    <label className="custom-token-image-pick small">
+                      Transparent PNG or image (optional)
+                      <input
+                        name="tokenImage"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(event) => chooseCustomImage(event.target.files?.[0])}
+                      />
+                    </label>
+                    {customImagePreview && (
+                      <div className="custom-token-preview">
+                        <img src={customImagePreview} alt="New token preview" />
+                        <span>Cutout preview</span>
+                      </div>
+                    )}
+                    <button className="ghost">Place actor</button>
+                  </form>
+                </section>
+              </div>
+            </div>}
+            {dmPanel === "audio" && map && <div className="dm-top-panel-grid dm-audio-panel">
+              {map && (
+                <section className="map-audio-settings">
+                  <h4>Map audio</h4>
+                  <form className="stack" onSubmit={uploadMapMusic}>
+                    <label className="small">
+                      Looping music or ambience
+                      <input
+                        name="mapAudio"
+                        type="file"
+                        accept="audio/mpeg,audio/ogg,audio/wav,audio/webm,audio/mp4"
+                        required
+                      />
+                    </label>
+                    <button className="ghost mini" disabled={mapAudioBusy}>
+                      {mapAudioBusy ? "Uploading..." : map.audioUrl ? "Replace music" : "Upload music"}
+                    </button>
+                  </form>
+                  {map.audioUrl && (
+                    <button
+                      type="button"
+                      className="ghost mini map-audio-remove"
+                      disabled={mapAudioBusy}
+                      onClick={removeMapMusic}
+                    >
+                      Remove uploaded music
+                    </button>
+                  )}
+                  {map.youtubeId && (
+                    <label className="map-youtube-audio-toggle">
+                      <input
+                        type="checkbox"
+                        checked={map.youtubeAudio}
+                        onChange={(event) => {
+                          const youtubeAudio = event.target.checked;
+                          setMap((current) => (current ? { ...current, youtubeAudio } : current));
+                          setYoutubeSoundEnabled(false);
+                          patchMap({ youtubeAudio });
+                        }}
+                      />
+                      Use audio from this YouTube map
+                    </label>
+                  )}
+                  <p className="muted small map-audio-note">
+                    Each player must click once before their browser allows sound.
+                  </p>
+                </section>
+              )}
+              <section>
+                <h4>Playback</h4>
+                {map.audioUrl && <button type="button" className="ghost" onClick={toggleMapMusic}>{audioPlaying ? "Pause uploaded audio" : "Play uploaded audio"}</button>}
+                {map.audioUrl && <label className="dm-panel-slider"><span>Uploaded volume</span><input type="range" min="0" max="1" step="0.01" value={audioVolume} onChange={(event) => setAudioVolume(Number(event.target.value))} /></label>}
+                {map.youtubeId && map.youtubeAudio && <label className="dm-panel-slider"><span>YouTube volume</span><input type="range" min="0" max="1" step="0.01" value={youtubeVolume} onChange={(event) => setYoutubeVolume(Number(event.target.value))} /></label>}
+              </section>
+            </div>}
+          </section>
+        </div>
+      )}
+
+
         <div
           ref={viewportRef}
           className={`map-viewport map-tool-${tool}${sceneEncounterPlacement ? " scene-placement-active" : ""}`}
@@ -2692,7 +2714,7 @@ Choose Cancel to permanently delete it instead.`
           )}
         </div>
 
-        <aside className={`map-sidebar encounter-sidebar${sidebarCollapsed ? " encounter-sidebar-collapsed" : ""}`}>
+        <aside id="map-encounter-panel" className={`map-sidebar encounter-sidebar${sidebarCollapsed ? " encounter-sidebar-collapsed" : ""}`}>
           <button
             type="button"
             className="encounter-sidebar-toggle"
@@ -2709,6 +2731,7 @@ Choose Cancel to permanently delete it instead.`
             {sidebarCollapsed ? "‹" : "›"}
           </button>
           <div className="encounter-sidebar-content">
+          <div className="gm-encounter-heading"><strong>{map?.boardType === "shop" ? "Table & party" : "Encounter"}</strong><span className="muted small">{combat.active ? `Round ${combat.round}` : "Ready to play"}</span></div>
           {error && <div className="error">{error}</div>}
           {isDM &&
             selectedToken &&
@@ -2742,13 +2765,8 @@ Choose Cancel to permanently delete it instead.`
               </section>
             )}
           {selectedToken && (isDM || canMove(selectedToken)) && (
-            <section className="token-art-panel">
-              <div className="row-between">
-                <h4>Token appearance</h4>
-                <button className="ghost mini" onClick={() => setSelectedTokenId(null)}>
-                  {"\u2715"}
-                </button>
-              </div>
+            <details key={selectedToken.id} className="token-art-panel gm-token-appearance">
+              <summary>Token appearance <span className="muted">{selectedToken.name}</span></summary>
 
               <div className={`token-art-preview${selectedToken.imageUrl ? " has-cutout" : ""}`}>
                 {selectedToken.imageUrl ? (
@@ -2853,7 +2871,7 @@ Choose Cancel to permanently delete it instead.`
                 Transparent PNGs work best. The footprint controls occupied squares; art scale
                 only changes the visible cutout.
               </p>
-            </section>
+            </details>
           )}
           {isDM && selectedToken && statblock && (
             <section className="statblock">
@@ -3283,38 +3301,8 @@ Choose Cancel to permanently delete it instead.`
             )}
           </section>
 
-          {isDM && map && (
-            <section className="sidebar-dm-tools">
-              <h4>DM Tools</h4>
-              <div className="sidebar-dm-tools-grid">
-                <button
-                  type="button"
-                  className="sidebar-dm-tool scene"
-                  onClick={() => window.dispatchEvent(new Event("dm-tools:open-scene-director"))}
-                >
-                  <span aria-hidden="true">◈</span>
-                  <span>
-                    <strong>Scene Director</strong>
-                    <small>Save and activate encounters</small>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="sidebar-dm-tool object"
-                  onClick={() => window.dispatchEvent(new Event("dm-tools:add-map-object"))}
-                >
-                  <span aria-hidden="true">＋</span>
-                  <span>
-                    <strong>Map Object</strong>
-                    <small>Add doors, chests, clues, and more</small>
-                  </span>
-                </button>
-              </div>
-            </section>
-          )}
-
           <section className="encounter-summary">
-            <h4>Encounter</h4>
+            <h4>At a glance</h4>
             <div className="encounter-summary-grid">
               <span><strong>{tokens.length}</strong> deployed</span>
               <span><strong>{combat.combatants.length}</strong> in initiative</span>
@@ -3348,4 +3336,3 @@ Choose Cancel to permanently delete it instead.`
     </div>
   );
 }
-

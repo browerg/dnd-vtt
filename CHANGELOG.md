@@ -28,6 +28,8 @@ is the one piece of markup the launcher renders.
 
 ### Minor changes
 
+- **Clearer GM map controls** — Maps, Tokens & NPCs, Audio, Board settings, Scenes and Objects now live together above the map. Move, Ruler, Draw and Fog have their own tool row. Setup panels leave the map usable; token sources are grouped into tabs, and appearance settings expand only when needed.
+
 - **For GMs** — switch a board between Battle and Shop from the map toolbar, select
   an NPC token to write its greeting, topics and stock, and approve or deny
   purchases one by one or all at once. Shop music uses the board's existing music.
