@@ -3,7 +3,21 @@ export default function CacheRewardArt({ id }: { id: string }) {
   if (id === "relic-first-flame") return <img className="cache-reward-art cache-relic-art" src="/assets/bundles/first-flame.webp" alt="" />;
   const mystery = ["event-horizon", "chronos-engine", "prismatic-echo"].includes(id);
   return <svg className={`cache-reward-art art-${id}`} viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-    {id === "first-flame" ? <>
+    {id === "silver-requiem" ? <>
+      <circle cx="60" cy="51" r="37" fill="#64162e" stroke="none" />
+      <path d="M60 73 17 27l9 32-14-8 24 32-12-2 27 18M60 73l43-46-9 32 14-8-24 32 12-2-27 18" fill="#d9dfed" stroke="#fff" />
+      <path d="m41 104 34-78M66 27 82 16c20 5 29 19 29 37-15-20-25-22-43-18" stroke="#ea5274" strokeWidth="4" />
+      <text x="60" y="83" textAnchor="middle" fill="#fff" stroke="#101321" strokeWidth="1.5" fontFamily="Cinzel, Georgia, serif" fontWeight="700" fontSize="36">20</text>
+    </> : id === "winter-verdict" ? <>
+      <circle cx="60" cy="53" r="40" stroke="#a2d9f8" /><circle cx="60" cy="53" r="32" stroke="#779cdb" strokeDasharray="2 4" />
+      <path d="m60 9 39 44-39 43-39-43Z" stroke="#b6eaf8" />
+      <path d="M57 13h6v22l17-5-7 10-10 2v46l-3 15-3-15V42l-10-2-7-10 17 5Z" fill="#e5f9ff" stroke="#5d8ac1" />
+      <ellipse cx="60" cy="104" rx="44" ry="8" stroke="#b6eaf8" />
+    </> : id === "emberheart" ? <>
+      <path d="M60 105C10 96 10 63 31 35c-5 24 9 21 12 9C46 26 61 21 61 9c32 25 16 44 22 53 7-8 10-16 8-22 36 37 7 65-31 65Z" fill="#fa922c" stroke="none" />
+      <path d="m42 84-4-38 7-11h30l7 11-4 38-9 13H51Z" fill="#efb541" stroke="#24151b" strokeWidth="3" />
+      <path d="M47 40v21m9-21v21m9-21v21m9-21v21M44 68h32M52 77h16v11H52Z" stroke="#654022" strokeWidth="3" />
+    </> : id === "first-flame" ? <>
       <path d="m13 94 22-21 8-17 21-4 12-24 28-16" stroke="#ff972b" strokeWidth="9" opacity=".3" />
       <path d="m13 94 22-21 8-17 21-4 12-24 28-16" stroke="#ffe6a0" strokeWidth="2.5" />
       <path d="m17 59 14-18 18-4-9 17-8 12Zm39 17 16-18 17-3-4 19-19 13ZM63 20l8-13 13 2-10 17" fill="#130d18" stroke="#c27d38" />

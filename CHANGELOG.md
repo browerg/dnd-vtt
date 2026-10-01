@@ -20,6 +20,8 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **Three Mythic RWBY-inspired Nat 20 effects** — Silver-Eyed Requiem sweeps a scythe through a crimson moon before silver wings awaken. Winter’s Verdict summons a spectral greatsword through icy glyphs. Emberheart Overdrive primes twin shotgun gauntlets and punches through an aura shield. Preview them free in Nat 20 effects; win them only in Vivid Cache. Each has its own sound, with silent previews and a still reduced-motion presentation.
+
 - **Shop boards** — A board can now be a shop instead of a battlefield. Your GM sets
   one up with shopkeeper NPCs: click one to chat, ask about what they sell, then
   browse their wares and request what you want with your character's Lien (gold in
@@ -27,6 +29,8 @@ is the one piece of markup the launcher renders.
   approved items land straight in your inventory. Track your requests in My orders.
 
 ### Minor changes
+
+- **Mythic collection** — The three new critical effects join the four existing Mythic rewards. The tier remains 0.2% overall, shared equally at 1 in 3,500 per reward. All other rewards retain their previous chances, and free openings still give no duplicate VCoins.
 
 - **Clearer GM map controls** — Maps, Tokens & NPCs, Audio, Board settings, Scenes and Objects now live together above the map. Move, Ruler, Draw and Fog have their own tool row. Setup panels leave the map usable; token sources are grouped into tabs, and appearance settings expand only when needed.
 

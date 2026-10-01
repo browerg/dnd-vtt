@@ -1,10 +1,12 @@
 import { SPECIAL_CRITICALS, isCacheCritical } from "../../shared/specialCriticals.js";
+import { MYTHIC_CRITICALS, type MythicCriticalStyle } from "../../shared/mythicCriticals.js";
 import { CACHE_COST } from "./vividCacheStore.js";
 import { SPECIAL_TRAILS, isCacheTrail } from "../../shared/specialTrails.js";
 
 export type CriticalSlot = "nat20" | "nat1";
 export type CosmeticSlot = CriticalSlot | "turnStart" | "tokenBorder" | "chatFlair";
 export type CriticalEffectStyle =
+  | MythicCriticalStyle
   | "first-flame"
   | "void-collapse" | "heavens-lance" | "chronobreak"
   | "golden"
@@ -142,6 +144,7 @@ export function bundlesNewestFirst(): CosmeticBundle[] {
 }
 
 export const COSMETICS = [
+  ...MYTHIC_CRITICALS.map(effect => ({ ...effect, type: "nat20-effect" as const, slot: "nat20" as const })),
   ...SPECIAL_CRITICALS.map(effect => ({ ...effect, type: "nat20-effect" as const, slot: "nat20" as const, price: 1 })),
   ...SPECIAL_TRAILS.map(trail => ({ ...trail, type: "dice-trail" as const, price: 1 })),
   { id: "crit1-first-flame", type: "nat1-effect", slot: "nat1", effect: "first-flame", name: "First Flame · Ashfall", description: "The flame gutters into molten cracks and falling embers on a natural 1.", price: 1, rarity: "mythic" },

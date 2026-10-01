@@ -15,6 +15,7 @@ import { DICE_COSMETICS } from "../diceCosmetics";
 import { SPECIAL_DICE } from "../specialDice";
 import { isSpecialTrail } from "../specialTrails";
 import CacheRewardArt from "../components/CacheRewardArt";
+import { MYTHIC_CRITICALS } from "../../../shared/mythicCriticals";
 import SpecialDiceCatalogue from "../components/SpecialDiceCatalogue";
 import "../components/RelicAppearance.css";
 
@@ -29,7 +30,7 @@ interface ShopItem {
   name: string;
   description: string;
   price: number;
-  rarity: "starter" | "uncommon" | "rare" | "legendary" | "mythic";
+  rarity: "starter" | "uncommon" | "rare" | "epic" | "legendary" | "mythic";
   owned: boolean;
   cacheExclusive?: boolean;
 }
@@ -54,6 +55,7 @@ interface ShopResponse {
 
 const RARITY_LABEL: Record<ShopItem["rarity"], string> = {
   mythic: "Mythic",
+  epic: "Epic",
   starter: "Starter",
   uncommon: "Uncommon",
   rare: "Rare",
@@ -470,7 +472,7 @@ export default function ShopPage() {
       );
     }
 
-    if (["void-collapse", "heavens-lance", "chronobreak", "severed-fate", "mimic", "abyssal-gaze", "main-character", "jackpot", "legend-forged"].includes(item.effect ?? "")) return <div className="special-trail-swatch"><CacheRewardArt id={item.effect!} /></div>;
+    if ([...MYTHIC_CRITICALS.map(item => item.effect), "void-collapse", "heavens-lance", "chronobreak", "severed-fate", "mimic", "abyssal-gaze", "main-character", "jackpot", "legend-forged"].includes(item.effect ?? "")) return <div className="special-trail-swatch"><CacheRewardArt id={item.effect!} /></div>;
     const kind = criticalKind(item);
     return (
       <span
@@ -543,7 +545,7 @@ export default function ShopPage() {
                   <span className="emporium-equipped">EQUIPPED</span>
                 ) : item.owned ? (
                   <span className="emporium-owned">OWNED</span>
-                ) : item.rarity === "mythic" || item.cacheExclusive ? (
+                ) : item.cacheExclusive ? (
                   <span className="emporium-rarity">Vivid Cache exclusive</span>
                 ) : (
                   // A brass tag on a string, hung off the shelf edge.
@@ -574,7 +576,7 @@ export default function ShopPage() {
                   >
                     {equipped ? (item.type === "token-border" || item.type === "chat-flair" ? "Remove" : "Equipped") : "Equip"}
                   </button>
-                ) : item.rarity === "mythic" || item.cacheExclusive ? (
+                ) : item.cacheExclusive ? (
                   <span className="muted small">Win in Vivid Cache to equip.</span>
                 ) : (
                   <button

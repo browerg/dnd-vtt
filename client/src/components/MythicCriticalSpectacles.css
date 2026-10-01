@@ -1,0 +1,116 @@
+/* Three authored 5.2s sequences: anticipation, signature action, result, exit. */
+.critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) {
+  --critical-primary: #f7eced;
+  --critical-secondary: #d65274;
+  background: #080910fc;
+  animation: mythic-overlay 5.2s both;
+}
+.critical-roll-overlay.effect-winter-verdict { --critical-secondary: #a7e1fa; background: #071422fc; }
+.critical-roll-overlay.effect-emberheart { --critical-secondary: #ffc764; background: #190e19fc; }
+.critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) :is(.critical-emblem, .critical-rings, .critical-particles, .critical-scan, .critical-screen-flash, .critical-vignette) { display: none; }
+.critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-banner {
+  position: absolute; inset: auto 16px 5%; width: auto; max-width: none; margin: 0;
+  background: none; border: 0; box-shadow: none; padding: 0; transform: none;
+  animation: mythic-caption 5.2s both;
+}
+.critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-banner h2 { font-size: clamp(22px, 3vw, 38px); color: #f5f1ed; text-shadow: none; }
+.critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-kicker { color: var(--critical-secondary); }
+.critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-banner-line { display: none; }
+.critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-message { font-size: 16px; color: #d8d9e2; overflow-wrap: anywhere; }
+.mythic-scene { position: absolute; inset: 0; overflow: hidden; }
+.mythic-stage { position: absolute; width: min(1100px, 110vh, 100vw); height: auto; left: 50%; top: 40%; transform: translate(-50%, -50%); overflow: visible; }
+.mythic-number text { text-anchor: middle; font: 700 180px "Cinzel", Georgia, serif; letter-spacing: -8px; fill: #faf7f2; }
+.mythic-scene-title { position: absolute; bottom: 25%; left: 16px; right: 16px; text-align: center; font: 500 clamp(19px, 2.7vw, 31px) "Cinzel", Georgia, serif; letter-spacing: .06em; color: var(--critical-secondary); animation: mythic-caption 5.2s both; }
+@keyframes mythic-overlay { 0% { opacity: 0; } 5%, 90% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes mythic-caption { 0%, 48% { opacity: 0; transform: translateY(10px); } 60%, 91% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-5px); } }
+
+/* Ruby: weapon silhouette -> silver eye -> wings, with physical petal shapes. */
+.requiem-moon { position: absolute; left: 50%; top: 37%; width: min(47vw, 53vh); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); background: #891c3e; box-shadow: inset -30px -18px 0 #5c142a; animation: requiem-moon 5.2s both; }
+.requiem-horizon { position: absolute; left: -10%; top: 45%; width: 120%; height: 1px; background: #a52849; transform: rotate(-14deg); opacity: .4; }
+.requiem-scythe { transform-origin: 500px 350px; animation: requiem-scythe 5.2s cubic-bezier(.2,.7,.2,1) both; }
+.requiem-cut { stroke-dasharray: 1; stroke-dashoffset: 1; animation: requiem-cut 5.2s both; }
+.requiem-eye { transform-origin: 500px 282px; animation: requiem-eye 5.2s both; }
+.requiem-wings { transform-origin: 500px 345px; animation: requiem-wings 5.2s cubic-bezier(.16,1,.3,1) both; }
+.requiem-feather { fill: url(#requiem-silver); stroke: #f2f4fc; stroke-width: .75; opacity: calc(.98 - var(--i) * .025); }
+.requiem-number { transform-origin: 500px 350px; animation: requiem-number 5.2s both; }
+.requiem-number text { paint-order: stroke; stroke: #11111c; stroke-width: 5; }
+.requiem-petals path { animation: requiem-petal 5.2s both; }
+@keyframes requiem-moon { 0% { opacity: 0; } 12%, 24% { opacity: 1; } 37%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.15); } }
+@keyframes requiem-scythe { 0% { opacity: 0; transform: rotate(-95deg) scale(.7); } 12% { opacity: 1; transform: rotate(-25deg) scale(1); } 21% { transform: rotate(-30deg); opacity: 1; } 30% { transform: rotate(110deg); opacity: 1; } 36%, 100% { transform: rotate(145deg) scale(1.2); opacity: 0; } }
+@keyframes requiem-cut { 0%, 22% { stroke-dashoffset: 1; opacity: 0; } 25% { opacity: 1; } 30% { stroke-dashoffset: 0; opacity: .8; } 39%, 100% { stroke-dashoffset: -1; opacity: 0; } }
+@keyframes requiem-eye { 0%, 28% { opacity: 0; transform: scaleY(.02); } 35%, 39% { opacity: 1; transform: scaleY(1); } 49%, 100% { opacity: 0; transform: scale(1.3); } }
+@keyframes requiem-wings { 0%, 38% { opacity: 0; transform: scaleX(.05) scaleY(.65); } 55%, 85% { opacity: .85; transform: scale(1); } 100% { opacity: 0; transform: scale(1.04); } }
+@keyframes requiem-number { 0%, 43% { opacity: 0; transform: scale(.7); } 54%, 92% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.03); } }
+@keyframes requiem-petal { 0%, 24% { opacity: 0; transform: translate(-50px, 0) scale(.1); } 36% { opacity: .95; } 85% { opacity: .65; } 100% { opacity: 0; transform: translate(calc(45px + var(--i) * 5px), 130px) rotate(160deg); } }
+
+/* Weiss: architectural symmetry, counter-rotating glyphs, falling steel and ice. */
+.winter-frost-edge { position: absolute; inset: 0; box-shadow: inset 0 -70px 100px #5388b526; }
+.winter-arches { opacity: .17; stroke-width: 1.5; }
+.winter-glyph, .winter-floor { fill: none; stroke: #a2d9f8; stroke-width: 1.3; }
+.winter-glyph.outer { animation: winter-glyph 5.2s both; }
+.winter-glyph.inner { animation: winter-counter 5.2s both; stroke: #dffaff; }
+.winter-floor { animation: winter-floor 5.2s both; }
+.winter-sword { animation: winter-sword 5.2s cubic-bezier(.55,.05,.55,1) both; }
+.winter-fracture { animation: winter-fracture 5.2s both; }
+.winter-shards path { animation: winter-shard 5.2s both; }
+.winter-number { animation: winter-number 5.2s both; transform-origin: 500px 350px; }
+.winter-number text { fill: #e6f7ff; stroke: #3778a1; stroke-width: 1; paint-order: stroke; }
+.winter-snow circle { animation: winter-snow 5.2s both; }
+@keyframes winter-glyph { 0% { opacity: 0; transform: rotate(-45deg) scale(.4); } 20% { opacity: .7; transform: rotate(0) scale(1); } 43% { opacity: .9; } 100% { opacity: .1; transform: rotate(65deg) scale(1); } }
+@keyframes winter-counter { 0%, 7% { opacity: 0; transform: rotate(70deg) scale(.3); } 25% { opacity: .8; transform: rotate(0) scale(1); } 100% { opacity: .1; transform: rotate(-80deg) scale(1); } }
+@keyframes winter-floor { 0%, 12% { opacity: 0; transform: scale(.2); } 29%, 44% { opacity: .8; transform: scale(1); } 49% { opacity: 1; transform: scale(1.07); } 100% { opacity: .2; transform: scale(1); } }
+@keyframes winter-sword { 0%, 18% { opacity: 0; transform: translateY(-190px); } 29%, 34% { opacity: 1; transform: translateY(-105px); } 45%, 53% { opacity: 1; transform: translateY(18px); } 69%, 100% { opacity: .42; transform: translateY(18px); } }
+@keyframes winter-fracture { 0%, 43% { opacity: 0; stroke-dasharray: 1; stroke-dashoffset: 1; } 55%, 90% { opacity: .8; stroke-dasharray: 1; stroke-dashoffset: 0; } 100% { opacity: 0; stroke-dasharray: 1; stroke-dashoffset: 0; } }
+@keyframes winter-shard { 0%, 44% { opacity: 0; transform: translateY(0) scale(0); } 51% { opacity: .85; transform: translateY(calc(-50px - var(--i) * 2px)) scale(1); } 90%, 100% { opacity: 0; transform: translateY(100px) rotate(30deg); } }
+@keyframes winter-number { 0%, 48% { opacity: 0; transform: translateY(20px); } 61%, 92% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
+@keyframes winter-snow { 0%, 22% { opacity: 0; transform: translateY(-15px); } 45%, 80% { opacity: .6; } 100% { opacity: 0; transform: translateY(calc(25px + var(--i) * 2px)); } }
+
+/* Yang: two mechanical recoil beats, a forward punch, fractured aura cells. */
+.emberheart-heat { position: absolute; inset: 15% 10% 23%; background: radial-gradient(ellipse, #a329173b, transparent 65%); animation: emberheart-heat 5.2s both; }
+.emberheart-left { transform-origin: 0 0; animation: emberheart-left 5.2s both; }
+.emberheart-right { transform-origin: 0 0; animation: emberheart-right 5.2s both; }
+.emberheart-recoil { animation: emberheart-recoil 5.2s both; }
+.emberheart-shield path { transform-box: fill-box; transform-origin: center; animation: emberheart-shield 5.2s both; }
+.emberheart-flare { transform-origin: 500px 447px; animation: emberheart-flare 5.2s both; }
+.emberheart-impact { transform-origin: 500px 327px; animation: emberheart-impact 5.2s both; }
+.emberheart-finisher > g { animation: emberheart-punch 5.2s both; }
+.emberheart-number { transform-origin: 500px 350px; animation: emberheart-number 5.2s both; }
+.emberheart-number text { fill: #fff1bf; paint-order: stroke; stroke: #6b251c; stroke-width: 6; }
+.emberheart-casings rect { animation: emberheart-casing 5.2s both; }
+@keyframes emberheart-heat { 0%, 25% { opacity: 0; } 46%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes emberheart-left { 0% { opacity: 0; transform: translate(-200px, 120px) rotate(-40deg); } 16%, 21% { opacity: 1; transform: translate(0, 0); } 25% { transform: translate(-20px, 35px) rotate(-9deg); } 31%, 84% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(-80px, 80px); } }
+@keyframes emberheart-right { 0%, 5% { opacity: 0; transform: translate(200px, 120px) rotate(40deg); } 18%, 28% { opacity: 1; transform: translate(0, 0); } 32% { transform: translate(20px, 35px) rotate(9deg); } 38%, 84% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(80px, 80px); } }
+@keyframes emberheart-recoil { 0%, 22% { opacity: 0; } 25% { opacity: .7; } 29% { opacity: 0; } 32% { opacity: .65; } 37%, 100% { opacity: 0; } }
+@keyframes emberheart-shield { 0% { opacity: 0; transform: scale(.4); } 22%, 41% { opacity: .4; transform: scale(1); } 47% { opacity: .8; transform: scale(.98); } 67%, 100% { opacity: 0; transform: translate(calc((var(--i) - 17) * 15px), calc((var(--i) - 17) * 7px)) rotate(35deg) scale(.2); } }
+@keyframes emberheart-flare { 0%, 42% { opacity: 0; transform: scale(.15); } 55% { opacity: .65; transform: scale(1.2); } 82% { opacity: .35; transform: scale(1.05); } 100% { opacity: 0; transform: scale(1.1); } }
+@keyframes emberheart-impact { 0%, 44% { opacity: 0; transform: scale(.5); } 49% { opacity: 1; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(1.3); } }
+@keyframes emberheart-punch { 0%, 34% { opacity: 0; transform: translateY(180px) scale(.3) rotate(-20deg); } 40% { opacity: 1; transform: translateY(40px) scale(.7) rotate(-12deg); } 46%, 49% { opacity: 1; transform: scale(1.9) rotate(0); } 58%, 100% { opacity: 0; transform: scale(2.7); } }
+@keyframes emberheart-number { 0%, 52% { opacity: 0; transform: scale(1.3) rotate(-8deg); } 60%, 91% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.04); } }
+@keyframes emberheart-casing { 0%, 26% { opacity: 0; transform: translate(0, 0); } 33% { opacity: 1; } 64%, 100% { opacity: 0; transform: translate(calc((var(--i) - 3.5) * 60px), 190px) rotate(260deg); } }
+
+@media (max-width: 600px) {
+  .mythic-stage { width: 125vw; top: 38%; }
+  .mythic-scene-title { bottom: 28%; font-size: 19px; letter-spacing: .01em; }
+  .critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-banner { bottom: 8%; }
+  .critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-message { font-size: 14px; }
+}
+@media (max-height: 540px) and (min-width: 601px) {
+  .mythic-stage { width: 110vh; top: 34%; }
+  .mythic-scene-title { bottom: 30%; font-size: 18px; }
+  .critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-banner { bottom: 3%; }
+  .critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) .critical-message { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart),
+  .critical-roll-overlay:is(.effect-silver-requiem, .effect-winter-verdict, .effect-emberheart) *,
+  .mythic-scene * { animation: none !important; }
+  .requiem-moon, .requiem-scythe, .requiem-cut, .requiem-eye, .requiem-petals,
+  .winter-shards, .winter-fracture, .winter-snow, .emberheart-finisher, .emberheart-recoil, .emberheart-casings, .emberheart-impact { display: none; }
+  .requiem-wings { opacity: .65; }
+  .winter-glyph { opacity: .3; }
+  .winter-sword { opacity: .25; }
+  .winter-floor { opacity: .5; }
+  .emberheart-shield { opacity: .2; }
+  .emberheart-flare { opacity: .25; }
+  .mythic-number { opacity: 1; }
+}

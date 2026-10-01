@@ -6,6 +6,37 @@
 
 type Score = (kit: Kit) => number;
 
+/** Original synthesized scores: no sampled music or character audio. */
+export const playSilverRequiemSound = () => play(0.17, ({ t0, tone, noise }) => {
+  tone("triangle", 164.81, 164.81, t0, t0 + 1.5, .2, .3);
+  noise(t0 + 1.12, .38, .6, "bandpass", 700, 6200, .8);
+  tone("sine", 1100, 2200, t0 + 1.55, t0 + 2.2, .11, .1);
+  [523.25, 783.99, 1046.5, 1318.51].forEach((hz, i) => tone("sine", hz, hz, t0 + 2.2 + i * .07, t0 + 4.5, .13, .12));
+  return 5.2;
+});
+
+export const playWinterVerdictSound = () => play(0.17, ({ t0, tone, noise }) => {
+  [587.33, 880, 1174.66].forEach((hz, i) => tone("sine", hz, hz, t0 + i * .25, t0 + 2, .16, .03));
+  noise(t0 + 1.7, .6, .25, "highpass", 1200, 4500);
+  tone("triangle", 100, 38, t0 + 2.34, t0 + 3.1, .65, .008);
+  noise(t0 + 2.34, .5, .5, "highpass", 5800, 1600);
+  [1174.66, 1760, 2349.32].forEach((hz, i) => tone("sine", hz, hz * .998, t0 + 2.4 + i * .08, t0 + 4.65, .09, .008));
+  return 5.2;
+});
+
+export const playEmberheartSound = () => play(0.18, ({ t0, tone, noise }) => {
+  tone("sawtooth", 65, 130, t0 + .25, t0 + 1.15, .09, .2);
+  [1.25, 1.62].forEach(beat => {
+    noise(t0 + beat, .15, .6, "lowpass", 3000, 500);
+    tone("triangle", 130, 48, t0 + beat, t0 + beat + .25, .55, .008);
+  });
+  noise(t0 + 2.15, .22, .28, "bandpass", 500, 5000);
+  tone("sine", 110, 28, t0 + 2.39, t0 + 3.3, .8, .008);
+  noise(t0 + 2.39, .48, .65, "lowpass", 4800, 350);
+  [220, 330, 440].forEach(hz => tone("triangle", hz, hz, t0 + 2.85, t0 + 4.6, .11, .14));
+  return 5.2;
+});
+
 interface Kit {
   t0: number;
   tone: (type: OscillatorType, from: number, to: number, start: number, end: number, peak: number, attack?: number) => OscillatorNode;

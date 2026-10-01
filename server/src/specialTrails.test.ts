@@ -21,7 +21,7 @@ test("special trails have matching renderers, shop entitlements and Legendary re
     assert.ok(isSpecialTrail(trail.effect)); assert.ok(isCacheTrail(trail.id));
     assert.ok(COSMETICS.some(item => item.id === trail.id && item.effect === trail.effect));
     const reward = CACHE_REWARDS.find(item => item.id === trail.effect)!;
-    assert.equal(reward.rarity, "legendary"); assert.equal(reward.weight, 45);
+    assert.equal(reward.rarity, "legendary"); assert.equal(reward.weight, 315);
     assert.deepEqual(reward.unlockIds, [trail.id]);
   }
   assert.equal(isSpecialTrail("ember"), false);

@@ -128,11 +128,11 @@ test("new Legendary trails grant their own entitlement on a free opening without
 
 test("weighted selection covers every ticket exactly with configured rarity counts", () => {
   const counts: Record<string, number> = {};
-  for (let ticket = 0; ticket < 10000; ticket++) {
+  for (let ticket = 0; ticket < 70000; ticket++) {
     const reward = selectCacheReward(ticket); counts[reward.rarity] = (counts[reward.rarity] || 0) + 1;
   }
-  assert.deepEqual(counts, { common: 7000, rare: 2200, epic: 600, legendary: 180, mythic: 20 });
-  assert.throws(() => selectCacheReward(10000)); assert.throws(() => selectCacheReward(-1));
+  assert.deepEqual(counts, { common: 49000, rare: 15400, epic: 4200, legendary: 1260, mythic: 140 });
+  assert.throws(() => selectCacheReward(70000)); assert.throws(() => selectCacheReward(-1));
 });
 // Small seeded generator so the theatre tests are deterministic.
 function seeded(seed: number) { return () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296); }
@@ -175,8 +175,8 @@ test("the three new dice sit in the mythic tier and the tier keeps its 0.2% shar
   }
   const total = CACHE_REWARDS.reduce((n, r) => n + r.weight, 0);
   const mythic = CACHE_REWARDS.filter(r => r.rarity === "mythic").reduce((n, r) => n + r.weight, 0);
-  assert.equal(total, 10000);
-  assert.equal(mythic, 20);
+  assert.equal(total, 70000);
+  assert.equal(mythic, 140);
 });
 test("a free opening grants the reward, moves no VCoins, and refunds nothing on a duplicate", () => {
   const dice = CACHE_REWARDS.find(r => r.id === "event-horizon")!;
@@ -215,10 +215,10 @@ test("the spin curve winds up, overshoots once, and lands exactly on the winner"
 });
 
 test("new critical rewards grant independently and preserve the 6% Epic tier", () => {
-  assert.equal(CACHE_REWARDS.filter(r => r.rarity === "epic").reduce((n,r) => n+r.weight,0),600);
+  assert.equal(CACHE_REWARDS.filter(r => r.rarity === "epic").reduce((n,r) => n+r.weight,0),4200);
   for (const effect of ["void-collapse", "heavens-lance", "chronobreak"]) {
     const reward = CACHE_REWARDS.find(r => r.id === effect)!;
-    assert.equal(reward.weight,150);
+    assert.equal(reward.weight,1050);
     const f = fixture(0, () => reward, 0);
     try {
       const result = f.store.open(1,key);
@@ -227,6 +227,30 @@ test("new critical rewards grant independently and preserve the 6% Epic tier", (
       assert.equal(f.store.owned(2,`crit20-${effect}`),false);
       f.store.acknowledge(1,key);
       assert.equal(f.store.open(1,next).refund,0);
+    } finally { f.db.close(); }
+  }
+});
+
+
+test("each Mythic critical grants only its own effect, persists, and never refunds free duplicates", () => {
+  for (const effect of ["silver-requiem", "winter-verdict", "emberheart"]) {
+    const reward = CACHE_REWARDS.find(r => r.id === effect)!;
+    const f = fixture(0, () => reward, 0);
+    try {
+      const result = f.store.open(1, key);
+      assert.equal(result.reward.rarity, "mythic");
+      assert.equal(result.balance, 0);
+      assert.equal(result.duplicate, false);
+      assert.equal(f.store.owned(1, "crit20-" + effect), true);
+      assert.equal(f.store.owned(2, "crit20-" + effect), false);
+      assert.equal(f.store.owned(1, "dice-first-flame"), false);
+      assert.equal(Number(f.db.prepare("SELECT count(*) n FROM cosmetic_unlocks WHERE user_id = 1").get()!.n), 1);
+      assert.equal(createVividCacheStore(f.db, 0, () => reward, 0).pending(1)?.reward.id, effect);
+      f.store.acknowledge(1, key);
+      const duplicate = f.store.open(1, next);
+      assert.equal(duplicate.duplicate, true);
+      assert.equal(duplicate.refund, 0);
+      assert.equal(f.balance(), 0);
     } finally { f.db.close(); }
   }
 });

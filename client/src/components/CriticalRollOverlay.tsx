@@ -6,6 +6,9 @@ import AbyssalGazeSpectacle from "./AbyssalGazeSpectacle";
 import MainCharacterSpectacle from "./MainCharacterSpectacle";
 import JackpotSpectacle from "./JackpotSpectacle";
 import LegendForgedSpectacle from "./LegendForgedSpectacle";
+import { MYTHIC_CRITICALS, type MythicCriticalStyle } from "../../../shared/mythicCriticals";
+import { SilverRequiemSpectacle, WinterVerdictSpectacle, EmberheartSpectacle } from "./MythicCriticalSpectacles";
+import { playSilverRequiemSound, playWinterVerdictSound, playEmberheartSound } from "../criticalSounds";
 import {
   playAbyssalGazeSound, playJackpotSound, playLegendForgedSound, playMainCharacterSound, playMimicSound, playSeveredFateSound,
 } from "../criticalSounds";
@@ -15,6 +18,7 @@ import "./CriticalRollEffects.css";
 
 export type CriticalRollKind = "nat20" | "nat1";
 export type CriticalEffectStyle =
+  | MythicCriticalStyle
   | SpecialCriticalStyle
   | "first-flame"
   | "golden"
@@ -48,7 +52,7 @@ interface ActiveCritical extends CriticalRollEventDetail {
 const EVENT_NAME = "tabletop:critical-roll";
 let eventId = 0;
 
-const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame", "main-character", "jackpot", "legend-forged", ...SPECIAL_CRITICALS.map(effect => effect.effect)]);
+const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame", "main-character", "jackpot", "legend-forged", ...SPECIAL_CRITICALS.map(effect => effect.effect), ...MYTHIC_CRITICALS.map(effect => effect.effect)]);
 const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris", "first-flame", "severed-fate", "mimic", "abyssal-gaze"]);
 
 /**
@@ -57,6 +61,9 @@ const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris"
  * so one table serves both. Adding one is an entry here plus its component.
  */
 const SPECTACLES: Partial<Record<CriticalEffectStyle, { scene: (props: { userName: string }) => JSX.Element; sound: () => void; duration: number; message: string }>> = {
+  "silver-requiem": { scene: SilverRequiemSpectacle, sound: playSilverRequiemSound, duration: 5200, message: "Even the darkness remembers the light." },
+  "winter-verdict": { scene: WinterVerdictSpectacle, sound: playWinterVerdictSound, duration: 5200, message: "By your hand, winter answers." },
+  emberheart: { scene: EmberheartSpectacle, sound: playEmberheartSound, duration: 5200, message: "Every hit only made you stronger." },
   "severed-fate": { scene: SeveredFateSpectacle, sound: playSeveredFateSound, duration: 4000, message: "Fate has cut your thread." },
   mimic: { scene: MimicSpectacle, sound: playMimicSound, duration: 4200, message: "It was a mimic." },
   "abyssal-gaze": { scene: AbyssalGazeSpectacle, sound: playAbyssalGazeSound, duration: 4400, message: "Something has noticed you." },
