@@ -302,6 +302,7 @@ shopRouter.get("/", (req, res) => {
     items: COSMETICS.map((item) => presentItem(user.id, item, bypass.active)),
     bundles: bundlesNewestFirst(),
     specialDice: MYTHIC_DICE.filter(dice => dice.theme !== "first-flame").map(dice => ({ ...dice, owned: ownsMythicDice(db, user.id, dice.theme) })),
+    ownedDiceThemes: MYTHIC_DICE.filter(dice => ownsMythicDice(db, user.id, dice.theme)).map(dice => dice.theme),
   });
 });
 
