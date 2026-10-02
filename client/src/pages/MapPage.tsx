@@ -15,6 +15,7 @@ import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import MapObjects from "../components/MapObjects";
 import ShopBoard, { type ShopView } from "../components/ShopBoard";
+import TokenQuickCard, { type QuickRoll, type VitalsResult } from "../components/TokenQuickCard";
 import SceneDirector from "../components/SceneDirector";
 import PreparedTokenTray, { type MonsterPreparation } from "../components/PreparedTokenTray";
 import YouTubeMapPlayer from "../components/YouTubeMapPlayer";
@@ -642,6 +643,17 @@ export default function MapPage() {
   const viewportRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef(view);
   viewRef.current = view;
+  // The token quick card positions itself inside the viewport, so track its size.
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const measure = () => setViewportSize({ width: el.clientWidth, height: el.clientHeight });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loaded]);
   const dragRef = useRef<
     | { kind: "pan"; startX: number; startY: number; viewX: number; viewY: number; moved: boolean }
     | { kind: "token"; tokenId: number; offsetX: number; offsetY: number; moved: boolean }
@@ -1797,6 +1809,136 @@ Choose Cancel to permanently delete it instead.`
     map?.rulerCalibration && !calibratingRuler ? Object.entries(remoteRulers).map(([name, r]) => ({ name, r })) : []
   );
 
+  const applyVitals = async (token: Token, action: "damage" | "heal" | "aura", amount: number, ignoreArmor: boolean) => {
+    if (!map) return null;
+    const result = await api<{ token: Token; result: VitalsResult | null }>(
+      `/api/campaigns/${campaignId}/maps/${map.id}/tokens/${token.id}/vitals`,
+      { method: "POST", body: JSON.stringify({ action, amount, ignoreArmor }) }
+    );
+    setTokens((previous) => previous.map((item) => (item.id === token.id ? result.token : item)));
+    return result.result;
+  };
+
+  const quickRolls = (token: Token): QuickRoll[] => {
+    if (!statblock || !token.monsterId) return [];
+    if (statblock.system === "remnant" && statblock.ferocity) {
+      return [
+        { label: "Attack", formula: `2d10+1d${statblock.ferocity}`, title: `${token.name}: Attack` },
+        { label: "Damage", formula: `1d${statblock.ferocity}`, title: `${token.name}: Damage` },
+      ];
+    }
+    return (statblock.actions ?? []).slice(0, 2).flatMap((action) => [
+      ...(action.attack_bonus != null
+        ? [{ label: `${action.name} hit`, formula: `1d20+${action.attack_bonus}`, title: `${token.name}: ${action.name} (to hit)` }]
+        : []),
+      ...(action.damage_dice
+        ? [{
+            label: `${action.name} dmg`,
+            formula: `${action.damage_dice}${action.damage_bonus ? `+${action.damage_bonus}` : ""}`,
+            title: `${token.name}: ${action.name} damage`,
+          }]
+        : []),
+    ]);
+  };
+
+  const showFullDetails = () => {
+    setSidebarCollapsed(false);
+    localStorage.setItem("encounter-sidebar-collapsed", "0");
+    window.setTimeout(() => {
+      document.querySelector(".encounter-sidebar .statblock, .encounter-sidebar .token-art-panel")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const renderQuickCard = (token: Token) => {
+    const scale = view.scale;
+    const ownStatblock = token.monsterId && statblock ? statblock : null;
+    const owner = token.characterId != null ? characters.find((c) => c.id === token.characterId) : undefined;
+    const subtitle = ownStatblock
+      ? ownStatblock.system === "remnant"
+        ? `Armor ${ownStatblock.armor ?? 0} · Threat ${ownStatblock.threat ?? "?"}`
+        : `AC ${ownStatblock.armor_class} · CR ${fmtCr(ownStatblock.cr)}`
+      : owner
+        ? `Played by ${owner.ownerName}`
+        : "Map token";
+    const stateLabel = isFinalFlare(token)
+      ? "Final Flare"
+      : isCriticalDowned(token)
+        ? "Critically downed"
+        : isResolvedDowned(token)
+          ? "Downed"
+          : token.hp != null && token.hp <= 0
+            ? "Down"
+            : "";
+    const inInitiative = combat.combatants.some((c) => c.tokenId === token.id);
+    const canRunShop =
+      isDM && (token.ownerId == null || token.ownerId === user?.id) && (map?.boardType === "shop" || token.isShopkeeper);
+
+    return (
+      <TokenQuickCard
+        token={token}
+        campaignId={campaignId}
+        anchor={{ x: view.x + token.x * scale, y: view.y + token.y * scale, radius: (token.size * g * scale) / 2 }}
+        viewport={viewportSize}
+        canEdit={isDM}
+        subtitle={subtitle}
+        armor={ownStatblock?.system === "remnant" ? ownStatblock.armor ?? 0 : 0}
+        rolls={isDM ? quickRolls(token) : []}
+        conditionOptions={system === "remnant" ? REMNANT_CONDITIONS : CONDITIONS}
+        stateLabel={stateLabel}
+        onApply={(action, amount, ignoreArmor) => applyVitals(token, action, amount, ignoreArmor)}
+        onToggleCondition={(condition) => toggleTokenCondition(token, condition)}
+        onRoll={(roll) => rollDice(roll.formula, roll.title)}
+        onClose={() => setSelectedTokenId(null)}
+        actions={
+          isDM ? (
+            <>
+              {!inInitiative && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    api(`/api/campaigns/${campaignId}/combat/combatants`, {
+                      method: "POST",
+                      body: JSON.stringify({ tokenId: token.id }),
+                    }).catch((e: any) => setError(e.message))
+                  }
+                >
+                  + Initiative
+                </button>
+              )}
+              {canRunShop && (
+                <button type="button" onClick={() => setShopView({ tokenId: token.id, mode: "edit" })}>
+                  {token.isShopkeeper ? "Shop" : "Make shopkeeper"}
+                </button>
+              )}
+              {token.characterId == null && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await api(`/api/campaigns/${campaignId}/maps/${map!.id}/tokens/${token.id}/return-to-tray`, {
+                        method: "POST",
+                      });
+                      setSelectedTokenId(null);
+                      window.dispatchEvent(new Event("prepared-tokens:refresh"));
+                    } catch (e: any) {
+                      setError(e.message);
+                    }
+                  }}
+                >
+                  To tray
+                </button>
+              )}
+              <button type="button" className="tqc-more" onClick={showFullDetails}>
+                Details ›
+              </button>
+            </>
+          ) : null
+        }
+      />
+    );
+  };
+
   let fogPath = "";
   if (map?.fogOn && imgSize.w > 0) {
     const cols = Math.ceil(imgSize.w / g);
@@ -2406,6 +2548,7 @@ Choose Cancel to permanently delete it instead.`
               {isDM ? "Shop board — select an NPC token to set up a shopkeeper" : "Shop — click a shopkeeper to talk"}
             </div>
           )}
+          {map && selectedToken && (isDM || canMove(selectedToken)) && renderQuickCard(selectedToken)}
           {!map ? (
             <div className="page-center muted">
               {isDM ? "Upload a map to get started →" : "The DM hasn't set a map yet."}

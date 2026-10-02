@@ -16,6 +16,23 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 2 October 2026
+
+### Major changes
+
+- **Token quick card** — Click a token on the battle map and a card pops up right
+  beside it. GMs get the token's Aura and HP, a damage box, attack and damage rolls,
+  conditions and quick actions without leaving the map. Players clicking their own
+  token see their Aura, HP and conditions at a glance.
+
+### Minor changes
+
+- **Damage follows the Huntsman's Handbook** — Aura absorbs hits first; a hit that
+  empties it breaks Aura and the rest carries into HP. Grimm Armor is taken off
+  before HP, with an option to ignore it for weak-point called shots.
+- **GMs can damage and heal player characters from the map** — changes go straight
+  to the character's sheet, along with any conditions added or removed.
+
 ## 1 October 2026
 
 ### Major changes

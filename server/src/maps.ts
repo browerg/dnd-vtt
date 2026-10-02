@@ -10,6 +10,8 @@ import { db, uploadsDir } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
+import { broadcastCharacter } from "./characters.js";
+import { applyDamage, applyHeal, restoreAura, type Vitals } from "./tokenVitals.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
@@ -664,7 +666,8 @@ mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/aura", (req, res) => {
   res.json({ token: updated });
 });
 
-// Conditions on monster/custom tokens (character tokens read their sheet).
+// Conditions on any token. Character tokens write through to the sheet, which
+// is where their conditions live.
 mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/conditions", (req, res) => {
   const campaignId = Number(req.params.id);
   const role = memberRole(campaignId, user(req).id);
@@ -672,18 +675,133 @@ mapsRouter.put("/:id/maps/:mapId/tokens/:tokenId/conditions", (req, res) => {
   if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM edits token conditions." });
   const token = getToken(Number(req.params.tokenId));
   if (!token || token.campaignId !== campaignId) return res.status(404).json({ error: "Token not found." });
-  if (token.characterId) {
-    return res.status(400).json({ error: "Character conditions live on the character sheet." });
-  }
   const conditions = req.body?.conditions;
   if (!Array.isArray(conditions) || conditions.length > 20) {
     return res.status(400).json({ error: "Conditions must be a short list." });
   }
   const clean = conditions.map((c) => String(c).slice(0, 30)).filter(Boolean);
-  db.prepare("UPDATE tokens SET conditions = ? WHERE id = ?").run(JSON.stringify(clean), token.id);
+  if (token.characterId) {
+    updateCharacterData(token.characterId, (data) => ({ ...data, conditions: clean }));
+    broadcastCharacter(campaignId, token.characterId, 0);
+  } else {
+    db.prepare("UPDATE tokens SET conditions = ? WHERE id = ?").run(JSON.stringify(clean), token.id);
+  }
   const updated = getToken(token.id)!;
   getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
   res.json({ token: updated });
+});
+
+function updateCharacterData(characterId: number, change: (data: Record<string, any>) => Record<string, any>) {
+  const row = db.prepare("SELECT data FROM characters WHERE id = ?").get(characterId) as any;
+  if (!row) return;
+  let data: Record<string, any> = {};
+  try {
+    data = JSON.parse(row.data) ?? {};
+  } catch {
+    data = {};
+  }
+  db.prepare("UPDATE characters SET data = ?, updated_at = datetime('now') WHERE id = ?").run(
+    JSON.stringify(change(data)),
+    characterId
+  );
+}
+
+const numOrNull = (value: unknown) => (value == null || !Number.isFinite(Number(value)) ? null : Number(value));
+const conditionList = (value: unknown) => (Array.isArray(value) ? value.map(String) : []);
+
+// Damage, healing and Aura for any token, from the GM's quick card. The rules
+// live in tokenVitals.ts; this reads the token's numbers from wherever they
+// are stored (the sheet for characters, the token for everything else).
+mapsRouter.post("/:id/maps/:mapId/tokens/:tokenId/vitals", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the GM applies damage." });
+  const token = getToken(Number(req.params.tokenId));
+  if (!token || token.campaignId !== campaignId) return res.status(404).json({ error: "Token not found." });
+
+  const action = req.body?.action;
+  if (!["damage", "heal", "aura"].includes(action)) {
+    return res.status(400).json({ error: "Choose damage, heal or aura." });
+  }
+  const amount = Number(req.body?.amount);
+  if (!Number.isFinite(amount) || amount < 0 || amount > 9999) {
+    return res.status(400).json({ error: "Enter an amount from 0 to 9999." });
+  }
+
+  let current: Vitals;
+  let armor = 0;
+  if (token.characterId) {
+    const row = db.prepare("SELECT data FROM characters WHERE id = ?").get(token.characterId) as any;
+    let data: Record<string, any> = {};
+    try {
+      data = JSON.parse(row?.data ?? "{}") ?? {};
+    } catch {
+      data = {};
+    }
+    current = {
+      hp: numOrNull(data.hp),
+      maxHp: numOrNull(data.maxHp),
+      aura: numOrNull(data.aura),
+      auraMax: numOrNull(data.auraMax),
+      tempHp: numOrNull(data.tempHp) ?? 0,
+      conditions: conditionList(data.conditions),
+    };
+  } else {
+    const row = db
+      .prepare(
+        `SELECT t.hp, t.max_hp, t.aura, t.aura_max, t.conditions, json_extract(m.data, '$.armor') AS armor
+         FROM tokens t LEFT JOIN monsters m ON m.id = t.monster_id WHERE t.id = ?`
+      )
+      .get(token.id) as any;
+    current = {
+      hp: numOrNull(row?.hp),
+      maxHp: numOrNull(row?.max_hp),
+      aura: numOrNull(row?.aura),
+      auraMax: numOrNull(row?.aura_max),
+      tempHp: 0,
+      conditions: conditionList(JSON.parse(row?.conditions ?? "[]")),
+    };
+    armor = numOrNull(row?.armor) ?? 0;
+  }
+
+  const result =
+    action === "damage"
+      ? applyDamage(current, amount, { armor, ignoreArmor: req.body?.ignoreArmor === true })
+      : null;
+  const next = result ? result.next : action === "heal" ? applyHeal(current, amount) : restoreAura(current, amount);
+
+  if (token.characterId) {
+    updateCharacterData(token.characterId, (data) => ({
+      ...data,
+      ...(next.hp != null ? { hp: next.hp } : {}),
+      ...(next.aura != null ? { aura: next.aura } : {}),
+      ...(data.tempHp != null ? { tempHp: next.tempHp } : {}),
+      conditions: next.conditions,
+    }));
+    broadcastCharacter(campaignId, token.characterId, 0);
+  } else {
+    db.prepare("UPDATE tokens SET hp = ?, aura = ?, conditions = ? WHERE id = ?").run(
+      next.hp,
+      next.aura,
+      JSON.stringify(next.conditions),
+      token.id
+    );
+  }
+
+  const updated = getToken(token.id)!;
+  getIo().to(`campaign:${campaignId}`).emit("token:update", { campaignId, token: updated });
+  res.json({
+    token: updated,
+    result: result && {
+      armorBlocked: result.armorBlocked,
+      toTempHp: result.toTempHp,
+      toAura: result.toAura,
+      toHp: result.toHp,
+      auraBroke: result.auraBroke,
+      reachedZeroHp: result.reachedZeroHp,
+    },
+  });
 });
 
 mapsRouter.delete("/:id/maps/:mapId/tokens/:tokenId", async (req, res) => {
