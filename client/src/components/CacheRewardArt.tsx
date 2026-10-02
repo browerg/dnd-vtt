@@ -3,7 +3,19 @@ export default function CacheRewardArt({ id }: { id: string }) {
   if (id === "relic-first-flame") return <img className="cache-reward-art cache-relic-art" src="/assets/bundles/first-flame.webp" alt="" />;
   const mystery = ["event-horizon", "chronos-engine", "prismatic-echo"].includes(id);
   return <svg className={`cache-reward-art art-${id}`} viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-    {id === "silver-requiem" ? <>
+    {id === "aura-break" ? <>
+      <path d="m60 9 39 17v31c0 25-20 41-39 53-19-12-39-28-39-53V26Z" fill="#412c58" stroke="#d2a7ee" strokeWidth="2" />
+      <path d="m62 15-10 27 16 13-17 21 10 29M51 76 25 58m43-3 26-13" stroke="#fff0c6" strokeWidth="3" />
+      <path d="m12 61 6 7-6 14-5-9m94-51 8-8 4 17-8 5" fill="#b891d8" />
+    </> : id === "nevermore" ? <>
+      <path d="m56 51-16-26L7 14l12 21-12-3 21 27-10-3 30 27m16-32 16-26 33-11-12 21 12-3-21 27 10-3-30 27" fill="#292432" stroke="#988497" />
+      <path d="m60 25-17 13-6 25 23 39 23-39-6-25Z" fill="#d9d0bf" stroke="#292432" />
+      <path d="m45 53 10 4-5 6m25-10-10 4 5 6" stroke="#c52d4c" strokeWidth="4" /><path d="m60 63-6 10 6 24 6-24Z" fill="#211b2a" />
+    </> : id === "shadow-snare" ? <>
+      <text x="60" y="90" textAnchor="middle" fill="#eee2f6" stroke="none" fontFamily="Cinzel, Georgia, serif" fontSize="83">1</text>
+      <path d="M91 24C18-7 1 57 42 72s71-22 46-38M28 56q49-26 61 14L43 80l-9 27m26-35 22 32" stroke="#8b6ba7" strokeWidth="7" />
+      <path d="m94 10 8 4-3 33-10 16 2-28Z" fill="#c9bfd9" />
+    </> : id === "silver-requiem" ? <>
       <circle cx="60" cy="51" r="37" fill="#64162e" stroke="none" />
       <path d="M60 73 17 27l9 32-14-8 24 32-12-2 27 18M60 73l43-46-9 32 14-8-24 32 12-2-27 18" fill="#d9dfed" stroke="#fff" />
       <path d="m41 104 34-78M66 27 82 16c20 5 29 19 29 37-15-20-25-22-43-18" stroke="#ea5274" strokeWidth="4" />

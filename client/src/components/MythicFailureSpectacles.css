@@ -1,0 +1,60 @@
+.critical-roll-overlay.nat1.mythic-failure { --critical-primary: #f2e8f4; --critical-secondary: #d0a4ee; background: #100c19; animation: mythic-overlay 5.2s both; }
+.critical-roll-overlay.nat1.mythic-failure.effect-nevermore { --critical-secondary: #d8c9bd; background: #090b16; }
+.critical-roll-overlay.nat1.mythic-failure :is(.critical-emblem,.critical-rings,.critical-particles,.critical-scan,.critical-screen-flash,.critical-vignette,.critical-fractures) { display: none; }
+.critical-roll-overlay.nat1.mythic-failure .critical-banner { position: absolute; inset: auto 16px 5%; width: auto; max-width: none; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; transform: none; animation: mythic-caption 5.2s both; }
+.critical-roll-overlay.nat1.mythic-failure .critical-banner h2 { font-size: clamp(22px,3vw,38px); color: #f5f1ed; text-shadow: none; }
+.critical-roll-overlay.nat1.mythic-failure .critical-kicker { color: var(--critical-secondary); }
+.critical-roll-overlay.nat1.mythic-failure .critical-banner-line { display: none; }
+.critical-roll-overlay.nat1.mythic-failure .critical-message { font-size: 16px; color: #d8d9e2; overflow-wrap: anywhere; }
+.mythic-failure-scene { position: absolute; inset: 0; overflow: hidden; }
+.mythic-failure-scene .mythic-number { animation: failure-number 5.2s both; transform-origin: 500px 350px; }
+@keyframes failure-number { 0%,48% { opacity: 0; transform: translateY(-25px); } 62%,92% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
+.aura-shell { animation: aura-shell 5.2s both; transform-origin: 500px 330px; }
+.aura-cell { opacity: .2; }
+.aura-hit { fill: none; stroke: #fff0cb; stroke-width: 4; opacity: 0; animation: aura-hit-one 5.2s both; }
+.aura-hit.second { animation-name: aura-hit-two; }
+.aura-hit.third { animation-name: aura-hit-three; stroke-width: 6; }
+.aura-fault { stroke-dasharray: 1; animation: aura-fault 5.2s both; }
+.aura-falling-shards path { animation: aura-shard 5.2s both; }
+.aura-meter text { font: 12px monospace; letter-spacing: 4px; fill: #c6aacd; animation: failure-number 5.2s both; }
+.aura-reserve { animation: aura-reserve 5.2s steps(1) both; }
+@keyframes aura-shell { 0% { opacity: 0; transform: scale(.6); } 13%,40% { opacity: 1; transform: scale(1); } 44% { transform: scale(.97); opacity: 1; } 54%,100% { opacity: 0; transform: scale(1.04); } }
+@keyframes aura-hit-one { 0%,17% { opacity: 0; } 18% { opacity: 1; } 24%,100% { opacity: 0; } }
+@keyframes aura-hit-two { 0%,29% { opacity: 0; } 30% { opacity: 1; } 36%,100% { opacity: 0; } }
+@keyframes aura-hit-three { 0%,41% { opacity: 0; } 42% { opacity: 1; } 49%,100% { opacity: 0; } }
+@keyframes aura-fault { 0%,40% { opacity: 0; stroke-dashoffset: 1; } 48% { opacity: 1; stroke-dashoffset: 0; } 61%,100% { opacity: 0; stroke-dashoffset: 0; } }
+@keyframes aura-shard { 0%,47% { opacity: 0; transform: translateY(0); } 51% { opacity: .85; } 86%,100% { opacity: 0; transform: translate(calc((var(--i) - 8) * 12px),210px) rotate(38deg); } }
+@keyframes aura-reserve { 0% { transform: scaleX(1); } 18% { transform: scaleX(.65); } 30% { transform: scaleX(.28); } 44%,100% { transform: scaleX(0); } }
+.nevermore-moon { position: absolute; left: 50%; top: 36%; width: min(43vw,48vh); aspect-ratio: 1; border-radius: 50%; background: #706671; box-shadow: inset -35px -12px #3d3747; transform: translate(-50%,-50%); opacity: .28; }
+.nevermore-bird { transform-origin: 500px 300px; animation: nevermore-bird 5.2s both; }
+.nevermore-wing { transform-origin: 0 0; animation: nevermore-wing 5.2s both; }
+.nevermore-eyes { filter: drop-shadow(0 0 5px #e52348); }
+.nevermore-feathers path { animation: nevermore-feathers 5.2s both; }
+.nevermore-last-feather { animation: nevermore-last 5.2s both; transform-origin: 550px 410px; }
+@keyframes nevermore-bird { 0% { opacity: 0; transform: scale(.25); } 22%,35% { opacity: 1; transform: scale(1); } 46% { opacity: 1; transform: scale(1.2); } 58%,100% { opacity: 0; transform: scale(1.35); } }
+@keyframes nevermore-wing { 0%,24% { transform: rotate(-12deg); } 39%,47% { transform: rotate(62deg); } 58%,100% { transform: rotate(-20deg); } }
+@keyframes nevermore-feathers { 0%,37% { opacity: 0; transform: translateY(-20px); } 49% { opacity: .9; } 92%,100% { opacity: 0; transform: translate(30px,170px) rotate(65deg); } }
+@keyframes nevermore-last { 0%,49% { opacity: 0; transform: translate(50px,-140px) rotate(-35deg); } 63% { opacity: .9; } 92%,100% { opacity: .7; transform: translate(70px,20px) rotate(15deg); } }
+.shadow-original { animation: shadow-original 5.2s both; }
+.shadow-decoy { animation: shadow-decoy 5.2s both; }
+.shadow-dissolve path { animation: shadow-dissolve 5.2s both; }
+.shadow-weapon { transform-origin: 690px 325px; animation: shadow-weapon 5.2s both; }
+.shadow-ribbon { stroke-dasharray: 1; animation: shadow-ribbon 5.2s both; }
+.shadow-knot { transform-origin: 500px 365px; animation: shadow-knot 5.2s both; }
+.shadow-pool { opacity: .5; }
+@keyframes shadow-original { 0% { opacity: 0; } 13%,30% { opacity: 1; } 43%,100% { opacity: 0; } }
+@keyframes shadow-decoy { 0%,18% { opacity: 0; transform: translateX(0); } 23% { opacity: .8; } 39%,100% { opacity: 0; transform: translate(-360px,-35px) skewX(15deg); } }
+@keyframes shadow-dissolve { 0%,30% { opacity: 0; transform: scale(1); } 36% { opacity: .7; } 60%,100% { opacity: 0; transform: translate(calc((var(--i) - 12) * 12px),-50px) scale(.1); } }
+@keyframes shadow-weapon { 0%,20% { opacity: 0; transform: rotate(-50deg); } 31% { opacity: 1; } 52%,100% { opacity: .7; transform: translate(30px,70px) rotate(35deg); } }
+@keyframes shadow-ribbon { 0%,28% { opacity: 0; stroke-dashoffset: 1; } 32% { opacity: 1; } 53%,75% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: .3; } }
+@keyframes shadow-knot { 0%,49% { opacity: 0; transform: scale(1.6); } 59% { opacity: 1; transform: scale(1.05); } 65%,100% { opacity: 1; transform: scale(.8); } }
+@media (prefers-reduced-motion: reduce) {
+  .critical-roll-overlay.nat1.mythic-failure, .critical-roll-overlay.nat1.mythic-failure * { animation: none !important; }
+  .critical-roll-overlay.nat1.mythic-failure, .critical-roll-overlay.nat1.mythic-failure .critical-banner, .mythic-failure-scene .mythic-scene-title, .mythic-failure-scene .mythic-number { opacity: 1; transform: none; }
+  .aura-shell { opacity: .2; } .aura-fault { opacity: .4; stroke-dashoffset: 0; }
+  .aura-reserve, .aura-hit, .aura-falling-shards, .nevermore-feathers, .shadow-original, .shadow-decoy, .shadow-dissolve { display: none; }
+  .nevermore-bird { opacity: .2; transform: translateY(-65px); }
+  .nevermore-last-feather { opacity: .8; transform: translate(90px,30px); }
+  .shadow-ribbon { opacity: .6; stroke-dashoffset: 0; } .shadow-knot { transform: scale(.8); }
+  .shadow-weapon { opacity: .7; }
+}

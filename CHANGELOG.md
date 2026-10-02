@@ -30,7 +30,8 @@ is the one piece of markup the launcher renders.
 
 ### Minor changes
 
-- **Mythic collection** — The three new critical effects join the four existing Mythic rewards. The tier remains 0.2% overall, shared equally at 1 in 3,500 per reward. All other rewards retain their previous chances, and free openings still give no duplicate VCoins.
+- **Mythic Nat 1s** — Aura Break, Nevermore’s Omen, and Shadow Snare bring three RWBY-inspired failure sequences with original synthesized scores, silent previews, and static reduced-motion scenes. Earn them exclusively through Vivid Cache.
+- **Mythic collection** — The six new critical effects join the four existing Mythic rewards. The tier remains 0.2% overall, shared equally at 1 in 5,000 per reward. All other rewards retain their previous chances, and free openings still give no duplicate VCoins.
 
 - **Clearer GM map controls** — Maps, Tokens & NPCs, Audio, Board settings, Scenes and Objects now live together above the map. Move, Ruler, Draw and Fog have their own tool row. Setup panels leave the map usable; token sources are grouped into tabs, and appearance settings expand only when needed.
 

@@ -15,7 +15,7 @@ import { DICE_COSMETICS } from "../diceCosmetics";
 import { SPECIAL_DICE } from "../specialDice";
 import { isSpecialTrail } from "../specialTrails";
 import CacheRewardArt from "../components/CacheRewardArt";
-import { MYTHIC_CRITICALS } from "../../../shared/mythicCriticals";
+import { MYTHIC_FAILURES, MYTHIC_CRITICALS } from "../../../shared/mythicCriticals";
 import SpecialDiceCatalogue from "../components/SpecialDiceCatalogue";
 import "../components/RelicAppearance.css";
 
@@ -472,7 +472,7 @@ export default function ShopPage() {
       );
     }
 
-    if ([...MYTHIC_CRITICALS.map(item => item.effect), "void-collapse", "heavens-lance", "chronobreak", "severed-fate", "mimic", "abyssal-gaze", "main-character", "jackpot", "legend-forged"].includes(item.effect ?? "")) return <div className="special-trail-swatch"><CacheRewardArt id={item.effect!} /></div>;
+    if ([...MYTHIC_FAILURES.map(item => item.effect), ...MYTHIC_CRITICALS.map(item => item.effect), "void-collapse", "heavens-lance", "chronobreak", "severed-fate", "mimic", "abyssal-gaze", "main-character", "jackpot", "legend-forged"].includes(item.effect ?? "")) return <div className="special-trail-swatch"><CacheRewardArt id={item.effect!} /></div>;
     const kind = criticalKind(item);
     return (
       <span

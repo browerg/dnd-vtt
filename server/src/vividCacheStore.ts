@@ -1,4 +1,4 @@
-import { MYTHIC_CRITICALS } from "../../shared/mythicCriticals.js";
+import { MYTHIC_FAILURES, MYTHIC_CRITICALS } from "../../shared/mythicCriticals.js";
 import { SPECIAL_CRITICALS } from "../../shared/specialCriticals.js";
 import { randomInt } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
@@ -23,8 +23,8 @@ export interface CacheReward {
   preview: { symbol: string; description: string };
 }
 // Relative weights total 70,000: 70% common, 22% rare, 6% epic,
-// 1.8% legendary, 0.2% mythic. Seven equal Mythics each have 20 tickets
-// (1 in 3,500). Integer scaling preserves every other reward’s probability.
+// 1.8% legendary, 0.2% mythic. Ten equal Mythics each have 14 tickets
+// (1 in 5,000). Integer scaling preserves every other reward’s probability.
 export const CACHE_REWARDS: CacheReward[] = [
   { id: "ember", name: "Ember Trail", rarity: "common", weight: 24500, cosmeticType: "dice-trail", unlockIds: ["trail-ember"], duplicateBehavior: "refund", preview: { symbol: "✦", description: "Fire sprites follow your throw." } },
   { id: "frost", name: "Frost Trail", rarity: "common", weight: 24500, cosmeticType: "dice-trail", unlockIds: ["trail-frost"], duplicateBehavior: "refund", preview: { symbol: "❄", description: "Cold motes and icy stars." } },
@@ -36,17 +36,20 @@ export const CACHE_REWARDS: CacheReward[] = [
   ...SPECIAL_TRAILS.map(trail => ({ id: trail.effect, name: trail.name, rarity: trail.rarity, weight: 315,
     cosmeticType: "dice-trail", unlockIds: [trail.id], duplicateBehavior: "refund" as const,
     preview: { symbol: "✦", description: trail.description } })),
-  ...MYTHIC_CRITICALS.map(effect => ({ id: effect.effect, name: effect.name, rarity: effect.rarity, weight: 20,
+  ...MYTHIC_FAILURES.map(effect => ({ id: effect.effect, name: effect.name, rarity: effect.rarity, weight: 14,
+    cosmeticType: "nat1-effect", unlockIds: [effect.id], duplicateBehavior: "refund" as const,
+    preview: { symbol: "◆", description: effect.description } })),
+  ...MYTHIC_CRITICALS.map(effect => ({ id: effect.effect, name: effect.name, rarity: effect.rarity, weight: 14,
     cosmeticType: "nat20-effect", unlockIds: [effect.id], duplicateBehavior: "refund" as const,
     preview: { symbol: "✦", description: effect.description } })),
   ...MYTHIC_DICE.filter(dice => dice.theme !== "first-flame").map(dice => ({
-    id: dice.theme, name: dice.name, rarity: "mythic" as const, weight: 20,
+    id: dice.theme, name: dice.name, rarity: "mythic" as const, weight: 14,
     cosmeticType: "dice", diceTheme: dice.theme, unlockIds: [dice.unlockId], duplicateBehavior: "refund" as const,
     preview: { symbol: "?", description: dice.theme === "event-horizon" ? "A dark singularity wrapped in moving violet accretion rings."
       : dice.theme === "chronos-engine" ? "Brass clockwork, illuminated teeth and a sweeping mint dial."
       : "Crystal facets with shifting spectral light and iridescent edges." },
   })),
-  { id: RELIC_ID, name: "Relic of the First Flame", rarity: "mythic", weight: 20, cosmeticType: "bundle", diceTheme: "first-flame", unlockIds: RELIC_UNLOCKS, duplicateBehavior: "refund", preview: { symbol: "◆", description: "Obsidian dice, molten trail, Nat 20 and Nat 1 effects, token border, gold chat name and Relic Owner title." } },
+  { id: RELIC_ID, name: "Relic of the First Flame", rarity: "mythic", weight: 14, cosmeticType: "bundle", diceTheme: "first-flame", unlockIds: RELIC_UNLOCKS, duplicateBehavior: "refund", preview: { symbol: "◆", description: "Obsidian dice, molten trail, Nat 20 and Nat 1 effects, token border, gold chat name and Relic Owner title." } },
 ];
 
 export function selectCacheReward(ticket = randomInt(CACHE_REWARDS.reduce((n, r) => n + r.weight, 0))) {

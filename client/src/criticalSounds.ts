@@ -6,6 +6,36 @@
 
 type Score = (kit: Kit) => number;
 
+export const playAuraBreakSound = () => play(.17, ({ t0, tone, noise }) => {
+  tone("sine", 330, 310, t0, t0 + 2.2, .15, .3);
+  [.94, 1.56, 2.18].forEach((beat, i) => {
+    tone("triangle", 170 - i * 30, 45, t0 + beat, t0 + beat + .3, .5, .008);
+    noise(t0 + beat, .2, .4, "bandpass", 2600, 700);
+  });
+  noise(t0 + 2.45, .8, .4, "highpass", 5200, 1400);
+  tone("sine", 440, 55, t0 + 2.5, t0 + 4.3, .2, .02);
+  return 5.2;
+});
+
+export const playNevermoreSound = () => play(.16, ({ t0, tone, noise }) => {
+  tone("sine", 55, 41, t0, t0 + 4.5, .3, .5);
+  [.5, 1.15, 1.85].forEach(beat => noise(t0 + beat, .4, .35, "lowpass", 1600, 200));
+  tone("sawtooth", 620, 190, t0 + 1.75, t0 + 2.35, .06, .08);
+  noise(t0 + 2.35, .6, .3, "lowpass", 1800, 120);
+  tone("sine", 880, 830, t0 + 3, t0 + 4.7, .1, .03);
+  return 5.2;
+});
+
+export const playShadowSnareSound = () => play(.17, ({ t0, tone, noise }) => {
+  noise(t0 + 1.05, .5, .4, "bandpass", 700, 3000);
+  noise(t0 + 1.65, .6, .22, "highpass", 2500, 700);
+  tone("triangle", 740, 220, t0 + 1.8, t0 + 2.9, .14, .06);
+  noise(t0 + 3.05, .12, .6, "bandpass", 2800, 900);
+  tone("triangle", 145, 48, t0 + 3.05, t0 + 3.5, .45, .008);
+  tone("sine", 110, 82, t0 + 3.25, t0 + 4.65, .16, .07);
+  return 5.2;
+});
+
 /** Original synthesized scores: no sampled music or character audio. */
 export const playSilverRequiemSound = () => play(0.17, ({ t0, tone, noise }) => {
   tone("triangle", 164.81, 164.81, t0, t0 + 1.5, .2, .3);

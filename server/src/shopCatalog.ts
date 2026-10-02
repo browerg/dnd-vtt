@@ -1,5 +1,5 @@
 import { SPECIAL_CRITICALS, isCacheCritical } from "../../shared/specialCriticals.js";
-import { MYTHIC_CRITICALS, type MythicCriticalStyle } from "../../shared/mythicCriticals.js";
+import { MYTHIC_FAILURES, MYTHIC_CRITICALS, type MythicCriticalStyle } from "../../shared/mythicCriticals.js";
 import { CACHE_COST } from "./vividCacheStore.js";
 import { SPECIAL_TRAILS, isCacheTrail } from "../../shared/specialTrails.js";
 
@@ -144,6 +144,7 @@ export function bundlesNewestFirst(): CosmeticBundle[] {
 }
 
 export const COSMETICS = [
+  ...MYTHIC_FAILURES.map(effect => ({ ...effect, type: "nat1-effect" as const, slot: "nat1" as const })),
   ...MYTHIC_CRITICALS.map(effect => ({ ...effect, type: "nat20-effect" as const, slot: "nat20" as const })),
   ...SPECIAL_CRITICALS.map(effect => ({ ...effect, type: "nat20-effect" as const, slot: "nat20" as const, price: 1 })),
   ...SPECIAL_TRAILS.map(trail => ({ ...trail, type: "dice-trail" as const, price: 1 })),

@@ -1,4 +1,6 @@
 import { SPECIAL_CRITICALS, type SpecialCriticalStyle } from "../../../shared/specialCriticals";
+import { AuraBreakSpectacle, NevermoreSpectacle, ShadowSnareSpectacle } from "./MythicFailureSpectacles";
+import { playAuraBreakSound, playNevermoreSound, playShadowSnareSound } from "../criticalSounds";
 import SpecialCriticalSpectacle from "./SpecialCriticalSpectacle";
 import SeveredFateSpectacle from "./SeveredFateSpectacle";
 import MimicSpectacle from "./MimicSpectacle";
@@ -6,7 +8,7 @@ import AbyssalGazeSpectacle from "./AbyssalGazeSpectacle";
 import MainCharacterSpectacle from "./MainCharacterSpectacle";
 import JackpotSpectacle from "./JackpotSpectacle";
 import LegendForgedSpectacle from "./LegendForgedSpectacle";
-import { MYTHIC_CRITICALS, type MythicCriticalStyle } from "../../../shared/mythicCriticals";
+import { MYTHIC_FAILURES, MYTHIC_CRITICALS, type MythicCriticalStyle } from "../../../shared/mythicCriticals";
 import { SilverRequiemSpectacle, WinterVerdictSpectacle, EmberheartSpectacle } from "./MythicCriticalSpectacles";
 import { playSilverRequiemSound, playWinterVerdictSound, playEmberheartSound } from "../criticalSounds";
 import {
@@ -53,7 +55,7 @@ const EVENT_NAME = "tabletop:critical-roll";
 let eventId = 0;
 
 const NAT20_EFFECTS = new Set<CriticalEffectStyle>(["golden", "rose", "lightning", "first-flame", "main-character", "jackpot", "legend-forged", ...SPECIAL_CRITICALS.map(effect => effect.effect), ...MYTHIC_CRITICALS.map(effect => effect.effect)]);
-const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris", "first-flame", "severed-fate", "mimic", "abyssal-gaze"]);
+const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris", "first-flame", "severed-fate", "mimic", "abyssal-gaze", ...MYTHIC_FAILURES.map(effect => effect.effect)]);
 
 /**
  * The premium spectacles take over the whole screen with their own scene,
@@ -61,6 +63,9 @@ const NAT1_EFFECTS = new Set<CriticalEffectStyle>(["fracture", "smoke", "debris"
  * so one table serves both. Adding one is an entry here plus its component.
  */
 const SPECTACLES: Partial<Record<CriticalEffectStyle, { scene: (props: { userName: string }) => JSX.Element; sound: () => void; duration: number; message: string }>> = {
+  "aura-break": { scene: AuraBreakSpectacle, sound: playAuraBreakSound, duration: 5200, message: "Your aura has nothing left to give." },
+  nevermore: { scene: NevermoreSpectacle, sound: playNevermoreSound, duration: 5200, message: "A pale feather. A terrible omen." },
+  "shadow-snare": { scene: ShadowSnareSpectacle, sound: playShadowSnareSound, duration: 5200, message: "Even your shadow left you hanging." },
   "silver-requiem": { scene: SilverRequiemSpectacle, sound: playSilverRequiemSound, duration: 5200, message: "Even the darkness remembers the light." },
   "winter-verdict": { scene: WinterVerdictSpectacle, sound: playWinterVerdictSound, duration: 5200, message: "By your hand, winter answers." },
   emberheart: { scene: EmberheartSpectacle, sound: playEmberheartSound, duration: 5200, message: "Every hit only made you stronger." },
@@ -257,7 +262,7 @@ export default function CriticalRollOverlay() {
   return (
     <div
       key={active.id}
-      className={`critical-roll-overlay ${active.kind} ${active.system} effect-${active.effect}`}
+      className={`critical-roll-overlay ${active.kind} ${active.system} effect-${active.effect} ${MYTHIC_FAILURES.some(item => item.effect === active.effect) ? "mythic-failure" : ""}`}
       role="status"
       aria-live="assertive"
     >

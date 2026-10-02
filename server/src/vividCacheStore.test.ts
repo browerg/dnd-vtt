@@ -254,3 +254,28 @@ test("each Mythic critical grants only its own effect, persists, and never refun
     } finally { f.db.close(); }
   }
 });
+
+test("each Mythic failure grants only its own effect, persists, and never refunds free duplicates", () => {
+  for (const effect of ["aura-break", "nevermore", "shadow-snare"]) {
+    const reward = CACHE_REWARDS.find(r => r.id === effect)!;
+    const f = fixture(0, () => reward, 0);
+    try {
+      const result = f.store.open(1, key);
+      assert.equal(result.reward.rarity, "mythic");
+      assert.equal(result.balance, 0);
+      assert.equal(result.reward.cosmeticType, "nat1-effect");
+      assert.equal(f.store.owned(1, "crit20-" + effect), false);
+      assert.equal(result.duplicate, false);
+      assert.equal(f.store.owned(1, "crit1-" + effect), true);
+      assert.equal(f.store.owned(2, "crit1-" + effect), false);
+      assert.equal(f.store.owned(1, "dice-first-flame"), false);
+      assert.equal(Number(f.db.prepare("SELECT count(*) n FROM cosmetic_unlocks WHERE user_id = 1").get()!.n), 1);
+      assert.equal(createVividCacheStore(f.db, 0, () => reward, 0).pending(1)?.reward.id, effect);
+      f.store.acknowledge(1, key);
+      const duplicate = f.store.open(1, next);
+      assert.equal(duplicate.duplicate, true);
+      assert.equal(duplicate.refund, 0);
+      assert.equal(f.balance(), 0);
+    } finally { f.db.close(); }
+  }
+});
