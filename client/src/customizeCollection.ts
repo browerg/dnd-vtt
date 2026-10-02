@@ -1,6 +1,6 @@
-import type { User } from "./api";
-import { decodeDiceCustomization } from "./diceCustomization";
-import { MYTHIC_DICE } from "../../shared/mythicDice";
+import type { User } from "./api.js";
+import { decodeDiceCustomization } from "./diceCustomization.js";
+import { MYTHIC_DICE } from "../../shared/mythicDice.js";
 
 export interface DicePreset { id: number; name: string; theme: string }
 export interface CollectionItem {

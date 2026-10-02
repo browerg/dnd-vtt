@@ -25,6 +25,13 @@ is the one piece of markup the launcher renders.
   conditions and quick actions without leaving the map. Players clicking their own
   token see their Aura, HP and conditions at a glance.
 
+- **A new Customize page** — Customize now opens on your collection: browse your
+  dice, trails, Nat 20 and Nat 1 effects, turn-start effects, token borders,
+  profile looks and table backdrops by category, search and filter them, and see
+  what you have equipped at a glance. Dice spin in a live 3D preview, and picking
+  something only previews it — nothing changes until you press Equip. Custom dice
+  have their own workshop for designing, saving and editing up to five sets.
+
 ### Minor changes
 
 - **Damage follows the Huntsman's Handbook** — Aura absorbs hits first; a hit that
