@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Link } from "react-router-dom";
 import { api, uploadImage, type User } from "../api";
 import { useAuth } from "../App";
-import { GALLERY_ACCENTS, GALLERY_SECTIONS, PROFILE_BANNERS, readProfileGallery, type GallerySection, type ProfileGallery } from "../../../shared/profileGallery";
+import { COVER_HEIGHTS, GALLERY_ACCENTS, GALLERY_SECTIONS, PROFILE_BANNERS, defaultFraming, readProfileGallery, type FramedImage, type GallerySection, type ProfileGallery } from "../../../shared/profileGallery";
 import Achievements, { type AchievementSnapshot } from "../components/Achievements";
 import { DiceThumbnail } from "../components/CollectionDicePreview";
-import ProfileGalleryView, { BannerArtwork, CampaignList, CharacterGrid, Icon, type GalleryData, type GalleryTab } from "../components/ProfileGallery";
+import ProfileGalleryView, { BannerArtwork, COVER_HEIGHT_NAMES, CampaignList, CharacterGrid, Icon, type FramingControls, type GalleryData, type GalleryTab } from "../components/ProfileGallery";
 import { diceCollection, type CollectionShop, type DicePreset } from "../customizeCollection";
 
 // The owner's Personal Gallery. Viewing shows the gallery as visitors see it
@@ -105,6 +105,13 @@ export default function ProfilePage() {
     setData((current) => current && JSON.stringify(current.showcase) !== JSON.stringify(snapshot.showcase) ? { ...current, showcase: snapshot.showcase } : current);
   }, []);
   const patch = (next: Partial<ProfileGallery>) => setGallery((current) => ({ ...current, ...next }));
+  /** A new picture starts centred; the old picture's framing would not fit it. */
+  const setPhoto = (slot: FramedImage, next: Partial<ProfileGallery>) =>
+    setGallery((current) => ({ ...current, ...next, framing: { ...current.framing, [slot]: defaultFraming()[slot] } }));
+  const framingControls: FramingControls = {
+    onFraming: (slot, framing) => setGallery((current) => ({ ...current, framing: { ...current.framing, [slot]: framing } })),
+    onCoverHeight: (coverHeight) => patch({ coverHeight }),
+  };
 
   const upload = async (key: string, file: File, apply: (url: string) => void) => {
     setBusy(key);
@@ -210,7 +217,7 @@ export default function ProfilePage() {
         <legend>Portrait</legend>
         {identity.avatarPath && <img className="pg-thumb" src={identity.avatarPath} alt="Your current portrait" style={{ maxWidth: 140, aspectRatio: "1" }} />}
         <div className="pg-row-actions">
-          {fileButton("avatar", identity.avatarPath ? "Replace portrait" : "Upload portrait", (url) => setIdentity((current) => ({ ...current, avatarPath: url })))}
+          {fileButton("avatar", identity.avatarPath ? "Replace portrait" : "Upload portrait", (url) => { setIdentity((current) => ({ ...current, avatarPath: url })); setPhoto("portrait", {}); })}
           {identity.avatarPath && <button type="button" className="pg-text-button" onClick={() => setIdentity((current) => ({ ...current, avatarPath: "" }))}>Remove</button>}
         </div>
       </fieldset>
@@ -225,15 +232,22 @@ export default function ProfilePage() {
     : panel === "cover" ? panelShell("Cover art", <>
       <p>Pick a ready-made banner or upload a picture of your own.</p>
       <div className="pg-banner-picker" aria-label="Built-in banners">
-        {PROFILE_BANNERS.map(banner => <button type="button" key={banner.id} aria-pressed={gallery.coverPath === `preset:${banner.id}`} onClick={() => patch({ coverPath: `preset:${banner.id}` })}>
+        {PROFILE_BANNERS.map(banner => <button type="button" key={banner.id} aria-pressed={gallery.coverPath === `preset:${banner.id}`} onClick={() => setPhoto("cover", { coverPath: `preset:${banner.id}` })}>
           <span className="pg-banner-swatch"><BannerArtwork value={`preset:${banner.id}`} /></span><span>{banner.name}</span>
         </button>)}
       </div>
       {gallery.coverPath.startsWith("/uploads/") && <img className="pg-thumb" src={gallery.coverPath} alt="Your current cover art" />}
       <div className="pg-row-actions">
-        {fileButton("cover", gallery.coverPath ? "Replace cover art" : "Upload cover art", (url) => patch({ coverPath: url }))}
+        {fileButton("cover", gallery.coverPath ? "Replace cover art" : "Upload cover art", (url) => setPhoto("cover", { coverPath: url }))}
         {gallery.coverPath && <button type="button" className="pg-text-button" onClick={() => patch({ coverPath: "" })}>Remove</button>}
       </div>
+      <fieldset>
+        <legend>Banner height</legend>
+        <div className="pg-height-buttons">
+          {COVER_HEIGHTS.map((height) => <button key={height} type="button" aria-pressed={gallery.coverHeight === height} onClick={() => patch({ coverHeight: height })}>{COVER_HEIGHT_NAMES[height]}</button>)}
+        </div>
+        <p>To move or zoom a picture, use the Adjust button on it.</p>
+      </fieldset>
       <fieldset>
         <legend>Frame colour</legend>
         <div className="pg-swatches">
@@ -264,13 +278,13 @@ export default function ProfilePage() {
         <label className="pg-field">Character name<input value={gallery.characterName} maxLength={60} placeholder="Rowan" onChange={(e) => patch({ characterName: e.target.value })} /></label>
         {gallery.characterImage && <img className="pg-thumb" src={gallery.characterImage} alt="Your featured character art" />}
         <div className="pg-row-actions">
-          {fileButton("character", gallery.characterImage ? "Replace art" : "Upload art", (url) => patch({ characterImage: url }))}
+          {fileButton("character", gallery.characterImage ? "Replace art" : "Upload art", (url) => setPhoto("character", { characterImage: url }))}
           {gallery.characterImage && <button type="button" className="pg-text-button" onClick={() => patch({ characterImage: "" })}>Remove</button>}
         </div>
         {!!data?.characters.length && <>
           <p>Or use one of your characters:</p>
           <div className="pg-picker">
-            {data.characters.slice(0, 8).map((character) => <button key={character.id} type="button" onClick={() => patch({ characterName: character.name, characterImage: character.portraitUrl || "" })}>
+            {data.characters.slice(0, 8).map((character) => <button key={character.id} type="button" onClick={() => setPhoto("character", { characterName: character.name, characterImage: character.portraitUrl || "" })}>
               {character.portraitUrl ? <img src={character.portraitUrl} alt="" /> : <span className="pg-character-initial" aria-hidden="true">{character.name.slice(0, 1)}</span>}
               {character.name}
             </button>)}
@@ -295,7 +309,7 @@ export default function ProfilePage() {
         <legend>Campaign memory</legend>
         {gallery.memoryImage && <img className="pg-thumb" src={gallery.memoryImage} alt="Your campaign memory" />}
         <div className="pg-row-actions">
-          {fileButton("memory", gallery.memoryImage ? "Replace picture" : "Upload picture", (url) => patch({ memoryImage: url }))}
+          {fileButton("memory", gallery.memoryImage ? "Replace picture" : "Upload picture", (url) => setPhoto("memory", { memoryImage: url }))}
           {gallery.memoryImage && <button type="button" className="pg-text-button" onClick={() => patch({ memoryImage: "" })}>Remove</button>}
         </div>
         <label className="pg-field">Caption <small>{gallery.memoryCaption.length}/280</small>
@@ -330,6 +344,7 @@ export default function ProfilePage() {
       tab={tab}
       onTab={setTab}
       editing={editing && !previewing}
+      framingControls={editing && !previewing ? framingControls : undefined}
       onEditProfile={() => { setStatus(""); setEditing(true); setPanel("details"); setTab("gallery"); }}
       onEmpty={(slot) => slot === "badges" ? setTab("journal") : setPanel(slot === "cover" ? "cover" : "showcase")}
       toolbar={toolbar || undefined}

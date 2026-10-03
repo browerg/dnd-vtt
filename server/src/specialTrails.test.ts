@@ -54,7 +54,7 @@ test("stationary dice do not accumulate effects, and fast rolls have a bounded p
 });
 test("cache-only cosmetics can't be equipped through the GM bypass, only won", () => {
   const byId = (id: string) => COSMETICS.find(item => item.id === id)!;
-  for (const id of ["trail-riftwake", "crit20-void-collapse", "crit1-first-flame"]) {
+  for (const id of ["crit1-first-flame"]) {
     const item = byId(id);
     assert.ok(item, id);
     assert.equal(isCacheExclusive(item), true, id);

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_PROFILE_GALLERY, PROFILE_BANNERS, readProfileGallery, validateProfileGallery } from "../../shared/profileGallery.js";
+import { DEFAULT_PROFILE_GALLERY, PROFILE_BANNERS, defaultFraming, readProfileGallery, validateProfileGallery } from "../../shared/profileGallery.js";
 
 test("only approved built-in banners are accepted and only for the cover", () => {
   for (const banner of PROFILE_BANNERS) {
@@ -33,4 +33,23 @@ test("legacy and corrupt gallery records become independent empty defaults", () 
   assert.deepEqual(readProfileGallery("{}"), DEFAULT_PROFILE_GALLERY);
   assert.equal(readProfileGallery("{}", true).accent, "profile", "existing profile palette survives migration");
   assert.equal(readProfileGallery(JSON.stringify(DEFAULT_PROFILE_GALLERY), true).accent, "copper", "explicit gallery accent is preserved");
+});
+
+test("photo framing is kept, clamped to its frame, and defaults for older galleries", () => {
+  const { framing: _framing, coverHeight: _height, ...legacy } = DEFAULT_PROFILE_GALLERY;
+  const old = validateProfileGallery(legacy);
+  assert.deepEqual(old.framing, defaultFraming(), "galleries saved before framing keep the original crop");
+  assert.equal(old.coverHeight, "standard");
+
+  const framed = validateProfileGallery({
+    ...DEFAULT_PROFILE_GALLERY,
+    coverHeight: "tall",
+    framing: { cover: { x: 20, y: 80.456, zoom: 1.75 }, character: { x: -40, y: 400, zoom: 99 }, memory: "nonsense", portrait: { x: "left" } },
+  });
+  assert.equal(framed.coverHeight, "tall");
+  assert.deepEqual(framed.framing.cover, { x: 20, y: 80.46, zoom: 1.75 });
+  assert.deepEqual(framed.framing.character, { x: 0, y: 100, zoom: 3 }, "out-of-range values clamp instead of failing the save");
+  assert.deepEqual(framed.framing.memory, defaultFraming().memory);
+  assert.deepEqual(framed.framing.portrait, defaultFraming().portrait);
+  assert.equal(validateProfileGallery({ ...DEFAULT_PROFILE_GALLERY, coverHeight: "giant" }).coverHeight, "standard");
 });

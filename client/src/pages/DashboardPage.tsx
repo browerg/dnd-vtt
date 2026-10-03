@@ -101,13 +101,17 @@ export default function DashboardPage() {
         </Link>
 
         <nav className="select-nav" aria-label="Account navigation">
-          <Link to="/customize" className="select-nav-link">
-            <span className="select-nav-icon customize-icon" aria-hidden />
-            Customize
+          <Link to="/customize" className="select-nav-link select-nav-customize">
+            <span className="select-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7Z"/><path d="m3 7 9 5 9-5M12 12v10M12 2v10"/></svg>
+            </span>
+            <span className="select-nav-copy"><strong>Customize</strong><small>Dice &amp; cosmetics</small></span>
           </Link>
-          <Link to="/emporium" className="select-nav-link">
-            <span className="select-nav-icon shop-icon" aria-hidden />
-            Emporium
+          <Link to="/emporium" className="select-nav-link select-nav-emporium">
+            <span className="select-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 9h16l1 12H3L4 9Z"/><path d="M8 9V6a4 4 0 0 1 8 0v3m-4 4 2 2-2 2-2-2 2-2Z"/></svg>
+            </span>
+            <span className="select-nav-copy"><strong>Emporium</strong><small>Discover rewards</small></span>
           </Link>
           <Link to="/profile" className="select-profile-link">
             <Avatar
@@ -117,7 +121,7 @@ export default function DashboardPage() {
               size={30}
             />
             <span>
-              <small>OPERATIVE</small>
+              <small>Your profile</small>
               <strong>{user?.display_name}</strong>
             </span>
           </Link>

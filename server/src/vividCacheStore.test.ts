@@ -279,3 +279,18 @@ test("each Mythic failure grants only its own effect, persists, and never refund
     } finally { f.db.close(); }
   }
 });
+
+test("live spin price charges 250 once and rejects balances below 250", () => {
+  const f = fixture(250);
+  try {
+    const live = createVividCacheStore(f.db, 100, () => CACHE_REWARDS[0]);
+    const result = live.open(1, key);
+    assert.equal(result.cost, 250);
+    assert.equal(f.balance(), 0);
+    assert.deepEqual(live.open(1, key), result);
+    assert.equal(f.balance(), 0);
+    live.acknowledge(1, key);
+    assert.throws(() => live.open(1, next), /250 VCoins/);
+    assert.equal(f.db.prepare("SELECT sum(amount) n FROM vcoin_transactions").get()!.n, -250);
+  } finally { f.db.close(); }
+});

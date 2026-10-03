@@ -7,10 +7,8 @@ import { SPECIAL_TRAILS } from "../../shared/specialTrails.js";
 import { ownsCosmetic, RELIC_ID, RELIC_ADDITIONS } from "./relicOwnership.js";
 export { RELIC_ID } from "./relicOwnership.js";
 
-// VCoins per opening. Free for now -- set a price here to charge again; it
-// reaches players with the next VTT update. While it is 0, duplicates refund
-// nothing (see cacheRefunds), so free openings can't be farmed for VCoins.
-export const CACHE_COST = 0;
+// VCoins per spin; shared with all shop and bundle displays.
+export const CACHE_COST = 250;
 export const RELIC_UNLOCKS = [RELIC_ID, "dice-first-flame", "trail-first-flame", "crit20-first-flame", "title-relic-owner", ...RELIC_ADDITIONS];
 export const DUPLICATE_REFUNDS = { common: 100, rare: 150, epic: 200, legendary: 300, mythic: 400 };
 export type CacheRarity = keyof typeof DUPLICATE_REFUNDS;

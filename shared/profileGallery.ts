@@ -7,6 +7,20 @@ export const PROFILE_BANNERS = [
   { id: "ember", name: "Ember", image: "" },
   { id: "forest", name: "Forest", image: "" },
 ] as const;
+/** Photos the owner can reposition and zoom inside their frame. */
+export const FRAMED_IMAGES = ["cover", "character", "memory", "portrait"] as const;
+export type FramedImage = typeof FRAMED_IMAGES[number];
+/** Focal point in percent of the picture, and zoom (1 = just fills the frame). */
+export interface ImageFraming { x: number; y: number; zoom: number }
+export const MAX_IMAGE_ZOOM = 3;
+export const COVER_HEIGHTS = ["short", "standard", "tall", "xtall"] as const;
+export type CoverHeight = typeof COVER_HEIGHTS[number];
+export const defaultFraming = (): Record<FramedImage, ImageFraming> => ({
+  cover: { x: 50, y: 50, zoom: 1 },
+  character: { x: 60, y: 30, zoom: 1 },
+  memory: { x: 50, y: 50, zoom: 1 },
+  portrait: { x: 50, y: 50, zoom: 1 },
+});
 export const profileBanner = (value: string) => PROFILE_BANNERS.find(banner => value === `preset:${banner.id}`);
 export interface ProfileGallery {
   coverPath: string;
@@ -18,10 +32,13 @@ export interface ProfileGallery {
   accent: typeof GALLERY_ACCENTS[number];
   sections: GallerySection[];
   badgesFirst: boolean;
+  framing: Record<FramedImage, ImageFraming>;
+  coverHeight: CoverHeight;
 }
 export const DEFAULT_PROFILE_GALLERY: ProfileGallery = {
   coverPath: "", characterImage: "", characterName: "", memoryImage: "", memoryCaption: "",
   signatureDice: "", accent: "copper", sections: [...GALLERY_SECTIONS], badgesFirst: false,
+  framing: defaultFraming(), coverHeight: "standard",
 };
 
 /** Only uploaded rasters are accepted for personal pictures. */
@@ -35,6 +52,17 @@ function text(value: unknown, max: number): string {
   if (typeof value !== "string" || value.length > max) throw new Error(`Gallery text must be ${max} characters or fewer.`);
   return value.trim();
 }
+const clamp = (value: unknown, min: number, max: number, fallback: number) =>
+  typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value * 100) / 100)) : fallback;
+/** Framing is cosmetic, so bad or missing values fall back instead of failing a save. */
+function framingOf(value: unknown): Record<FramedImage, ImageFraming> {
+  const input = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, any> : {};
+  const defaults = defaultFraming();
+  return Object.fromEntries(FRAMED_IMAGES.map((id) => {
+    const item = input[id] && typeof input[id] === "object" ? input[id] : {};
+    return [id, { x: clamp(item.x, 0, 100, defaults[id].x), y: clamp(item.y, 0, 100, defaults[id].y), zoom: clamp(item.zoom, 1, MAX_IMAGE_ZOOM, 1) }];
+  })) as Record<FramedImage, ImageFraming>;
+}
 export function validateProfileGallery(value: unknown): ProfileGallery {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid gallery settings.");
   const input = value as Record<string, unknown>;
@@ -46,9 +74,11 @@ export function validateProfileGallery(value: unknown): ProfileGallery {
     characterName: text(input.characterName, 60), memoryImage: imagePath(input.memoryImage),
     memoryCaption: text(input.memoryCaption, 280), signatureDice: text(input.signatureDice, 600),
     accent: input.accent as ProfileGallery["accent"], sections: [...input.sections] as GallerySection[], badgesFirst: input.badgesFirst,
+    framing: framingOf(input.framing),
+    coverHeight: COVER_HEIGHTS.includes(input.coverHeight as CoverHeight) ? input.coverHeight as CoverHeight : "standard",
   };
 }
 export function readProfileGallery(raw: unknown, preserveProfilePalette = false): ProfileGallery {
   try { return validateProfileGallery(typeof raw === "string" ? JSON.parse(raw) : raw); }
-  catch { return { ...DEFAULT_PROFILE_GALLERY, accent: preserveProfilePalette ? "profile" : "copper", sections: [...GALLERY_SECTIONS] }; }
+  catch { return { ...DEFAULT_PROFILE_GALLERY, accent: preserveProfilePalette ? "profile" : "copper", sections: [...GALLERY_SECTIONS], framing: defaultFraming() }; }
 }

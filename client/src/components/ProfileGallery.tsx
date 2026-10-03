@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../App";
 import type { ProfileGallery as GallerySettings } from "../../../shared/profileGallery";
-import { profileBanner } from "../../../shared/profileGallery";
+import { COVER_HEIGHTS, MAX_IMAGE_ZOOM, defaultFraming, profileBanner, type CoverHeight, type FramedImage, type ImageFraming } from "../../../shared/profileGallery";
 import type { ProfileBadge } from "./BadgeShowcase";
 import { Avatar } from "./Avatar";
 import { DiceThumbnail } from "./CollectionDicePreview";
@@ -75,6 +75,7 @@ export function Icon({ name }: { name: string }) {
     chevron: <path d="m6 9 6 6 6-6" />,
     close: <path d="M6 6l12 12M18 6 6 18" />,
     upload: <><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5" /><path d="M4.5 15v4.5h15V15" /></>,
+    move: <><path d="M12 3v18M3 12h18" /><path d="m9 6 3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3" /></>,
     dice: <><path d="m12 2.5 8.5 5v9L12 21.5l-8.5-5v-9Z" /><path d="M12 2.5v9m8.5-4-8.5 4-8.5-4m8.5 4v10" /></>,
   };
   return <svg className="pg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
@@ -91,6 +92,110 @@ function Crest() {
 /** A short rule with a diamond, the comp's ornament. */
 function Ornament({ variant = "center" }: { variant?: "center" | "start" | "rule" }) {
   return <span className={`pg-ornament is-${variant}`} aria-hidden="true"><i /><b /><i /></span>;
+}
+
+/** Owner editing: reposition, zoom and (for the banner) resize photos in place. */
+export interface FramingControls {
+  onFraming: (slot: FramedImage, framing: ImageFraming) => void;
+  onCoverHeight: (height: CoverHeight) => void;
+}
+export const COVER_HEIGHT_NAMES: Record<CoverHeight, string> = { short: "Short", standard: "Standard", tall: "Tall", xtall: "Extra tall" };
+const clampFraming = (f: ImageFraming): ImageFraming => ({
+  x: Math.round(Math.min(100, Math.max(0, f.x)) * 10) / 10,
+  y: Math.round(Math.min(100, Math.max(0, f.y)) * 10) / 10,
+  zoom: Math.round(Math.min(MAX_IMAGE_ZOOM, Math.max(1, f.zoom)) * 100) / 100,
+});
+
+/**
+ * A photo that fills its frame at the owner's chosen focal point and zoom.
+ * In edit mode an Adjust button lets the owner drag it, zoom it, and nudge
+ * it with the arrow keys; everyone else just sees the framed result.
+ */
+function FramedPhoto({ slot, src, framing, controls, label, coverHeight }: {
+  slot: FramedImage;
+  src: string;
+  framing: ImageFraming;
+  controls?: FramingControls;
+  label: string;
+  coverHeight?: CoverHeight;
+}) {
+  const [adjusting, setAdjusting] = useState(false);
+  const drag = useRef<{ x: number; y: number; start: ImageFraming } | null>(null);
+  const clip = useRef<HTMLDivElement>(null);
+  const adjustButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (!controls) setAdjusting(false); }, [controls]);
+  useEffect(() => { if (adjusting) clip.current?.focus({ preventScroll: true }); }, [adjusting]);
+
+  const update = (next: ImageFraming) => controls?.onFraming(slot, clampFraming(next));
+  const finish = () => { setAdjusting(false); requestAnimationFrame(() => adjustButton.current?.focus({ preventScroll: true })); };
+  const style: CSSProperties = {
+    objectPosition: `${framing.x}% ${framing.y}%`,
+    transformOrigin: `${framing.x}% ${framing.y}%`,
+    transform: framing.zoom > 1 ? `scale(${framing.zoom})` : undefined,
+  };
+
+  return <div className={`pg-frame${adjusting ? " is-adjusting" : ""}`}>
+    <div
+      ref={clip}
+      className="pg-frame-clip"
+      tabIndex={adjusting ? 0 : undefined}
+      role={adjusting ? "group" : undefined}
+      aria-label={adjusting ? `Reposition ${label}. Drag, or use the arrow keys; plus and minus zoom.` : undefined}
+      onPointerDown={(event) => {
+        if (!adjusting) return;
+        event.preventDefault();
+        drag.current = { x: event.clientX, y: event.clientY, start: framing };
+        try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* Capture is a nicety; dragging works without it. */ }
+      }}
+      onPointerMove={(event) => {
+        const active = drag.current;
+        if (!active || !clip.current) return;
+        // Moving the pointer right pulls the picture right, revealing more
+        // of its left side, so the focal point moves the other way.
+        const { width, height } = clip.current.getBoundingClientRect();
+        update({
+          ...active.start,
+          x: active.start.x - ((event.clientX - active.x) / Math.max(1, width)) * 100 / active.start.zoom,
+          y: active.start.y - ((event.clientY - active.y) / Math.max(1, height)) * 100 / active.start.zoom,
+        });
+      }}
+      onPointerUp={() => { drag.current = null; }}
+      onPointerCancel={() => { drag.current = null; }}
+      onKeyDown={(event) => {
+        if (!adjusting) return;
+        const step = event.shiftKey ? 10 : 2;
+        const moves: Record<string, Partial<ImageFraming>> = {
+          ArrowLeft: { x: framing.x + step }, ArrowRight: { x: framing.x - step },
+          ArrowUp: { y: framing.y + step }, ArrowDown: { y: framing.y - step },
+          "+": { zoom: framing.zoom + 0.1 }, "=": { zoom: framing.zoom + 0.1 }, "-": { zoom: framing.zoom - 0.1 },
+        };
+        if (event.key === "Escape" || event.key === "Enter") { event.preventDefault(); finish(); return; }
+        const move = moves[event.key];
+        if (!move) return;
+        event.preventDefault();
+        update({ ...framing, ...move });
+      }}
+    >
+      <img src={src} alt="" draggable={false} style={style} />
+    </div>
+    {controls && !adjusting && <button ref={adjustButton} type="button" className="pg-adjust" onClick={() => setAdjusting(true)}>
+      <Icon name="move" /><span>Adjust<span className="sr-only"> {label}</span></span>
+    </button>}
+    {controls && adjusting && <div className="pg-adjust-panel" onPointerDown={(event) => event.stopPropagation()}>
+      <p>Drag the picture to move it.</p>
+      <label className="pg-zoom">Zoom
+        <input type="range" min={1} max={MAX_IMAGE_ZOOM} step={0.05} value={framing.zoom}
+          onChange={(event) => update({ ...framing, zoom: Number(event.target.value) })} />
+      </label>
+      {slot === "cover" && coverHeight && <div className="pg-height-choice" role="group" aria-label="Banner height">
+        {COVER_HEIGHTS.map((height) => <button key={height} type="button" aria-pressed={coverHeight === height} onClick={() => controls.onCoverHeight(height)}>{COVER_HEIGHT_NAMES[height]}</button>)}
+      </div>}
+      <div className="pg-adjust-actions">
+        <button type="button" className="pg-text-button" onClick={() => update(defaultFraming()[slot])}>Reset</button>
+        <button type="button" className="pg-adjust-done" onClick={finish}>Done</button>
+      </div>
+    </div>}
+  </div>;
 }
 
 export function GalleryTopbar({ active }: { active: "profile" | "other" }) {
@@ -139,7 +244,7 @@ const NAV: { id: GalleryTab; label: string; icon: string }[] = [
 ];
 
 export default function ProfileGalleryView({
-  data, mode, tab, onTab, onEditProfile, onEmpty, toolbar, tabContent, editing = false, notice, overlay,
+  data, mode, tab, onTab, onEditProfile, onEmpty, toolbar, tabContent, editing = false, notice, overlay, framingControls,
 }: {
   data: GalleryData;
   mode: Mode;
@@ -153,6 +258,8 @@ export default function ProfileGalleryView({
   editing?: boolean;
   notice?: ReactNode;
   overlay?: ReactNode;
+  /** Present only while the owner is editing. */
+  framingControls?: FramingControls;
 }) {
   const { profile, showcase, art } = data;
   const gallery = profile.profileGallery;
@@ -164,6 +271,9 @@ export default function ProfileGalleryView({
   const memory = art?.memory || gallery.memoryImage;
   const signature = gallery.signatureDice || profile.diceTheme || "white";
   const portrait = profile.avatarPath;
+  const framing = { ...defaultFraming(), ...gallery.framing };
+  const controls = owner && editing ? framingControls : undefined;
+  const coverHeight = gallery.coverHeight ?? "standard";
   const palette = PROFILE_PALETTES.find(item => item.id === profile.profileStyle) ?? PROFILE_PALETTES[0];
   const paletteStyle = gallery.accent === "profile" ? {
     "--pg-accent": palette.color, "--pg-accent-text": palette.color, "--pg-accent-fill": palette.color,
@@ -178,7 +288,7 @@ export default function ProfileGalleryView({
 
   const characterCard = show("character") && (character || gallery.characterName || owner) &&
     <article className="pg-card pg-character">
-      {character && <img src={character} alt="" />}
+      {character && <FramedPhoto slot="character" src={character} framing={framing.character} controls={controls} label="your character art" />}
       <header className="pg-card-title">
         <h2>My character{gallery.characterName && <><span className="pg-dot" aria-hidden="true">•</span>{gallery.characterName}</>}</h2>
         <Ornament variant="start" />
@@ -210,7 +320,7 @@ export default function ProfileGalleryView({
   const memoryBlock = show("memory") && (memory || gallery.memoryCaption || owner) &&
     <section className="pg-memory" aria-labelledby="pg-memory-heading">
       <div className="pg-section-heading"><h2 id="pg-memory-heading">Campaign memory</h2><Ornament variant="rule" /></div>
-      {memory ? <img src={memory} alt="" /> : empty("memory", "Add a memory", "A moment from your table worth keeping: one picture and a line about it.")}
+      {memory ? <FramedPhoto slot="memory" src={memory} framing={framing.memory} controls={controls} label="your campaign memory" /> : empty("memory", "Add a memory", "A moment from your table worth keeping: one picture and a line about it.")}
       {gallery.memoryCaption && <p className="pg-caption">{gallery.memoryCaption}</p>}
       {gallery.memoryCaption && <Ornament />}
     </section>;
@@ -224,7 +334,7 @@ export default function ProfileGalleryView({
     <div className="pg-layout">
       <aside className="pg-rail">
         <div className="pg-portrait">
-          {portrait ? <img src={portrait} alt="" /> : <Avatar name={profile.display_name} id={profile.id || undefined} size={286} />}
+          {portrait ? <FramedPhoto slot="portrait" src={portrait} framing={framing.portrait} controls={controls} label="your portrait" /> : <Avatar name={profile.display_name} id={profile.id || undefined} size={286} />}
         </div>
         <h1 className="pg-name">{profile.display_name}</h1>
         {profile.pronouns && <p className="pg-pronouns">{profile.pronouns}</p>}
@@ -242,8 +352,11 @@ export default function ProfileGalleryView({
       <main className="pg-main" id="pg-main" tabIndex={-1}>
         {notice}
         {tab === "gallery" ? <>
-          <figure className={`pg-banner${banner ? "" : " is-empty"}`}>
-            {banner ? <BannerArtwork value={banner} /> : empty("cover", "Add cover art", owner ? "Set the scene: a wide picture of your world or your table." : "")}
+          <figure className={`pg-banner height-${coverHeight}${banner ? "" : " is-empty"}`}>
+            {banner ? (profileBanner(banner) && !profileBanner(banner)!.image
+              ? <BannerArtwork value={banner} />
+              : <FramedPhoto slot="cover" src={profileBanner(banner)?.image || banner} framing={framing.cover} controls={controls} label="your cover art" coverHeight={coverHeight} />)
+              : empty("cover", "Add cover art", owner ? "Set the scene: a wide picture of your world or your table." : "")}
           </figure>
           {gallery.badgesFirst ? <>{lower}{upper}</> : <>{upper}{lower}</>}
         </> : tabContent}

@@ -224,28 +224,28 @@ export default function VividCache({ onChange, onPreviewDice }: { onChange: () =
     <div className="cache-reel-window" aria-hidden="true"><span className="cache-pointer" /><span className="cache-fade" /><span className="cache-flare" />
       <span className="cache-burst"><i className="cache-ring" /><i className="cache-ring" /></span>
       <div className="cache-reel" ref={strip} style={{ transform: position(reel.length && phase !== "spin" ? CACHE_WINNER_INDEX : 2) }}>
-        {(reel.length ? reel : catalog?.rewards ?? []).map((reward, i) => <div key={i} className={`cache-tile rarity-${reward.rarity}${reel.length && phase === "reveal" && i === CACHE_WINNER_INDEX ? " is-winner" : ""}`}><CacheRewardArt id={reward.id} /><small>{reward.rarity}</small><strong>{reward.name}</strong></div>)}
+        {(reel.length ? reel : catalog?.rewards ?? []).map((reward, i) => <div key={i} className={`cache-tile rarity-${reward.rarity}${reel.length && phase === "reveal" && i === CACHE_WINNER_INDEX ? " is-winner" : ""}`}><CacheRewardArt id={reward.id} concealed={reward.rarity === "mythic"} /><small>{reward.rarity}</small><strong>{reward.name}</strong></div>)}
       </div>
     </div>
     <div className="cache-controls"><button type="button" className="cache-open" onClick={open} disabled={!catalog || phase !== "idle" || catalog.balance < catalog.cost}>{phase === "request" ? "Confirming…" : phase === "spin" ? "Opening…" : cost ? `Open Cache · ${cost} VCoins` : "Open Cache · Free"}</button><span role="status">{phase === "spin" ? "Your reward is secured. Revealing…" : "Fictional rewards · No cash value"}</span></div>
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
     {phase === "reveal" && result && <div ref={reveal} className={`cache-reveal rarity-${result.reward.rarity}`} role="status">
       {mythic && <div className="cache-embers" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ "--i": i } as CSSProperties} />)}</div>}
-      <CacheRewardArt id={result.reward.id} />
+      <CacheRewardArt id={result.reward.id} concealed={result.reward.rarity === "mythic"} />
       <h3>{result.reward.name}</h3>
       <p className="cache-reveal-rarity">{result.reward.rarity}{odds(result.reward)}</p>
       <p>{result.reward.preview.description}</p>
       <p className="cache-reveal-status">{!result.duplicate ? "Added to your collection" : result.refund ? `Already owned · ${result.refund} VCoins refunded` : "Already in your collection"}</p>
       <div className="cache-reveal-actions">
         {result.reward.diceTheme && <button type="button" onClick={() => void equipDice(result.reward.diceTheme!, result.reward.name)}>Equip dice</button>}
-        {result.reward.diceTheme && onPreviewDice && <button type="button" onClick={() => onPreviewDice(result.reward.diceTheme!)}>Roll them</button>}
+        {result.reward.rarity !== "mythic" && result.reward.diceTheme && onPreviewDice && <button type="button" onClick={() => onPreviewDice(result.reward.diceTheme!)}>Roll them</button>}
         <button type="button" ref={continueButton} onClick={dismiss}>Continue</button>
       </div>
     </div>}
     {ownedDice.length > 0 && <div className="cache-owned-dice"><strong>Your mythic dice</strong>
       {ownedDice.map(r => <span key={r.id} className="cache-owned-die">{r.name}
         <button type="button" disabled={busy || user?.diceTheme === r.diceTheme} onClick={() => void equipDice(r.diceTheme!, r.name)}>{user?.diceTheme === r.diceTheme ? "Equipped" : "Equip"}</button>
-        {onPreviewDice && <button type="button" disabled={busy} onClick={() => onPreviewDice(r.diceTheme!)}>Roll</button>}
+        {r.rarity !== "mythic" && onPreviewDice && <button type="button" disabled={busy} onClick={() => onPreviewDice(r.diceTheme!)}>Roll</button>}
       </span>)}
     </div>}
     <ul className="cache-legend" aria-label="Rarity odds and duplicate refunds">{rarities.map(rarity => <li key={rarity} className={`rarity-${rarity}`}><strong>{rarity}</strong><span>{((catalog?.rewards.filter(r => r.rarity === rarity).reduce((n, r) => n + r.weight, 0) ?? 0) / total * 100).toFixed(1)}%</span><small>{!catalog ? "—" : catalog.refunds[rarity] ? `Duplicate: ${catalog.refunds[rarity]} VCoins` : "No duplicate refund while free"}</small></li>)}</ul>

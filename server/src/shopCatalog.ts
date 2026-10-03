@@ -1,7 +1,7 @@
-import { SPECIAL_CRITICALS, isCacheCritical } from "../../shared/specialCriticals.js";
+import { SPECIAL_CRITICALS } from "../../shared/specialCriticals.js";
 import { MYTHIC_FAILURES, MYTHIC_CRITICALS, type MythicCriticalStyle } from "../../shared/mythicCriticals.js";
 import { CACHE_COST } from "./vividCacheStore.js";
-import { SPECIAL_TRAILS, isCacheTrail } from "../../shared/specialTrails.js";
+import { SPECIAL_TRAILS } from "../../shared/specialTrails.js";
 
 export type CriticalSlot = "nat20" | "nat1";
 export type CosmeticSlot = CriticalSlot | "turnStart" | "tokenBorder" | "chatFlair";
@@ -143,7 +143,9 @@ export function bundlesNewestFirst(): CosmeticBundle[] {
   return [...BUNDLES].sort((a, b) => b.releasedAt.localeCompare(a.releasedAt));
 }
 
-export const COSMETICS = [
+export const RARITY_PRICES = { starter: 0, uncommon: 100, rare: 250, epic: 500, legendary: 1000 } as const;
+
+const CATALOGUE = [
   ...MYTHIC_FAILURES.map(effect => ({ ...effect, type: "nat1-effect" as const, slot: "nat1" as const })),
   ...MYTHIC_CRITICALS.map(effect => ({ ...effect, type: "nat20-effect" as const, slot: "nat20" as const })),
   ...SPECIAL_CRITICALS.map(effect => ({ ...effect, type: "nat20-effect" as const, slot: "nat20" as const, price: 1 })),
@@ -407,18 +409,20 @@ export const COSMETICS = [
 
 ] as const;
 
+// Mythic uses a positive internal sentinel, never a purchasable price.
+export const COSMETICS = CATALOGUE.map(item => ({ ...item, price: item.rarity === "mythic" ? 1 : RARITY_PRICES[item.rarity] }));
+
 /**
- * Mythics and the cache-only trails and Nat 20 effects can only be won in the
- * Vivid Cache: they can't be bought, and the GM/dev bypass that frees the
- * rest of the Emporium doesn't unlock them either. One rule, used for showing
- * ownership, for purchases and for equipping, so the three can't drift apart.
+ * Mythics can only be won in Vivid Cache. All other tiers can also be bought.
+ * This rule gates purchases, ownership and the GM bypass.
  */
 export function isCacheExclusive(item: { id: string; rarity: string }): boolean {
-  return item.rarity === "mythic" || isCacheTrail(item.id) || isCacheCritical(item.id);
+  return item.rarity === "mythic";
 }
 
 /** Whether a player may equip a cosmetic with a server-side equip slot. */
 export function equipAllowed(item: { id: string; rarity: string; price: number }, bypassActive: boolean, unlocked: boolean): boolean {
+  if (isCacheExclusive(item)) return unlocked;
   if (item.price <= 0 || unlocked) return true;
   return bypassActive && !isCacheExclusive(item);
 }

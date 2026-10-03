@@ -107,7 +107,6 @@ export default function ShopPage() {
   const [dicePreviewing, setDicePreviewing] = useState(false);
   const dicePreviewLock = useRef(false);
   const [specialDiceOpen, setSpecialDiceOpen] = useState(false);
-  const [specialDiceError, setSpecialDiceError] = useState("");
   const [specialDiceName, setSpecialDiceName] = useState("");
   const shopHeader = useRef<HTMLElement>(null);
   const shopMain = useRef<HTMLElement>(null);
@@ -124,47 +123,6 @@ export default function ShopPage() {
     void preloadDice().catch(error => console.warn("dice preload failed", error));
     return () => { mounted.current = false; };
   }, []);
-
-  const previewSpecialDice = async (id: string, reopenCatalogue = true) => {
-    const dice = SPECIAL_DICE.find(die => die.id === id);
-    if (!dice || dicePreviewLock.current) return;
-    dicePreviewLock.current = true;
-    setDicePreviewing(true);
-    setSpecialDiceError("");
-    // Native modal top layers obscure the global dice canvas; close for the roll.
-    setSpecialDiceOpen(false);
-    setSpecialDiceName(dice.label);
-    try {
-      await previewDice(dice.id, dice.trailId as DiceTrailStyle, true);
-    } catch (cause) {
-      if (mounted.current) setSpecialDiceError(cause instanceof Error ? cause.message : "Could not preview these dice. Try again.");
-    } finally {
-      dicePreviewLock.current = false;
-      if (mounted.current) {
-        setDicePreviewing(false);
-        setNotice("");
-        setSpecialDiceName("");
-        if (reopenCatalogue) setSpecialDiceOpen(true);
-      }
-    }
-  };
-
-  // "Roll them" from a cache reveal. The dialog's top layer hides the dice
-  // canvas, so the cache closes for the roll and reopens on the same reveal
-  // (an unacknowledged opening is restored from the server).
-  const previewCacheDice = async (theme: string) => {
-    if (dicePreviewLock.current) return;
-    setCacheOpen(false);
-    if (SPECIAL_DICE.some(die => die.id === theme)) await previewSpecialDice(theme, false);
-    else {
-      dicePreviewLock.current = true;
-      setDicePreviewing(true);
-      try { await previewDice(theme); }
-      catch (cause) { if (mounted.current) setError(cause instanceof Error ? cause.message : "Could not preview these dice."); }
-      finally { dicePreviewLock.current = false; if (mounted.current) setDicePreviewing(false); }
-    }
-    if (mounted.current) setCacheOpen(true);
-  };
 
   const loadShop = async () => {
     const response = await api<ShopResponse>("/api/shop");
@@ -266,7 +224,7 @@ export default function ShopPage() {
         { id: "nat20-effect", label: "Nat 20 effects", caption: "The celebration everyone sees.", blurb: "Equip the celebration everyone sees when you land a natural 20.", list: nat20Effects },
         { id: "nat1-effect", label: "Nat 1 effects", caption: "Fail with some style.", blurb: "When the dice betray you, at least fail with style.", list: nat1Effects },
         { id: "turn-start-effect", label: "Turn start", caption: "Your entrance, every round.", blurb: "A short token-centered entrance that fires when initiative reaches your character.", list: turnStartEffects },
-        { id: "token-border", label: "Token border", caption: "Carry the flame.", blurb: "Preview freely. Relic owners can equip a border for their character tokens or remove it here.", list: items.filter(item => item.type === "token-border") },
+        { id: "token-border", label: "Token border", caption: "Carry the flame.", blurb: "Relic owners can equip a border for their character tokens or remove it here.", list: items.filter(item => item.type === "token-border") },
         { id: "chat-flair", label: "Chat effect", caption: "A mark of the First Flame.", blurb: "A gold accent for your campaign chat name. Equipping is optional and requires ownership.", list: items.filter(item => item.type === "chat-flair") },
       ].filter((category) => category.list.length > 0),
     [items, diceTrails, nat20Effects, nat1Effects, turnStartEffects]
@@ -296,7 +254,8 @@ export default function ShopPage() {
     return shop?.equipped[item.slot] === item.id;
   };
 
-  const preview = async (item: ShopItem) => {
+  const preview = async (item: ShopItem, bundlePreview = false) => {
+    if (item.rarity === "mythic" && !bundlePreview) return;
     setBusyId(item.id);
     setNotice("");
     setError("");
@@ -405,7 +364,8 @@ export default function ShopPage() {
     finally { setBusyId(null); }
   };
 
-  const renderPreview = (item: ShopItem) => {
+  const renderPreview = (item: ShopItem, bundlePreview = false) => {
+    if (item.rarity === "mythic" && !bundlePreview) return <div className="special-trail-swatch"><CacheRewardArt id={item.effect} concealed /></div>;
     if (isDiceTrail(item) && isSpecialTrail(item.effect)) return <span className="special-trail-swatch" aria-hidden="true"><CacheRewardArt id={item.effect} /></span>;
     if (item.type === "token-border") return <div className="relic-appearance-preview" aria-label="First Flame token border preview">
       <span className="relic-preview-token">
@@ -561,10 +521,10 @@ export default function ShopPage() {
                 <button
                   type="button"
                   className="ghost"
-                  disabled={busy}
+                  disabled={busy || item.rarity === "mythic"}
                   onClick={() => void preview(item)}
                 >
-                  {busy ? "Loading…" : "Preview"}
+                  {item.rarity === "mythic" ? "Preview hidden" : busy ? "Loading…" : "Preview"}
                 </button>
 
                 {item.owned ? (
@@ -678,13 +638,13 @@ export default function ShopPage() {
         {!loading && featured && (
           <FeaturedBundle
             bundle={featured}
-            categories={[...categories, { id: "special-dice", label: "Mystery dice", caption: "Three extraordinary sets. Take a look.", owned: 0, total: SPECIAL_DICE.length, countLabel: "Free previews" }]}
+            categories={[...categories, { id: "special-dice", label: "Mystery dice", caption: "Three extraordinary sets. Spin to unlock.", owned: 0, total: SPECIAL_DICE.length, countLabel: "Spin exclusive" }]}
             onOpenCategory={id => id === "special-dice" ? setSpecialDiceOpen(true) : setOpenCategory(id)}
             onOpenCache={() => setCacheOpen(true)}
-            trailPreview={featuredTrail ? renderPreview(featuredTrail) : undefined}
-            critPreview={featuredCrit ? renderPreview(featuredCrit) : undefined}
-            onPreviewTrail={featuredTrail ? () => void preview(featuredTrail) : undefined}
-            onPreviewCrit={featuredCrit ? () => void preview(featuredCrit) : undefined}
+            trailPreview={featuredTrail ? renderPreview(featuredTrail, true) : undefined}
+            critPreview={featuredCrit ? renderPreview(featuredCrit, true) : undefined}
+            onPreviewTrail={featuredTrail ? () => void preview(featuredTrail, true) : undefined}
+            onPreviewCrit={featuredCrit ? () => void preview(featuredCrit, true) : undefined}
             onPreviewDice={featuredDice ? () => void previewFeaturedDice() : undefined}
             dicePreviewing={dicePreviewing}
             tokenImage={shop?.previewCharacter?.imageUrl}
@@ -718,10 +678,10 @@ export default function ShopPage() {
       <ShopDialog
         open={specialDiceOpen}
         title="Mystery dice"
-        subtitle="Names revealed. Appearances concealed. Roll a set to discover it."
+        subtitle="Names revealed. Appearances concealed. Win a set in Vivid Cache."
         onClose={() => setSpecialDiceOpen(false)}
       >
-        <SpecialDiceCatalogue onPreview={id => void previewSpecialDice(id)} busy={dicePreviewing} error={specialDiceError} />
+        <SpecialDiceCatalogue />
       </ShopDialog>
 
       <ShopDialog
@@ -730,7 +690,7 @@ export default function ShopPage() {
         subtitle="One cache. One cosmetic. A chance at the First Flame."
         onClose={() => setCacheOpen(false)}
       >
-        <VividCache onChange={loadShop} onPreviewDice={(theme) => void previewCacheDice(theme)} />
+        <VividCache onChange={loadShop} />
       </ShopDialog>
     </div>
   );
