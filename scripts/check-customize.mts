@@ -37,6 +37,9 @@ await page.getByRole('heading',{name:'Your dice',exact:true}).waitFor();
 
 await page.locator('.collection-tile-art img').first().waitFor({timeout:30000});
 await page.waitForFunction(()=>document.querySelectorAll('.collection-tile-art img').length>=18,{},{timeout:60000});
+await page.locator('.collection-die-stage[data-rendered=true]').waitFor({timeout:30000});
+await page.locator('.collection-die-stage .preview-status').waitFor({state:'detached'});
+await page.waitForTimeout(500); // Let the WebGL compositor present the rendered frame before capture.
 if(await page.locator('.collection-die-stage').count()) await page.locator('.collection-die-stage[data-rendered=true]').waitFor(); await page.evaluate(() => window.scrollTo({top:0,behavior:"instant"})); if(await page.locator(".collection-die-stage").count()) await page.locator(".collection-die-stage[data-rendered=true]").waitFor(); await page.screenshot({path:out+'/desktop.png',fullPage:true,timeout:60000});
 assert.equal(await page.evaluate(()=>localStorage.getItem('vivid:diceTrailStyle')),'aura');
 assert.equal(writes.length,0);

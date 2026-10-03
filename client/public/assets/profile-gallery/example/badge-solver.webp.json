@@ -1,0 +1,4 @@
+{
+  "prompt": "Edit this existing medal asset only: remove the nearly black rectangular background around its actual outer contour. Preserve the exact medal design, bronze colours, blue enamel if present, relief, worn texture and composition. Do not redesign, add text, invent details or cut off the top/bottom. Output one centered isolated medal on a genuinely transparent PNG background with 5 percent clear padding, preserving fine outer leaves and transparent gaps outside the medal. No shadow cast onto a backdrop. This is reusable website artwork, not a mockup.\n",
+  "createdAt": "2026-10-03T17:18:51.189Z"
+}

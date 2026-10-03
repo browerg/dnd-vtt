@@ -1,0 +1,298 @@
+{
+  "regions": [
+    {
+      "id": "topbar",
+      "kind": "chrome",
+      "box": {
+        "w": 1,
+        "x": 0,
+        "h": 0.052734375,
+        "y": 0
+      },
+      "note": "Slim navigation with brand and links",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "portrait",
+      "kind": "plate",
+      "box": {
+        "w": 0.18619791666666666,
+        "x": 0.022135416666666668,
+        "h": 0.279296875,
+        "y": 0.0859375
+      },
+      "note": "Square portrait of red-haired fantasy adventurer, stone background, no text",
+      "bleed": true,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "banner",
+      "kind": "plate",
+      "box": {
+        "w": 0.7376302083333334,
+        "x": 0.24479166666666666,
+        "h": 0.2216796875,
+        "y": 0.076171875
+      },
+      "note": "Panoramic castle city by lake at sunset, mountains and trees, no text",
+      "bleed": true,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "character",
+      "kind": "plate",
+      "box": {
+        "w": 0.4947916666666667,
+        "x": 0.244140625,
+        "h": 0.2939453125,
+        "y": 0.318359375
+      },
+      "note": "Landscape portrait of same red-haired ranger in forest, subject on right, no text",
+      "bleed": true,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "dice",
+      "kind": "plate",
+      "box": {
+        "w": 0.23177083333333334,
+        "x": 0.751953125,
+        "h": 0.294921875,
+        "y": 0.318359375
+      },
+      "note": "Obsidian d20 with orange cracks on black stone plinth in candlelit room, no UI text",
+      "bleed": true,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "badge-story",
+      "kind": "plate",
+      "box": {
+        "w": 0.091796875,
+        "x": 0.2623697916666667,
+        "h": 0.1357421875,
+        "y": 0.6728515625
+      },
+      "note": "Isolated antique gold compass medal with pointed star, transparent background, no text",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "badge-party",
+      "kind": "plate",
+      "box": {
+        "w": 0.09635416666666667,
+        "x": 0.3782552083333333,
+        "h": 0.1357421875,
+        "y": 0.6728515625
+      },
+      "note": "Isolated antique gold laurel handshake medal with blue enamel, transparent background, no text",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "badge-solver",
+      "kind": "plate",
+      "box": {
+        "w": 0.09114583333333333,
+        "x": 0.4986979166666667,
+        "h": 0.1357421875,
+        "y": 0.6728515625
+      },
+      "note": "Isolated antique gold laurel lantern medal with blue enamel, transparent background, no text",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "memory",
+      "kind": "plate",
+      "box": {
+        "w": 0.33984375,
+        "x": 0.6380208333333334,
+        "h": 0.1591796875,
+        "y": 0.669921875
+      },
+      "note": "Fantasy companions around campfire beside moonlit lake and castle, no text",
+      "bleed": true,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "name",
+      "kind": "text",
+      "box": {
+        "w": 0.18033854166666666,
+        "x": 0.021484375,
+        "h": 0.04296875,
+        "y": 0.388671875
+      },
+      "note": "Semantic text: Ruby Rose",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "pronouns",
+      "kind": "text",
+      "box": {
+        "w": 0.16927083333333334,
+        "x": 0.022135416666666668,
+        "h": 0.01953125,
+        "y": 0.4365234375
+      },
+      "note": "Semantic text: she/her",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "bio",
+      "kind": "text",
+      "box": {
+        "w": 0.18684895833333334,
+        "x": 0.022135416666666668,
+        "h": 0.029296875,
+        "y": 0.501953125
+      },
+      "note": "Semantic text: Collector of stories. Terrible at stealth.",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "edit",
+      "kind": "control",
+      "box": {
+        "w": 0.11067708333333333,
+        "x": 0.022135416666666668,
+        "h": 0.0458984375,
+        "y": 0.5517578125
+      },
+      "note": "Edit profile",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "sidebar-nav",
+      "kind": "chrome",
+      "box": {
+        "w": 0.1875,
+        "x": 0.021484375,
+        "h": 0.25390625,
+        "y": 0.6259765625
+      },
+      "note": "Gallery Characters Campaigns Journal Saved navigation",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "character-title",
+      "kind": "text",
+      "box": {
+        "w": 0.19986979166666666,
+        "x": 0.2584635416666667,
+        "h": 0.0302734375,
+        "y": 0.3349609375
+      },
+      "note": "Semantic text: My character · Rowan",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "dice-title",
+      "kind": "text",
+      "box": {
+        "w": 0.12955729166666666,
+        "x": 0.7649739583333334,
+        "h": 0.0283203125,
+        "y": 0.3359375
+      },
+      "note": "Semantic text: Signature dice",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "badges-heading",
+      "kind": "text",
+      "box": {
+        "w": 0.11458333333333333,
+        "x": 0.25390625,
+        "h": 0.02734375,
+        "y": 0.634765625
+      },
+      "note": "Semantic text: At the table",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "badge-captions",
+      "kind": "text",
+      "box": {
+        "w": 0.333984375,
+        "x": 0.2578125,
+        "h": 0.04296875,
+        "y": 0.830078125
+      },
+      "note": "Semantic text: Story Keeper Brings the lore to life; Party Heart Looks out for everyone; Problem Solver Finds a way (usually)",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "memory-title",
+      "kind": "text",
+      "box": {
+        "w": 0.14518229166666666,
+        "x": 0.6373697916666666,
+        "h": 0.02734375,
+        "y": 0.634765625
+      },
+      "note": "Semantic text: Campaign memory",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "memory-caption",
+      "kind": "text",
+      "box": {
+        "w": 0.3424479166666667,
+        "x": 0.6380208333333334,
+        "h": 0.029296875,
+        "y": 0.83984375
+      },
+      "note": "Semantic text: That night by the lake, when everything finally felt like it might be okay.",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    },
+    {
+      "id": "toolbar",
+      "kind": "chrome",
+      "box": {
+        "w": 0.7688802083333334,
+        "x": 0.23111979166666666,
+        "h": 0.0966796875,
+        "y": 0.9033203125
+      },
+      "note": "Cover art Layout Showcase Preview Done editing",
+      "bleed": false,
+      "grid": "A0:J9",
+      "snap": false
+    }
+  ]
+}

@@ -7,6 +7,7 @@ export interface User {
   pronouns?: string;
   bio?: string;
   profileStyle?: string;
+  profileGallery?: import("../../shared/profileGallery.js").ProfileGallery;
   relicOwner?: boolean;
 }
 

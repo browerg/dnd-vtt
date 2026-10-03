@@ -6,6 +6,7 @@ import { DEFAULT_PROFILE_STYLE, isProfileStyle } from "./profileStyles.js";
 import { reconcileAccountAchievements } from "./achievementTracking.js";
 import { mythicDiceForTheme } from "../../shared/mythicDice.js";
 import { ownsMythicDice } from "./diceOwnership.js";
+import { readProfileGallery, validateProfileGallery, type ProfileGallery } from "../../shared/profileGallery.js";
 
 const SESSION_DAYS = 30;
 
@@ -18,6 +19,7 @@ export interface SessionUser {
   pronouns?: string;
   bio?: string;
   profileStyle?: string;
+  profileGallery?: ProfileGallery;
   relicOwner?: boolean;
 }
 
@@ -203,14 +205,16 @@ export function userForToken(token: string): SessionUser | null {
   const row = db
     .prepare(
       `SELECT u.id, u.email, u.display_name, u.dice_theme AS diceTheme,
-              u.avatar_path AS avatarPath, u.pronouns, u.bio, u.profile_style AS profileStyle,
+              u.avatar_path AS avatarPath, u.pronouns, u.bio, u.profile_style AS profileStyle, u.profile_gallery AS galleryJson,
               EXISTS(SELECT 1 FROM cosmetic_unlocks cu WHERE cu.user_id = u.id AND cu.cosmetic_id = 'title-relic-owner') AS relicOwner
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.token = ? AND s.expires_at > datetime('now')`
     )
-    .get(token) as SessionUser | undefined;
-  return row ?? null;
+    .get(token) as (SessionUser & { galleryJson: string }) | undefined;
+  if (!row) return null;
+  const { galleryJson, ...user } = row;
+  return { ...user, profileGallery: readProfileGallery(galleryJson, true) };
 }
 
 export function parseCookies(header: string | undefined): Record<string, string> {
@@ -566,9 +570,18 @@ authRouter.put("/me/profile", (req, res) => {
   // Reconstruct the path from just the filename so no traversal segments are
   // ever stored ΓÇö same defense the character/map/codex uploaders use.
   const safeAvatar = avatarPath ? `/uploads/${path.basename(avatarPath)}` : "";
+  let gallery = current.profileGallery!;
+  // The palette picker in Customize remains an active profile control.
+  if (req.body?.profileGallery === undefined && req.body?.profileStyle !== undefined) gallery = { ...gallery, accent: "profile" };
+  if (req.body?.profileGallery !== undefined) {
+    try { gallery = validateProfileGallery(req.body.profileGallery); }
+    catch (error) { return res.status(400).json({ error: (error as Error).message }); }
+    if (!isValidDiceTheme(gallery.signatureDice)) return res.status(400).json({ error: "Choose a valid signature die." });
+    if (mythicDiceForTheme(gallery.signatureDice) && !ownsMythicDice(db, current.id, gallery.signatureDice)) return res.status(403).json({ error: "You must own that Mythic die to showcase it." });
+  }
   db.prepare(
-    "UPDATE users SET display_name = ?, pronouns = ?, bio = ?, avatar_path = ?, profile_style = ? WHERE id = ?"
-  ).run(displayName, pronouns, bio, safeAvatar, profileStyle, current.id);
+    "UPDATE users SET display_name = ?, pronouns = ?, bio = ?, avatar_path = ?, profile_style = ?, profile_gallery = ? WHERE id = ?"
+  ).run(displayName, pronouns, bio, safeAvatar, profileStyle, JSON.stringify(gallery), current.id);
   reconcileAccountAchievements(current.id);
   res.json({ user: getSessionUser(req) });
 });

@@ -1,0 +1,977 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-03T17:17:43.024955+00:00",
+  "title": "Design System: Vivid Realms Customize and Personal Gallery",
+  "extensions": {
+    "colorMeta": {
+      "copper": {
+        "role": "primary",
+        "displayName": "Copper",
+        "tonalRamp": [
+          "oklch(0.15 0.0881 51.92)",
+          "oklch(0.26 0.0881 51.92)",
+          "oklch(0.38 0.0881 51.92)",
+          "oklch(0.49 0.0881 51.92)",
+          "oklch(0.61 0.0881 51.92)",
+          "oklch(0.72 0.0881 51.92)",
+          "oklch(0.84 0.0881 51.92)",
+          "oklch(0.95 0.0881 51.92)"
+        ]
+      },
+      "copper-hover": {
+        "role": "primary",
+        "displayName": "Copper Hover",
+        "tonalRamp": [
+          "oklch(0.15 0.0675 52.69)",
+          "oklch(0.26 0.0675 52.69)",
+          "oklch(0.38 0.0675 52.69)",
+          "oklch(0.49 0.0675 52.69)",
+          "oklch(0.61 0.0675 52.69)",
+          "oklch(0.72 0.0675 52.69)",
+          "oklch(0.84 0.0675 52.69)",
+          "oklch(0.95 0.0675 52.69)"
+        ]
+      },
+      "copper-ink": {
+        "role": "primary",
+        "displayName": "Copper Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0222 47.76)",
+          "oklch(0.26 0.0222 47.76)",
+          "oklch(0.38 0.0222 47.76)",
+          "oklch(0.49 0.0222 47.76)",
+          "oklch(0.61 0.0222 47.76)",
+          "oklch(0.72 0.0222 47.76)",
+          "oklch(0.84 0.0222 47.76)",
+          "oklch(0.95 0.0222 47.76)"
+        ]
+      },
+      "slate-bg": {
+        "role": "neutral",
+        "displayName": "Slate Bg",
+        "tonalRamp": [
+          "oklch(0.15 0.0176 248.72)",
+          "oklch(0.26 0.0176 248.72)",
+          "oklch(0.38 0.0176 248.72)",
+          "oklch(0.49 0.0176 248.72)",
+          "oklch(0.61 0.0176 248.72)",
+          "oklch(0.72 0.0176 248.72)",
+          "oklch(0.84 0.0176 248.72)",
+          "oklch(0.95 0.0176 248.72)"
+        ]
+      },
+      "slate-panel": {
+        "role": "neutral",
+        "displayName": "Slate Panel",
+        "tonalRamp": [
+          "oklch(0.15 0.0226 246.12)",
+          "oklch(0.26 0.0226 246.12)",
+          "oklch(0.38 0.0226 246.12)",
+          "oklch(0.49 0.0226 246.12)",
+          "oklch(0.61 0.0226 246.12)",
+          "oklch(0.72 0.0226 246.12)",
+          "oklch(0.84 0.0226 246.12)",
+          "oklch(0.95 0.0226 246.12)"
+        ]
+      },
+      "slate-well": {
+        "role": "neutral",
+        "displayName": "Slate Well",
+        "tonalRamp": [
+          "oklch(0.15 0.0265 246.63)",
+          "oklch(0.26 0.0265 246.63)",
+          "oklch(0.38 0.0265 246.63)",
+          "oklch(0.49 0.0265 246.63)",
+          "oklch(0.61 0.0265 246.63)",
+          "oklch(0.72 0.0265 246.63)",
+          "oklch(0.84 0.0265 246.63)",
+          "oklch(0.95 0.0265 246.63)"
+        ]
+      },
+      "slate-line": {
+        "role": "neutral",
+        "displayName": "Slate Line",
+        "tonalRamp": [
+          "oklch(0.15 0.0276 244.49)",
+          "oklch(0.26 0.0276 244.49)",
+          "oklch(0.38 0.0276 244.49)",
+          "oklch(0.49 0.0276 244.49)",
+          "oklch(0.61 0.0276 244.49)",
+          "oklch(0.72 0.0276 244.49)",
+          "oklch(0.84 0.0276 244.49)",
+          "oklch(0.95 0.0276 244.49)"
+        ]
+      },
+      "slate-input": {
+        "role": "neutral",
+        "displayName": "Slate Input",
+        "tonalRamp": [
+          "oklch(0.15 0.0204 245.70)",
+          "oklch(0.26 0.0204 245.70)",
+          "oklch(0.38 0.0204 245.70)",
+          "oklch(0.49 0.0204 245.70)",
+          "oklch(0.61 0.0204 245.70)",
+          "oklch(0.72 0.0204 245.70)",
+          "oklch(0.84 0.0204 245.70)",
+          "oklch(0.95 0.0204 245.70)"
+        ]
+      },
+      "slate-selected": {
+        "role": "neutral",
+        "displayName": "Slate Selected",
+        "tonalRamp": [
+          "oklch(0.15 0.0221 243.20)",
+          "oklch(0.26 0.0221 243.20)",
+          "oklch(0.38 0.0221 243.20)",
+          "oklch(0.49 0.0221 243.20)",
+          "oklch(0.61 0.0221 243.20)",
+          "oklch(0.72 0.0221 243.20)",
+          "oklch(0.84 0.0221 243.20)",
+          "oklch(0.95 0.0221 243.20)"
+        ]
+      },
+      "slate-art": {
+        "role": "neutral",
+        "displayName": "Slate Art",
+        "tonalRamp": [
+          "oklch(0.15 0.0239 248.82)",
+          "oklch(0.26 0.0239 248.82)",
+          "oklch(0.38 0.0239 248.82)",
+          "oklch(0.49 0.0239 248.82)",
+          "oklch(0.61 0.0239 248.82)",
+          "oklch(0.72 0.0239 248.82)",
+          "oklch(0.84 0.0239 248.82)",
+          "oklch(0.95 0.0239 248.82)"
+        ]
+      },
+      "slate-tile-line": {
+        "role": "neutral",
+        "displayName": "Slate Tile Line",
+        "tonalRamp": [
+          "oklch(0.15 0.0273 246.54)",
+          "oklch(0.26 0.0273 246.54)",
+          "oklch(0.38 0.0273 246.54)",
+          "oklch(0.49 0.0273 246.54)",
+          "oklch(0.61 0.0273 246.54)",
+          "oklch(0.72 0.0273 246.54)",
+          "oklch(0.84 0.0273 246.54)",
+          "oklch(0.95 0.0273 246.54)"
+        ]
+      },
+      "slate-hover-line": {
+        "role": "neutral",
+        "displayName": "Slate Hover Line",
+        "tonalRamp": [
+          "oklch(0.15 0.0244 239.70)",
+          "oklch(0.26 0.0244 239.70)",
+          "oklch(0.38 0.0244 239.70)",
+          "oklch(0.49 0.0244 239.70)",
+          "oklch(0.61 0.0244 239.70)",
+          "oklch(0.72 0.0244 239.70)",
+          "oklch(0.84 0.0244 239.70)",
+          "oklch(0.95 0.0244 239.70)"
+        ]
+      },
+      "copper-nav-bg": {
+        "role": "primary",
+        "displayName": "Copper Nav Bg",
+        "tonalRamp": [
+          "oklch(0.15 0.0062 34.30)",
+          "oklch(0.26 0.0062 34.30)",
+          "oklch(0.38 0.0062 34.30)",
+          "oklch(0.49 0.0062 34.30)",
+          "oklch(0.61 0.0062 34.30)",
+          "oklch(0.72 0.0062 34.30)",
+          "oklch(0.84 0.0062 34.30)",
+          "oklch(0.95 0.0062 34.30)"
+        ]
+      },
+      "copper-nav-line": {
+        "role": "primary",
+        "displayName": "Copper Nav Line",
+        "tonalRamp": [
+          "oklch(0.15 0.0372 47.91)",
+          "oklch(0.26 0.0372 47.91)",
+          "oklch(0.38 0.0372 47.91)",
+          "oklch(0.49 0.0372 47.91)",
+          "oklch(0.61 0.0372 47.91)",
+          "oklch(0.72 0.0372 47.91)",
+          "oklch(0.84 0.0372 47.91)",
+          "oklch(0.95 0.0372 47.91)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(0.15 0.0046 78.30)",
+          "oklch(0.26 0.0046 78.30)",
+          "oklch(0.38 0.0046 78.30)",
+          "oklch(0.49 0.0046 78.30)",
+          "oklch(0.61 0.0046 78.30)",
+          "oklch(0.72 0.0046 78.30)",
+          "oklch(0.84 0.0046 78.30)",
+          "oklch(0.95 0.0046 78.30)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(0.15 0.0194 243.03)",
+          "oklch(0.26 0.0194 243.03)",
+          "oklch(0.38 0.0194 243.03)",
+          "oklch(0.49 0.0194 243.03)",
+          "oklch(0.61 0.0194 243.03)",
+          "oklch(0.72 0.0194 243.03)",
+          "oklch(0.84 0.0194 243.03)",
+          "oklch(0.95 0.0194 243.03)"
+        ]
+      },
+      "placeholder": {
+        "role": "neutral",
+        "displayName": "Placeholder",
+        "tonalRamp": [
+          "oklch(0.15 0.0234 243.91)",
+          "oklch(0.26 0.0234 243.91)",
+          "oklch(0.38 0.0234 243.91)",
+          "oklch(0.49 0.0234 243.91)",
+          "oklch(0.61 0.0234 243.91)",
+          "oklch(0.72 0.0234 243.91)",
+          "oklch(0.84 0.0234 243.91)",
+          "oklch(0.95 0.0234 243.91)"
+        ]
+      },
+      "profile-bg": {
+        "role": "neutral",
+        "displayName": "Profile Bg",
+        "tonalRamp": [
+          "oklch(0.15 0.0000 89.88)",
+          "oklch(0.26 0.0000 89.88)",
+          "oklch(0.38 0.0000 89.88)",
+          "oklch(0.49 0.0000 89.88)",
+          "oklch(0.61 0.0000 89.88)",
+          "oklch(0.72 0.0000 89.88)",
+          "oklch(0.84 0.0000 89.88)",
+          "oklch(0.95 0.0000 89.88)"
+        ]
+      },
+      "profile-bg-deep": {
+        "role": "neutral",
+        "displayName": "Profile Bg Deep",
+        "tonalRamp": [
+          "oklch(0.15 0.0041 106.82)",
+          "oklch(0.26 0.0041 106.82)",
+          "oklch(0.38 0.0041 106.82)",
+          "oklch(0.49 0.0041 106.82)",
+          "oklch(0.61 0.0041 106.82)",
+          "oklch(0.72 0.0041 106.82)",
+          "oklch(0.84 0.0041 106.82)",
+          "oklch(0.95 0.0041 106.82)"
+        ]
+      },
+      "profile-line": {
+        "role": "neutral",
+        "displayName": "Profile Line",
+        "tonalRamp": [
+          "oklch(0.15 0.0133 57.79)",
+          "oklch(0.26 0.0133 57.79)",
+          "oklch(0.38 0.0133 57.79)",
+          "oklch(0.49 0.0133 57.79)",
+          "oklch(0.61 0.0133 57.79)",
+          "oklch(0.72 0.0133 57.79)",
+          "oklch(0.84 0.0133 57.79)",
+          "oklch(0.95 0.0133 57.79)"
+        ]
+      },
+      "profile-line-soft": {
+        "role": "neutral",
+        "displayName": "Profile Line Soft",
+        "tonalRamp": [
+          "oklch(0.15 0.0106 48.30)",
+          "oklch(0.26 0.0106 48.30)",
+          "oklch(0.38 0.0106 48.30)",
+          "oklch(0.49 0.0106 48.30)",
+          "oklch(0.61 0.0106 48.30)",
+          "oklch(0.72 0.0106 48.30)",
+          "oklch(0.84 0.0106 48.30)",
+          "oklch(0.95 0.0106 48.30)"
+        ]
+      },
+      "profile-text": {
+        "role": "neutral",
+        "displayName": "Profile Text",
+        "tonalRamp": [
+          "oklch(0.15 0.0149 80.71)",
+          "oklch(0.26 0.0149 80.71)",
+          "oklch(0.38 0.0149 80.71)",
+          "oklch(0.49 0.0149 80.71)",
+          "oklch(0.61 0.0149 80.71)",
+          "oklch(0.72 0.0149 80.71)",
+          "oklch(0.84 0.0149 80.71)",
+          "oklch(0.95 0.0149 80.71)"
+        ]
+      },
+      "profile-muted": {
+        "role": "neutral",
+        "displayName": "Profile Muted",
+        "tonalRamp": [
+          "oklch(0.15 0.0176 64.56)",
+          "oklch(0.26 0.0176 64.56)",
+          "oklch(0.38 0.0176 64.56)",
+          "oklch(0.49 0.0176 64.56)",
+          "oklch(0.61 0.0176 64.56)",
+          "oklch(0.72 0.0176 64.56)",
+          "oklch(0.84 0.0176 64.56)",
+          "oklch(0.95 0.0176 64.56)"
+        ]
+      },
+      "profile-quiet": {
+        "role": "neutral",
+        "displayName": "Profile Quiet",
+        "tonalRamp": [
+          "oklch(0.15 0.0176 64.56)",
+          "oklch(0.26 0.0176 64.56)",
+          "oklch(0.38 0.0176 64.56)",
+          "oklch(0.49 0.0176 64.56)",
+          "oklch(0.61 0.0176 64.56)",
+          "oklch(0.72 0.0176 64.56)",
+          "oklch(0.84 0.0176 64.56)",
+          "oklch(0.95 0.0176 64.56)"
+        ]
+      },
+      "profile-accent": {
+        "role": "primary",
+        "displayName": "Profile Accent",
+        "tonalRamp": [
+          "oklch(0.15 0.1007 49.87)",
+          "oklch(0.26 0.1007 49.87)",
+          "oklch(0.38 0.1007 49.87)",
+          "oklch(0.49 0.1007 49.87)",
+          "oklch(0.61 0.1007 49.87)",
+          "oklch(0.72 0.1007 49.87)",
+          "oklch(0.84 0.1007 49.87)",
+          "oklch(0.95 0.1007 49.87)"
+        ]
+      },
+      "profile-accent-text": {
+        "role": "primary",
+        "displayName": "Profile Accent Text",
+        "tonalRamp": [
+          "oklch(0.15 0.0909 50.27)",
+          "oklch(0.26 0.0909 50.27)",
+          "oklch(0.38 0.0909 50.27)",
+          "oklch(0.49 0.0909 50.27)",
+          "oklch(0.61 0.0909 50.27)",
+          "oklch(0.72 0.0909 50.27)",
+          "oklch(0.84 0.0909 50.27)",
+          "oklch(0.95 0.0909 50.27)"
+        ]
+      },
+      "profile-accent-fill": {
+        "role": "primary",
+        "displayName": "Profile Accent Fill",
+        "tonalRamp": [
+          "oklch(0.15 0.0936 49.43)",
+          "oklch(0.26 0.0936 49.43)",
+          "oklch(0.38 0.0936 49.43)",
+          "oklch(0.49 0.0936 49.43)",
+          "oklch(0.61 0.0936 49.43)",
+          "oklch(0.72 0.0936 49.43)",
+          "oklch(0.84 0.0936 49.43)",
+          "oklch(0.95 0.0936 49.43)"
+        ]
+      },
+      "profile-accent-fill-hover": {
+        "role": "primary",
+        "displayName": "Profile Accent Fill Hover",
+        "tonalRamp": [
+          "oklch(0.15 0.0828 50.36)",
+          "oklch(0.26 0.0828 50.36)",
+          "oklch(0.38 0.0828 50.36)",
+          "oklch(0.49 0.0828 50.36)",
+          "oklch(0.61 0.0828 50.36)",
+          "oklch(0.72 0.0828 50.36)",
+          "oklch(0.84 0.0828 50.36)",
+          "oklch(0.95 0.0828 50.36)"
+        ]
+      },
+      "profile-accent-ink": {
+        "role": "primary",
+        "displayName": "Profile Accent Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0327 44.65)",
+          "oklch(0.26 0.0327 44.65)",
+          "oklch(0.38 0.0327 44.65)",
+          "oklch(0.49 0.0327 44.65)",
+          "oklch(0.61 0.0327 44.65)",
+          "oklch(0.72 0.0327 44.65)",
+          "oklch(0.84 0.0327 44.65)",
+          "oklch(0.95 0.0327 44.65)"
+        ]
+      },
+      "profile-accent-wash": {
+        "role": "primary",
+        "displayName": "Profile Accent Wash",
+        "tonalRamp": [
+          "oklch(0.15 0.1007 49.87)",
+          "oklch(0.26 0.1007 49.87)",
+          "oklch(0.38 0.1007 49.87)",
+          "oklch(0.49 0.1007 49.87)",
+          "oklch(0.61 0.1007 49.87)",
+          "oklch(0.72 0.1007 49.87)",
+          "oklch(0.84 0.1007 49.87)",
+          "oklch(0.95 0.1007 49.87)"
+        ]
+      },
+      "profile-rose": {
+        "role": "primary",
+        "displayName": "Profile Rose",
+        "tonalRamp": [
+          "oklch(0.15 0.0982 9.26)",
+          "oklch(0.26 0.0982 9.26)",
+          "oklch(0.38 0.0982 9.26)",
+          "oklch(0.49 0.0982 9.26)",
+          "oklch(0.61 0.0982 9.26)",
+          "oklch(0.72 0.0982 9.26)",
+          "oklch(0.84 0.0982 9.26)",
+          "oklch(0.95 0.0982 9.26)"
+        ]
+      },
+      "profile-rose-text": {
+        "role": "primary",
+        "displayName": "Profile Rose Text",
+        "tonalRamp": [
+          "oklch(0.15 0.0820 8.48)",
+          "oklch(0.26 0.0820 8.48)",
+          "oklch(0.38 0.0820 8.48)",
+          "oklch(0.49 0.0820 8.48)",
+          "oklch(0.61 0.0820 8.48)",
+          "oklch(0.72 0.0820 8.48)",
+          "oklch(0.84 0.0820 8.48)",
+          "oklch(0.95 0.0820 8.48)"
+        ]
+      },
+      "profile-rose-fill": {
+        "role": "primary",
+        "displayName": "Profile Rose Fill",
+        "tonalRamp": [
+          "oklch(0.15 0.0839 7.81)",
+          "oklch(0.26 0.0839 7.81)",
+          "oklch(0.38 0.0839 7.81)",
+          "oklch(0.49 0.0839 7.81)",
+          "oklch(0.61 0.0839 7.81)",
+          "oklch(0.72 0.0839 7.81)",
+          "oklch(0.84 0.0839 7.81)",
+          "oklch(0.95 0.0839 7.81)"
+        ]
+      },
+      "profile-rose-fill-hover": {
+        "role": "primary",
+        "displayName": "Profile Rose Fill Hover",
+        "tonalRamp": [
+          "oklch(0.15 0.0649 7.67)",
+          "oklch(0.26 0.0649 7.67)",
+          "oklch(0.38 0.0649 7.67)",
+          "oklch(0.49 0.0649 7.67)",
+          "oklch(0.61 0.0649 7.67)",
+          "oklch(0.72 0.0649 7.67)",
+          "oklch(0.84 0.0649 7.67)",
+          "oklch(0.95 0.0649 7.67)"
+        ]
+      },
+      "profile-rose-ink": {
+        "role": "primary",
+        "displayName": "Profile Rose Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0400 7.51)",
+          "oklch(0.26 0.0400 7.51)",
+          "oklch(0.38 0.0400 7.51)",
+          "oklch(0.49 0.0400 7.51)",
+          "oklch(0.61 0.0400 7.51)",
+          "oklch(0.72 0.0400 7.51)",
+          "oklch(0.84 0.0400 7.51)",
+          "oklch(0.95 0.0400 7.51)"
+        ]
+      },
+      "profile-rose-wash": {
+        "role": "primary",
+        "displayName": "Profile Rose Wash",
+        "tonalRamp": [
+          "oklch(0.15 0.0982 9.26)",
+          "oklch(0.26 0.0982 9.26)",
+          "oklch(0.38 0.0982 9.26)",
+          "oklch(0.49 0.0982 9.26)",
+          "oklch(0.61 0.0982 9.26)",
+          "oklch(0.72 0.0982 9.26)",
+          "oklch(0.84 0.0982 9.26)",
+          "oklch(0.95 0.0982 9.26)"
+        ]
+      },
+      "profile-jade": {
+        "role": "primary",
+        "displayName": "Profile Jade",
+        "tonalRamp": [
+          "oklch(0.15 0.0710 159.78)",
+          "oklch(0.26 0.0710 159.78)",
+          "oklch(0.38 0.0710 159.78)",
+          "oklch(0.49 0.0710 159.78)",
+          "oklch(0.61 0.0710 159.78)",
+          "oklch(0.72 0.0710 159.78)",
+          "oklch(0.84 0.0710 159.78)",
+          "oklch(0.95 0.0710 159.78)"
+        ]
+      },
+      "profile-jade-text": {
+        "role": "primary",
+        "displayName": "Profile Jade Text",
+        "tonalRamp": [
+          "oklch(0.15 0.0668 157.59)",
+          "oklch(0.26 0.0668 157.59)",
+          "oklch(0.38 0.0668 157.59)",
+          "oklch(0.49 0.0668 157.59)",
+          "oklch(0.61 0.0668 157.59)",
+          "oklch(0.72 0.0668 157.59)",
+          "oklch(0.84 0.0668 157.59)",
+          "oklch(0.95 0.0668 157.59)"
+        ]
+      },
+      "profile-jade-fill": {
+        "role": "primary",
+        "displayName": "Profile Jade Fill",
+        "tonalRamp": [
+          "oklch(0.15 0.0672 157.51)",
+          "oklch(0.26 0.0672 157.51)",
+          "oklch(0.38 0.0672 157.51)",
+          "oklch(0.49 0.0672 157.51)",
+          "oklch(0.61 0.0672 157.51)",
+          "oklch(0.72 0.0672 157.51)",
+          "oklch(0.84 0.0672 157.51)",
+          "oklch(0.95 0.0672 157.51)"
+        ]
+      },
+      "profile-jade-fill-hover": {
+        "role": "primary",
+        "displayName": "Profile Jade Fill Hover",
+        "tonalRamp": [
+          "oklch(0.15 0.0573 157.70)",
+          "oklch(0.26 0.0573 157.70)",
+          "oklch(0.38 0.0573 157.70)",
+          "oklch(0.49 0.0573 157.70)",
+          "oklch(0.61 0.0573 157.70)",
+          "oklch(0.72 0.0573 157.70)",
+          "oklch(0.84 0.0573 157.70)",
+          "oklch(0.95 0.0573 157.70)"
+        ]
+      },
+      "profile-jade-ink": {
+        "role": "primary",
+        "displayName": "Profile Jade Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0318 159.75)",
+          "oklch(0.26 0.0318 159.75)",
+          "oklch(0.38 0.0318 159.75)",
+          "oklch(0.49 0.0318 159.75)",
+          "oklch(0.61 0.0318 159.75)",
+          "oklch(0.72 0.0318 159.75)",
+          "oklch(0.84 0.0318 159.75)",
+          "oklch(0.95 0.0318 159.75)"
+        ]
+      },
+      "profile-jade-wash": {
+        "role": "primary",
+        "displayName": "Profile Jade Wash",
+        "tonalRamp": [
+          "oklch(0.15 0.0710 159.78)",
+          "oklch(0.26 0.0710 159.78)",
+          "oklch(0.38 0.0710 159.78)",
+          "oklch(0.49 0.0710 159.78)",
+          "oklch(0.61 0.0710 159.78)",
+          "oklch(0.72 0.0710 159.78)",
+          "oklch(0.84 0.0710 159.78)",
+          "oklch(0.95 0.0710 159.78)"
+        ]
+      },
+      "profile-ice": {
+        "role": "primary",
+        "displayName": "Profile Ice",
+        "tonalRamp": [
+          "oklch(0.15 0.0588 238.20)",
+          "oklch(0.26 0.0588 238.20)",
+          "oklch(0.38 0.0588 238.20)",
+          "oklch(0.49 0.0588 238.20)",
+          "oklch(0.61 0.0588 238.20)",
+          "oklch(0.72 0.0588 238.20)",
+          "oklch(0.84 0.0588 238.20)",
+          "oklch(0.95 0.0588 238.20)"
+        ]
+      },
+      "profile-ice-text": {
+        "role": "primary",
+        "displayName": "Profile Ice Text",
+        "tonalRamp": [
+          "oklch(0.15 0.0461 236.06)",
+          "oklch(0.26 0.0461 236.06)",
+          "oklch(0.38 0.0461 236.06)",
+          "oklch(0.49 0.0461 236.06)",
+          "oklch(0.61 0.0461 236.06)",
+          "oklch(0.72 0.0461 236.06)",
+          "oklch(0.84 0.0461 236.06)",
+          "oklch(0.95 0.0461 236.06)"
+        ]
+      },
+      "profile-ice-fill": {
+        "role": "primary",
+        "displayName": "Profile Ice Fill",
+        "tonalRamp": [
+          "oklch(0.15 0.0498 237.05)",
+          "oklch(0.26 0.0498 237.05)",
+          "oklch(0.38 0.0498 237.05)",
+          "oklch(0.49 0.0498 237.05)",
+          "oklch(0.61 0.0498 237.05)",
+          "oklch(0.72 0.0498 237.05)",
+          "oklch(0.84 0.0498 237.05)",
+          "oklch(0.95 0.0498 237.05)"
+        ]
+      },
+      "profile-ice-fill-hover": {
+        "role": "primary",
+        "displayName": "Profile Ice Fill Hover",
+        "tonalRamp": [
+          "oklch(0.15 0.0392 236.15)",
+          "oklch(0.26 0.0392 236.15)",
+          "oklch(0.38 0.0392 236.15)",
+          "oklch(0.49 0.0392 236.15)",
+          "oklch(0.61 0.0392 236.15)",
+          "oklch(0.72 0.0392 236.15)",
+          "oklch(0.84 0.0392 236.15)",
+          "oklch(0.95 0.0392 236.15)"
+        ]
+      },
+      "profile-ice-ink": {
+        "role": "primary",
+        "displayName": "Profile Ice Ink",
+        "tonalRamp": [
+          "oklch(0.15 0.0304 239.87)",
+          "oklch(0.26 0.0304 239.87)",
+          "oklch(0.38 0.0304 239.87)",
+          "oklch(0.49 0.0304 239.87)",
+          "oklch(0.61 0.0304 239.87)",
+          "oklch(0.72 0.0304 239.87)",
+          "oklch(0.84 0.0304 239.87)",
+          "oklch(0.95 0.0304 239.87)"
+        ]
+      },
+      "profile-ice-wash": {
+        "role": "primary",
+        "displayName": "Profile Ice Wash",
+        "tonalRamp": [
+          "oklch(0.15 0.0588 238.20)",
+          "oklch(0.26 0.0588 238.20)",
+          "oklch(0.38 0.0588 238.20)",
+          "oklch(0.49 0.0588 238.20)",
+          "oklch(0.61 0.0588 238.20)",
+          "oklch(0.72 0.0588 238.20)",
+          "oklch(0.84 0.0588 238.20)",
+          "oklch(0.95 0.0588 238.20)"
+        ]
+      },
+      "profile-panel": {
+        "role": "neutral",
+        "displayName": "Profile Panel",
+        "tonalRamp": [
+          "oklch(0.15 0.0075 48.35)",
+          "oklch(0.26 0.0075 48.35)",
+          "oklch(0.38 0.0075 48.35)",
+          "oklch(0.49 0.0075 48.35)",
+          "oklch(0.61 0.0075 48.35)",
+          "oklch(0.72 0.0075 48.35)",
+          "oklch(0.84 0.0075 48.35)",
+          "oklch(0.95 0.0075 48.35)"
+        ]
+      },
+      "profile-field": {
+        "role": "neutral",
+        "displayName": "Profile Field",
+        "tonalRamp": [
+          "oklch(0.15 0.0054 39.35)",
+          "oklch(0.26 0.0054 39.35)",
+          "oklch(0.38 0.0054 39.35)",
+          "oklch(0.49 0.0054 39.35)",
+          "oklch(0.61 0.0054 39.35)",
+          "oklch(0.72 0.0054 39.35)",
+          "oklch(0.84 0.0054 39.35)",
+          "oklch(0.95 0.0054 39.35)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Page heading",
+        "purpose": "Customize page titles."
+      },
+      "headline": {
+        "displayName": "Item heading",
+        "purpose": "Selected cosmetic names."
+      },
+      "title": {
+        "displayName": "Inventory title",
+        "purpose": "Bold tile names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Copy and normal controls."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Form labels and supporting actions."
+      },
+      "profile-display": {
+        "displayName": "Profile Display",
+        "purpose": "Personal Gallery only; scoped hierarchy in DESIGN.md."
+      },
+      "profile-headline": {
+        "displayName": "Profile Headline",
+        "purpose": "Personal Gallery only; scoped hierarchy in DESIGN.md."
+      },
+      "profile-section": {
+        "displayName": "Profile Section",
+        "purpose": "Personal Gallery only; scoped hierarchy in DESIGN.md."
+      },
+      "profile-body": {
+        "displayName": "Profile Body",
+        "purpose": "Personal Gallery only; scoped hierarchy in DESIGN.md."
+      },
+      "profile-label": {
+        "displayName": "Profile Label",
+        "purpose": "Personal Gallery only; scoped hierarchy in DESIGN.md."
+      }
+    },
+    "shadows": [
+      {
+        "name": "flat-controls",
+        "value": "none",
+        "purpose": "Customize buttons and selected controls suppress global shadows."
+      },
+      {
+        "name": "profile-menu",
+        "value": "0 14px 34px rgba(0, 0, 0, 0.45)",
+        "purpose": "Gallery account menu."
+      },
+      {
+        "name": "profile-panel",
+        "value": "0 22px 60px rgba(0, 0, 0, 0.55)",
+        "purpose": "Gallery editor."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-state",
+        "value": "background .16s, border-color .16s",
+        "purpose": "Button hover; disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "dice-rotation",
+        "value": "0.24rad/s",
+        "purpose": "Live die rotation; suspended during pause, drag, reduced motion, and hidden document."
+      },
+      {
+        "name": "profile-state",
+        "value": "0.16s ease",
+        "purpose": "Gallery state transitions; disabled under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-min",
+        "value": "1650px"
+      },
+      {
+        "name": "laptop-max",
+        "value": "1200px"
+      },
+      {
+        "name": "tablet-max",
+        "value": "900px"
+      },
+      {
+        "name": "mobile-max",
+        "value": "650px"
+      },
+      {
+        "name": "profile-rail",
+        "value": "1280px"
+      },
+      {
+        "name": "profile-stack",
+        "value": "1060px"
+      },
+      {
+        "name": "profile-mobile",
+        "value": "860px"
+      },
+      {
+        "name": "profile-compact",
+        "value": "520px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Save or equip with a copper action.",
+      "html": "<button class=\"ds-button ds-primary\">Save design</button>",
+      "css": ".ds-button{font:500 17px/1.45 'Alegreya Sans',sans-serif;min-height:42px;padding:8px 15px;border:1px solid #34424e;border-radius:5px;background:transparent;color:#f0eeeb;cursor:pointer;box-shadow:none;transition:background .16s,border-color .16s}.ds-button:hover:not(:disabled){background:#1b2732;border-color:#72818c}.ds-button:focus-visible{outline:2px solid #efb18c;outline-offset:4px}.ds-button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-primary{background:#efb18c;border-color:#efb18c;color:#271b15;font-weight:700}.ds-primary:hover:not(:disabled){background:#f4c4a7;border-color:#f4c4a7}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Test roll or return to collection.",
+      "html": "<button class=\"ds-button\">Test roll</button>",
+      "css": ".ds-button{font:500 17px/1.45 'Alegreya Sans',sans-serif;min-height:42px;padding:8px 15px;border:1px solid #34424e;border-radius:5px;background:transparent;color:#f0eeeb;cursor:pointer;box-shadow:none;transition:background .16s,border-color .16s}.ds-button:hover:not(:disabled){background:#1b2732;border-color:#72818c}.ds-button:focus-visible{outline:2px solid #efb18c;outline-offset:4px}.ds-button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}"
+    },
+    {
+      "name": "Search field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Find items in the current category.",
+      "html": "<input class=\"ds-input\" aria-label=\"Search dice sets\" placeholder=\"Search dice sets…\">",
+      "css": ".ds-input{font:400 17px/1.45 'Alegreya Sans',sans-serif;min-height:42px;padding:9px 12px;border:1px solid #34424e;border-radius:5px;background:#141d25;color:#f0eeeb;caret-color:#efb18c}.ds-input::placeholder{color:#a1afbb;opacity:1}.ds-input:focus-visible{outline:2px solid #efb18c;outline-offset:4px}"
+    },
+    {
+      "name": "Category navigation",
+      "kind": "nav",
+      "refersTo": "category-current",
+      "description": "A current category with icon and count.",
+      "html": "<nav aria-label=\"Cosmetic categories\"><button class=\"ds-button ds-category\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m12 2 9 5v10l-9 5-9-5V7Zm0 0v10m9-5-9 5-9-5m9 5v10\"/></svg><span>Dice sets</span><small>18</small></button></nav>",
+      "css": ".ds-button{font:500 17px/1.45 'Alegreya Sans',sans-serif;min-height:42px;padding:8px 15px;border:1px solid #34424e;border-radius:5px;background:transparent;color:#f0eeeb;cursor:pointer;box-shadow:none;transition:background .16s,border-color .16s}.ds-button:hover:not(:disabled){background:#1b2732;border-color:#72818c}.ds-button:focus-visible{outline:2px solid #efb18c;outline-offset:4px}.ds-button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-category{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 10px;font-size:16px;background:#2d2928;border-color:#6d5549;color:#efb18c}.ds-category svg{width:23px;height:23px;flex:none}.ds-category small{margin-left:auto;color:#b3bfc9;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Equipped status",
+      "kind": "chip",
+      "refersTo": "equipped-tag",
+      "description": "Noninteractive equipment status; independent of selection.",
+      "html": "<span class=\"ds-equipped\">Equipped</span>",
+      "css": ".ds-equipped{display:inline-block;background:#efb18c;color:#271b15;padding:3px 7px;font:700 12px/1.45 'Alegreya Sans',sans-serif;border-radius:3px}"
+    },
+    {
+      "name": "Collection tile",
+      "kind": "card",
+      "refersTo": "collection-tile",
+      "description": "Inventory tile shown with the source's D20 loading fallback; real tiles render cosmetic art.",
+      "html": "<button class=\"ds-button ds-tile\" aria-pressed=\"false\"><span class=\"ds-art\">D20</span><span class=\"ds-name\">Ivory</span><span class=\"ds-rarity\">Starter</span></button>",
+      "css": ".ds-button{font:500 17px/1.45 'Alegreya Sans',sans-serif;min-height:42px;padding:8px 15px;border:1px solid #34424e;border-radius:5px;background:transparent;color:#f0eeeb;cursor:pointer;box-shadow:none;transition:background .16s,border-color .16s}.ds-button:hover:not(:disabled){background:#1b2732;border-color:#72818c}.ds-button:focus-visible{outline:2px solid #efb18c;outline-offset:4px}.ds-button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-tile{width:190px;min-width:0;padding:0 0 13px;overflow:hidden;text-align:left;border-color:#2d3a46;background:#151f28;border-radius:7px}.ds-art{display:flex;align-items:center;justify-content:center;aspect-ratio:1.12;width:100%;background:#18222c;color:#b3bfc9;font:400 26px/1.45 Cinzel,serif}.ds-name{display:block;padding:10px 12px 0;font-size:17px;font-weight:700;line-height:1.22;overflow-wrap:anywhere}.ds-rarity{display:block;padding:5px 12px 0;color:#b3bfc9;font-size:14px}.ds-tile[aria-pressed=true]{border-color:#efb18c;color:#f0eeeb;background:#26313a}"
+    },
+    {
+      "name": "Die shape",
+      "kind": "button",
+      "description": "Pressed shape control with final selected-state styling.",
+      "html": "<button class=\"ds-button ds-shape\" aria-pressed=\"true\">D20</button>",
+      "css": ".ds-button{font:500 17px/1.45 'Alegreya Sans',sans-serif;min-height:42px;padding:8px 15px;border:1px solid #34424e;border-radius:5px;background:transparent;color:#f0eeeb;cursor:pointer;box-shadow:none;transition:background .16s,border-color .16s}.ds-button:hover:not(:disabled){background:#1b2732;border-color:#72818c}.ds-button:focus-visible{outline:2px solid #efb18c;outline-offset:4px}.ds-button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}.ds-shape{width:54px;padding:7px 0;font-size:14px}.ds-shape[aria-pressed=true]{border-color:#efb18c;color:#f0eeeb;background:#26313a}"
+    },
+    {
+      "name": "Personal Gallery Primary Button",
+      "kind": "button",
+      "refersTo": "profile-button-primary",
+      "description": "Personal Gallery only. Primary Button.",
+      "html": "<button class=\"ds-pg-primary\">Done editing</button>",
+      "css": ".ds-pg-primary{font-family:Wittgenstein,Georgia,serif;height:43px;padding:0 22px;border:0;border-radius:3px;background:#dc9a76;color:#2a1810;font-size:16.5px;cursor:pointer;transition:background .16s ease}.ds-pg-primary:hover:not(:disabled){background:#e8ad8c}.ds-pg-primary:focus-visible{outline:2px solid #e0a07c;outline-offset:3px}.ds-pg-primary:disabled{opacity:.6;cursor:default}@media(prefers-reduced-motion:reduce){.ds-pg-primary{transition:none}}"
+    },
+    {
+      "name": "Personal Gallery Outline Button",
+      "kind": "button",
+      "refersTo": "profile-button-outline",
+      "description": "Personal Gallery only. Outline Button.",
+      "html": "<button class=\"ds-pg-outline\">Upload cover art</button>",
+      "css": ".ds-pg-outline{font-family:Wittgenstein,Georgia,serif;min-height:42px;padding:0 20px;border:1px solid #c9845d;border-radius:3px;background:transparent;color:#e0a07c;font-size:16px;cursor:pointer;transition:background .16s ease}.ds-pg-outline:hover{background:rgba(201,132,93,.16)}.ds-pg-outline:focus-visible{outline:2px solid #e0a07c;outline-offset:3px}.ds-pg-outline:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-pg-outline{transition:none}}"
+    },
+    {
+      "name": "Personal Gallery Text Field",
+      "kind": "input",
+      "refersTo": "profile-input",
+      "description": "Personal Gallery only. Text Field.",
+      "html": "<label class=\"ds-pg-field\">Display name<input value=\"Rowan\"></label>",
+      "css": ".ds-pg-field{display:grid;gap:6px;font-family:Wittgenstein,Georgia,serif;font-size:15px;color:#a1978e}.ds-pg-field input{font-family:Wittgenstein,Georgia,serif;min-height:42px;padding:8px 12px;border:1px solid #39322d;border-radius:3px;background:#141110;color:#efe9df;font-size:16px}.ds-pg-field input:focus{border-color:#c9845d;outline:none}.ds-pg-field input:focus-visible{outline:2px solid #e0a07c;outline-offset:3px}"
+    },
+    {
+      "name": "Personal Gallery Navigation",
+      "kind": "nav",
+      "refersTo": "",
+      "description": "Personal Gallery only. Navigation.",
+      "html": "<nav class=\"ds-pg-tabs\"><button aria-current=\"page\">Gallery</button><button>Characters</button></nav>",
+      "css": ".ds-pg-tabs{display:grid;gap:5px;background:#171413}.ds-pg-tabs button{position:relative;font-family:Wittgenstein,Georgia,serif;min-height:46px;padding:0 26px;border:0;background:none;color:#ddd6cc;font-size:17px;text-align:left;cursor:pointer;transition:background .16s ease,color .16s ease}.ds-pg-tabs button:hover{color:#efe9df;background:rgba(255,255,255,.025)}.ds-pg-tabs button[aria-current=page]{color:#efe9df;background:linear-gradient(90deg,rgba(201,132,93,.16),transparent 92%)}.ds-pg-tabs button[aria-current=page]:before{content:\"\";position:absolute;inset:0 auto 0 0;width:3px;background:#c9845d}.ds-pg-tabs button:focus-visible{outline:2px solid #e0a07c;outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-pg-tabs button{transition:none}}"
+    },
+    {
+      "name": "Personal Gallery Gallery Card",
+      "kind": "card",
+      "refersTo": "profile-card",
+      "description": "Personal Gallery only. Gallery Card.",
+      "html": "<section class=\"ds-pg-card\"><h2>Signature dice</h2><p>Choose owned dice for your gallery.</p></section>",
+      "css": ".ds-pg-card{font-family:Wittgenstein,Georgia,serif;border:1px solid #2a2421;background:#131110;color:#efe9df;overflow:hidden}.ds-pg-card h2{margin:0;padding:19px 22px 0;font-size:21px;line-height:1.25;font-weight:400}.ds-pg-card p{padding:24px;font-size:16px;color:#a1978e;text-align:center}"
+    },
+    {
+      "name": "Personal Gallery Banner Choice",
+      "kind": "custom",
+      "refersTo": "profile-banner-choice",
+      "description": "Personal Gallery only. Banner Choice.",
+      "html": "<button class=\"ds-pg-banner\" aria-pressed=\"true\"><span class=\"ds-pg-swatch\"></span><span class=\"ds-pg-caption\">Midnight</span></button>",
+      "css": ".ds-pg-banner{font-family:Wittgenstein,Georgia,serif;width:230px;padding:0 0 10px;overflow:hidden;border:1px solid #39322d;border-radius:3px;background:#171413;color:#efe9df;text-align:left}.ds-pg-banner[aria-pressed=true]{border-color:#c9845d;outline:2px solid #c9845d;outline-offset:2px;box-shadow:none}.ds-pg-banner:focus-visible{outline:2px solid #e0a07c;outline-offset:3px}.ds-pg-swatch{display:block;height:64px;background:radial-gradient(ellipse at 75% 10%,#455978,transparent 65%),#171c32}.ds-pg-caption{display:block;padding:7px 10px 0;font-size:15px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Vault and Workshop; Personal Gallery (profile scope)",
+    "overview": "The Vault and Workshop place owned cosmetics on quiet slate surfaces with restrained copper controls. The collection is dense and browseable; the workshop gives the live die room beside grouped editing controls. Existing material rendering and cosmetic art supply the richness.\n\nThis system applies only to Customize. It preserves Vivid Realms’ Cinzel and Alegreya Sans pairing while replacing this route’s surrounding purple-and-gold shell with slate and copper. Other routes retain their incumbent systems.\n\nThe Personal Gallery places personal art and earned objects against near-black gallery walls. Warm ivory serif text, fine accent rules, and quiet controls frame the collection. Artwork supplies the richer color and texture.\n\nThis profile system applies to owner, visitor, and labelled example profiles. Tokens prefixed `profile-` describe this world; unprefixed tokens and the preceding Customize guidance retain their existing scope. The gallery uses Wittgenstein rather than Customize's Cinzel and Alegreya Sans pairing.",
+    "keyCharacteristics": [
+      "Slate tonal layers and thin structural borders.",
+      "Copper marks action, selection, and equipped status.",
+      "Live cosmetic materials remain the visual subject.",
+      "Responsive collection browsing and explicit equipment actions.",
+      "Square portrait and artwork frames against warm dark surfaces.",
+      "A single selected accent family coordinates rules, controls, and focus.",
+      "Serif names, copy, and controls share a quiet editorial voice.",
+      "The same gallery composition serves owner, visitor, and labelled example."
+    ],
+    "rules": [
+      {
+        "name": "The Copper State Rule",
+        "body": "Use copper for actionable and selected states, with a separate Equipped label for equipment status.",
+        "section": "colors"
+      },
+      {
+        "name": "The Material First Rule",
+        "body": "Keep interface surfaces flat so live dice materials and cosmetic effects carry the depth.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Coordinated Accent Rule",
+        "body": "Within Personal Gallery, switch the full accent family together so frames, text, fills, ink, and focus remain coordinated.",
+        "section": "colors"
+      },
+      {
+        "name": "The Gallery Frame Rule",
+        "body": "Use flat framed surfaces for gallery objects; reserve floating surface shadows for menus and editing panels.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep selection, preview, and equipping visibly distinct.",
+      "Do use the shipped cosmetic art and live dice materials.",
+      "Do keep keyboard focus visible and honor reduced motion.",
+      "Do scope these tokens and patterns to Customize.",
+      "Do keep Personal Gallery tokens scoped to profile surfaces.",
+      "Do preserve named preset previews and a visible selected state.",
+      "Do distinguish illustrative example content from earned objects.",
+      "Do keep focus visible and honor reduced motion."
+    ],
+    "donts": [
+      "Don't replace functioning dice with concept illustrations.",
+      "Don't restore the old selected-state glow on Customize controls.",
+      "Don't use color alone to indicate equipped status.",
+      "Don't treat a chosen banner as an earned badge or equipment change.",
+      "Don't apply Customize's flat-depth rule to the gallery's floating editor panels."
+    ]
+  }
+}

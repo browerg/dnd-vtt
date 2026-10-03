@@ -421,6 +421,7 @@ for (const ddl of [
   "ALTER TABLE messages ADD COLUMN reply_to_id INTEGER REFERENCES messages(id) ON DELETE SET NULL",
   "ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE users ADD COLUMN profile_style TEXT NOT NULL DEFAULT 'astral'",
+  "ALTER TABLE users ADD COLUMN profile_gallery TEXT NOT NULL DEFAULT '{}'",
 ]) {
   try {
     db.exec(ddl);

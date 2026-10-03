@@ -20,6 +20,8 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **Your Personal Gallery** — Profiles now feature a portrait sidebar, cover banner, favourite character, signature dice, earned badges and a campaign memory. Choose what appears, change the accent, and preview before saving. A Ruby Rose example shows a finished gallery.
+
 - **Token quick card** — Click a token on the battle map and a card pops up right
   beside it. GMs get the token's Aura and HP, a damage box, attack and damage rolls,
   conditions and quick actions without leaving the map. Players clicking their own
@@ -33,6 +35,8 @@ is the one piece of markup the launcher renders.
   have their own workshop for designing, saving and editing up to five sets.
 
 ### Minor changes
+
+- **Ready-made profile banners** — Choose Lakeside Citadel, Midnight, Ember or Forest, or upload your own image. Unfinished profile edits recover when you return in the same browser tab.
 
 - **Customize on mobile** — Category navigation stays within the screen, dice previews show their loading state, and previously selected trails return to the starter trail if they are no longer owned.
 - **Keep your dice draft** — Unfinished designs return when you navigate back to Customize. Mobile item details also keep keyboard focus with you as you browse.
