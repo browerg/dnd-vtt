@@ -1,6 +1,7 @@
 ﻿import DiceBox from "@3d-dice/dice-box-threejs";
 import type { RollDetail } from "./api";
 import { applyDiceBoxCustomization, decodeDiceCustomization } from "./diceCustomization";
+import { shareDiceColorsets } from "./diceColorCache";
 import { applyDiceCosmetic, DICE_COSMETICS, type CosmeticAnimation } from "./diceCosmetics";
 import { createSpecialTrail, isSpecialTrail } from "./specialTrails";
 
@@ -584,6 +585,7 @@ function ensureBox(): Promise<void> {
       gravity_multiplier: 400,
       baseScale: 100,
     });
+    shareDiceColorsets(box);
     const engine = box;
     ready = engine.initialize();
   }

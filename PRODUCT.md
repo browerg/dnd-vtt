@@ -17,7 +17,7 @@ Web application for tabletop roleplaying, with player and GM workflows. The exis
 
 The user wants a full layout and color redesign, with easier navigation and clear access to everything owned. Customize will become the home for all owned cosmetics; the Emporium will mainly handle discovery and acquisition. Preserve dice selection, dice creation, and the floating 3D model.
 
-Explore visual concepts with generated images and let the user choose before implementation. No visual direction has been approved yet. Sample inventories in concepts are illustrative, not account data.
+The user approved the A+B combination: the Vault collection browser and the Workshop dice editor. Sample inventories and rendered models in the generated concepts are illustrative, not account data or replacement dice materials.
 
 ## Constraints
 

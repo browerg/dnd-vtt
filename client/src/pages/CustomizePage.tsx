@@ -29,8 +29,19 @@ function CategoryIcon({ kind }: { kind: string }) {
 }
 const rarityName = (rarity: string) => rarity === "custom" ? "Custom design" : rarity.charAt(0).toUpperCase() + rarity.slice(1);
 
+function readWorkshopDraft(key: string) {
+  try {
+    const draft = JSON.parse(sessionStorage.getItem(key) || "null");
+    const settings = decodeDiceCustomization(draft?.theme ?? "");
+    if (!settings || typeof draft.name !== "string" || typeof draft.savedSignature !== "string") return null;
+    return { settings, name: draft.name.slice(0, 24), savedSignature: draft.savedSignature, editingId: Number.isInteger(draft.editingId) ? draft.editingId as number : null };
+  } catch { return null; }
+}
+
 export default function CustomizePage() {
   const { user, setUser } = useAuth();
+  const draftKey = `vivid:workshop-draft:${user?.id}`;
+  const [restoredDraft] = useState(() => readWorkshopDraft(draftKey));
   const [shop, setShop] = useState<CollectionShop | null>(null);
   const [presets, setPresets] = useState<DicePreset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,15 +59,20 @@ export default function CustomizePage() {
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [workshop, setWorkshop] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [settings, setSettings] = useState<DiceCustomization>({ ...DEFAULT_DICE_CUSTOMIZATION });
-  const [name, setName] = useState("");
-  const [savedSignature, setSavedSignature] = useState("");
+  const [notice, setNotice] = useState(restoredDraft ? "Restored your unsaved dice design." : "");
+  const [workshop, setWorkshop] = useState(!!restoredDraft);
+  const [editingId, setEditingId] = useState<number | null>(restoredDraft?.editingId ?? null);
+  const [settings, setSettings] = useState<DiceCustomization>(restoredDraft?.settings ?? { ...DEFAULT_DICE_CUSTOMIZATION });
+  const [name, setName] = useState(restoredDraft?.name ?? "");
+  const [savedSignature, setSavedSignature] = useState(restoredDraft?.savedSignature ?? "");
   const [turnPreview, setTurnPreview] = useState(0);
   const turnTimer = useRef<ReturnType<typeof setTimeout>>();
   const heading = useRef<HTMLHeadingElement>(null);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  const originatingCard = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (mobileDetail && !wide) detailHeading.current?.focus({ preventScroll: true });
+  }, [mobileDetail, wide]);
   const draftTheme = useMemo(() => encodeDiceCustomization(settings), [settings]);
   const signature = name + "|" + draftTheme;
   const dirty = signature !== savedSignature;
@@ -80,16 +96,33 @@ export default function CustomizePage() {
     try {
       const [catalogue, designs] = await Promise.all([api<CollectionShop>("/api/shop"), api<{ presets: DicePreset[] }>("/api/auth/me/dice-presets")]);
       setShop(catalogue); setPresets(designs.presets);
+      if (restoredDraft?.editingId && !designs.presets.some(preset => preset.id === restoredDraft.editingId)) setEditingId(null);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Couldn't load your collection."); }
     finally { setLoading(false); }
   }
   useEffect(() => { void load(); return () => clearTimeout(turnTimer.current); }, []);
   useEffect(() => {
+    if (!shop || shop.items.some(item => item.type === "dice-trail" && item.owned && item.effect === trail)) return;
+    setDiceTrailStyle("aura");
+    setTrail("aura");
+  }, [shop, trail]);
+  useEffect(() => {
     if (!workshop || !dirty) return;
     const guard = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
     window.addEventListener("beforeunload", guard); return () => window.removeEventListener("beforeunload", guard);
   }, [workshop, dirty]);
-  const canLeave = () => !workshop || !dirty || window.confirm("Discard the changes to this dice design?");
+  useEffect(() => {
+    try {
+      if (workshop && dirty) sessionStorage.setItem(draftKey, JSON.stringify({ theme: draftTheme, name, editingId, savedSignature }));
+      else sessionStorage.removeItem(draftKey);
+    } catch { /* Editing remains available when browser storage is disabled. */ }
+  }, [draftKey, workshop, dirty, draftTheme, name, editingId, savedSignature]);
+  const canLeave = () => {
+    if (!workshop || !dirty) return true;
+    if (!window.confirm("Discard the changes to this dice design?")) return false;
+    try { sessionStorage.removeItem(draftKey); } catch { /* Storage may be disabled. */ }
+    return true;
+  };
   function switchCategory(value: Category) {
     if (busy || !canLeave()) return;
     window.scrollTo(0, 0); setCategory(value); setWorkshop(false); setSelectedId(""); setSearch(""); setRarity("all"); setDiceTab("all"); setMobileDetail(false); setNotice(""); setError("");
@@ -182,15 +215,15 @@ export default function CustomizePage() {
             {category === "dice" && <div className="collection-tabs" aria-label="Dice collection filter"><button aria-pressed={diceTab === "all"} onClick={() => { setDiceTab("all"); setSelectedId(""); }}>All dice</button><button aria-pressed={diceTab === "custom"} onClick={() => { setDiceTab("custom"); setSelectedId(""); }}>Custom designs <span>{presets.length} / 5</span></button></div>}
             <div className="collection-filters"><label className="collection-search"><span className="sr-only">Search your collection</span><input type="search" value={search} placeholder={`Search ${currentCategory.name.toLowerCase()}…`} onChange={e => { setSearch(e.target.value); setSelectedId(""); }} /></label><label><span className="sr-only">Rarity</span><select aria-label="Rarity" value={rarity} onChange={e => { setRarity(e.target.value); setSelectedId(""); }}><option value="all">All rarities</option>{[...new Set(categoryItems.map(item => item.rarity))].map(value => <option key={value} value={value}>{rarityName(value)}</option>)}</select></label></div>
             <div className="collection-results"><span>{loading ? "Loading collection…" : `${filtered.length} ${filtered.length === 1 ? "item" : "items"}`}</span><span>Owned & included</span></div>
-            {loading ? <div className="collection-loading" role="status">Gathering your collection…</div> : <div className="collection-grid">{filtered.map(item => <button key={item.id} className={`collection-tile${selected?.id === item.id ? " selected" : ""}`} aria-pressed={selected?.id === item.id} onClick={() => { setSelectedId(item.id); setMobileDetail(true); if (!wide) window.scrollTo(0, 0); setTurnPreview(0); }}><span className="collection-tile-art">{art(item)}</span>{equipped(item) && <span className="collection-equipped-tag">Equipped</span>}<span className="collection-tile-name">{item.name}</span><span className={`collection-rarity rarity-${item.rarity}`}>{rarityName(item.rarity)}</span></button>)}</div>}
+            {loading ? <div className="collection-loading" role="status">Gathering your collection…</div> : <div className="collection-grid">{filtered.map(item => <button key={item.id} className={`collection-tile${selected?.id === item.id ? " selected" : ""}`} aria-pressed={selected?.id === item.id} onClick={e => { originatingCard.current = e.currentTarget; setSelectedId(item.id); setMobileDetail(true); if (!wide) window.scrollTo(0, 0); setTurnPreview(0); }}><span className="collection-tile-art">{art(item)}</span>{equipped(item) && <span className="collection-equipped-tag">Equipped</span>}<span className="collection-tile-name">{item.name}</span><span className={`collection-rarity rarity-${item.rarity}`}>{rarityName(item.rarity)}</span></button>)}</div>}
             {!loading && filtered.length === 0 && <div className="collection-empty"><CategoryIcon kind={category} /><h2>{search || rarity !== "all" ? "No matches this time" : "Room for something new"}</h2><p>{search || rarity !== "all" ? "Try another name or clear your filters." : category === "dice" ? "Create your first custom dice design." : "Your owned cosmetics will appear here as your collection grows."}</p>{search || rarity !== "all" ? <button onClick={() => { setSearch(""); setRarity("all"); }}>Clear filters</button> : category === "dice" ? <button onClick={() => openWorkshop()}>Create dice</button> : <Link to="/emporium">Explore the Emporium</Link>}</div>}
             {category === "table" && <label className="collection-upload">{busy ? "Uploading…" : "+ Upload your own backdrop"}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e => { const file = e.target.files?.[0]; if (file) void upload(file); e.target.value = ""; }} /></label>}
             {category === "profile" && <p className="collection-footnote">Manage your avatar, biography, and earned badge showcase in <Link to="/profile">your profile</Link>.</p>}
             <footer className="collection-footnote">Looking for something new? <Link to="/emporium">Visit the Emporium</Link></footer>
           </section>
-          {(wide || mobileDetail) && <aside className="collection-inspector" aria-label="Selected item preview"><button className="collection-mobile-back" onClick={() => setMobileDetail(false)}>Back to collection</button>
+          {(wide || mobileDetail) && <aside className="collection-inspector" aria-label="Selected item preview"><button className="collection-mobile-back" onClick={() => { setMobileDetail(false); requestAnimationFrame(() => originatingCard.current?.focus()); }}>Back to collection</button>
             {selected ? <><div className="collection-preview-label">{selected.type === "dice" ? "Live 3D preview" : "Preview"}</div>{selected.type === "dice" ? <CollectionDicePreview theme={selected.theme!} sides={sides} onSides={setSides} /> : <div className={`collection-effect-stage type-${selected.type}`}>{art(selected)}{selected.type === "turn-start-effect" && turnPreview > 0 && <TurnStartEffect key={turnPreview} effect={selected.effect} preview />}</div>}
-              <div className="collection-item-details"><h2>{selected.name}</h2><p className={`collection-rarity rarity-${selected.rarity}`}>{rarityName(selected.rarity)} · {selected.type === "dice" ? "Dice set" : currentCategory.name}</p><p>{selected.description}</p><div className="collection-actions">{selected.type !== "title" && <button className="collection-primary" disabled={busy || equipped(selected)} onClick={() => void equipItem(selected)}>{equipped(selected) ? "Equipped" : selected.type === "background" ? "Use backdrop" : selected.type === "dice" ? "Equip dice" : "Equip"}</button>}{["dice", "dice-trail", "nat20-effect", "nat1-effect", "turn-start-effect"].includes(selected.type) && <button disabled={busy} onClick={() => void preview(selected)}>{busy ? "Working…" : selected.type === "dice" ? "Test roll" : "Preview effect"}</button>}</div>
+              <div className="collection-item-details"><h2 ref={detailHeading} tabIndex={-1}>{selected.name}</h2><p className={`collection-rarity rarity-${selected.rarity}`}>{rarityName(selected.rarity)} · {selected.type === "dice" ? "Dice set" : currentCategory.name}</p><p>{selected.description}</p><div className="collection-actions">{selected.type !== "title" && <button className="collection-primary" disabled={busy || equipped(selected)} onClick={() => void equipItem(selected)}>{equipped(selected) ? "Equipped" : selected.type === "background" ? "Use backdrop" : selected.type === "dice" ? "Equip dice" : "Equip"}</button>}{["dice", "dice-trail", "nat20-effect", "nat1-effect", "turn-start-effect"].includes(selected.type) && <button disabled={busy} onClick={() => void preview(selected)}>{busy ? "Working…" : selected.type === "dice" ? "Test roll" : "Preview effect"}</button>}</div>
               {selected.rarity === "custom" && selected.type === "dice" && <div className="collection-secondary-actions"><button disabled={busy} onClick={() => openWorkshop(selected)}>Edit design</button>{selected.preset && <button disabled={busy} onClick={() => deleteDesign(selected)}>Delete</button>}</div>}
               {["token-border", "chat-flair"].includes(selected.type) && equipped(selected) && <button className="collection-text-button" disabled={busy} onClick={() => void clearItem(selected)}>Remove {selected.type === "token-border" ? "border" : "chat effect"}</button>}
               </div></> : <div className="collection-preview-empty"><CategoryIcon kind={category} /><p>Select an item to take a closer look.</p></div>}

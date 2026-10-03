@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import DiceBox from "@3d-dice/dice-box-threejs";
 import { applyDiceBoxCustomization, decodeDiceCustomization } from "../diceCustomization";
 import { applyDiceCosmetic, DICE_COSMETICS, type CosmeticAnimation } from "../diceCosmetics";
+import { shareDiceColorsets } from "../diceColorCache";
 
 // The engine's declaration omits its public scene and factory APIs.
 type StudioBox = DiceBox & { [key: string]: any };
@@ -13,12 +14,22 @@ async function appearance(box: StudioBox, theme: string) {
   else await box.updateConfig({ theme_customColorset: null, theme_colorset: theme || "white" });
 }
 function makeBox(id: string) {
-  const engine = new DiceBox(`#${id}`, { assetPath: "/assets/dice/", sounds: false, shadows: false, light_intensity: 1.05, baseScale: 100, theme_colorset: "white" }) as StudioBox;
+  const engine = shareDiceColorsets(new DiceBox(`#${id}`, { assetPath: "/assets/dice/", sounds: false, shadows: false, light_intensity: 1.05, baseScale: 100, theme_colorset: "white" }) as StudioBox);
   engine.resizeWorld = () => {}; // ResizeObserver owns resizing and cleanup.
   return engine;
 }
 function meshFor(box: StudioBox, sides: number) {
-  const mesh = box.DiceFactory.create(`d${sides}`);
+  // Sets like Dragons or Glitter Party give each rolled die a random colour
+  // and texture from a list. Pin the preview to the first variant so the
+  // thumbnail and the live preview always show the same die.
+  const random = Math.random;
+  Math.random = () => 0;
+  let mesh: any;
+  try {
+    mesh = box.DiceFactory.create(`d${sides}`);
+  } finally {
+    Math.random = random;
+  }
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(-.35, .58, .08);
   mesh.castShadow = false;
@@ -40,6 +51,7 @@ export default function CollectionDicePreview({ theme, sides, onSides }: { theme
   const version = useRef(0);
   const drag = useRef<{ x: number; y: number } | null>(null);
   const [ready, setReady] = useState(false);
+  const [rendered, setRendered] = useState(false);
   const [error, setError] = useState("");
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(paused); pausedRef.current = paused;
@@ -74,24 +86,27 @@ export default function CollectionDicePreview({ theme, sides, onSides }: { theme
       sequence.current = sequence.current.catch(() => {}).then(async () => {
         const engine = box.current;
         if (!engine || request !== version.current) return;
+        setRendered(false);
         score.current?.dispose(); score.current = undefined;
         if (mesh.current) { engine.scene.remove(mesh.current); mesh.current = undefined; }
         const animation = await appearance(engine, theme);
         if (request !== version.current) { animation?.dispose(); return; }
         score.current = animation;
         mesh.current = meshFor(engine, sides);
+        engine.renderer.render(engine.scene, engine.camera);
+        setRendered(true);
         setError("");
       }).catch(() => setError("Couldn't load this preview. Select another die to try again."));
     }, 80);
     return () => { clearTimeout(timer); version.current++; };
   }, [theme, sides, ready]);
   return <div className="collection-live-dice">
-    <div ref={host} id={id} className="collection-die-stage" tabIndex={0} role="img" aria-label={`Live D${sides}. Drag or use arrow keys to rotate.`}
+    <div ref={host} id={id} className="collection-die-stage" data-rendered={rendered} tabIndex={0} role="img" aria-label={`Live D${sides}. Drag or use arrow keys to rotate.`}
       onKeyDown={e => { if (mesh.current && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) { e.preventDefault(); mesh.current.rotation[e.key === "ArrowLeft" || e.key === "ArrowRight" ? "y" : "x"] += e.key === "ArrowLeft" || e.key === "ArrowUp" ? -.2 : .2; } }}
       onPointerDown={e => { drag.current = { x: e.clientX, y: e.clientY }; e.currentTarget.setPointerCapture(e.pointerId); }}
       onPointerMove={e => { if (!drag.current || !mesh.current) return; mesh.current.rotation.y += (e.clientX - drag.current.x) * .01; mesh.current.rotation.x += (e.clientY - drag.current.y) * .01; drag.current = { x: e.clientX, y: e.clientY }; }}
       onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
-      {error ? <p className="preview-status">{error}</p> : !ready ? <p className="preview-status">Loading your die…</p> : null}
+      {error ? <p className="preview-status">{error}</p> : !rendered ? <p className="preview-status">Loading your die…</p> : null}
     </div>
     <div className="collection-spin"><span>Drag to rotate · arrow keys work too</span><button onClick={() => setPaused(!paused)} aria-pressed={paused}>{paused ? "Rotate" : "Pause"}</button></div>
     <div className="collection-shapes" aria-label="Preview die shape">{[4, 6, 8, 10, 12, 20].map(value => <button key={value} aria-pressed={sides === value} onClick={() => onSides(value)}>D{value}</button>)}</div>

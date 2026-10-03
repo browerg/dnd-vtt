@@ -147,3 +147,6 @@
 .customize-vault .collection-tabs button[aria-pressed=true] { background:transparent!important; color:var(--cv-accent)!important; }
 .collection-sidebar { position:sticky; top:0; height:calc(100vh - 74px); overflow-y:auto; align-self:start; scrollbar-color:#576571 #10171e; scrollbar-width:thin; }
 @media(max-width:900px) { .collection-sidebar { position:static; height:auto; overflow:visible; } }
+/* Grid children must be allowed to shrink around the horizontally scrolling categories. */
+.collection-sidebar { min-width:0; }
+@media(max-width:900px) { .collection-layout,.is-workshop .collection-layout { grid-template-columns:minmax(0,1fr); } }

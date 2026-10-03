@@ -34,6 +34,10 @@ is the one piece of markup the launcher renders.
 
 ### Minor changes
 
+- **Customize on mobile** — Category navigation stays within the screen, dice previews show their loading state, and previously selected trails return to the starter trail if they are no longer owned.
+- **Keep your dice draft** — Unfinished designs return when you navigate back to Customize. Mobile item details also keep keyboard focus with you as you browse.
+- **Dice textures stay put** — Textured sets such as Fire, Astral Sea and Dragons no longer turn into plain colours in the 3D preview or in your rolls after browsing other dice. Collection pictures now match the preview.
+
 - **Damage follows the Huntsman's Handbook** — Aura absorbs hits first; a hit that
   empties it breaks Aura and the rest carries into HP. Grimm Armor is taken off
   before HP, with an option to ignore it for weak-point called shots.

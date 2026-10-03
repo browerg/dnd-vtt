@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import DiceBox from "@3d-dice/dice-box-threejs";
 import { DICE_RECIPES } from "../diceRecipes";
+import { shareDiceColorsets } from "../diceColorCache";
 import { api } from "../api";
 import { useAuth } from "../App";
 import {
@@ -113,6 +114,7 @@ export default function DiceCustomizer() {
       strength: 0.8,
       ...diceBoxAppearanceConfig(initial),
     }) as PreviewBox;
+    shareDiceColorsets(preview);
 
     boxRef.current = preview;
 

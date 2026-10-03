@@ -1,6 +1,6 @@
 # Customize redesign exploration
 
-Status: concepts for user selection; no application UI changes yet.
+Status: user approved the A+B combination; implementation and verification in progress.
 
 ## Confirmed scope
 
@@ -30,7 +30,15 @@ Customize becomes the home for all owned cosmetics. The Emporium primarily handl
 2. **The Workshop:** graphite and vermilion, compact collection browser, large center model, right-side creation controls. Strongest for making dice; browsing has less room.
 3. **The Folio:** warm ivory, dark ink, forest-green selection, horizontal categories, catalogue grid and large studio preview. Clearest departure from the current dark theme.
 
-The user chooses the direction before implementation. Mockup inventory, counts, and rendered dice are illustrative. Actual item metadata, rarity, ownership, and dice materials come from the existing application.
+The user chose the Vault collection browser with the Workshop editor. Mockup inventory, counts, and rendered dice are illustrative. Actual item metadata, rarity, ownership, and dice materials come from the existing application.
+
+## Accepted implementation direction
+
+Operate mode. Preserve runtime-rendered dice and existing cosmetic assets instead of treating the generated dice illustrations as replacement models. The code-led composition combines A's collection grid, category rail, copper selection, and persistent inspector with B's central floating model, saved-design browser, and grouped editing controls. Surface colors are dark slate and restrained copper; self-hosted Cinzel supplies display headings and Alegreya Sans supplies controls and body text. Do not redesign the other routes.
+
+The first viewport must expose owned dice and their equipped state, a reachable Create dice action, categories for all owned cosmetics, and the selected model. Selecting changes the preview only; equipping is explicit. The workshop keeps model and controls alongside each other on desktop. Small screens use horizontally scrollable categories, a two-column inventory, and an item-detail view. Loading, empty, error, unsaved edits, five-preset capacity, reduced motion, and keyboard rotation are required states.
+
+Quality target: the approved A/B concepts' recognizable navigation and proportions, legible ownership and selection, and no debug panels or old global selected-state glow. Actual dice materials, taxonomy, text, and data take precedence over illustrative concept details. Risk: the taller creation form needs scrolling at smaller laptop heights; keep the die visible while editing.
 
 ## Recent push context
 
