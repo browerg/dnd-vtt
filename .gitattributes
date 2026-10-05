@@ -1,0 +1,3 @@
+# Never line-ending-convert PDFs; some have no NUL bytes early enough for git to
+# detect them as binary, and CRLF conversion corrupts them.
+*.pdf binary
