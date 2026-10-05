@@ -22,6 +22,33 @@ export interface RollDetail {
   kept: RollResult;
   dropped?: RollResult; // the other roll when advantage/disadvantage
   manual?: boolean; // physical dice at the table — total entered by hand
+  // Set by the server when the roll is made: which critical cosmetic (if
+  // any) it earns under the campaign's system. Absent on older rolls.
+  critical?: CriticalKind | null;
+}
+
+export type CriticalKind = "nat20" | "nat1";
+
+/**
+ * Which critical cosmetic a roll earns. D&D: a d20 showing 20 or 1.
+ * Remnant has no natural crits in its rules (a critical hit is beating
+ * Defense by 8+), so for the cosmetics its core 2d10 stands in: double 10s
+ * (which shows 20) or double 1s, whatever the attribute die rolled.
+ */
+export function criticalOf(detail: RollDetail, system: string): CriticalKind | null {
+  if (detail.manual) return null;
+  const { groups } = detail.kept;
+  if (system === "remnant") {
+    const core = groups.find((g) => g.sides === 10 && g.count === 2);
+    if (!core) return null;
+    if (core.results.every((face) => face === 10)) return "nat20";
+    if (core.results.every((face) => face === 1)) return "nat1";
+    return null;
+  }
+  const d20 = groups.filter((g) => g.sides === 20).flatMap((g) => g.results);
+  if (d20.includes(20)) return "nat20";
+  if (d20.includes(1)) return "nat1";
+  return null;
 }
 
 const MAX_DICE = 100;

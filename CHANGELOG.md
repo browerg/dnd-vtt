@@ -34,6 +34,8 @@ is the one piece of markup the launcher renders.
 
 ### Minor changes
 
+- **Critical effects in Remnant** — Your Nat 20 and Nat 1 effects now play in Remnant too: rolling double 10s on your 2d10 sets off your Nat 20 effect, and double 1s your Nat 1, whatever your attribute die shows. D&D is unchanged.
+
 - **Grimm, D&D or both in the bestiary** — A switch above the creature list chooses what you see: Grimm, D&D creatures, or everything. It remembers your pick for each campaign, and + New makes whichever kind you're looking at.
 
 - **D&D creatures and spells on new installs** — Fresh installs were starting with no D&D monsters or spells. They now load properly, and any install that missed them picks them up on its next start.

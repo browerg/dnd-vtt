@@ -74,22 +74,35 @@ export function recapSuggestions(campaignId: number, since: string): Highlight[]
     .all(campaignId, since) as any[];
   for (const h of handouts) out.push({ kind: "handout", text: `Discovered: ${h.name}` });
 
-  // Natural 20s and 1s on a single public d20 — the moments people retell.
+  // Public critical rolls — the moments people retell. The server stamps
+  // each roll with its critical (see criticalOf); older rolls predate that
+  // and fall back to a single d20 showing 1 or 20.
   const crits = db
     .prepare(
-      `SELECT u.display_name AS who, r.label, json_extract(r.detail, '$.kept.groups[0].results[0]') AS face
+      `SELECT u.display_name AS who, r.label,
+              COALESCE(json_extract(r.detail, '$.critical'),
+                CASE json_extract(r.detail, '$.kept.groups[0].results[0]') WHEN 20 THEN 'nat20' ELSE 'nat1' END) AS kind
        FROM rolls r JOIN users u ON u.id = r.user_id
        WHERE r.campaign_id = ? AND r.visibility = 'public' AND r.created_at >= ?
-         AND json_array_length(r.detail, '$.kept.groups') = 1
-         AND json_extract(r.detail, '$.kept.groups[0].sides') = 20
-         AND json_extract(r.detail, '$.kept.groups[0].count') = 1
-         AND json_extract(r.detail, '$.kept.groups[0].results[0]') IN (1, 20)
+         AND (
+           json_extract(r.detail, '$.critical') IN ('nat20', 'nat1')
+           OR (json_type(r.detail, '$.critical') IS NULL
+               AND json_array_length(r.detail, '$.kept.groups') = 1
+               AND json_extract(r.detail, '$.kept.groups[0].sides') = 20
+               AND json_extract(r.detail, '$.kept.groups[0].count') = 1
+               AND json_extract(r.detail, '$.kept.groups[0].results[0]') IN (1, 20))
+         )
        ORDER BY r.id LIMIT 6`
     )
     .all(campaignId, since) as any[];
+  const system = (db.prepare("SELECT system FROM campaigns WHERE id = ?").get(campaignId) as any)?.system;
   for (const c of crits) {
     const what = c.label ? ` on ${c.label}` : "";
-    out.push({ kind: "roll", text: `${c.who} rolled a natural ${c.face}${what}` });
+    const moment =
+      system === "remnant"
+        ? c.kind === "nat20" ? "rolled double 10s" : "rolled double 1s"
+        : c.kind === "nat20" ? "rolled a natural 20" : "rolled a natural 1";
+    out.push({ kind: "roll", text: `${c.who} ${moment}${what}` });
   }
 
   const journal = db

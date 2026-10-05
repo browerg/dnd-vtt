@@ -9,6 +9,7 @@ const VISIBILITY_TAGS: Record<string, string> = {
 
 // Natural 20 / natural 1 on a single d20 gets the fanfare it deserves.
 function natD20(roll: RollPayload): 20 | 1 | null {
+  if (roll.detail?.critical !== undefined) return roll.detail.critical === "nat20" ? 20 : roll.detail.critical === "nat1" ? 1 : null;
   const groups = roll.detail?.kept.groups;
   if (!groups || groups.length !== 1) return null;
   const g = groups[0];

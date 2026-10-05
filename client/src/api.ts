@@ -45,6 +45,9 @@ export interface RollDetail {
   kept: RollResult;
   dropped?: RollResult;
   manual?: boolean; // physical dice at the table — total entered by hand
+  // Server's verdict for critical cosmetics (D&D: d20 20/1; Remnant: double
+  // 10s/1s on the 2d10). Absent on rolls made before it existed.
+  critical?: "nat20" | "nat1" | null;
 }
 
 export interface RollPayload {

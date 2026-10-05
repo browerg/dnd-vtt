@@ -2,7 +2,7 @@ import { Router, type Request } from "express";
 import { db } from "./db.js";
 import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
-import { roll, DiceError, type RollDetail } from "./dice.js";
+import { criticalOf, roll, DiceError, type RollDetail } from "./dice.js";
 import { getIo } from "./realtime.js";
 import { achievements, notifyAchievementUnlocks } from "./achievements.js";
 import type { AchievementUnlock } from "./achievementStore.js";
@@ -61,6 +61,9 @@ export function performRoll(
   visibility: "public" | "private" | "dm" | "blind" = "public"
 ): RollPayload {
   const detail = roll(formula, mode);
+  const system =
+    (db.prepare("SELECT system FROM campaigns WHERE id = ?").get(campaignId) as { system: string } | undefined)?.system ?? "dnd5e";
+  detail.critical = criticalOf(detail, system);
   // Read fresh — the session object can predate a theme change.
   const diceTheme =
     ((db.prepare("SELECT dice_theme FROM users WHERE id = ?").get(roller.id) as any)

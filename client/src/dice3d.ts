@@ -661,6 +661,8 @@ export function notationFor(detail: RollDetail): string | null {
 
 function criticalFor(detail: RollDetail): CriticalRollKind | null {
   if (detail.manual) return null;
+  // The server decides, knowing the campaign's system.
+  if (detail.critical !== undefined) return detail.critical;
 
   const d20Results = detail.kept.groups
     .filter((group) => group.sides === 20)
