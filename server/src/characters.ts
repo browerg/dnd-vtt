@@ -232,6 +232,7 @@ charactersRouter.get("/:id/characters", (req, res) => {
         maxHp: d.maxHp,
         aura: d.system === "remnant" ? d.aura : undefined,
         auraMax: d.system === "remnant" ? d.auraMax : undefined,
+        teamName: d.system === "remnant" ? String(d.teamName ?? "") : undefined,
         isNpc: p.isNpc,
         playerControllable: p.playerControllable,
         assignedPlayerIds: p.assignedPlayerIds,

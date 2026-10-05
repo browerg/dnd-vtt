@@ -117,6 +117,10 @@ export interface CharacterSummary {
   portraitUrl: string;
   hp: number;
   maxHp: number;
+  // Remnant only.
+  aura?: number;
+  auraMax?: number;
+  teamName?: string;
   isNpc?: boolean;
   playerControllable?: boolean;
   assignedPlayerIds?: number[];

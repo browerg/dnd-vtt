@@ -411,6 +411,8 @@ export default function CampaignPage() {
               myId={user?.id ?? 0}
               canChat={canRoll}
               isDM={isDM}
+              scroll={detail.campaign.system === "remnant"}
+              rolls={rolls}
               onSend={sendChat}
             />
           </section>

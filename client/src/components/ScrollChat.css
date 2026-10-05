@@ -1,0 +1,417 @@
+/* ---- The Scroll: Remnant's chat, dressed as the phone from RWBY ----
+   A slim dark slab with a glassy holographic screen, cool white-cyan UI.
+   Everything is scoped under .scroll-chat so the classic chat is untouched. */
+
+.chat-panel.scroll-chat {
+  --scroll-ink: #e6f5ff;
+  --scroll-dim: rgba(196, 232, 255, 0.66);
+  --scroll-cyan: #7fe3ff;
+  --scroll-line: rgba(150, 220, 255, 0.16);
+  --scroll-glass: rgba(255, 255, 255, 0.06);
+  padding: 4px;
+}
+
+.chat-panel.scroll-chat .scroll-device {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid rgba(150, 220, 255, 0.35);
+  border-radius: 26px;
+  background:
+    radial-gradient(120% 50% at 50% 0%, rgba(127, 227, 255, 0.1), transparent 60%),
+    linear-gradient(165deg, rgba(18, 30, 42, 0.95), rgba(6, 12, 20, 0.98));
+  box-shadow:
+    inset 0 0 0 5px #0a0e13,
+    inset 0 0 0 6px rgba(150, 220, 255, 0.14),
+    0 14px 34px rgba(0, 0, 0, 0.45);
+  color: var(--scroll-ink);
+}
+
+/* Faint holographic scanlines over the whole screen. */
+.chat-panel.scroll-chat .scroll-device::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(0deg, rgba(150, 220, 255, 0.03) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+}
+
+/* ---- status bar ---- */
+.chat-panel.scroll-chat .scroll-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 1.15rem 0.2rem;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  color: var(--scroll-dim);
+}
+
+.chat-panel.scroll-chat .scroll-signal {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1.5px;
+}
+
+.chat-panel.scroll-chat .scroll-signal i {
+  display: block;
+  width: 3px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.chat-panel.scroll-chat .scroll-signal i:nth-child(1) { height: 4px; }
+.chat-panel.scroll-chat .scroll-signal i:nth-child(2) { height: 6px; }
+.chat-panel.scroll-chat .scroll-signal i:nth-child(3) { height: 8px; }
+.chat-panel.scroll-chat .scroll-signal i:nth-child(4) { height: 10px; margin-right: 4px; }
+
+.chat-panel.scroll-chat .scroll-aura {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.chat-panel.scroll-chat .scroll-battery {
+  position: relative;
+  display: inline-block;
+  width: 22px;
+  height: 10px;
+  padding: 1px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+}
+
+.chat-panel.scroll-chat .scroll-battery::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: -3px;
+  width: 2px;
+  height: 4px;
+  border-radius: 0 1px 1px 0;
+  background: currentColor;
+}
+
+.chat-panel.scroll-chat .scroll-battery > span {
+  display: block;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--scroll-cyan);
+  transition: width 0.4s ease;
+}
+
+.chat-panel.scroll-chat .scroll-battery.is-low > span {
+  background: #ff6b6b;
+}
+
+/* ---- app header ---- */
+.chat-panel.scroll-chat .scroll-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.95rem 0.6rem;
+  border-bottom: 1px solid var(--scroll-line);
+}
+
+.chat-panel.scroll-chat .scroll-header-badge {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(127, 227, 255, 0.45);
+  border-radius: 50%;
+  background: rgba(127, 227, 255, 0.12);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--scroll-cyan);
+}
+
+.chat-panel.scroll-chat .scroll-header-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.chat-panel.scroll-chat .scroll-header-text strong {
+  overflow: hidden;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-panel.scroll-chat .scroll-header-text small {
+  font-size: 0.72rem;
+  color: var(--scroll-dim);
+}
+
+.chat-panel.scroll-chat .chat-sound-toggle {
+  margin-left: auto;
+}
+
+/* ---- push notification (dice rolls) ---- */
+.chat-panel.scroll-chat .scroll-push {
+  position: absolute;
+  top: 2.1rem;
+  left: 0.6rem;
+  right: 0.6rem;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(150, 220, 255, 0.35);
+  border-radius: 14px;
+  background: rgba(12, 22, 32, 0.96);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  animation: scroll-push-in 4.5s ease both;
+}
+
+.chat-panel.scroll-chat .scroll-push.is-nat20 {
+  border-color: #f3cf6b;
+  box-shadow: 0 0 0 1px rgba(243, 207, 107, 0.4), 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+.chat-panel.scroll-chat .scroll-push.is-nat1 {
+  border-color: #ff6b6b;
+}
+
+.chat-panel.scroll-chat .scroll-push-icon {
+  font-size: 1.2rem;
+}
+
+.chat-panel.scroll-chat .scroll-push-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.chat-panel.scroll-chat .scroll-push-text small {
+  overflow: hidden;
+  font-size: 0.7rem;
+  color: var(--scroll-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-panel.scroll-chat .scroll-push-text strong {
+  font-size: 0.88rem;
+}
+
+.chat-panel.scroll-chat .scroll-notice {
+  margin: 0.4rem 0.8rem 0;
+}
+
+/* ---- thread ---- */
+.chat-panel.scroll-chat .scroll-thread {
+  flex: 1 1 auto;
+  gap: 0.45rem;
+  min-height: 0;
+  max-height: none;
+  padding: 0.75rem 0.85rem;
+  overflow-y: auto;
+  scrollbar-color: rgba(127, 227, 255, 0.35) transparent;
+}
+
+/* Outside a dashboard tile (the Campaign page card) there's no height to
+   fill, so cap the thread instead of letting it grow forever. */
+.card > .chat-panel.scroll-chat .scroll-device {
+  height: auto;
+}
+
+.card > .chat-panel.scroll-chat .scroll-thread {
+  max-height: 380px;
+}
+
+.chat-panel.scroll-chat .scroll-empty {
+  margin: auto;
+  font-size: 0.82rem;
+  color: var(--scroll-dim);
+}
+
+.chat-panel.scroll-chat .scroll-bubble-row {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 0.1rem;
+  font-size: 0.88rem;
+}
+
+.chat-panel.scroll-chat .scroll-bubble-row.is-own {
+  justify-items: end;
+}
+
+.chat-panel.scroll-chat .scroll-author {
+  margin: 0 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--scroll-cyan);
+}
+
+.chat-panel.scroll-chat .scroll-author-real {
+  font-weight: 400;
+  color: var(--scroll-dim);
+}
+
+.chat-panel.scroll-chat .scroll-bubble {
+  display: grid;
+  gap: 0.15rem;
+  max-width: 84%;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--scroll-line);
+  border-radius: 16px 16px 16px 5px;
+  background: var(--scroll-glass);
+  overflow-wrap: anywhere;
+}
+
+.chat-panel.scroll-chat .is-own .scroll-bubble {
+  border-color: rgba(127, 227, 255, 0.5);
+  border-radius: 16px 16px 5px 16px;
+  background: rgba(110, 215, 255, 0.18);
+}
+
+.chat-panel.scroll-chat .scroll-whisper-to {
+  font-size: 0.68rem;
+  color: var(--scroll-dim);
+}
+
+.chat-panel.scroll-chat .chat-quote {
+  border-left-color: rgba(127, 227, 255, 0.5);
+  color: var(--scroll-dim);
+}
+
+.chat-panel.scroll-chat .chat-reply-btn {
+  position: absolute;
+  bottom: 0.2rem;
+  right: -0.1rem;
+  margin: 0;
+  color: var(--scroll-dim);
+}
+
+.chat-panel.scroll-chat .is-own .chat-reply-btn {
+  right: auto;
+  left: -0.1rem;
+}
+
+.chat-panel.scroll-chat .scroll-bubble-row:hover .chat-reply-btn,
+.chat-panel.scroll-chat .scroll-bubble-row:focus-within .chat-reply-btn {
+  opacity: 1;
+}
+
+/* ---- compose ---- */
+.chat-panel.scroll-chat .chat-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  position: static;
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid var(--scroll-line);
+  background: transparent;
+}
+
+.chat-panel.scroll-chat .chat-compose input,
+.chat-panel.scroll-chat .chat-compose select {
+  border-color: rgba(150, 220, 255, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--scroll-ink);
+}
+
+.chat-panel.scroll-chat .chat-compose input::placeholder {
+  color: var(--scroll-dim);
+}
+
+.chat-panel.scroll-chat .chat-compose button.primary {
+  border: 1px solid var(--scroll-cyan);
+  border-radius: 999px;
+  background: rgba(127, 227, 255, 0.2);
+  color: var(--scroll-ink);
+}
+
+.chat-panel.scroll-chat .ic-speaker-control,
+.chat-panel.scroll-chat .chat-replying-to {
+  color: var(--scroll-dim);
+}
+
+/* ---- app tabs ---- */
+.chat-panel.scroll-chat .scroll-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 0.15rem 0.5rem 0.55rem;
+  border-top: 1px solid var(--scroll-line);
+}
+
+.chat-panel.scroll-chat .scroll-tabs button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.05rem;
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--scroll-dim);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat-panel.scroll-chat .scroll-tabs button > span[aria-hidden] {
+  font-size: 1.05rem;
+  filter: grayscale(0.6);
+}
+
+.chat-panel.scroll-chat .scroll-tabs button.is-active {
+  color: var(--scroll-cyan);
+}
+
+.chat-panel.scroll-chat .scroll-tabs button.is-active > span[aria-hidden] {
+  filter: none;
+}
+
+.chat-panel.scroll-chat .scroll-tabs button:focus-visible {
+  outline: 2px solid var(--scroll-cyan);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+
+.chat-panel.scroll-chat .scroll-tabs .chat-tab-unread {
+  position: absolute;
+  top: 0.1rem;
+  left: calc(50% + 0.5rem);
+}
+
+@keyframes scroll-push-in {
+  0% { opacity: 0; transform: translateY(-14px); }
+  8%, 88% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-panel.scroll-chat .scroll-push { animation: none; }
+}
+
+/* Message box and Send share a row; pickers and the reply strip span it. */
+.chat-panel.scroll-chat .chat-compose > select,
+.chat-panel.scroll-chat .chat-compose > .ic-speaker-control,
+.chat-panel.scroll-chat .chat-compose > .chat-replying-to {
+  grid-column: 1 / -1;
+}
+
+.chat-panel.scroll-chat .chat-compose > input {
+  grid-column: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.chat-panel.scroll-chat .chat-compose > button.primary {
+  grid-column: 2;
+  width: auto;
+  padding: 0.45rem 1rem;
+}

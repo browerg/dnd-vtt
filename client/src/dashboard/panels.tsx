@@ -266,6 +266,8 @@ export const PANELS: PanelDef[] = [
         myId={ctx.myId}
         canChat={ctx.canWrite}
         isDM={ctx.isDM}
+        scroll={ctx.system === "remnant"}
+        rolls={ctx.rolls}
         onSend={ctx.sendChat}
       />
     ),

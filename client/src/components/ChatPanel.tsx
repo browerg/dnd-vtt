@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { ChatMessage, Member } from "../api";
+import type { ChatMessage, Member, RollPayload } from "../api";
 import type { CharacterSummary } from "../sheet";
 import { Avatar } from "./Avatar";
 import "./RelicAppearance.css";
 import { chatSoundEnabled, playChatSound, setChatSoundEnabled } from "../chatSound";
+import "./ScrollChat.css";
 
 type Tab = "ic" | "ooc" | "whisper";
 
@@ -13,6 +14,23 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "whisper", label: "Whispers" },
 ];
 
+// Remnant campaigns dress the chat as a Scroll, the phone everyone in RWBY
+// carries: the three channels become its app tabs, the battery shows your
+// character's Aura, and dice rolls arrive as push notifications.
+const SCROLL_TABS: { key: Tab; label: string; icon: string }[] = [
+  { key: "ic", label: "Team", icon: "👥" },
+  { key: "ooc", label: "Table talk", icon: "💬" },
+  { key: "whisper", label: "Private", icon: "🔒" },
+];
+
+interface RollPush {
+  id: number;
+  who: string;
+  what: string;
+  result: string;
+  critical: "nat20" | "nat1" | null;
+}
+
 interface Props {
   messages: ChatMessage[];
   messagesReady: boolean;
@@ -21,6 +39,10 @@ interface Props {
   myId: number;
   canChat: boolean;
   isDM: boolean;
+  /** Render as a RWBY Scroll (Remnant campaigns). */
+  scroll?: boolean;
+  /** Rolls to surface as Scroll push notifications. */
+  rolls?: RollPayload[];
   onSend: (
     body: string,
     channel: Tab,
@@ -39,6 +61,8 @@ export default function ChatPanel({
   myId,
   canChat,
   isDM,
+  scroll = false,
+  rolls,
   onSend,
 }: Props) {
   const [tab, setTab] = useState<Tab>("ooc");
@@ -58,6 +82,42 @@ export default function ChatPanel({
   const initializedRef = useRef(false);
   const lastMessageIdRef = useRef(0);
   const noticeTimerRef = useRef<number>();
+  const [clock, setClock] = useState(() => new Date());
+  const [push, setPush] = useState<RollPush | null>(null);
+  const pushTimerRef = useRef<number>();
+  const lastRollIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!scroll) return;
+    const timer = window.setInterval(() => setClock(new Date()), 20_000);
+    return () => window.clearInterval(timer);
+  }, [scroll]);
+
+  // New rolls slide down from the top of the Scroll for a few seconds. The
+  // first batch is history, not news, so it only sets the high-water mark.
+  useEffect(() => {
+    if (!scroll || !rolls) return;
+    const newest = rolls.reduce((max, roll) => Math.max(max, roll.id), 0);
+    if (lastRollIdRef.current === null) {
+      lastRollIdRef.current = newest;
+      return;
+    }
+    const fresh = rolls.filter((roll) => roll.id > (lastRollIdRef.current ?? 0));
+    lastRollIdRef.current = Math.max(lastRollIdRef.current, newest);
+    const roll = fresh[fresh.length - 1];
+    if (!roll) return;
+    setPush({
+      id: roll.id,
+      who: roll.userName,
+      what: roll.label || roll.formula,
+      result: roll.total == null ? "Rolled in secret" : `${roll.formula} = ${roll.total}`,
+      critical: roll.detail?.critical ?? null,
+    });
+    window.clearTimeout(pushTimerRef.current);
+    pushTimerRef.current = window.setTimeout(() => setPush(null), 4500);
+  }, [scroll, rolls]);
+
+  useEffect(() => () => window.clearTimeout(pushTimerRef.current), []);
 
   const shown = messages.filter((m) => m.channel === tab);
   const others = members.filter((m) => m.id !== myId);
@@ -159,6 +219,239 @@ export default function ChatPanel({
     }
   };
 
+  const composeForm = canChat && (
+    <form onSubmit={send} className="chat-compose">
+      {replyTo && (
+        <div className="chat-replying-to">
+          <span className="chat-replying-label">Replying to</span>
+          <span className="chat-replying-author">{replyTo.speaker || replyTo.userName}</span>
+          <span className="chat-replying-body">{replyTo.body}</span>
+          <button type="button" onClick={() => setReplyTo(null)} title="Cancel reply">
+            <span aria-hidden="true">✕</span>
+            <span className="sr-only">Cancel reply</span>
+          </button>
+        </div>
+      )}
+      {tab === "ic" && isDM && (
+        <label className="ic-speaker-control">
+          <span>Speaking as</span>
+          <select value={speakerChoice} onChange={(e) => setSpeakerChoice(e.target.value)}>
+            <option value="gm">GM</option>
+            {characters.map((character) => (
+              <option key={character.id} value={character.id}>
+                {character.isNpc ? "NPC: " : "Character: "}
+                {character.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {tab === "whisper" && (
+        <select value={target || others[0]?.id || 0} onChange={(e) => setTarget(Number(e.target.value))}>
+          {others.map((m) => (
+            <option key={m.id} value={m.id}>
+              to {m.display_name}
+            </option>
+          ))}
+        </select>
+      )}
+
+      <input
+        ref={composeRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && replyTo) {
+            e.preventDefault();
+            setReplyTo(null);
+          }
+        }}
+        placeholder={
+          tab === "ic"
+            ? isDM
+              ? speakerChoice === "gm"
+                ? "Speak as the GM…"
+                : "Speak as the selected character…"
+              : "Speak as your character…"
+            : scroll
+              ? tab === "whisper"
+                ? "Private message…"
+                : "Message the table…"
+              : "Say something…"
+        }
+      />
+      <button className="primary">Send</button>
+    </form>
+  );
+
+  const jumpTo = (id: number) => {
+    const el = document.getElementById(`chat-msg-${id}`);
+    el?.scrollIntoView({ block: "center" });
+    el?.classList.add("chat-msg-flash");
+    window.setTimeout(() => el?.classList.remove("chat-msg-flash"), 1200);
+  };
+
+  const soundToggle = (
+    <button
+      type="button"
+      className="chat-sound-toggle"
+      aria-pressed={soundOn}
+      title={soundOn ? "Chat sound on — click to mute" : "Chat sound muted — click to unmute"}
+      onClick={() => {
+        const next = !soundOn;
+        setSoundOn(next);
+        setChatSoundEnabled(next);
+        if (next) playChatSound("message", true); // preview so they know what to listen for
+      }}
+    >
+      <span aria-hidden="true">{soundOn ? "🔔" : "🔕"}</span>
+      <span className="sr-only">{soundOn ? "Mute chat sound" : "Unmute chat sound"}</span>
+    </button>
+  );
+
+  if (scroll) {
+    const mine = characters.find((c) => c.ownerId === myId && !c.isNpc && c.auraMax);
+    const auraPct = mine?.auraMax
+      ? Math.max(0, Math.min(100, Math.round(((mine.aura ?? 0) / mine.auraMax) * 100)))
+      : null;
+    // The GM has no character of their own; use the team most of the party is on.
+    const teamCounts = new Map<string, number>();
+    for (const c of characters) {
+      const name = c.teamName?.trim();
+      if (name && !c.isNpc) teamCounts.set(name, (teamCounts.get(name) ?? 0) + 1);
+    }
+    const teamName =
+      mine?.teamName?.trim() || [...teamCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+    const header =
+      tab === "ic"
+        ? { title: teamName ? `Team ${teamName}` : "Team", sub: "In character", badge: (teamName || "TM").slice(0, 4).toUpperCase() }
+        : tab === "ooc"
+          ? { title: "Table talk", sub: "Out of character", badge: "💬" }
+          : { title: "Private", sub: "Only you and them", badge: "🔒" };
+
+    return (
+      <div className="chat-panel scroll-chat">
+        <div className="scroll-device">
+          <div className="scroll-status" aria-hidden="true">
+            <span className="scroll-signal">
+              <i />
+              <i />
+              <i />
+              <i /> CCT
+            </span>
+            <span>{clock.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</span>
+            <span className="scroll-aura" title={auraPct == null ? undefined : "Your Aura"}>
+              {auraPct == null ? (isDM ? "GM" : "") : `${auraPct}%`}
+              <span className={`scroll-battery${auraPct != null && auraPct <= 20 ? " is-low" : ""}`}>
+                <span style={{ width: `${auraPct ?? 100}%` }} />
+              </span>
+            </span>
+          </div>
+
+          <header className="scroll-header">
+            <span className="scroll-header-badge" aria-hidden="true">
+              {header.badge}
+            </span>
+            <span className="scroll-header-text">
+              <strong>{header.title}</strong>
+              <small>{header.sub}</small>
+            </span>
+            {soundToggle}
+          </header>
+
+          {push && (
+            <div key={push.id} className={`scroll-push${push.critical ? ` is-${push.critical}` : ""}`} role="status">
+              <span className="scroll-push-icon" aria-hidden="true">🎲</span>
+              <span className="scroll-push-text">
+                <small>
+                  {push.who} · {push.what}
+                </small>
+                <strong>
+                  {push.result}
+                  {push.critical === "nat20" ? " · Critical!" : push.critical === "nat1" ? " · Ouch" : ""}
+                </strong>
+              </span>
+            </div>
+          )}
+          {notice && (
+            <div className="chat-unread-toast scroll-notice" role="status" aria-live="polite">
+              <span className="chat-unread-pip" />
+              {notice}
+            </div>
+          )}
+
+          <div className="chat-log scroll-thread" ref={chatLogRef}>
+            {shown.length === 0 && <p className="scroll-empty">No messages yet.</p>}
+            {shown.map((m) => {
+              const own = m.userId === myId;
+              const author = m.channel === "ic" && m.speaker ? m.speaker : m.userName;
+              return (
+                <div key={m.id} id={`chat-msg-${m.id}`} className={`chat-msg scroll-bubble-row${own ? " is-own" : ""}`}>
+                  {!own && (
+                    <span className={`scroll-author${m.chatFlair === "chat-first-flame" ? " relic-chat-name" : ""}`}>
+                      {author}
+                      {m.channel === "ic" && m.speaker && <span className="scroll-author-real"> · {m.userName}</span>}
+                    </span>
+                  )}
+                  <div className="scroll-bubble">
+                    {m.replyTo && (
+                      <button
+                        type="button"
+                        className="chat-quote"
+                        title="Jump to the message this replies to"
+                        onClick={() => jumpTo(m.replyTo!.id)}
+                      >
+                        <span className="chat-quote-author">{m.replyTo.author}</span>
+                        <span className="chat-quote-body">{m.replyTo.body}</span>
+                      </button>
+                    )}
+                    {m.channel === "whisper" && (
+                      <span className="scroll-whisper-to">
+                        {!own && m.targetUserId === myId ? "to you" : `to ${m.targetName}`}
+                      </span>
+                    )}
+                    <span className="chat-body">{m.body}</span>
+                  </div>
+                  {canChat && (
+                    <button type="button" className="chat-reply-btn" title={`Reply to ${author}`} onClick={() => startReply(m)}>
+                      <span aria-hidden="true">↩</span>
+                      <span className="sr-only">Reply to {author}</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            <div ref={bottomRef} />
+          </div>
+
+          {composeForm}
+          {error && <div className="error">{error}</div>}
+
+          <nav className="scroll-tabs" aria-label="Chat channels">
+            {SCROLL_TABS.map(({ key, label, icon }) => (
+              <button
+                key={key}
+                type="button"
+                className={tab === key ? "is-active" : ""}
+                aria-current={tab === key ? "page" : undefined}
+                onClick={() => selectTab(key)}
+              >
+                <span aria-hidden="true">{icon}</span>
+                {label}
+                {unread[key] > 0 && (
+                  <span className={key === "whisper" ? "chat-tab-unread whisper" : "chat-tab-unread"}>
+                    {unread[key] > 99 ? "99+" : unread[key]}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="chat-panel">
       {notice && (
@@ -179,21 +472,7 @@ export default function ChatPanel({
             )}
           </button>
         ))}
-        <button
-          type="button"
-          className="chat-sound-toggle"
-          aria-pressed={soundOn}
-          title={soundOn ? "Chat sound on — click to mute" : "Chat sound muted — click to unmute"}
-          onClick={() => {
-            const next = !soundOn;
-            setSoundOn(next);
-            setChatSoundEnabled(next);
-            if (next) playChatSound("message", true); // preview so they know what to listen for
-          }}
-        >
-          <span aria-hidden="true">{soundOn ? "🔔" : "🔕"}</span>
-          <span className="sr-only">{soundOn ? "Mute chat sound" : "Unmute chat sound"}</span>
-        </button>
+        {soundToggle}
       </div>
 
       <div className="chat-log" ref={chatLogRef}>
@@ -205,12 +484,7 @@ export default function ChatPanel({
                 type="button"
                 className="chat-quote"
                 title="Jump to the message this replies to"
-                onClick={() => {
-                  const el = document.getElementById(`chat-msg-${m.replyTo!.id}`);
-                  el?.scrollIntoView({ block: "center" });
-                  el?.classList.add("chat-msg-flash");
-                  window.setTimeout(() => el?.classList.remove("chat-msg-flash"), 1200);
-                }}
+                onClick={() => jumpTo(m.replyTo!.id)}
               >
                 <span className="chat-quote-author">{m.replyTo.author}</span>
                 <span className="chat-quote-body">{m.replyTo.body}</span>
@@ -253,67 +527,7 @@ export default function ChatPanel({
         <div ref={bottomRef} />
       </div>
 
-      {canChat && (
-        <form onSubmit={send} className="chat-compose">
-          {replyTo && (
-            <div className="chat-replying-to">
-              <span className="chat-replying-label">Replying to</span>
-              <span className="chat-replying-author">{replyTo.speaker || replyTo.userName}</span>
-              <span className="chat-replying-body">{replyTo.body}</span>
-              <button type="button" onClick={() => setReplyTo(null)} title="Cancel reply">
-                <span aria-hidden="true">✕</span>
-                <span className="sr-only">Cancel reply</span>
-              </button>
-            </div>
-          )}
-          {tab === "ic" && isDM && (
-            <label className="ic-speaker-control">
-              <span>Speaking as</span>
-              <select value={speakerChoice} onChange={(e) => setSpeakerChoice(e.target.value)}>
-                <option value="gm">GM</option>
-                {characters.map((character) => (
-                  <option key={character.id} value={character.id}>
-                    {character.isNpc ? "NPC: " : "Character: "}
-                    {character.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-
-          {tab === "whisper" && (
-            <select value={target || others[0]?.id || 0} onChange={(e) => setTarget(Number(e.target.value))}>
-              {others.map((m) => (
-                <option key={m.id} value={m.id}>
-                  to {m.display_name}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <input
-            ref={composeRef}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape" && replyTo) {
-                e.preventDefault();
-                setReplyTo(null);
-              }
-            }}
-            placeholder={
-              tab === "ic"
-                ? isDM
-                  ? speakerChoice === "gm"
-                    ? "Speak as the GM…"
-                    : "Speak as the selected character…"
-                  : "Speak as your character…"
-                : "Say something…"
-            }
-          />
-          <button className="primary">Send</button>
-        </form>
-      )}
+      {composeForm}
 
       {error && <div className="error">{error}</div>}
     </div>
