@@ -422,6 +422,12 @@ for (const ddl of [
   "ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE users ADD COLUMN profile_style TEXT NOT NULL DEFAULT 'astral'",
   "ALTER TABLE users ADD COLUMN profile_gallery TEXT NOT NULL DEFAULT '{}'",
+  // When a quest last changed status / a handout was first shown, so a
+  // session recap can list what happened since the previous one.
+  "ALTER TABLE quests ADD COLUMN status_changed_at TEXT DEFAULT NULL",
+  "ALTER TABLE handouts ADD COLUMN revealed_at TEXT DEFAULT NULL",
+  // The session the GM locked in from the availability scheduler (UTC ISO).
+  "ALTER TABLE campaigns ADD COLUMN next_session_at TEXT NOT NULL DEFAULT ''",
 ]) {
   try {
     db.exec(ddl);
@@ -432,6 +438,29 @@ for (const ddl of [
 
 // Shop boards: shopkeepers, their wares and DM-approved purchase orders.
 db.exec(BOARD_SHOP_SCHEMA);
+
+// "Previously on…" recaps and the next-session availability grid.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS session_recaps (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id    INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    session_number INTEGER NOT NULL DEFAULT 0,
+    title          TEXT NOT NULL,
+    body           TEXT NOT NULL DEFAULT '',
+    highlights     TEXT NOT NULL DEFAULT '[]',
+    created_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at     TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_session_recaps_campaign ON session_recaps (campaign_id, id);
+
+  CREATE TABLE IF NOT EXISTS session_availability (
+    campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day         TEXT NOT NULL,
+    status      TEXT NOT NULL CHECK (status IN ('yes','maybe','no')),
+    PRIMARY KEY (campaign_id, user_id, day)
+  );
+`);
 
 // Convert the previous all-players NPC toggle into explicit assignments once.
 db.exec(`

@@ -11,6 +11,8 @@ import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
+import HandoutReveal from "../components/HandoutReveal";
+import PreviouslyOn from "../components/PreviouslyOn";
 import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
@@ -216,6 +218,7 @@ export default function CampaignPage() {
   return (
     <div className="shell campaign-themed" data-system={detail.campaign.system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
+      <HandoutReveal campaignId={campaignId} />
       <header className="topbar campaign-topbar">
         <Link to="/" className="ghost link campaign-back-link">{"\u2190"}</Link>
         <CampaignThemeBrand
@@ -248,6 +251,10 @@ export default function CampaignPage() {
             Handbook
           </Link>
         )}
+        <Link to={`/campaigns/${campaignId}/schedule`} className="ghost link campaign-nav-link">
+          Schedule
+        </Link>
+        <PreviouslyOn campaignId={campaignId} campaignName={detail.campaign.name} isDM={isDM} system={detail.campaign.system} />
         <CampaignThemePicker
           campaignId={campaignId}
           role={detail.yourRole}

@@ -20,6 +20,14 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **Previously on…** — Your GM can publish a short recap of last session, pre-filled with the quests, handouts and natural 20s and 1s that happened. It greets you the next time you open the campaign, and the 📜 button lets you flip back through older ones.
+
+- **Schedule** — A new Schedule page shows the next two weeks. Tap the days you're free, maybe or busy, see the best days at a glance, and once the GM locks one in, everyone sees the date in their own time zone. If Discord is switched on in the launcher, it's announced there too.
+
+- **Handouts land on the table** — When the GM reveals a handout, it appears on everyone's screen like a letter set down in front of you. It's kept in the Codex afterwards.
+
+- **You're up next** — In combat, the player whose turn is coming gets a heads-up with a Ready button, so the GM can see who's set to go. On your turn it tells you it's your turn.
+
 - **A new opening** — Vivid Realms has a brand-new intro: the crest bursts out of a starfield in time with the music, a shockwave rolls out, and "Host your world." writes itself in. The music plays softly, and you can still skip it.
 
 - **The Huntsman's Handbook, built in** — Remnant campaigns have a new Handbook link beside the Grimm Archive. It opens the full rulebook right inside Vivid Realms, with buttons to pop it out into its own tab or download it.

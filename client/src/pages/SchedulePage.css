@@ -1,0 +1,187 @@
+.schedule-page {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.schedule-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.schedule-next h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 4vw, 1.9rem);
+}
+
+.schedule-next-time {
+  margin: 0.15rem 0 0.6rem;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.schedule-best-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.schedule-best-day {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-well);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.schedule-best-day:disabled {
+  cursor: default;
+}
+
+.schedule-best-day small {
+  color: var(--muted);
+}
+
+.schedule-best-day.is-everyone {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 18px rgba(207, 166, 79, 0.25);
+}
+
+.schedule-notice {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  background: var(--bg-well);
+}
+
+.schedule-lock-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem;
+}
+
+.schedule-lock-row label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+/* The grid scrolls sideways inside its card on narrow screens. */
+.schedule-grid-scroll {
+  overflow-x: auto;
+  margin-top: 0.6rem;
+}
+
+.schedule-grid {
+  border-collapse: separate;
+  border-spacing: 3px;
+  min-width: 100%;
+}
+
+.schedule-grid th,
+.schedule-grid td {
+  padding: 0;
+  text-align: center;
+}
+
+.schedule-grid thead th button {
+  display: grid;
+  width: 100%;
+  min-width: 2.6rem;
+  padding: 0.3rem 0.2rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.schedule-grid thead th button:disabled {
+  cursor: default;
+}
+
+.schedule-grid thead th button:not(:disabled):hover {
+  border-color: var(--border-gold);
+}
+
+.schedule-grid thead th small {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.schedule-grid thead th.is-everyone button {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.schedule-name-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-right: 0.6rem !important;
+  background: var(--bg-raised);
+  text-align: left !important;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.schedule-name-col .badge {
+  margin-left: 0.35rem;
+}
+
+.schedule-cell {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 2.6rem;
+  height: 2.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-well);
+  color: var(--muted);
+  font-weight: 700;
+}
+
+button.schedule-cell {
+  cursor: pointer;
+}
+
+tr.is-mine .schedule-cell {
+  border-color: var(--border-gold);
+}
+
+.schedule-cell.mark-yes {
+  border-color: var(--online);
+  background: rgba(99, 200, 130, 0.18);
+  color: var(--online);
+}
+
+.schedule-cell.mark-maybe {
+  border-color: var(--accent);
+  background: rgba(207, 166, 79, 0.14);
+  color: var(--accent);
+}
+
+.schedule-cell.mark-no {
+  background: rgba(224, 92, 92, 0.12);
+  color: var(--danger);
+}
+
+@media (max-width: 640px) {
+  .schedule-page {
+    padding: 0.75rem 1rem;
+  }
+}

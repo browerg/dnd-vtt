@@ -11,6 +11,7 @@ import CharacterSheetPage from "./pages/CharacterSheetPage";
 import MapPage from "./pages/MapPage";
 import BestiaryPage from "./pages/BestiaryPage";
 import HandbookPage from "./pages/HandbookPage";
+import SchedulePage from "./pages/SchedulePage";
 import JoinPage from "./pages/JoinPage";
 import CustomizePage from "./pages/CustomizePage";
 import ShopPage from "./pages/ShopPage";
@@ -92,6 +93,7 @@ export default function App() {
         <Route path="/campaigns/:id/map" element={user ? <MapPage /> : <Navigate to="/login" />} />
         <Route path="/campaigns/:id/bestiary" element={user ? <BestiaryPage /> : <Navigate to="/login" />} />
         <Route path="/campaigns/:id/handbook" element={user ? <HandbookPage /> : <Navigate to="/login" />} />
+        <Route path="/campaigns/:id/schedule" element={user ? <SchedulePage /> : <Navigate to="/login" />} />
         <Route path="/customize" element={user ? <CustomizePage /> : <Navigate to="/login" />} />
         <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
         <Route path="/profiles/:userId" element={user ? <PlayerProfilePage /> : <Navigate to="/login" />} />

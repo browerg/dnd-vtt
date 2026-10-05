@@ -23,6 +23,19 @@ export interface CombatState {
   round: number;
   turn: number; // index into the sorted combatant list
   combatants: Combatant[];
+  /** Combatants whose player tapped "Ready" during the current turn. */
+  ready: number[];
+}
+
+// "I'm ready" taps, keyed to the turn they were made in so they lapse on
+// their own when the DM advances. Memory only: it's a courtesy signal, and a
+// server restart mid-turn losing it costs nothing.
+const readyByCampaign = new Map<number, { turnKey: string; ids: Set<number> }>();
+const turnKeyOf = (round: number, turn: number) => `${round}:${turn}`;
+
+function readyFor(campaignId: number, round: number, turn: number): Set<number> | null {
+  const entry = readyByCampaign.get(campaignId);
+  return entry && entry.turnKey === turnKeyOf(round, turn) ? entry.ids : null;
 }
 
 export function combatState(campaignId: number): CombatState {
@@ -48,6 +61,9 @@ export function combatState(campaignId: number): CombatState {
     round: c.combat_round,
     turn: c.combat_turn,
     combatants,
+    ready: [...(readyFor(campaignId, c.combat_round, c.combat_turn) ?? [])].filter((id) =>
+      combatants.some((combatant) => combatant.id === id)
+    ),
   };
 }
 
@@ -197,6 +213,37 @@ combatRouter.post("/:id/combat/next", (req, res) => {
   );
   broadcast(campaignId);
   res.json({ state: combatState(campaignId) });
+});
+
+// A player signals they're set for their upcoming turn. Only the player
+// who owns the combatant's character (or the DM) can mark it.
+combatRouter.post("/:id/combat/ready", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const role = memberRole(campaignId, user(req).id);
+  if (!role) return res.status(404).json({ error: "Campaign not found." });
+  const combatantId = Number(req.body?.combatantId);
+  const state = combatState(campaignId);
+  if (!state.active) return res.status(400).json({ error: "Combat hasn't started." });
+  const combatant = state.combatants.find((c) => c.id === combatantId);
+  if (!combatant) return res.status(404).json({ error: "Combatant not found." });
+  if (!isDMRole(role)) {
+    const owner = combatant.tokenId
+      ? (db
+          .prepare("SELECT c.user_id AS ownerId FROM tokens t JOIN characters c ON c.id = t.character_id WHERE t.id = ?")
+          .get(combatant.tokenId) as { ownerId: number } | undefined)
+      : undefined;
+    if (owner?.ownerId !== user(req).id) return res.status(403).json({ error: "That isn't your combatant." });
+  }
+  const turnKey = turnKeyOf(state.round, state.turn);
+  let entry = readyByCampaign.get(campaignId);
+  if (!entry || entry.turnKey !== turnKey) {
+    entry = { turnKey, ids: new Set() };
+    readyByCampaign.set(campaignId, entry);
+  }
+  if (req.body?.ready === false) entry.ids.delete(combatantId);
+  else entry.ids.add(combatantId);
+  broadcast(campaignId);
+  res.json({ ok: true });
 });
 
 combatRouter.post("/:id/combat/end", (req, res) => {

@@ -13,6 +13,7 @@ import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
+import HandoutReveal from "../components/HandoutReveal";
 import MapObjects from "../components/MapObjects";
 import ShopBoard, { type ShopView } from "../components/ShopBoard";
 import TokenQuickCard, { type QuickRoll, type VitalsResult } from "../components/TokenQuickCard";
@@ -71,6 +72,7 @@ interface CombatState {
   round: number;
   turn: number;
   combatants: Combatant[];
+  ready?: number[];
 }
 
 type Tool = "move" | "reveal" | "hide" | "ruler" | "draw" | "erase";
@@ -1800,6 +1802,21 @@ Choose Cancel to permanently delete it instead.`
 
   const g = map?.gridSize ?? 70;
   const currentCombatant = combat.active ? combat.combatants[combat.turn] : undefined;
+  // Whose turn follows this one (wrapping into the next round).
+  const nextTurnIndex = combat.active && combat.combatants.length > 1 ? (combat.turn + 1) % combat.combatants.length : -1;
+  const nextCombatant = nextTurnIndex >= 0 ? combat.combatants[nextTurnIndex] : undefined;
+  const ownsCombatant = (c: Combatant | undefined) =>
+    !!c?.tokenId && !!user && tokens.some((t) => t.id === c.tokenId && t.ownerId === user.id);
+  const myTurnNow = !isGm && ownsCombatant(currentCombatant);
+  const myTurnNext = !isGm && !myTurnNow && ownsCombatant(nextCombatant);
+  const nextIsReady = !!nextCombatant && (combat.ready ?? []).includes(nextCombatant.id);
+  const toggleReady = () => {
+    if (!nextCombatant) return;
+    void api(`/api/campaigns/${campaignId}/combat/ready`, {
+      method: "POST",
+      body: JSON.stringify({ combatantId: nextCombatant.id, ready: !nextIsReady }),
+    }).catch(() => {});
+  };
 
   const rulerLabel = (r: RulerLine) => {
     if (calibratingRuler) return `Setting ${calibrationStep === "pixels" ? "known distance" : calibrationStep + " limit"}`;
@@ -1953,6 +1970,24 @@ Choose Cancel to permanently delete it instead.`
   return (
     <div className={`shell map-shell campaign-themed${sidebarCollapsed ? " sidebar-is-collapsed" : ""}`} data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
+      <HandoutReveal campaignId={campaignId} />
+      {(myTurnNow || myTurnNext) && (
+        <div className={`turn-nudge${myTurnNow ? " is-now" : ""}`} role="status" aria-live="polite">
+          {myTurnNow ? (
+            <strong>Your turn</strong>
+          ) : (
+            <>
+              <span>
+                <strong>You're up next</strong>
+                <small>{nextCombatant?.name} · plan your move</small>
+              </span>
+              <button type="button" className={nextIsReady ? "is-ready" : ""} onClick={toggleReady} aria-pressed={nextIsReady}>
+                {nextIsReady ? "✓ Ready" : "Ready"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
       {combatEffectNotice && (
         <div className="rwby-combat-effect-notice" role="status">
           <span>Combat effect</span>
@@ -3194,6 +3229,11 @@ Choose Cancel to permanently delete it instead.`
                   <span className="init-name">
                     {combat.active && i === combat.turn ? "▶ " : ""}
                     {c.name}
+                    {combat.active && i === nextTurnIndex && (
+                      <span className={`initiative-next-badge${(combat.ready ?? []).includes(c.id) ? " is-ready" : ""}`}>
+                        {(combat.ready ?? []).includes(c.id) ? "✓ Ready" : "Up next"}
+                      </span>
+                    )}
                     <span className="initiative-tiebreak-label">
                       {c.tieBreaker > 0
                         ? system === "remnant"

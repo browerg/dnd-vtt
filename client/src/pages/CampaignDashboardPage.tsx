@@ -14,6 +14,8 @@ import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
+import HandoutReveal from "../components/HandoutReveal";
+import PreviouslyOn from "../components/PreviouslyOn";
 import DMGuide from "../components/DMGuide";
 import { PANEL_BY_ID, availablePanels, type PanelCtx } from "../dashboard/panels";
 import {
@@ -323,6 +325,7 @@ export default function CampaignDashboardPage() {
   return (
     <div className="shell dashboard-shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
+      <HandoutReveal campaignId={campaignId} />
       {isDM && <DMGuide campaignId={campaignId} system={system} />}
       <header className="topbar campaign-topbar">
         <Link to="/" className="ghost link campaign-back-link" title="Back to campaigns">{"\u2190"}</Link>
@@ -348,6 +351,10 @@ export default function CampaignDashboardPage() {
             Handbook
           </Link>
         )}
+        <Link to={`/campaigns/${campaignId}/schedule`} className="ghost link campaign-nav-link">
+          Schedule
+        </Link>
+        <PreviouslyOn campaignId={campaignId} campaignName={detail.campaign.name} isDM={!!isDM} system={system} />
         {editing && (
           <div className="add-panel-wrap">
             <button className="ghost" onClick={() => setShowAdd((s) => !s)} disabled={addable.length === 0}>

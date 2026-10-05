@@ -4825,3 +4825,81 @@ details[data-sheet-section="background"] > label:last-of-type textarea {
     grid-template-columns: 1fr;
   }
 }
+/* ---- "You're up next" / "Your turn" nudge on the map ---- */
+.turn-nudge {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.5rem 0.55rem 0.5rem 1.1rem;
+  border: 1px solid var(--border-gold);
+  border-radius: 999px;
+  background: rgba(20, 17, 30, 0.92);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  color: var(--text);
+  transform: translateX(-50%);
+  animation: turn-nudge-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+
+.turn-nudge > span {
+  display: grid;
+  line-height: 1.2;
+}
+
+.turn-nudge strong {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.turn-nudge small {
+  color: var(--muted);
+}
+
+.turn-nudge button {
+  padding: 0.4rem 0.95rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.turn-nudge button.is-ready {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.turn-nudge.is-now {
+  padding: 0.55rem 1.4rem;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 28px rgba(207, 166, 79, 0.35), 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.initiative-next-badge {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+  vertical-align: middle;
+}
+
+.initiative-next-badge.is-ready {
+  border-color: var(--online);
+  color: var(--online);
+}
+
+@keyframes turn-nudge-in {
+  from { opacity: 0; transform: translate(-50%, -12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-nudge { animation: none; }
+}

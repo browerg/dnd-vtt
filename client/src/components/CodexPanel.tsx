@@ -412,6 +412,17 @@ export default function CodexPanel({ campaignId, isDM, canWrite, myId, refreshKe
                       >
                         {h.revealed ? "🙈" : "👁"}
                       </button>
+                      {h.revealed && (
+                        <button
+                          className="ghost mini"
+                          title="Show to the table again"
+                          onClick={() =>
+                            act(() => api(`/api/campaigns/${campaignId}/handouts/${h.id}/present`, { method: "POST" }))
+                          }
+                        >
+                          📣
+                        </button>
+                      )}
                       <button
                         className="ghost mini"
                         onClick={() =>

@@ -19,6 +19,21 @@ function touch(campaignId: number, kind: string) {
   getIo().to(`campaign:${campaignId}`).emit("codex:update", { campaignId, kind });
 }
 
+// Puts a handout in front of the whole table. Everyone in the room gets it;
+// the sender's own client skips the overlay.
+function presentHandout(campaignId: number, h: any, fromUserId: number) {
+  getIo().to(`campaign:${campaignId}`).emit("handout:reveal", {
+    campaignId,
+    fromUserId,
+    handout: {
+      id: h.id,
+      name: h.name,
+      url: `/uploads/${path.basename(h.file_path)}`,
+      isPdf: String(h.file_path).endsWith(".pdf"),
+    },
+  });
+}
+
 function roleOr404(req: Request, res: any): string | null {
   const role = memberRole(Number(req.params.id), user(req).id);
   if (!role) res.status(404).json({ error: "Campaign not found." });
@@ -152,6 +167,9 @@ codexRouter.put("/:id/quests/:qid", (req, res) => {
     nextRewardAmount,
     q.id
   );
+  if (nextStatus !== q.status) {
+    db.prepare("UPDATE quests SET status_changed_at = datetime('now') WHERE id = ?").run(q.id);
+  }
 
   const vcoinReward =
     nextStatus === "completed"
@@ -370,7 +388,27 @@ codexRouter.put("/:id/handouts/:hid", (req, res) => {
   if (!h) return res.status(404).json({ error: "Handout not found." });
   const revealed = typeof req.body?.revealed === "boolean" ? (req.body.revealed ? 1 : 0) : h.revealed;
   db.prepare("UPDATE handouts SET revealed = ? WHERE id = ?").run(revealed, h.id);
+  if (revealed && !h.revealed) db.prepare("UPDATE handouts SET revealed_at = datetime('now') WHERE id = ?").run(h.id);
   touch(campaignId, "handouts");
+  if (revealed && !h.revealed) presentHandout(campaignId, h, user(req).id);
+  res.json({ ok: true });
+});
+
+// Show a handout to the table again (revealing it first if it was hidden).
+codexRouter.post("/:id/handouts/:hid/present", (req, res) => {
+  const role = roleOr404(req, res);
+  if (!role) return;
+  if (!isDMRole(role)) return res.status(403).json({ error: "Only the DM presents handouts." });
+  const campaignId = Number(req.params.id);
+  const h = db
+    .prepare("SELECT * FROM handouts WHERE id = ? AND campaign_id = ?")
+    .get(Number(req.params.hid), campaignId) as any;
+  if (!h) return res.status(404).json({ error: "Handout not found." });
+  if (!h.revealed) {
+    db.prepare("UPDATE handouts SET revealed = 1, revealed_at = datetime('now') WHERE id = ?").run(h.id);
+    touch(campaignId, "handouts");
+  }
+  presentHandout(campaignId, h, user(req).id);
   res.json({ ok: true });
 });
 

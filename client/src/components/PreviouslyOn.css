@@ -1,0 +1,144 @@
+.recap-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background: rgba(5, 4, 9, 0.8);
+  animation: recap-fade 0.35s ease-out both;
+}
+
+.recap-card {
+  display: grid;
+  gap: 0.75rem;
+  width: min(640px, 100%);
+  margin: auto;
+  padding: 1.6rem 1.6rem 1.2rem;
+  border: 1px solid var(--border-gold, rgba(207, 166, 79, 0.4));
+  border-radius: var(--radius, 10px);
+  background:
+    radial-gradient(110% 60% at 50% 0%, rgba(232, 193, 105, 0.1), transparent 65%),
+    var(--bg-raised, #1a1727);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 236, 190, 0.1);
+  color: var(--text, #eae6f2);
+  animation: recap-rise 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.recap-eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent, #cfa64f);
+}
+
+.recap-title {
+  margin: 0;
+  font-family: var(--font-display, Cinzel, Georgia, serif);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  line-height: 1.15;
+}
+
+.recap-meta {
+  margin: -0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted, #9d95b5);
+}
+
+.recap-body p {
+  margin: 0 0 0.6rem;
+  line-height: 1.6;
+}
+
+.recap-highlights {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.8rem 0 0;
+  border-top: 1px solid var(--border, #322b48);
+  list-style: none;
+}
+
+.recap-highlights li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  animation: recap-line 0.45s ease-out both;
+}
+
+.recap-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.recap-nav,
+.recap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recap-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.recap-field > span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted, #9d95b5);
+}
+
+.recap-draft-lines {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recap-draft-lines li {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.recap-draft-lines li.is-dropped input:not([type="checkbox"]) {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.previously-on-trigger {
+  white-space: nowrap;
+}
+
+@keyframes recap-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes recap-rise {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes recap-line {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recap-overlay,
+  .recap-card,
+  .recap-highlights li {
+    animation: none;
+  }
+}
