@@ -4,7 +4,11 @@ import "./Entrance.css";
 
 const SESSION_KEY = "vivid-realms-entrance-v1";
 
+// Off until the replacement intro video is ready. Flip back to true to restore it.
+const ENTRANCE_ENABLED = false;
+
 function shouldShowEntrance() {
+  if (!ENTRANCE_ENABLED) return false;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
   if (window.location.pathname === "/reset-password") return false;
   try { return sessionStorage.getItem(SESSION_KEY) !== "seen"; } catch { return true; }

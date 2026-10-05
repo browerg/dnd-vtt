@@ -218,9 +218,11 @@
   72% { opacity: 1; transform: rotate(9deg) scale(1.04); }
 }
 
+/* `translate` rather than margins: it composes with each petal's own rotate
+   and stays off the layout path, where margins re-laid the card every frame. */
 @keyframes emporium-petal-drift {
-  from { margin-top: 3px; margin-left: -3px; }
-  to { margin-top: -5px; margin-left: 4px; }
+  from { translate: -3px 3px; }
+  to { translate: 4px -5px; }
 }
 .emporium-rarity {
   padding: 4px 7px;

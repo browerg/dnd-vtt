@@ -24,6 +24,18 @@ export default function ShopDialog({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const scrollIdle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(scrollIdle.current), []);
+
+  // Cards slide under a still cursor while the list scrolls, and each one it
+  // crosses would start its hover lift, shadow and sheen. Hold hover off until
+  // the scroll settles.
+  const markScrolling = (body: HTMLDivElement) => {
+    if (!body.dataset.scrolling) body.dataset.scrolling = "";
+    clearTimeout(scrollIdle.current);
+    scrollIdle.current = setTimeout(() => { delete body.dataset.scrolling; }, 160);
+  };
 
   useEffect(() => {
     const element = ref.current;
@@ -72,7 +84,7 @@ export default function ShopDialog({
           </button>
         </header>
 
-        <div className="shop-dialog-body">{children}</div>
+        <div className="shop-dialog-body" onScroll={(event) => markScrolling(event.currentTarget)}>{children}</div>
       </div>
     </dialog>
   );

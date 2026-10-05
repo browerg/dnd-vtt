@@ -16,6 +16,14 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 4 October 2026
+
+### Minor changes
+
+- **Smoother Emporium scrolling** — The Dice Trails, Nat 20, Nat 1 and Turn Start catalogues no longer stutter while you scroll through them.
+
+- **Intro video paused** — The opening video is switched off for now while a new one is made. The app opens straight to the sign-in screen.
+
 ## 2 October 2026
 
 ### Major changes

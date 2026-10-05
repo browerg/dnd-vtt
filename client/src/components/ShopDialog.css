@@ -14,19 +14,13 @@
   overflow: hidden;
 }
 
+/* No backdrop blur. Blurring means re-blurring the whole page behind the
+   dialog on every frame that anything moves — the cache reel measured at
+   double the frame time with it (24ms vs 12ms), and the Emporium keeps
+   animating behind every catalogue, so scrolling paid it too. A deeper dim
+   does the same job of pushing the page back. */
 .shop-dialog::backdrop {
-  background: rgba(6, 3, 5, .72);
-  backdrop-filter: blur(3px);
-}
-
-/* Blurring the backdrop means re-blurring the whole page behind the dialog on
-   every frame that anything in front of it moves. For a static catalogue that
-   cost is paid once; for the cache reel it is paid for eleven seconds, and it
-   measured at double the frame time (24ms vs 12ms per frame). Nobody is
-   looking through the backdrop mid-spin, so drop the blur while it runs and
-   keep the dimming. Browsers without :has() simply keep the blur. */
-.shop-dialog:has(.cache-reel.is-spinning)::backdrop {
-  backdrop-filter: none;
+  background: rgba(6, 3, 5, .8);
 }
 
 .shop-dialog[open] {
@@ -115,6 +109,11 @@
   overscroll-behavior: contain;
   padding: 18px 20px 22px;
   scrollbar-color: color-mix(in srgb, var(--burrow-gold, #e8c169) 45%, transparent) transparent;
+}
+
+/* Set by ShopDialog while the list is moving; see markScrolling. */
+.shop-dialog-body[data-scrolling] > * {
+  pointer-events: none;
 }
 
 /* Section blocks lose their own card chrome in here — the dialog is the card. */
