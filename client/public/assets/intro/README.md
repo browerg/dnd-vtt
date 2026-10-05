@@ -1,17 +1,21 @@
 # Entrance media
 
-`entrance-v1.webp` is the exact first frame of the user-supplied
-`website intro.mp4`, encoded as WebP at quality 85 (1920 × 1080, 57,808 bytes).
+The current intro (v2) is drawn in code by `src/components/Entrance.tsx` and
+`Entrance.css`; it uses only these two files:
 
-`entrance-v1.mp4` retains the supplied soundtrack and was encoded with:
+- `vivid-realms-logo.webp`: the Vivid Realms crest, 512 × 512 with transparency.
+- `entrance-v2.m4a`: the original intro soundtrack (8.4 s), copied out of
+  `entrance-v1.mp4` without re-encoding:
 
 ```
-ffmpeg -i "website intro.mp4" -vf scale=1280:-2 -c:v libx264 -preset slow -crf 25 -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart entrance-v1.mp4
+ffmpeg -i entrance-v1.mp4 -vn -c:a copy -movflags +faststart entrance-v2.m4a
 ```
 
-The result is 999,713 bytes. Keep poster and video identically framed; the
-entrance uses `object-fit: contain` to preserve the full scene on all screens.
-Version both filenames when changing the media to invalidate browser caches.
+The animation's keyframe delays are timed to this soundtrack (peak at 1.6 s,
+second hit at 4.8 s, fade from 6.6 s). If the soundtrack changes, retime them.
+
+`entrance-v1.mp4` and `entrance-v1.webp` are the previous video intro and its
+poster. Nothing loads them any more.
 
 The sparkle button is adapted from the user-supplied Uiverse.io snippet by
 MuhammadHasann. Its attribution remains in the component and stylesheet.

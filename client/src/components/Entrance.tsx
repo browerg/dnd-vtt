@@ -1,11 +1,38 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { markEntranceDone } from "../entranceGate";
 import "./Entrance.css";
 
-const SESSION_KEY = "vivid-realms-entrance-v1";
+const SESSION_KEY = "vivid-realms-entrance-v2";
 
-// Off until the replacement intro video is ready. Flip back to true to restore it.
-const ENTRANCE_ENABLED = false;
+// Flip to false to switch the intro off without touching anything else.
+const ENTRANCE_ENABLED = true;
+
+// The animation is timed to this soundtrack (8.4s): a swell that peaks at
+// 1.6s (logo reveal), a second hit at 4.8s (shockwave + tagline) and a tail
+// that fades from 6.6s. Entrance.css holds the matching keyframe delays.
+const SOUNDTRACK = "/assets/intro/entrance-v2.m4a";
+const LOGO = "/assets/intro/vivid-realms-logo.webp";
+const FINISH_AT_MS = 7400;
+// If the soundtrack hasn't started by then, run the intro silently.
+const AUDIO_GRACE_MS = 1500;
+const TAGLINE = "Host your world.";
+// Kept quiet on purpose: background flavour, not a jump scare.
+const SOUNDTRACK_VOLUME = 0.05;
+
+// Fixed pseudo-random starfield so it looks the same on every visit.
+const STARS = Array.from({ length: 56 }, (_, i) => {
+  const r = (n: number) => {
+    const x = Math.sin((i + 1) * 9301 + n * 49297) * 233280;
+    return x - Math.floor(x);
+  };
+  return {
+    left: `${(r(1) * 100).toFixed(2)}%`,
+    top: `${(r(2) * 100).toFixed(2)}%`,
+    size: `${(1 + r(3) * 2.2).toFixed(1)}px`,
+    delay: `${(-r(4) * 4).toFixed(2)}s`,
+    duration: `${(2.4 + r(5) * 3).toFixed(2)}s`,
+  };
+});
 
 function shouldShowEntrance() {
   if (!ENTRANCE_ENABLED) return false;
@@ -16,25 +43,25 @@ function shouldShowEntrance() {
 
 export default function Entrance({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<"ready" | "starting" | "playing" | "leaving" | "done">(() => shouldShowEntrance() ? "ready" : "done");
-  const video = useRef<HTMLVideoElement>(null);
+  const audio = useRef<HTMLAudioElement>(null);
   const enter = useRef<HTMLButtonElement>(null);
   const skip = useRef<HTMLButtonElement>(null);
   const app = useRef<HTMLDivElement>(null);
-  const stallTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const closing = useRef(false);
 
   useLayoutEffect(() => {
     if (app.current) app.current.inert = phase !== "done";
   }, [phase]);
 
-  const dismiss = useCallback(() => {
+  const leave = useCallback((stopSound: boolean) => {
     if (closing.current) return;
     closing.current = true;
-    clearTimeout(stallTimer.current);
-    video.current?.pause();
+    // A natural finish lets the last quiet second of music ring out under the fade.
+    if (stopSound) audio.current?.pause();
     try { sessionStorage.setItem(SESSION_KEY, "seen"); } catch { /* Storage can be disabled. */ }
     setPhase("leaving");
   }, []);
+  const dismiss = useCallback(() => leave(true), [leave]);
 
   // Anything that would talk over the intro's soundtrack waits on this.
   useEffect(() => {
@@ -54,32 +81,36 @@ export default function Entrance({ children }: { children: ReactNode }) {
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== "starting" && phase !== "playing") return;
-    const timer = setTimeout(dismiss, 15000);
-    return () => clearTimeout(timer);
-  }, [phase, dismiss]);
-
-  useEffect(() => () => clearTimeout(stallTimer.current), []);
-
-  function waitForPlayback() {
-    clearTimeout(stallTimer.current);
-    stallTimer.current = setTimeout(dismiss, 4000);
-  }
+    if (phase === "starting") {
+      const timer = setTimeout(() => {
+        // Out of sync is worse than silent.
+        audio.current?.pause();
+        setPhase("playing");
+      }, AUDIO_GRACE_MS);
+      return () => clearTimeout(timer);
+    }
+    if (phase === "playing") {
+      const timer = setTimeout(() => leave(false), FINISH_AT_MS);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, leave]);
 
   function start() {
     if (phase !== "ready") return;
     setPhase("starting");
-    waitForPlayback();
+    if (audio.current) audio.current.volume = SOUNDTRACK_VOLUME;
     // Invoke play directly from the click so browsers allow the soundtrack.
-    video.current?.play().catch(dismiss);
+    audio.current?.play().catch(() => setPhase((p) => p === "starting" ? "playing" : p));
   }
+
+  const playing = phase === "playing" || phase === "leaving";
 
   return <>
     <div ref={app} className="entrance-app" tabIndex={-1}>
       {children}
     </div>
     {phase !== "done" && <div
-      className={`vr-entrance${phase === "leaving" ? " vr-entrance--leaving" : ""}`}
+      className={`vr-entrance${playing ? " is-playing" : ""}${phase === "leaving" ? " vr-entrance--leaving" : ""}`}
       role="dialog" aria-modal="true" aria-label="Welcome to Vivid Realms"
       onKeyDown={(event) => {
         if (event.key === "Escape") { event.preventDefault(); dismiss(); }
@@ -90,16 +121,36 @@ export default function Entrance({ children }: { children: ReactNode }) {
         }
       }}
     >
-      <video ref={video} className="vr-entrance__video"
-        src="/assets/intro/entrance-v1.mp4" poster="/assets/intro/entrance-v1.webp"
-        preload="metadata" playsInline aria-hidden="true" tabIndex={-1}
-        onEnded={dismiss} onError={dismiss}
-        onWaiting={() => { if (phase === "starting" || phase === "playing") waitForPlayback(); }}
-        onPlaying={() => {
-          clearTimeout(stallTimer.current);
-          if (!closing.current) setPhase("playing");
-        }}
-      />
+      <audio ref={audio} src={SOUNDTRACK} preload="auto"
+        onPlaying={() => setPhase((p) => p === "starting" ? "playing" : p)} />
+
+      <div className="vr-intro" aria-hidden="true">
+        <div className="vr-intro__stars">
+          {STARS.map((star, i) => <i key={i} style={{
+            left: star.left, top: star.top, width: star.size, height: star.size,
+            animationDelay: star.delay, animationDuration: star.duration,
+          }} />)}
+        </div>
+        <div className="vr-intro__flash" />
+        <div className="vr-intro__stage">
+          <div className="vr-intro__glow" />
+          <svg className="vr-intro__rings" viewBox="0 0 100 100">
+            <circle className="vr-intro__ring-draw" cx="50" cy="50" r="47" pathLength="100" />
+            <circle className="vr-intro__ring-ticks" cx="50" cy="50" r="43.5" pathLength="100" />
+            <circle className="vr-intro__ring-inner" cx="50" cy="50" r="40" pathLength="100" />
+          </svg>
+          <span className="vr-intro__wave vr-intro__wave--reveal" />
+          <span className="vr-intro__wave vr-intro__wave--hit" />
+          <div className="vr-intro__logo">
+            <img src={LOGO} alt="" draggable={false} />
+            <span className="vr-intro__shimmer" style={{ "--logo": `url(${LOGO})` } as CSSProperties} />
+          </div>
+        </div>
+        <p className="vr-intro__tagline">
+          {[...TAGLINE].map((ch, i) => <span key={i} style={{ "--i": i } as CSSProperties}>{ch === " " ? " " : ch}</span>)}
+        </p>
+      </div>
+
       {phase === "ready" && <div className="vr-entrance__invitation">
         {/* Button adapted from Uiverse.io by MuhammadHasann. */}
         <button ref={enter} type="button" className="vr-enter-button" onClick={start}>

@@ -20,6 +20,8 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **A new opening** — Vivid Realms has a brand-new intro: the crest bursts out of a starfield in time with the music, a shockwave rolls out, and "Host your world." writes itself in. The music plays softly, and you can still skip it.
+
 - **The Huntsman's Handbook, built in** — Remnant campaigns have a new Handbook link beside the Grimm Archive. It opens the full rulebook right inside Vivid Realms, with buttons to pop it out into its own tab or download it.
 
 ### Minor changes
