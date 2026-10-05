@@ -49,7 +49,8 @@ interface Props {
     targetUserId?: number,
     speakerCharacterId?: number,
     speakerAsGm?: boolean,
-    replyToId?: number
+    replyToId?: number,
+    speakerName?: string
   ) => Promise<void>;
 }
 
@@ -69,6 +70,10 @@ export default function ChatPanel({
   const [draft, setDraft] = useState("");
   const [target, setTarget] = useState(0);
   const [speakerChoice, setSpeakerChoice] = useState("gm");
+  // GM only: who a private message comes from — "me", an NPC's id, or "contact"
+  // for a typed-in name like "Unknown number".
+  const [whisperAs, setWhisperAs] = useState("me");
+  const [contactName, setContactName] = useState("");
   const [error, setError] = useState("");
   const [unread, setUnread] = useState<Record<Tab, number>>({ ic: 0, ooc: 0, whisper: 0 });
   const [notice, setNotice] = useState("");
@@ -211,7 +216,21 @@ export default function ChatPanel({
           ? Number(speakerChoice) || undefined
           : undefined;
 
-      await onSend(draft, tab, whisperTarget, speakerCharacterId, speakerAsGm, replyTo?.id);
+      const asNpc = tab === "whisper" && isDM && whisperAs !== "me" && whisperAs !== "contact";
+      const asContact = tab === "whisper" && isDM && whisperAs === "contact" && contactName.trim();
+      if (tab === "whisper" && isDM && whisperAs === "contact" && !contactName.trim()) {
+        setError("Name the contact this message comes from.");
+        return;
+      }
+      await onSend(
+        draft,
+        tab,
+        whisperTarget,
+        asNpc ? Number(whisperAs) || undefined : speakerCharacterId,
+        speakerAsGm,
+        replyTo?.id,
+        asContact ? contactName.trim() : undefined
+      );
       setDraft("");
       setReplyTo(null);
     } catch (err: any) {
@@ -244,6 +263,30 @@ export default function ChatPanel({
               </option>
             ))}
           </select>
+        </label>
+      )}
+
+      {tab === "whisper" && isDM && (
+        <label className="ic-speaker-control whisper-as-control">
+          <span>Send as</span>
+          <select value={whisperAs} onChange={(e) => setWhisperAs(e.target.value)}>
+            <option value="me">Yourself (GM)</option>
+            {characters.filter((c) => c.isNpc).map((c) => (
+              <option key={c.id} value={c.id}>
+                NPC: {c.name}
+              </option>
+            ))}
+            <option value="contact">Another contact…</option>
+          </select>
+          {whisperAs === "contact" && (
+            <input
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              placeholder="Contact name, e.g. Unknown number"
+              maxLength={40}
+              aria-label="Contact name"
+            />
+          )}
         </label>
       )}
 
@@ -385,13 +428,15 @@ export default function ChatPanel({
             {shown.length === 0 && <p className="scroll-empty">No messages yet.</p>}
             {shown.map((m) => {
               const own = m.userId === myId;
-              const author = m.channel === "ic" && m.speaker ? m.speaker : m.userName;
+              const author = m.speaker && m.channel !== "ooc" ? m.speaker : m.userName;
+              const fromContact = m.channel === "whisper" && !!m.speaker;
               return (
                 <div key={m.id} id={`chat-msg-${m.id}`} className={`chat-msg scroll-bubble-row${own ? " is-own" : ""}`}>
                   {!own && (
                     <span className={`scroll-author${m.chatFlair === "chat-first-flame" ? " relic-chat-name" : ""}`}>
                       {author}
                       {m.channel === "ic" && m.speaker && <span className="scroll-author-real"> · {m.userName}</span>}
+                      {fromContact && <span className="scroll-contact-tag">Contact</span>}
                     </span>
                   )}
                   <div className="scroll-bubble">
@@ -406,9 +451,13 @@ export default function ChatPanel({
                         <span className="chat-quote-body">{m.replyTo.body}</span>
                       </button>
                     )}
+                    {own && fromContact && <span className="scroll-whisper-to">as {m.speaker}</span>}
                     {m.channel === "whisper" && (
                       <span className="scroll-whisper-to">
-                        {!own && m.targetUserId === myId ? "to you" : `to ${m.targetName}`}
+                        {!own && m.targetUserId === myId
+                          ? "to you"
+                          : // Replying to a contact's text addresses the contact, not the GM behind it.
+                            `to ${m.replyTo && m.replyTo.author !== m.targetName ? m.replyTo.author : m.targetName}`}
                       </span>
                     )}
                     <span className="chat-body">{m.body}</span>
@@ -490,7 +539,7 @@ export default function ChatPanel({
                 <span className="chat-quote-body">{m.replyTo.body}</span>
               </button>
             )}
-            {m.channel !== "ic" && (
+            {m.channel !== "ic" && !(m.channel === "whisper" && m.speaker) && (
               <Avatar
                 name={m.userName}
                 src={members.find((mem) => mem.id === m.userId)?.avatar_path || undefined}
@@ -502,6 +551,10 @@ export default function ChatPanel({
               {m.channel === "ic" && m.speaker ? (
                 <>
                   {m.speaker} <span className="muted">({m.userName})</span>
+                </>
+              ) : m.channel === "whisper" && m.speaker ? (
+                <>
+                  📱 {m.speaker} <span className="muted">(contact)</span>
                 </>
               ) : (
                 m.userName

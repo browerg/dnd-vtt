@@ -130,6 +130,19 @@ chatRouter.post("/:id/messages", (req, res) => {
       speaker = c?.name ?? "";
     }
   }
+  // The GM can text a player as an NPC or any named contact ("Unknown
+  // number"); the player sees it come from that contact.
+  if (channel === "whisper" && isDMRole(role)) {
+    if (Number.isInteger(Number(req.body?.speakerCharacterId)) && req.body?.speakerCharacterId != null) {
+      const npc = db
+        .prepare("SELECT name FROM characters WHERE id = ? AND campaign_id = ?")
+        .get(Number(req.body.speakerCharacterId), campaignId) as any;
+      if (!npc) return res.status(400).json({ error: "That character is not in this campaign." });
+      speaker = npc.name;
+    } else if (typeof req.body?.speakerName === "string" && req.body.speakerName.trim()) {
+      speaker = req.body.speakerName.trim().slice(0, 40);
+    }
+  }
 
   const info = db
     .prepare(

@@ -1,0 +1,74 @@
+.scroll-text-alerts {
+  position: fixed;
+  top: 76px;
+  right: 16px;
+  z-index: 8500;
+  display: grid;
+  gap: 0.5rem;
+  width: min(340px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.scroll-text-alert {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border-gold, rgba(207, 166, 79, 0.4));
+  border-radius: 14px;
+  background: var(--bg-raised, #1a1727);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+  color: var(--text, #eae6f2);
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: scroll-text-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+
+.scroll-text-alert-app {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted, #9d95b5);
+}
+
+.scroll-text-alert strong {
+  font-size: 0.95rem;
+}
+
+.scroll-text-alert-body {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow-wrap: anywhere;
+}
+
+/* Remnant: the same glassy Scroll look as the chat. */
+.scroll-text-alerts.is-scroll .scroll-text-alert {
+  border-color: rgba(150, 220, 255, 0.4);
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(127, 227, 255, 0.1), transparent 60%),
+    rgba(10, 18, 28, 0.97);
+  color: #e6f5ff;
+}
+
+.scroll-text-alerts.is-scroll .scroll-text-alert-app {
+  color: rgba(196, 232, 255, 0.7);
+}
+
+.scroll-text-alerts.is-scroll .scroll-text-alert strong {
+  color: #7fe3ff;
+}
+
+@keyframes scroll-text-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-text-alert { animation: none; }
+}

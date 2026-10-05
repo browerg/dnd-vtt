@@ -15,6 +15,7 @@ import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
+import ScrollTextAlert from "../components/ScrollTextAlert";
 import PreviouslyOn from "../components/PreviouslyOn";
 import DMGuide from "../components/DMGuide";
 import { PANEL_BY_ID, availablePanels, type PanelCtx } from "../dashboard/panels";
@@ -195,11 +196,12 @@ export default function CampaignDashboardPage() {
       targetUserId?: number,
       speakerCharacterId?: number,
       speakerAsGm?: boolean,
-      replyToId?: number
+      replyToId?: number,
+      speakerName?: string
     ) => {
       await api(`/api/campaigns/${campaignId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm, replyToId }),
+        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm, replyToId, speakerName }),
       });
     },
     [campaignId]
@@ -326,6 +328,7 @@ export default function CampaignDashboardPage() {
     <div className="shell dashboard-shell campaign-themed" data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
       <HandoutReveal campaignId={campaignId} />
+      <ScrollTextAlert campaignId={campaignId} system={system} />
       {isDM && <DMGuide campaignId={campaignId} system={system} />}
       <header className="topbar campaign-topbar">
         <Link to="/" className="ghost link campaign-back-link" title="Back to campaigns">{"\u2190"}</Link>

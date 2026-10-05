@@ -14,6 +14,7 @@ import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
+import ScrollTextAlert from "../components/ScrollTextAlert";
 import MapObjects from "../components/MapObjects";
 import ShopBoard, { type ShopView } from "../components/ShopBoard";
 import TokenQuickCard, { type QuickRoll, type VitalsResult } from "../components/TokenQuickCard";
@@ -1971,6 +1972,7 @@ Choose Cancel to permanently delete it instead.`
     <div className={`shell map-shell campaign-themed${sidebarCollapsed ? " sidebar-is-collapsed" : ""}`} data-system={system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
       <HandoutReveal campaignId={campaignId} />
+      <ScrollTextAlert campaignId={campaignId} system={system} />
       {(myTurnNow || myTurnNext) && (
         <div className={`turn-nudge${myTurnNow ? " is-now" : ""}`} role="status" aria-live="polite">
           {myTurnNow ? (

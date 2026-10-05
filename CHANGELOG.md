@@ -22,6 +22,8 @@ is the one piece of markup the launcher renders.
 
 - **Your Scroll** — In Remnant campaigns, the chat is now a Scroll, just like the ones in the show. Team, Table talk and Private are its apps, the battery shows your Aura, and dice rolls pop up as notifications. D&D campaigns keep the regular chat.
 
+- **Texts from NPCs** — Your GM can now message you as an NPC or a mysterious contact. The text pops up on your screen wherever you are, even on the map, and lands in your Private messages so you can reply in character.
+
 - **Previously on…** — Your GM can publish a short recap of last session, pre-filled with the quests, handouts and natural 20s and 1s that happened. It greets you the next time you open the campaign, and the 📜 button lets you flip back through older ones.
 
 - **Schedule** — A new Schedule page shows the next two weeks. Tap the days you're free, maybe or busy, see the best days at a glance, and once the GM locks one in, everyone sees the date in their own time zone. If Discord is switched on in the launcher, it's announced there too.

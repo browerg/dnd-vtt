@@ -12,6 +12,7 @@ import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
+import ScrollTextAlert from "../components/ScrollTextAlert";
 import PreviouslyOn from "../components/PreviouslyOn";
 import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
@@ -127,11 +128,13 @@ export default function CampaignPage() {
       channel: "ic" | "ooc" | "whisper",
       targetUserId?: number,
       speakerCharacterId?: number,
-      speakerAsGm?: boolean
+      speakerAsGm?: boolean,
+      replyToId?: number,
+      speakerName?: string
     ) => {
       await api(`/api/campaigns/${campaignId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm }),
+        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm, replyToId, speakerName }),
       });
     },
     [campaignId]
@@ -219,6 +222,7 @@ export default function CampaignPage() {
     <div className="shell campaign-themed" data-system={detail.campaign.system} data-theme={themeView.themeId}>
       <AnnouncementCenter campaignId={campaignId} />
       <HandoutReveal campaignId={campaignId} />
+      <ScrollTextAlert campaignId={campaignId} system={detail.campaign.system} />
       <header className="topbar campaign-topbar">
         <Link to="/" className="ghost link campaign-back-link">{"\u2190"}</Link>
         <CampaignThemeBrand
