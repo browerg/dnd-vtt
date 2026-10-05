@@ -449,7 +449,7 @@ const spellCount = (db.prepare("SELECT COUNT(*) AS n FROM spells").get() as any)
 if (spellCount === 0) {
   const srdPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "srd", "srd-spells.json");
   try {
-    const raw = readFileSync(srdPath, "utf8").replace(/^∩╗┐/, "");
+    const raw = readFileSync(srdPath, "utf8").replace(/^\uFEFF/, "");
     const spells = JSON.parse(raw) as any[];
     const insert = db.prepare("INSERT INTO spells (name, level, data) VALUES (?, ?, ?)");
     for (const s of spells) insert.run(s.name, Number(s.level) || 0, JSON.stringify(s));
@@ -459,12 +459,14 @@ if (spellCount === 0) {
   }
 }
 
-// Seed the SRD monster collection on first boot (322 monsters, CC-BY-4.0 via Open5e).
-const monsterCount = (db.prepare("SELECT COUNT(*) AS n FROM monsters").get() as any).n;
+// Seed the SRD monster collection (322 monsters, CC-BY-4.0 via Open5e).
+// Counts SRD rows only: a broken BOM strip once made this seed fail, and Grimm
+// seeding then filled the table, so "any monsters at all" never retried it.
+const monsterCount = (db.prepare("SELECT COUNT(*) AS n FROM monsters WHERE source = 'srd'").get() as any).n;
 if (monsterCount === 0) {
   const srdPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "srd", "srd-monsters.json");
   try {
-    const raw = readFileSync(srdPath, "utf8").replace(/^∩╗┐/, "");
+    const raw = readFileSync(srdPath, "utf8").replace(/^\uFEFF/, "");
     const monsters = JSON.parse(raw) as any[];
     // CRs come as strings and may be fractions ("1/4").
     const parseCr = (v: unknown): number => {

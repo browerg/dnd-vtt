@@ -179,6 +179,25 @@ const BLANK_GRIMM: GrimmDraft = {
   actions: [],
 };
 
+type BestiaryView = "remnant" | "dnd5e" | "all";
+
+const BESTIARY_VIEWS: { id: BestiaryView; label: string }[] = [
+  { id: "remnant", label: "Grimm" },
+  { id: "dnd5e", label: "D&D" },
+  { id: "all", label: "Both" },
+];
+
+const viewKey = (campaignId: number) => `vivid-bestiary-view-${campaignId}`;
+
+function storedView(campaignId: number): BestiaryView | null {
+  try {
+    const value = localStorage.getItem(viewKey(campaignId));
+    return value === "remnant" || value === "dnd5e" || value === "all" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 const fmtCr = (cr: number) => ({ 0.125: "1/8", 0.25: "1/4", 0.5: "1/2" }[cr] ?? `${cr}`);
 const mod = (s: number) => Math.floor((s - 10) / 2);
 const fmtMod = (m: number) => (m >= 0 ? `+${m}` : `${m}`);
@@ -263,7 +282,9 @@ export default function BestiaryPage() {
   const [campaignSession, setCampaignSession] = useState(0);
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
-  const [showDndCreatures, setShowDndCreatures] = useState(false);
+  // Which ruleset's creatures to list. Null until the campaign loads, so the
+  // first search already uses the campaign's own system as the default.
+  const [view, setView] = useState<BestiaryView | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [grimmDraft, setGrimmDraft] = useState<GrimmDraft | null>(null);
@@ -279,6 +300,7 @@ export default function BestiaryPage() {
       .then((r) => {
         setRole(r.yourRole);
         setSystem(r.campaign.system);
+        setView(storedView(campaignId) ?? (r.campaign.system === "remnant" ? "remnant" : "dnd5e"));
         setCampaignTheme(r.campaign.theme ?? "");
         setCampaignName(r.campaign.name);
         setCampaignChapter(r.campaign.chapter ?? "");
@@ -288,12 +310,23 @@ export default function BestiaryPage() {
   }, [campaignId]);
 
   const search = useCallback(() => {
-    api<{ monsters: Hit[] }>(
-      `/api/monsters?campaignId=${campaignId}${query.trim() ? `&q=${encodeURIComponent(query)}` : ""}`
-    )
+    if (!view) return;
+    const params = new URLSearchParams({ campaignId: String(campaignId) });
+    if (query.trim()) params.set("q", query);
+    if (view !== "all") params.set("system", view);
+    api<{ monsters: Hit[] }>(`/api/monsters?${params}`)
       .then((r) => setHits(r.monsters))
       .catch(() => {});
-  }, [campaignId, query]);
+  }, [campaignId, query, view]);
+
+  const chooseView = (next: BestiaryView) => {
+    setView(next);
+    try { localStorage.setItem(viewKey(campaignId), next); } catch { /* Storage can be disabled. */ }
+  };
+
+  // "+ New" makes whichever kind of creature is on screen; "Both" falls back
+  // to the campaign's own system.
+  const newIsGrimm = view === "remnant" || (view !== "dnd5e" && system === "remnant");
 
   useEffect(() => {
     const t = window.setTimeout(search, 250);
@@ -369,10 +402,6 @@ export default function BestiaryPage() {
   const set = (patch: Partial<Draft>) => setDraft((d) => (d ? { ...d, ...patch } : d));
   const setG = (patch: Partial<GrimmDraft>) => setGrimmDraft((d) => (d ? { ...d, ...patch } : d));
 
-  const visibleHits =
-    system === "remnant" && !showDndCreatures
-      ? hits.filter((hit) => hit.system === "remnant")
-      : hits;
 
   const prepareMonster = async (monsterId: number) => {
     setError("");
@@ -415,12 +444,17 @@ export default function BestiaryPage() {
         >
           {system === "remnant" ? "Grimm Archive" : "Bestiary"}
         </Link>
+        {system === "remnant" && (
+          <Link to={`/campaigns/${campaignId}/handbook`} className="ghost link campaign-nav-link">
+            Handbook
+          </Link>
+        )}
         {isDM && (
           <button
             className="primary"
             onClick={() => {
               setDetail(null);
-              if (system === "remnant") {
+              if (newIsGrimm) {
                 setDraft(null);
                 setGrimmDraft({ ...BLANK_GRIMM, traits: [] });
               } else {
@@ -429,7 +463,7 @@ export default function BestiaryPage() {
               }
             }}
           >
-            {system === "remnant" ? "+ New Grimm" : "+ New monster"}
+            {newIsGrimm ? "+ New Grimm" : "+ New monster"}
           </button>
         )}
         <CampaignThemePicker
@@ -450,21 +484,22 @@ export default function BestiaryPage() {
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
             />
-            {system === "remnant" && (
-              <label className="bestiary-system-toggle">
-                <span>
-                  <strong>Show D&D Creatures</strong>
-                  <small>Include 5e/SRD creatures alongside the Grimm archive.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  checked={showDndCreatures}
-                  onChange={(event) => setShowDndCreatures(event.target.checked)}
-                />
-              </label>
-            )}
+            <div className="bestiary-view-toggle" role="radiogroup" aria-label="Show creatures from">
+              {BESTIARY_VIEWS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={view === option.id}
+                  className={view === option.id ? "is-active" : ""}
+                  onClick={() => chooseView(option.id)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
             <div className="bestiary-list">
-              {visibleHits.map((h) => (
+              {hits.map((h) => (
                 <button key={h.id} className="bestiary-row" onClick={() => open(h.id)}>
                   <span className="mon-hit">
                     {h.name}{" "}
@@ -479,11 +514,13 @@ export default function BestiaryPage() {
                   </span>
                 </button>
               ))}
-              {visibleHits.length === 0 && (
+              {hits.length === 0 && (
                 <p className="muted">
-                  {system === "remnant" && !showDndCreatures
-                    ? "No Grimm match. Turn on Show D&D Creatures to include 5e entries."
-                    : "No monsters match."}
+                  {view === "remnant"
+                    ? "No Grimm match. Switch to D&D or Both to see 5e creatures."
+                    : view === "dnd5e"
+                      ? "No D&D creatures match. Switch to Grimm or Both to see Remnant creatures."
+                      : "No monsters match."}
                 </p>
               )}
             </div>

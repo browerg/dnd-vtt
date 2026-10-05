@@ -16,6 +16,18 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 5 October 2026
+
+### Major changes
+
+- **The Huntsman's Handbook, built in** — Remnant campaigns have a new Handbook link beside the Grimm Archive. It opens the full rulebook right inside Vivid Realms, with buttons to pop it out into its own tab or download it.
+
+### Minor changes
+
+- **Grimm, D&D or both in the bestiary** — A switch above the creature list chooses what you see: Grimm, D&D creatures, or everything. It remembers your pick for each campaign, and + New makes whichever kind you're looking at.
+
+- **D&D creatures and spells on new installs** — Fresh installs were starting with no D&D monsters or spells. They now load properly, and any install that missed them picks them up on its next start.
+
 ## 4 October 2026
 
 ### Minor changes

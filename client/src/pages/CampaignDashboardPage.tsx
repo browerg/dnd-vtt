@@ -343,6 +343,11 @@ export default function CampaignDashboardPage() {
         <Link to={`/campaigns/${campaignId}/bestiary`} className="ghost link campaign-nav-link">
           {isRemnant ? "Grimm archive" : "Bestiary"}
         </Link>
+        {isRemnant && (
+          <Link to={`/campaigns/${campaignId}/handbook`} className="ghost link campaign-nav-link">
+            Handbook
+          </Link>
+        )}
         {editing && (
           <div className="add-panel-wrap">
             <button className="ghost" onClick={() => setShowAdd((s) => !s)} disabled={addable.length === 0}>

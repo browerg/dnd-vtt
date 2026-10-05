@@ -157,6 +157,13 @@ monstersRouter.get("/", (req, res) => {
     sql += " AND name LIKE ? COLLATE NOCASE";
     params.push(`%${q}%`);
   }
+  // Filter here rather than in the client: the LIMIT below would otherwise
+  // fill up with the other system's entries before the client saw them.
+  const system = String(req.query.system ?? "");
+  if (system === "remnant" || system === "dnd5e") {
+    sql += " AND COALESCE(json_extract(data, '$.system'), 'dnd5e') = ?";
+    params.push(system);
+  }
   sql += " ORDER BY (campaign_id IS NULL), name LIMIT 60";
   const rows = db.prepare(sql).all(...params) as any[];
   res.json({

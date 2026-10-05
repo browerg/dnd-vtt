@@ -243,6 +243,11 @@ export default function CampaignPage() {
         <Link to={`/campaigns/${campaignId}/bestiary`} className="ghost link campaign-nav-link">
           {detail.campaign.system === "remnant" ? "Grimm archive" : "Bestiary"}
         </Link>
+        {detail.campaign.system === "remnant" && (
+          <Link to={`/campaigns/${campaignId}/handbook`} className="ghost link campaign-nav-link">
+            Handbook
+          </Link>
+        )}
         <CampaignThemePicker
           campaignId={campaignId}
           role={detail.yourRole}
