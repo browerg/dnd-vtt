@@ -13,6 +13,7 @@ import type { CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
+import PocketScroll from "../components/PocketScroll";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
 import ScrollTextAlert from "../components/ScrollTextAlert";
@@ -465,7 +466,7 @@ export default function CampaignDashboardPage() {
 
       {/* Quick dice + roll notifications, reachable from every campaign screen. */}
       {canWrite && <DiceDock onRoll={doRoll} system={system} />}
-      <RollDock rolls={rolls} />
+      {isRemnant ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <RollDock rolls={rolls} />}
     </div>
   );
 }

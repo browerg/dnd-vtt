@@ -1,0 +1,254 @@
+/* The pocket Scroll: tucked into the bottom-right corner with its status bar
+   peeking out, sliding up to full size when opened. */
+.pocket-scroll {
+  --pocket-peek: 46px;
+  position: fixed;
+  right: 18px;
+  bottom: 12px;
+  z-index: 7000;
+  width: 340px;
+  height: min(640px, calc(100dvh - 110px));
+  transform: translateY(calc(100% + 12px - var(--pocket-peek)));
+  transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.pocket-scroll.is-open {
+  transform: none;
+}
+
+.pocket-scroll-body {
+  height: 100%;
+}
+
+.pocket-scroll .chat-panel.scroll-chat {
+  height: 100%;
+  padding: 0;
+}
+
+.pocket-scroll .chat-panel.scroll-chat .scroll-device {
+  min-height: 0;
+  box-shadow:
+    inset 0 0 0 5px #0a0e13,
+    inset 0 0 0 6px rgba(150, 220, 255, 0.14),
+    0 -6px 30px rgba(0, 0, 0, 0.55);
+}
+
+/* Tucked: the visible strip is the status bar; the whole strip opens it. */
+.pocket-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: var(--pocket-peek);
+  border: 0;
+  border-radius: 26px 26px 0 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pocket-strip:hover {
+  background: rgba(127, 227, 255, 0.06);
+}
+
+.pocket-strip:focus-visible {
+  outline: 2px solid #7fe3ff;
+  outline-offset: 2px;
+}
+
+.pocket-unread {
+  position: absolute;
+  top: -9px;
+  left: 18px;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #ff5f72;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* The little grab handle at the top of the phone. */
+.pocket-scroll .scroll-handle {
+  display: block;
+  width: 42px;
+  height: 4px;
+  margin: 8px auto -4px;
+  border-radius: 999px;
+  background: rgba(196, 232, 255, 0.35);
+}
+
+.chat-panel.scroll-chat .scroll-tuck {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: 0.15rem;
+  border: 1px solid rgba(150, 220, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e6f5ff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-panel.scroll-chat .scroll-tuck:hover {
+  border-color: #7fe3ff;
+}
+
+/* A message arrived while tucked: buzz. */
+.pocket-scroll.is-buzzing .scroll-device {
+  animation: pocket-buzz 0.7s linear;
+}
+
+/* Peek: a lock-screen style preview above the tucked phone. */
+.pocket-peek {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% - var(--pocket-peek) + 10px);
+  left: 0;
+  z-index: 4;
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(150, 220, 255, 0.4);
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(127, 227, 255, 0.1), transparent 60%),
+    rgba(10, 18, 28, 0.97);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+  color: #e6f5ff;
+  text-align: left;
+  cursor: pointer;
+  animation: pocket-peek-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+
+.pocket-peek-app {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(196, 232, 255, 0.7);
+}
+
+.pocket-peek strong {
+  color: #7fe3ff;
+}
+
+.pocket-peek-body {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+/* Rolls app. */
+.chat-panel.scroll-chat .scroll-rolls {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-panel.scroll-chat .scroll-roll {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(150, 220, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.chat-panel.scroll-chat .scroll-roll.is-nat20 {
+  border-color: #f3cf6b;
+}
+
+.chat-panel.scroll-chat .scroll-roll.is-nat1 {
+  border-color: #ff6b6b;
+}
+
+.chat-panel.scroll-chat .scroll-roll-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.chat-panel.scroll-chat .scroll-roll-text small {
+  overflow: hidden;
+  font-size: 0.7rem;
+  color: rgba(196, 232, 255, 0.66);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-panel.scroll-chat .scroll-roll-text strong {
+  font-size: 0.86rem;
+}
+
+.chat-panel.scroll-chat .scroll-tabs.has-rolls {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Stand-in for the old chat panel / card in Remnant campaigns. */
+.scroll-hint {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 1.2rem 1rem;
+  text-align: center;
+  color: var(--muted, #9d95b5);
+}
+
+.scroll-hint > span {
+  font-size: 1.8rem;
+}
+
+.scroll-hint p {
+  margin: 0;
+}
+
+@keyframes pocket-buzz {
+  0%, 100% { transform: none; }
+  10%, 50% { transform: translateX(-3px) rotate(-1deg); }
+  20%, 60% { transform: translateX(3px) rotate(1deg); }
+  30%, 70% { transform: translateX(-2px); }
+  40%, 80% { transform: translateX(2px); }
+}
+
+@keyframes pocket-peek-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .pocket-scroll {
+    right: 8px;
+    left: 8px;
+    width: auto;
+    height: min(82dvh, 640px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pocket-scroll { transition: none; }
+  .pocket-scroll.is-buzzing .scroll-device,
+  .pocket-peek { animation: none; }
+}
+
+/* The chat thread is display:flex, which beats the hidden attribute. */
+.chat-panel.scroll-chat .scroll-thread[hidden] {
+  display: none;
+}
+
+/* Floating over the map, the phone needs a solid body. */
+.pocket-scroll .chat-panel.scroll-chat .scroll-device {
+  background:
+    radial-gradient(120% 50% at 50% 0%, rgba(127, 227, 255, 0.1), transparent 60%),
+    linear-gradient(165deg, #121e2a, #060c14);
+}

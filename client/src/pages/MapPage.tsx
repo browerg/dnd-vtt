@@ -12,6 +12,7 @@ import { CONDITIONS, type CharacterSummary } from "../sheet";
 import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
+import PocketScroll from "../components/PocketScroll";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
 import ScrollTextAlert from "../components/ScrollTextAlert";
@@ -3517,7 +3518,7 @@ Choose Cancel to permanently delete it instead.`
         </aside>
       </div>
       {canRoll && <DiceDock onRoll={doRoll} system={system} />}
-      <RollDock rolls={rolls} />
+      {system === "remnant" ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <RollDock rolls={rolls} />}
     </div>
   );
 }

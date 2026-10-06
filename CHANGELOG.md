@@ -20,7 +20,7 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
-- **Your Scroll** — In Remnant campaigns, the chat is now a Scroll, just like the ones in the show. Team, Table talk and Private are its apps, the battery shows your Aura, and dice rolls pop up as notifications. D&D campaigns keep the regular chat.
+- **Your Scroll** — In Remnant campaigns, the chat is now a Scroll, just like the ones in the show, and you carry it everywhere. It sits tucked in the bottom-right corner of every campaign screen, even the map, and buzzes with a preview when a message comes in. Tap it to slide it up. Team, Table talk, Private and Rolls are its apps, the battery shows your Aura, dice rolls pop up as notifications, and it clicks and swooshes like a real phone. D&D campaigns keep the regular chat.
 
 - **Texts from NPCs** — Your GM can now message you as an NPC or a mysterious contact. The text pops up on your screen wherever you are, even on the map, and lands in your Private messages so you can reply in character.
 

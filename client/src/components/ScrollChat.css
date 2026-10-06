@@ -427,3 +427,15 @@
   text-transform: uppercase;
   color: var(--scroll-dim);
 }
+
+/* The open dropdown list is drawn by the browser, white by default, which
+   left the Scroll's light text unreadable on it. Ask for the dark native
+   list and colour the options to match the Scroll. */
+.chat-panel.scroll-chat select {
+  color-scheme: dark;
+}
+
+.chat-panel.scroll-chat select option {
+  background: #0c1620;
+  color: #e6f5ff;
+}

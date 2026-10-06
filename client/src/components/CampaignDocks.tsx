@@ -5,6 +5,7 @@ import { api, type RollPayload } from "../api";
 import { animateRoll } from "../dice3d";
 import DiceDock from "./DiceDock";
 import RollDock from "./RollDock";
+import PocketScroll from "./PocketScroll";
 
 // Self-contained floating docks (dice bottom-left + roll log / notifications
 // bottom-right) for any campaign screen that doesn't already own the roll
@@ -58,7 +59,7 @@ export default function CampaignDocks() {
   return (
     <>
       {canRoll && <DiceDock onRoll={doRoll} system={system} />}
-      {loaded && <RollDock rolls={rolls} />}
+      {loaded && (system === "remnant" ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <RollDock rolls={rolls} />)}
     </>
   );
 }

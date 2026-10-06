@@ -16,6 +16,8 @@ export default function ScrollTextAlert({ campaignId, system }: { campaignId: nu
   const [alerts, setAlerts] = useState<ChatMessage[]>([]);
   const myId = useRef(user?.id);
   myId.current = user?.id;
+  const systemRef = useRef(system);
+  systemRef.current = system;
   const timers = useRef(new Map<number, number>());
 
   useEffect(() => {
@@ -23,6 +25,8 @@ export default function ScrollTextAlert({ campaignId, system }: { campaignId: nu
     socket.on("connect", () => socket.emit("campaign:join", campaignId));
     socket.on("chat", (m: ChatMessage) => {
       if (m.campaignId !== campaignId || m.channel !== "whisper" || m.targetUserId !== myId.current) return;
+      // Remnant campaigns carry a pocket Scroll, which buzzes and peeks itself.
+      if (systemRef.current === "remnant") return;
       const chatOnScreen = !!document.querySelector(".chat-panel");
       if (!m.speaker && chatOnScreen) return;
       // The chat panel plays its own sound when it's mounted.

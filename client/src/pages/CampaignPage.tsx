@@ -10,6 +10,7 @@ import type { CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
+import PocketScroll, { ScrollHint } from "../components/PocketScroll";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
 import ScrollTextAlert from "../components/ScrollTextAlert";
@@ -407,18 +408,20 @@ export default function CampaignPage() {
           </section>
           <section className="card">
             <h3>Chat</h3>
-            <ChatPanel
-              messages={messages}
-              messagesReady={messagesReady}
-              members={detail.members}
-              characters={characters}
-              myId={user?.id ?? 0}
-              canChat={canRoll}
-              isDM={isDM}
-              scroll={detail.campaign.system === "remnant"}
-              rolls={rolls}
-              onSend={sendChat}
-            />
+            {detail.campaign.system === "remnant" ? (
+              <ScrollHint />
+            ) : (
+              <ChatPanel
+                messages={messages}
+                messagesReady={messagesReady}
+                members={detail.members}
+                characters={characters}
+                myId={user?.id ?? 0}
+                canChat={canRoll}
+                isDM={isDM}
+                onSend={sendChat}
+              />
+            )}
           </section>
         </div>
         <div className="column">
@@ -491,7 +494,11 @@ export default function CampaignPage() {
         </div>
       </main>
       {canRoll && <DiceDock onRoll={doRoll} system={detail.campaign.system} defaultOpen />}
-      <RollDock rolls={rolls} defaultOpen />
+      {detail.campaign.system === "remnant" ? (
+        <PocketScroll campaignId={campaignId} rolls={rolls} />
+      ) : (
+        <RollDock rolls={rolls} defaultOpen />
+      )}
     </div>
   );
 }

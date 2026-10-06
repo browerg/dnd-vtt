@@ -3,7 +3,7 @@ import type { ChatMessage, Member, RollPayload } from "../api";
 import type { CharacterSummary } from "../sheet";
 import { Avatar } from "./Avatar";
 import "./RelicAppearance.css";
-import { chatSoundEnabled, playChatSound, setChatSoundEnabled } from "../chatSound";
+import { chatSoundEnabled, playChatSound, playScrollSound, setChatSoundEnabled } from "../chatSound";
 import "./ScrollChat.css";
 
 type Tab = "ic" | "ooc" | "whisper";
@@ -41,8 +41,11 @@ interface Props {
   isDM: boolean;
   /** Render as a RWBY Scroll (Remnant campaigns). */
   scroll?: boolean;
-  /** Rolls to surface as Scroll push notifications. */
+  /** Rolls to surface as Scroll push notifications (and the Rolls app). */
   rolls?: RollPayload[];
+  /** Living in the pocket Scroll: adds the Rolls app and a tuck-away button. */
+  pocket?: boolean;
+  onTuck?: () => void;
   onSend: (
     body: string,
     channel: Tab,
@@ -64,6 +67,8 @@ export default function ChatPanel({
   isDM,
   scroll = false,
   rolls,
+  pocket = false,
+  onTuck,
   onSend,
 }: Props) {
   const [tab, setTab] = useState<Tab>("ooc");
@@ -89,6 +94,14 @@ export default function ChatPanel({
   const noticeTimerRef = useRef<number>();
   const [clock, setClock] = useState(() => new Date());
   const [push, setPush] = useState<RollPush | null>(null);
+  // Pocket Scroll only: the Rolls app is open instead of a chat channel.
+  const [rollsOpen, setRollsOpen] = useState(false);
+  const rollsLogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const log = rollsLogRef.current;
+    if (log) log.scrollTop = log.scrollHeight;
+  }, [rollsOpen, rolls?.length]);
   const pushTimerRef = useRef<number>();
   const lastRollIdRef = useRef<number | null>(null);
 
@@ -189,6 +202,8 @@ export default function ChatPanel({
   );
 
   const selectTab = (next: Tab) => {
+    if (scroll && (next !== tab || rollsOpen)) playScrollSound("tap");
+    setRollsOpen(false);
     setTab(next);
     setUnread((current) => ({ ...current, [next]: 0 }));
     setNotice("");
@@ -231,6 +246,7 @@ export default function ChatPanel({
         replyTo?.id,
         asContact ? contactName.trim() : undefined
       );
+      if (scroll) playScrollSound("send");
       setDraft("");
       setReplyTo(null);
     } catch (err: any) {
@@ -366,16 +382,18 @@ export default function ChatPanel({
     }
     const teamName =
       mine?.teamName?.trim() || [...teamCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
-    const header =
-      tab === "ic"
+    const header = rollsOpen
+      ? { title: "Rolls", sub: "Dice history", badge: "🎲" }
+      : tab === "ic"
         ? { title: teamName ? `Team ${teamName}` : "Team", sub: "In character", badge: (teamName || "TM").slice(0, 4).toUpperCase() }
         : tab === "ooc"
           ? { title: "Table talk", sub: "Out of character", badge: "💬" }
           : { title: "Private", sub: "Only you and them", badge: "🔒" };
 
     return (
-      <div className="chat-panel scroll-chat">
+      <div className={`chat-panel scroll-chat${pocket ? " is-pocket" : ""}`}>
         <div className="scroll-device">
+          {pocket && <span className="scroll-handle" aria-hidden="true" />}
           <div className="scroll-status" aria-hidden="true">
             <span className="scroll-signal">
               <i />
@@ -401,6 +419,14 @@ export default function ChatPanel({
               <small>{header.sub}</small>
             </span>
             {soundToggle}
+            {onTuck && (
+              <button type="button" className="scroll-tuck" onClick={onTuck} title="Put your Scroll away">
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path d="M3.5 6l4.5 4.5L12.5 6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="sr-only">Put your Scroll away</span>
+              </button>
+            )}
           </header>
 
           {push && (
@@ -424,7 +450,31 @@ export default function ChatPanel({
             </div>
           )}
 
-          <div className="chat-log scroll-thread" ref={chatLogRef}>
+          {rollsOpen && (
+            <div className="scroll-thread scroll-rolls" ref={rollsLogRef}>
+              {!rolls?.length && <p className="scroll-empty">No rolls yet.</p>}
+              {rolls?.map((roll) => {
+                const critical = roll.detail?.critical ?? null;
+                return (
+                  <div key={roll.id} className={`scroll-roll${critical ? ` is-${critical}` : ""}`}>
+                    <span className="scroll-roll-icon" aria-hidden="true">🎲</span>
+                    <span className="scroll-roll-text">
+                      <small>
+                        {roll.userName}
+                        {roll.label ? ` · ${roll.label}` : ""}
+                      </small>
+                      <strong>
+                        {roll.total == null ? "Rolled in secret" : `${roll.formula} = ${roll.total}`}
+                        {critical === "nat20" ? " · Critical!" : critical === "nat1" ? " · Ouch" : ""}
+                      </strong>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="chat-log scroll-thread" ref={chatLogRef} hidden={rollsOpen}>
             {shown.length === 0 && <p className="scroll-empty">No messages yet.</p>}
             {shown.map((m) => {
               const own = m.userId === myId;
@@ -474,16 +524,16 @@ export default function ChatPanel({
             <div ref={bottomRef} />
           </div>
 
-          {composeForm}
+          {!rollsOpen && composeForm}
           {error && <div className="error">{error}</div>}
 
-          <nav className="scroll-tabs" aria-label="Chat channels">
+          <nav className={`scroll-tabs${pocket ? " has-rolls" : ""}`} aria-label="Scroll apps">
             {SCROLL_TABS.map(({ key, label, icon }) => (
               <button
                 key={key}
                 type="button"
-                className={tab === key ? "is-active" : ""}
-                aria-current={tab === key ? "page" : undefined}
+                className={!rollsOpen && tab === key ? "is-active" : ""}
+                aria-current={!rollsOpen && tab === key ? "page" : undefined}
                 onClick={() => selectTab(key)}
               >
                 <span aria-hidden="true">{icon}</span>
@@ -495,6 +545,20 @@ export default function ChatPanel({
                 )}
               </button>
             ))}
+            {pocket && (
+              <button
+                type="button"
+                className={rollsOpen ? "is-active" : ""}
+                aria-current={rollsOpen ? "page" : undefined}
+                onClick={() => {
+                  if (!rollsOpen) playScrollSound("tap");
+                  setRollsOpen(true);
+                }}
+              >
+                <span aria-hidden="true">🎲</span>
+                Rolls
+              </button>
+            )}
           </nav>
         </div>
       </div>

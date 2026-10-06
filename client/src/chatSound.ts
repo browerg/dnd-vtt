@@ -88,3 +88,92 @@ export function playChatSound(kind: ChatSoundKind = "message", force = false): v
     // Audio is enhancement-only; the unread badges still do their job.
   }
 }
+
+export type ScrollSoundKind = "tap" | "send" | "buzz";
+
+/**
+ * The Scroll's interface sounds: a soft tick when switching apps and a quick
+ * rising swoosh when a message goes out. Quieter than the message chimes,
+ * and silenced by the same chat mute.
+ */
+export function playScrollSound(kind: ScrollSoundKind): void {
+  if (!chatSoundEnabled()) return;
+  const ctx = getContext();
+  if (!ctx) return;
+  try {
+    const start = ctx.currentTime;
+    if (kind === "buzz") {
+      // A phone vibrating on a table: two short low rattles.
+      for (const offset of [0, 0.2]) {
+        const osc = ctx.createOscillator();
+        const low = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(140, start + offset);
+        low.type = "lowpass";
+        low.frequency.value = 420;
+        gain.gain.setValueAtTime(0.0001, start + offset);
+        gain.gain.exponentialRampToValueAtTime(0.09, start + offset + 0.015);
+        gain.gain.setValueAtTime(0.09, start + offset + 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.15);
+        osc.connect(low);
+        low.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start + offset);
+        osc.stop(start + offset + 0.16);
+      }
+      return;
+    }
+    if (kind === "tap") {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(1900, start);
+      osc.frequency.exponentialRampToValueAtTime(1200, start + 0.04);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.06, start + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.05);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.06);
+      return;
+    }
+    // Send: filtered noise swept upward under a short rising tone.
+    const length = Math.floor(ctx.sampleRate * 0.22);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.Q.value = 1.2;
+    band.frequency.setValueAtTime(600, start);
+    band.frequency.exponentialRampToValueAtTime(3800, start + 0.2);
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.0001, start);
+    noiseGain.gain.exponentialRampToValueAtTime(0.07, start + 0.05);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+    noise.connect(band);
+    band.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start(start);
+    noise.stop(start + 0.23);
+
+    const tone = ctx.createOscillator();
+    const toneGain = ctx.createGain();
+    tone.type = "sine";
+    tone.frequency.setValueAtTime(520, start + 0.03);
+    tone.frequency.exponentialRampToValueAtTime(1320, start + 0.17);
+    toneGain.gain.setValueAtTime(0.0001, start + 0.03);
+    toneGain.gain.exponentialRampToValueAtTime(0.05, start + 0.06);
+    toneGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+    tone.connect(toneGain);
+    toneGain.connect(ctx.destination);
+    tone.start(start + 0.03);
+    tone.stop(start + 0.21);
+  } catch {
+    // Audio is enhancement-only.
+  }
+}

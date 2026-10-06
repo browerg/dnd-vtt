@@ -10,6 +10,7 @@ import NotesPanel from "../components/NotesPanel";
 import RollFeed from "../components/RollFeed";
 import DicePanel from "../components/DicePanel";
 import ChatPanel from "../components/ChatPanel";
+import { ScrollHint } from "../components/PocketScroll";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
 import VCoinRewardsPanel from "../components/VCoinRewardsPanel";
@@ -257,20 +258,23 @@ export const PANELS: PanelDef[] = [
     minH: 6,
     defaultW: 4,
     defaultH: 12,
-    render: (ctx) => (
-      <ChatPanel
-        messages={ctx.messages}
-        messagesReady={ctx.messagesReady}
-        members={ctx.members}
-        characters={ctx.characters}
-        myId={ctx.myId}
-        canChat={ctx.canWrite}
-        isDM={ctx.isDM}
-        scroll={ctx.system === "remnant"}
-        rolls={ctx.rolls}
-        onSend={ctx.sendChat}
-      />
-    ),
+    // Remnant's chat lives on the pocket Scroll; a second copy here would
+    // double every sound and badge.
+    render: (ctx) =>
+      ctx.system === "remnant" ? (
+        <ScrollHint />
+      ) : (
+        <ChatPanel
+          messages={ctx.messages}
+          messagesReady={ctx.messagesReady}
+          members={ctx.members}
+          characters={ctx.characters}
+          myId={ctx.myId}
+          canChat={ctx.canWrite}
+          isDM={ctx.isDM}
+          onSend={ctx.sendChat}
+        />
+      ),
   },
   {
     id: "vcoins",
