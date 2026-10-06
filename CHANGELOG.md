@@ -20,7 +20,7 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
-- **Schnee Atelier theme** — A new Remnant look in the Theme menu: an ivory palace backdrop, silver-framed panels, snowflake crests and blue enamel buttons. Your panels, layout, notes and dice stay exactly where you left them, and GMs can make it the campaign default.
+- **Schnee Atelier theme** — A full makeover for Remnant dashboards, found under Theme → Full makeovers. Your character becomes a portrait card with an Aura dial and your six attributes, your notes read as a mission brief with numbered steps, Team status shows everyone's HP and Aura bars, and Combat dice is a pick-a-die-and-Roll panel (press R to roll). The other campaign pages and the theme menu live behind the ⚙ button. Your panels stay where you left them; "✦ Atelier layout" in Edit panels arranges them like the design, and "View the Atelier example" shows it filled in with Team RWBY. Each panel's ⋮ menu can switch back to the full sheet, the full dice options, or the notes editor. GMs can make it the campaign default.
 
 ## 5 October 2026
 

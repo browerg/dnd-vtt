@@ -16,6 +16,7 @@ import JoinPage from "./pages/JoinPage";
 import CustomizePage from "./pages/CustomizePage";
 import ShopPage from "./pages/ShopPage";
 import ProfilePage from "./pages/ProfilePage";
+import AtelierExamplePage from "./pages/AtelierExamplePage";
 import PlayerProfilePage from "./pages/PlayerProfilePage";
 import AchievementNotifications from "./components/AchievementNotifications";
 import CriticalRollOverlay from "./components/CriticalRollOverlay";
@@ -94,6 +95,7 @@ export default function App() {
         <Route path="/campaigns/:id/bestiary" element={user ? <BestiaryPage /> : <Navigate to="/login" />} />
         <Route path="/campaigns/:id/handbook" element={user ? <HandbookPage /> : <Navigate to="/login" />} />
         <Route path="/campaigns/:id/schedule" element={user ? <SchedulePage /> : <Navigate to="/login" />} />
+        <Route path="/themes/schnee-atelier/example" element={user ? <AtelierExamplePage /> : <Navigate to="/login" />} />
         <Route path="/customize" element={user ? <CustomizePage /> : <Navigate to="/login" />} />
         <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
         <Route path="/profiles/:userId" element={user ? <PlayerProfilePage /> : <Navigate to="/login" />} />

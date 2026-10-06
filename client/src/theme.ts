@@ -37,6 +37,8 @@ export interface ThemeDefinition {
   preview: [string, string, string];
   /** Goes beyond recolouring: its own backdrop, panel frames and title plaque. */
   fullMakeover?: boolean;
+  /** A sample-data page showing the theme as designed. */
+  exampleHref?: string;
 }
 
 export const THEMES: ThemeDefinition[] = [
@@ -49,6 +51,7 @@ export const THEMES: ThemeDefinition[] = [
     glyph: "",
     preview: ["#f5f6f8", "#8394ab", "#215c91"],
     fullMakeover: true,
+    exampleHref: "/themes/schnee-atelier/example",
   },
   {
     id: "huntsman-network",

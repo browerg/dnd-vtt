@@ -1,5 +1,7 @@
-/* Optional Schnee Atelier world. Frame ornaments are independent of the grid
-   hitboxes: never clip the panel itself or intercept its resize handles. */
+/* Schnee Atelier: a full-makeover Remnant theme built to the approved comp
+   (.impeccable/mocks/schnee/atelier-dashboard.png). Frame ornaments are
+   independent of the grid hitboxes: never clip the panel itself or intercept
+   its resize handles. Everything is scoped to the theme. */
 .campaign-themed[data-theme="schnee-atelier"] {
   --theme-page: #e3ebf4;
   --theme-deep: #d9e4ef;
@@ -14,19 +16,34 @@
   --theme-line: #bbc8d7;
   --theme-glow: transparent;
   --theme-radius: 3px;
-  --theme-font-display: "Wittgenstein", Georgia, serif;
-  --font-display: "Wittgenstein", Georgia, serif;
+  --theme-font-display: "Crimson Pro", Georgia, serif;
+  --font-display: "Crimson Pro", Georgia, serif;
   --panel: #f7f8fa;
   --online: #277257;
   --accent-ink: #ffffff;
   --shadow-card: 0 5px 14px #23395820;
-  --atelier-cut: polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px);
+  --at-ink: #182a4a;
+  --at-body: #3e4d66;
+  --at-muted: #5d6c83;
+  --at-line: #c3cedb;
+  --at-silver: linear-gradient(180deg, #8a9ab0, #f4f7fb 35%, #94a3b8 62%, #d4dce6);
+  --at-enamel: linear-gradient(180deg, #3c75bd 0%, #1d4f93 48%, #143c76 52%, #1b4a8a 100%);
+  --atelier-cut: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+  --at-hex: polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%);
   color-scheme: light;
   caret-color: #215c91;
   scrollbar-color: #8297b2 #edf2f8;
+  font-family: "Alegreya Sans", system-ui, sans-serif;
 }
 .campaign-themed[data-theme="schnee-atelier"]::before {
-  background: linear-gradient(#eaf1f91a, #eaf1f933), url('/assets/themes/schnee-atelier/palace.webp') center top / cover no-repeat;
+  background: linear-gradient(#eaf1f90d, #eaf1f91f), url('/assets/themes/schnee-atelier/palace.webp') center top / cover no-repeat;
+}
+/* On wide screens, frame the art like the comp: the castle rides above the
+   right-hand panels and the marble floor shows beneath them. */
+@media (min-aspect-ratio: 13/10) {
+  .campaign-themed[data-theme="schnee-atelier"]::before {
+    background: linear-gradient(#eaf1f90d, #eaf1f91f), url('/assets/themes/schnee-atelier/palace.webp') 76% 100% / 135% auto no-repeat, #dfe8f2;
+  }
 }
 .campaign-themed[data-theme="schnee-atelier"]::after { display: none; }
 .campaign-themed[data-theme="schnee-atelier"] ::selection { color: #102b4e; background: #c6ddf5; }
@@ -35,164 +52,559 @@
   outline-offset: 3px;
 }
 .campaign-themed[data-theme="schnee-atelier"] :is(input, textarea)::placeholder { color: #536881; opacity: 1; }
+
+/* ---------- Top bar ---------- */
 .campaign-themed[data-theme="schnee-atelier"] .topbar {
-  background: #f7f9fdf2;
-  border-bottom: 1px solid #869ab2;
-  box-shadow: 0 3px 12px #2339581c, inset 0 -3px #ffffff;
-  gap: 9px;
+  background: linear-gradient(180deg, #ffffffeb, #f1f5faeb);
+  border-bottom: 1px solid #93a4ba;
+  box-shadow: 0 2px 10px #2339581f, inset 0 -3px #ffffffb0;
+  gap: 10px;
   flex-wrap: wrap;
-  padding: 10px 20px;
+  padding: 0 20px;
+  min-height: 56px;
 }
-.campaign-themed[data-theme="schnee-atelier"] .campaign-theme-crest {
-  border: 0;
-  background: none;
-  box-shadow: none;
-  width: 44px;
-  height: 44px;
+.campaign-themed[data-theme="schnee-atelier"] .atelier-topbar { position: relative; z-index: 60; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-wordmark {
+  display: inline-flex; align-items: center; gap: 16px;
+  color: var(--at-ink); text-decoration: none;
+  font: 400 22px/1 var(--font-display); letter-spacing: .14em; text-transform: uppercase;
+  margin-right: 22px;
 }
-.campaign-themed[data-theme="schnee-atelier"] .campaign-theme-crest img { width: 100%; height: 100%; }
-.campaign-themed[data-theme="schnee-atelier"] .campaign-theme-brand { font-size: 19px; letter-spacing: .12em; color: #182f50; }
-.campaign-themed[data-theme="schnee-atelier"].dashboard-shell .campaign-theme-subline { display: none; }
-.campaign-themed[data-theme="schnee-atelier"] .campaign-nav-link { font-size: 15px; padding: 7px 11px; }
-.campaign-themed[data-theme="schnee-atelier"] :is(.topbar, .dashboard-grid, .content, .dock-body, .theme-picker-popover) :is(button, .ghost.link) {
-  color: #203e62;
-  border-color: #99abc1;
-  border-radius: 2px;
-  background: linear-gradient(160deg, #fff, #e7edf5);
-  box-shadow: inset 0 0 0 2px #ffffffb3;
-  text-shadow: none;
+.campaign-themed[data-theme="schnee-atelier"] .atelier-wordmark img { width: 46px; height: 52px; object-fit: contain; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-pills {
+  display: flex; align-self: stretch; align-items: stretch;
+  margin: 5px 0 -5px;
+  padding: 2px;
+  background: var(--at-silver);
+  clip-path: var(--at-hex);
+  filter: drop-shadow(0 2px 3px #2a3e5a30);
 }
-.campaign-themed[data-theme="schnee-atelier"] :is(.topbar, .dashboard-grid, .content, .dock-body, .theme-picker-popover) :is(button, .ghost.link):hover {
-  border-color: #427cad;
-  background: #e0ecf9;
-  color: #143958;
+.campaign-themed[data-theme="schnee-atelier"] .atelier-pills a {
+  display: grid; place-items: center;
+  min-width: 128px; padding: 0 30px;
+  color: var(--at-ink); text-decoration: none;
+  font: 500 16px/1 var(--font-display);
+  background: linear-gradient(180deg, #ffffff, #e9eef5);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+  margin-left: -12px;
 }
-.campaign-themed[data-theme="schnee-atelier"] :is(.topbar, .dashboard-grid, .content, .dock-body, .theme-picker-popover) :is(button.primary, .seg-btn.active, button[aria-pressed="true"]) {
-  color: #fff;
-  border-color: #294c76;
-  background: linear-gradient(135deg, #346fa2, #19466e);
-  box-shadow: inset 0 0 0 2px #ffffff38;
+.campaign-themed[data-theme="schnee-atelier"] .atelier-pills a:first-child {
+  margin-left: 0; padding-left: 40px;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
 }
-.campaign-themed[data-theme="schnee-atelier"] :is(.topbar, .dashboard-grid, .content) button:disabled { opacity: .55; cursor: not-allowed; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-pills a:last-child {
+  padding-right: 40px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-pills a:hover { background: linear-gradient(180deg, #ffffff, #dde8f5); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-pills a.is-active {
+  background: linear-gradient(180deg, #f3f8fe, #cfe0f3 70%, #e4eef9);
+  box-shadow: inset 0 0 12px #8fb6e3;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-edit {
+  display: inline-flex; align-items: center; gap: 10px;
+  height: 38px; padding: 0 26px;
+  color: #fff; border: 0; border-radius: 0;
+  background: var(--at-enamel);
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+  box-shadow: inset 0 0 0 1.5px #a9c3e3;
+  font: 400 15px/1 var(--font-display);
+  text-shadow: 0 1px 1px #0a2348;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-edit svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 1.6; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-edit:hover { filter: brightness(1.12); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-edit.is-on { background: linear-gradient(180deg, #3f8a6c, #1d5b44); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-divider { width: 1px; height: 30px; margin: 0 12px; background: #9fb0c4; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-icon-btn {
+  display: grid; place-items: center; width: 34px; height: 34px; padding: 0;
+  border: 0; background: none; box-shadow: none; color: var(--at-ink); cursor: pointer;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-icon-btn svg { width: 28px; height: 28px; fill: #1d2c4a; stroke: #1d2c4a; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-avatar img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px #1d2c4a; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-wrap { position: relative; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu {
+  position: absolute; top: calc(100% + 10px); right: -40px; z-index: 90;
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 250px; padding: 8px;
+  background: #f8fafd; border: 1px solid #93a4ba;
+  box-shadow: 0 10px 26px #1d335233, inset 0 0 0 3px #fff;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu[hidden] { display: none; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu > :is(a, button),
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu .theme-picker-trigger {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 9px 12px; text-align: left;
+  border: 0; background: none; box-shadow: none; border-radius: 0;
+  color: var(--at-ink); font: 400 15px/1.2 var(--font-display); text-decoration: none;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu > :is(a, button):hover,
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu .theme-picker-trigger:hover { background: #e3edf8; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu .campaign-theme-picker { width: 100%; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-topbar .atelier-gear-menu :is(.previously-on-trigger, .theme-picker-trigger) {
+  justify-content: flex-start; width: 100%; padding: 9px 12px; border: 0; border-radius: 0;
+  background: none; box-shadow: none; color: var(--at-ink); font: 400 15px/1.2 var(--font-display);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-topbar .atelier-gear-menu :is(.previously-on-trigger, .theme-picker-trigger):hover:not(:disabled) { background: #e3edf8; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-topbar .atelier-gear-menu .previously-on-trigger:disabled { opacity: .55; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu .theme-picker-popover { position: fixed; top: 64px; right: 16px; left: auto; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-menu-role {
+  padding: 6px 12px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--at-line);
+  color: var(--at-muted); font-size: 13px; letter-spacing: .04em;
+}
+
+/* ---------- Masthead ---------- */
 .campaign-themed[data-theme="schnee-atelier"] .atelier-masthead {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 136px;
-  padding: 18px 28px 10px;
+  display: flex; justify-content: center; align-items: center;
+  padding: 30px 28px 9px;
 }
 .campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque {
-  position: relative;
-  isolation: isolate;
-  min-width: min(520px, 100%);
-  max-width: 850px;
-  padding: 16px 42px;
+  position: relative; isolation: isolate;
+  min-width: min(420px, 100%); max-width: 860px;
+  padding: 17px 64px 12px;
   text-align: center;
-  filter: drop-shadow(0 5px 9px #29405b26);
+  filter: drop-shadow(0 6px 10px #29405b30);
 }
-.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque::before {
-  content: ""; position: absolute; inset: 0; z-index: -1;
-  background: linear-gradient(140deg, #ffffffed, #eef3f9f2);
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque::before,
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque::after {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  clip-path: polygon(34px 0, calc(100% - 34px) 0, 100% 50%, calc(100% - 34px) 100%, 34px 100%, 0 50%);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque::before { inset: 0; background: var(--at-silver); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque::after {
+  inset: 4px;
+  background:
+    linear-gradient(90deg, transparent 32px, #9aabc0 32px 33px, transparent 33px calc(100% - 33px), #9aabc0 calc(100% - 33px) calc(100% - 32px), transparent 0),
+    linear-gradient(170deg, #ffffff, #eef3f9 60%, #f8fafd);
+  clip-path: polygon(31px 0, calc(100% - 31px) 0, 100% 50%, calc(100% - 31px) 100%, 31px 100%, 0 50%);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-eyebrow {
+  position: absolute; left: 50%; top: -14px; transform: translateX(-50%);
+  padding: 5px 26px 4px; white-space: nowrap;
+  color: #2b3c58; font: 400 13px/1 var(--font-display); letter-spacing: .08em; text-transform: uppercase;
+  background: linear-gradient(180deg, #ffffff, #e8eef5);
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
+  box-shadow: inset 0 0 0 1px #9aabc0;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque h1 {
+  margin: 4px 0 0; font: 600 34px/1.15 var(--font-display); color: var(--at-ink);
+  overflow-wrap: anywhere;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque p {
+  display: inline-flex; align-items: center; gap: 12px;
+  margin: 4px 0 0; color: #2c3c57; font: 500 15px/1 var(--font-display); letter-spacing: .2em; text-transform: uppercase;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-plaque-spark { position: absolute; top: 50%; width: 30px; height: 30px; margin-top: -15px; z-index: 2; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-plaque-spark.left { left: 4px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-plaque-spark.right { right: 4px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque p::before,
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque p::after {
+  content: ""; width: 30px; height: 7px;
+  background:
+    linear-gradient(45deg, transparent 45%, #8195b0 45% 55%, transparent 55%) right center / 7px 7px no-repeat,
+    linear-gradient(#8195b0, #8195b0) center / 100% 1px no-repeat;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque p::after { transform: scaleX(-1); }
+
+/* ---------- Panel frames ---------- */
+.campaign-themed[data-theme="schnee-atelier"] .dashboard-grid > .panel {
+  background: none; border: 0; border-radius: 0; padding: 8px 10px 6px; box-shadow: none;
+  filter: drop-shadow(0 4px 6px #26385030);
+  isolation: isolate; container-type: inline-size;
+}
+.campaign-themed[data-theme="schnee-atelier"] .dashboard-grid > .panel::before {
+  inset: 0; width: auto; height: auto; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(120% 70% at 85% 10%, #ffffff 0, transparent 60%),
+    linear-gradient(145deg, #fbfcfd, #eef1f5 60%, #f7f9fb);
   clip-path: var(--atelier-cut);
 }
-.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque::after,
 .campaign-themed[data-theme="schnee-atelier"] .dashboard-grid > .panel::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
   border: 24px solid transparent;
-  border-image: url('/assets/themes/schnee-atelier/frame.svg') 28 / 24px / 0 stretch;
+  border-image: url('/assets/themes/schnee-atelier/frame.svg') 30 / 26px / 0 stretch;
+  background:
+    url('/assets/themes/schnee-atelier/sparkle.svg') 50% 0 / 20px no-repeat border-box,
+    url('/assets/themes/schnee-atelier/sparkle.svg') 50% 100% / 20px no-repeat border-box;
   z-index: 5;
 }
-.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque h1 {
-  margin: 0; font: 500 clamp(24px, 2.5vw, 36px)/1.25 var(--font-display); color: #142a4d;
-  overflow-wrap: anywhere;
-}
-.campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque p { margin: 6px 0 0; color: #435878; font-size: 14px; letter-spacing: .12em; }
-.campaign-themed[data-theme="schnee-atelier"] .dashboard-grid > .panel {
-  background: none;
-  border: 0;
-  border-radius: 0;
-  padding: 10px;
-  box-shadow: none;
-  filter: drop-shadow(0 4px 5px #26385026);
-  isolation: isolate;
-  container-type: inline-size;
-}
-.campaign-themed[data-theme="schnee-atelier"] .dashboard-grid > .panel::before {
-  inset: 0; width: auto; height: auto; z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(145deg, #ffffff, #f0f2f7 65%, #f9fbfd);
-  clip-path: var(--atelier-cut);
-}
 .campaign-themed[data-theme="schnee-atelier"] .panel-head {
-  background: transparent;
-  min-height: 38px;
-  padding: 0 8px 7px;
-  border-bottom: 1px solid #bdc9d8;
-  position: relative;
-  gap: 8px;
+  background: transparent; min-height: 38px; padding: 0 8px 7px;
+  border-bottom: 1px solid #bdc9d8; position: relative; gap: 8px;
 }
 .campaign-themed[data-theme="schnee-atelier"] .panel-title {
-  padding: 3px 18px 3px 8px;
-  border: 1px solid #a2b1c5;
-  background: linear-gradient(#ffffff, #e2e9f2);
-  box-shadow: inset 0 0 0 2px #fff;
-  font: 500 17px/1.3 var(--font-display);
-  letter-spacing: 0;
-  color: #1b3556;
-  max-width: 100%;
-  border-image: url('/assets/themes/schnee-atelier/frame.svg') 28 / 10px / 0 stretch;
+  padding: 3px 18px 3px 8px; border: 1px solid #a2b1c5;
+  background: linear-gradient(#ffffff, #e2e9f2); box-shadow: inset 0 0 0 2px #fff;
+  font: 500 17px/1.3 var(--font-display); letter-spacing: 0; color: #1b3556; max-width: 100%;
+}
+.campaign-themed[data-theme="schnee-atelier"] .panel-body { padding: 14px 10px 10px; }
+
+/* The Atelier header: tab label riding the top frame, sparkle, kebab. */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-head {
+  display: flex; align-items: center; justify-content: flex-start;
+  min-height: 44px; margin: -2px 6px 0; padding: 0 0 6px;
+  border-bottom: 1px solid var(--at-line);
+  background: none;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-head::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+  background: linear-gradient(90deg, transparent, #9fb1c7 15%, #9fb1c7 85%, transparent);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-grip {
+  width: 8px; height: 10px; margin-right: 6px; flex: none;
+  background: radial-gradient(circle, #4f6684 1.2px, transparent 1.5px) 0 0 / 4px 5px;
+  opacity: .8;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-tab {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  min-width: 178px; height: 32px; padding: 0 30px; margin: 0;
+  border: 0; box-shadow: none; background: var(--at-silver);
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+  color: var(--at-ink); font: 500 18px/1 var(--font-display); white-space: nowrap;
+  isolation: isolate; z-index: 1;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-tab::before {
+  content: ""; position: absolute; inset: 2px; z-index: -1;
+  background: linear-gradient(180deg, #ffffff, #e4ebf3 70%, #f2f5f9);
+  clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 13px 100%, 0 50%);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-tab::after {
+  content: ""; position: absolute; left: 7px; top: 50%; width: 16px; height: 16px; margin-top: -8px;
+  background: url('/assets/themes/schnee-atelier/sparkle.svg') center / contain no-repeat;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-head-spark {
+  position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -12px 0 0 -9px; opacity: .9;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-head::before {
+  content: ""; position: absolute; left: calc(50% - 46px); width: 92px; top: 50%; margin-top: -3px; height: 1px;
+  background: linear-gradient(90deg, transparent, #9fb1c7 30%, transparent 40% 60%, #9fb1c7 70%, transparent);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-head .panel-remove { margin-left: auto; order: 2; position: relative; z-index: 8; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-kebab-wrap { position: relative; margin-left: auto; order: 3; z-index: 9; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-head .panel-remove + .atelier-kebab-wrap { margin-left: 6px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-kebab {
+  width: 26px; height: 30px; padding: 0; border: 0; background: none; box-shadow: none;
+  color: #23365a; font: 700 20px/1 Georgia, serif; cursor: pointer;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-kebab:hover { color: #1f5a98; background: none; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 40;
+  display: flex; flex-direction: column; min-width: 200px; padding: 6px;
+  background: #f8fafd; border: 1px solid #93a4ba; box-shadow: 0 8px 20px #1d335233, inset 0 0 0 3px #fff;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-menu > :is(a, button) {
+  padding: 8px 10px; border: 0; background: none; box-shadow: none; border-radius: 0; text-align: left;
+  color: var(--at-ink); font: 400 14px/1.2 var(--font-display); text-decoration: none; cursor: pointer;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-menu > :is(a, button):hover { background: #e3edf8; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-panel > .panel-body { padding: 8px 8px 2px; }
+.campaign-themed[data-theme="schnee-atelier"] .dashboard-grid.editing .panel { outline: 1px dashed #366d9c; outline-offset: 3px; }
+.campaign-themed[data-theme="schnee-atelier"] .dashboard-grid.editing .atelier-head { background: #e1edf9a0; cursor: grab; }
+.campaign-themed[data-theme="schnee-atelier"] .react-resizable-handle { z-index: 12; }
+
+/* ---------- Shared bits ---------- */
+.campaign-themed[data-theme="schnee-atelier"] :is(.atelier-title-plaque h1, .atelier-character-id h2, .atelier-mission-head h2) { letter-spacing: 0; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-portrait {
+  position: relative; display: grid; place-items: center; flex: none;
+  width: 58px; height: 58px; overflow: hidden;
+  background: linear-gradient(160deg, #e7edf5, #c9d5e3);
   clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 9px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 9px 100%, 0 calc(100% - 9px), 0 9px);
 }
-.campaign-themed[data-theme="schnee-atelier"] .panel-icon img { display: block; width: 23px; height: 23px; }
-.campaign-themed[data-theme="schnee-atelier"] .panel-body { padding: 14px 10px 10px; }
-.campaign-themed[data-theme="schnee-atelier"] .panel-drag::after {
-  content: ""; width: 16px; height: 20px; margin-left: auto; flex-shrink: 0;
-  background: radial-gradient(circle, #536d8b 1.3px, transparent 1.6px) 0 0 / 6px 6px;
+.campaign-themed[data-theme="schnee-atelier"] .atelier-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-initial { color: #46607f; font: 400 24px/1 var(--font-display); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-empty { color: var(--at-muted); padding: 10px 6px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-rule-heading {
+  display: flex; align-items: center; gap: 10px; margin: 0;
+  color: #2f3f59; font: 400 14px/1 var(--font-display); letter-spacing: .06em; text-transform: uppercase;
 }
-.campaign-themed[data-theme="schnee-atelier"] .panel-remove { order: 2; position: relative; z-index: 8; }
-.campaign-themed[data-theme="schnee-atelier"] .dashboard-grid.editing .panel { outline: 1px dashed #366d9c; outline-offset: 3px; }
-.campaign-themed[data-theme="schnee-atelier"] .dashboard-grid.editing .panel-head { background: #e1edf9; }
-.campaign-themed[data-theme="schnee-atelier"] .react-resizable-handle { z-index: 12; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-rule-heading::before {
+  content: ""; width: 22px; height: 22px; flex: none;
+  background: url('/assets/themes/schnee-atelier/sparkle.svg') center / contain no-repeat;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-rule-heading::after {
+  content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, #9fb1c7, #9fb1c700);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-rule-heading.centered { justify-content: center; text-transform: none; letter-spacing: 0; font-size: 15px; color: var(--at-ink); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-rule-heading.centered::before { width: 40px; height: 8px; background: linear-gradient(90deg, #9fb1c700, #9fb1c7) center / 100% 1px no-repeat; flex: none; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-rule-heading.centered::after { flex: none; width: 40px; }
+
+/* ---------- Character card ---------- */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character { display: flex; flex-direction: column; gap: 6px; padding: 0 6px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-top { display: grid; grid-template-columns: minmax(0, min(54%, 210px)) 1fr; gap: 16px; align-items: start; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-portrait.large {
+  width: 100%; height: auto; aspect-ratio: 190 / 198; margin-top: 4px;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-portrait.large .atelier-initial { font-size: 64px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-id { padding-top: 14px; min-width: 0; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-id h2 { margin: 0; font: 600 26px/1.1 var(--font-display); color: var(--at-ink); overflow-wrap: anywhere; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-id h2 a { color: inherit; text-decoration: none; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-id h2 a:hover { color: #1f5a98; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-sub { margin: 10px 0 0; color: #2f3f59; font-size: 15px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-emblem { display: block; width: 36px; height: 40px; margin: 12px 0 10px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-gem {
+  display: block; width: 22px; height: 22px; margin: 18px 0 16px 4px;
+  transform: rotate(45deg); box-shadow: inset 0 0 0 2px #ffffffb0, 0 0 0 1px #8094ae;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-character-line { margin: 0; color: #3a4a64; font-size: 13.5px; line-height: 1.4; }
+
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge { position: relative; width: min(100%, 204px); margin: -40px auto -4px; aspect-ratio: 220 / 168; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge svg { display: block; width: 100%; overflow: visible; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge::before {
+  content: ""; position: absolute; left: 50%; top: 0; width: 88%; aspect-ratio: 1; transform: translate(-50%, 4%);
+  border-radius: 50%; background: radial-gradient(circle, #ffffffd0 50%, #ffffff00 70%); z-index: -1;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge-star { position: absolute; top: 42%; width: 50px; height: 50px; opacity: .85; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge-star.left { left: -58px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge-star.right { right: -58px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge-core {
+  position: absolute; inset: 18% 0 auto; display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-emblem { width: 40px; height: 44px; filter: grayscale(1) opacity(.5); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-emblem.glyph { filter: none; opacity: .75; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge-label { margin-top: 4px; color: #2f3f59; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge-value { color: var(--at-ink); font: 600 30px/1 var(--font-display); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-gauge-value small { font-size: 22px; }
+
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 22px; padding: 0 4px; margin-top: 2px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  aspect-ratio: 92 / 118; padding: 10px 4px 22px;
+}
+/* A Remnant sheet has six attributes: two shorter rows instead of the comp's three tall shields. */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shields:not(.count-3) { gap: 8px 22px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shields:not(.count-3) .atelier-shield { aspect-ratio: 92 / 74; padding: 6px 4px 8px; gap: 0; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shields:not(.count-3) .atelier-shield-label { font-size: 12px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shields:not(.count-3) .atelier-shield-value { font-size: 25px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shields:not(.count-3) .atelier-shield-mark { display: none; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield svg path:first-child { fill: #f7f9fc; stroke: #8fa1b8; stroke-width: 1.6; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield svg path:last-child { fill: none; stroke: #c1ccda; stroke-width: 1; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield.is-main svg path:first-child { fill: #edf3fb; stroke: #5d7aa2; stroke-width: 2; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield.is-main svg path:last-child { stroke: #8fb0d6; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield-label { color: #22334f; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield-value { color: var(--at-ink); font: 600 30px/1.05 var(--font-display); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield-mark { width: 22px; height: 22px; opacity: .55; margin-top: 4px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-shield.is-main .atelier-shield-mark { opacity: .9; }
+
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon { margin-top: 10px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-row { display: grid; grid-template-columns: 118px 1fr; gap: 14px; align-items: center; margin-top: 10px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art {
+  display: grid; place-items: center; aspect-ratio: 128 / 91; overflow: hidden;
+  background: linear-gradient(160deg, #e8edf3, #c5cfdb);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art img { width: 100%; height: 100%; object-fit: cover; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art img.glyph { width: 60%; height: auto; opacity: .6; object-fit: contain; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon strong { color: var(--at-ink); font: 600 20px/1.2 var(--font-display); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon p { margin: 6px 0 0; padding-bottom: 6px; color: #4c5e78; font-size: 15px; border-bottom: 1px solid var(--at-line); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-tags span {
+  padding: 3px 5px; border: 1px solid #a9b6c7; border-radius: 3px; background: #f7f9fc;
+  color: #42536d; font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
+}
+
+/* ---------- Mission notes ---------- */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-mission { position: relative; isolation: isolate; height: 100%; padding: 4px 14px 0; overflow: hidden; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-mission-compass {
+  position: absolute; right: -70px; bottom: -80px; width: 330px; z-index: -1; opacity: .72; pointer-events: none;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-mission-head { display: flex; align-items: center; gap: 16px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-mission-mark { width: 46px; height: 46px; flex: none; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-mission-head h2 { margin: 0; flex: 1; min-width: 0; font: 600 28px/1.2 var(--font-display); color: var(--at-ink); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-region { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; margin-top: 8px; color: #3b4a62; font-size: 13px; white-space: nowrap; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-region svg { width: 12px; height: 15px; fill: #55698a; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-mission-desc {
+  max-width: 520px; margin: 12px 0 0 2px; padding-bottom: 20px;
+  color: #3a4961; font-size: 15.5px; line-height: 1.45;
+  background: linear-gradient(90deg, #9fb1c7, #9fb1c7 80%, transparent) left bottom / 82% 1px no-repeat;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-steps { list-style: none; margin: 18px 0 0; padding: 0 0 0 2px; display: grid; gap: 22px; max-width: 470px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-steps li { display: grid; grid-template-columns: 44px 1fr; gap: 18px; align-items: center; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-step-num {
+  position: relative; display: grid; place-items: center; width: 44px; height: 44px;
+  color: #1a3360; font: 600 20px/1 var(--font-display); isolation: isolate;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-step-num::before {
+  content: ""; position: absolute; inset: 6px; z-index: -1; transform: rotate(45deg);
+  background: linear-gradient(135deg, #eaf2fc, #b4cdea); border: 1.5px solid #5878a3; box-shadow: inset 0 0 0 2px #ffffffc0;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-steps strong { display: block; color: var(--at-ink); font: 600 16.5px/1.25 var(--font-display); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-steps p { margin: 6px 0 0; color: #56657c; font-size: 13.5px; line-height: 1.35; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-mission-empty { max-width: 440px; padding: 18px 6px; color: var(--at-body); line-height: 1.5; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-mission-empty button,
+.campaign-themed[data-theme="schnee-atelier"] .atelier-done {
+  margin-top: 10px; padding: 8px 18px; border: 0; border-radius: 0; color: #fff; background: var(--at-enamel);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  font: 400 15px/1 var(--font-display);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-notes-edit { display: flex; flex-direction: column; height: 100%; gap: 8px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-notes-edit .atelier-done { align-self: flex-end; margin: 0; }
+
+/* ---------- Combat dice ---------- */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-dice { display: grid; grid-template-columns: minmax(0, 46%) 1fr; gap: 14px; height: 100%; align-items: center; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-dice-stage { position: relative; display: grid; place-items: center; height: 100%; min-height: 150px; margin: -12px 0 -6px -8px; overflow: hidden; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-dice-stage.is-art img {
+  width: 100%; height: 100%; object-fit: cover; object-position: center;
+  -webkit-mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 70% at 50% 50%, #000 62%, transparent 100%);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-dice-circle { position: absolute; inset: 4% 2%; width: 96%; height: 92%; opacity: .75; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-dice-die { position: relative; display: grid; place-items: center; width: min(62%, 170px); aspect-ratio: 1; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-dice-die img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 8px #2a3d5a55); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-dice-controls { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 0 10px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-die-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-die {
+  position: relative; display: grid; place-items: center; width: 42px; height: 48px; padding: 0;
+  border: 0; border-radius: 0; box-shadow: none; text-shadow: none;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(#a4b2c4, #a4b2c4); color: #2b3b55;
+  font: 400 15px/1 var(--font-display); cursor: pointer; isolation: isolate;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-die::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: -1;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(180deg, #f3f5f8, #dfe5ec);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-die:hover::before { background: linear-gradient(180deg, #ffffff, #d4e2f1); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-dice .atelier-die-row .atelier-die.is-active { background: #8ec1f5; color: #fff; box-shadow: none; filter: drop-shadow(0 0 6px #5ea7f2); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-die.is-active::before { background: linear-gradient(180deg, #3f7ec7, #174a8c); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-die-count {
+  position: absolute; right: 2px; bottom: 9px; font-size: 10px; color: #dceaff;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-roll {
+  position: relative; width: min(100%, 240px); height: 56px; margin-top: 10px; padding: 0;
+  border: 0; border-radius: 0; color: #fff; text-shadow: 0 1px 2px #0a2348;
+  font: 600 28px/1 var(--font-display); cursor: pointer;
+  background: linear-gradient(#b8c7da, #eef3f9 40%, #8ea2bd); isolation: isolate;
+  clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0 50%);
+  filter: drop-shadow(0 4px 6px #1a3a6640);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-roll::before {
+  content: ""; position: absolute; inset: 3px; z-index: -1; background: var(--at-enamel);
+  clip-path: polygon(20px 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 20px 100%, 0 50%);
+  box-shadow: inset 0 0 0 1px #8fb2de;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-roll:hover:not(:disabled) { filter: drop-shadow(0 4px 8px #2a62a855) brightness(1.08); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-roll:disabled { opacity: .6; cursor: not-allowed; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-roll-hint { margin: -4px 0 0; color: #4d5c73; font-size: 13px; }
+
+/* ---------- Team status ---------- */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team { list-style: none; margin: 0; padding: 0 4px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team li {
+  position: relative; display: grid; grid-template-columns: 72px 1fr auto; gap: 16px; align-items: center;
+  padding: 6px 0 7px; border-bottom: 1px solid var(--at-line);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team li:last-child { border-bottom: 0; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team .atelier-portrait { width: 72px; height: 70px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-online { position: absolute; left: 62px; top: 10px; width: 9px; height: 9px; border-radius: 50%; background: #3f9a6f; box-shadow: 0 0 0 2px #fff; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team-body { min-width: 0; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team-body > strong { display: block; color: var(--at-ink); font: 600 18px/1.2 var(--font-display); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team-body > strong a { color: inherit; text-decoration: none; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team-bars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 8px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar-text { display: block; color: #25354f; font-size: 12px; letter-spacing: .02em; white-space: nowrap; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar-text > span { display: inline-block; min-width: 26px; text-transform: uppercase; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar.aura .atelier-bar-text > span { min-width: 40px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar-text strong { font: 600 16px/1 var(--font-display); color: var(--at-ink); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar-text small { font-size: 11px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar-track {
+  display: block; height: 8px; margin-top: 5px; overflow: hidden;
+  background: #dde3ea; box-shadow: inset 0 1px 1px #8c9bb040;
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 50%, calc(100% - 4px) 100%, 0 100%);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar-track > span {
+  display: block; height: 100%;
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 50%, calc(100% - 5px) 100%, 0 100%);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar.hp .atelier-bar-track > span { background: linear-gradient(180deg, #f2545f, #c9202f 60%, #a5141f); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-bar.aura .atelier-bar-track > span { background: linear-gradient(180deg, #67b5f5, #2577d6 60%, #1a5fb5); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-team-emblem { width: 34px; height: 38px; margin-right: 4px; }
+
+/* ---------- Session log ---------- */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log { display: flex; flex-direction: column; padding: 0 4px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log-entry {
+  display: grid; grid-template-columns: 58px 1fr; gap: 14px; align-items: start;
+  padding: 0 0 4px; border-bottom: 1px solid var(--at-line);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log-entry + .atelier-log-entry { padding-top: 6px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log-entry:last-of-type { border-bottom: 0; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log-entry header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log-entry header strong { color: var(--at-ink); font: 600 16px/1.2 var(--font-display); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log-entry time { color: #4e5d74; font-size: 12px; white-space: nowrap; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log-roll { margin: 1px 0 0; color: var(--at-ink); font: 600 16px/1.15 var(--font-display); }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-chip {
+  display: inline-grid; place-items: center; min-width: 30px; height: 22px; padding: 0 6px; margin-left: 4px;
+  border-radius: 3px; font: 400 15px/1 var(--font-display);
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-chip.rose { color: #b5182b; background: #fde0e3; border: 1px solid #ec9aa4; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-chip.steel { color: #1d2e4a; background: #e3e9f1; border: 1px solid #b0bfd1; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-log-detail { margin: 2px 0 0; color: #56657c; font-size: 12.5px; line-height: 1.35; }
+
+/* ---------- Scroll pill (pocket Scroll tucked) ---------- */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-scroll-pill,
+.campaign-themed[data-theme="schnee-atelier"] .pocket-scroll:not(.is-open) .pocket-strip {
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  height: 46px; padding: 0 30px;
+  color: #fff; font: 400 18px/1 var(--font-display); text-shadow: 0 1px 1px #0a2348;
+  background:
+    linear-gradient(#173f75, #173f75) padding-box,
+    var(--at-silver) border-box;
+  border: 2px solid transparent; border-radius: 0;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%);
+  box-shadow: inset 0 0 0 1px #6f97cf;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-scroll-pill { position: fixed; right: 16px; bottom: 26px; z-index: 50; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-scroll-pill svg { width: 24px; height: 20px; fill: #fff; }
+.campaign-themed[data-theme="schnee-atelier"] .pocket-scroll:not(.is-open) { transform: translateY(calc(100% + 12px)); }
+.campaign-themed[data-theme="schnee-atelier"] .pocket-scroll:not(.is-open) .pocket-strip {
+  position: absolute; top: auto; bottom: calc(100% + 26px); left: auto; right: -2px; width: auto;
+}
+.campaign-themed[data-theme="schnee-atelier"] .pocket-scroll:not(.is-open) .pocket-strip::before {
+  content: ""; width: 24px; height: 20px;
+  background: #fff;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 20'%3E%3Cpath d='M2 3c3.5-1.2 7-1 10 1v14c-3-2-6.5-2.2-10-1Zm20 0c-3.5-1.2-7-1-10 1v14c3-2 6.5-2.2 10-1Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.campaign-themed[data-theme="schnee-atelier"] .pocket-scroll:not(.is-open) .pocket-strip::after { content: "Scroll"; }
+.campaign-themed[data-theme="schnee-atelier"] .pocket-scroll:not(.is-open) .pocket-strip:hover { filter: brightness(1.12); }
+.campaign-themed[data-theme="schnee-atelier"] .pocket-scroll:not(.is-open) .pocket-unread { top: -4px; left: 8px; }
+
+/* ---------- Example page ---------- */
+.campaign-themed[data-theme="schnee-atelier"] .atelier-example-note {
+  position: fixed; left: 16px; bottom: 26px; z-index: 50;
+  display: flex; align-items: center; gap: 10px; max-width: min(520px, calc(100vw - 210px));
+  padding: 8px 10px 8px 14px; color: var(--at-body); font-size: 13px; line-height: 1.35;
+  background: #f8fafdf0; border: 1px solid #93a4ba; box-shadow: 0 6px 18px #1d335226;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-example-note strong { color: #1f5a98; text-transform: uppercase; letter-spacing: .08em; font-size: 12px; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-example-note button {
+  flex: none; padding: 6px 12px; border: 1px solid #93a4ba; border-radius: 0; background: #fff; color: var(--at-ink); font: 400 13px/1 var(--font-display);
+}
+
+/* ---------- Classic views and shared widgets in this theme ---------- */
+.campaign-themed[data-theme="schnee-atelier"] :is(.dashboard-grid, .content, .dock-body, .theme-picker-popover, .atelier-topbar) :is(button.ghost, .ghost.link, .seg-btn, .die-btn, .fav-chip button) {
+  color: #203e62; border-color: #99abc1; border-radius: 2px;
+  background: linear-gradient(160deg, #fff, #e7edf5); box-shadow: inset 0 0 0 2px #ffffffb3; text-shadow: none;
+}
+.campaign-themed[data-theme="schnee-atelier"] :is(.dashboard-grid, .content, .dock-body) :is(button.primary, .seg-btn.active) {
+  color: #fff; border-color: #294c76; background: linear-gradient(135deg, #346fa2, #19466e); box-shadow: inset 0 0 0 2px #ffffff38;
+}
 .campaign-themed[data-theme="schnee-atelier"] :is(.card, .dock-body, .theme-picker-popover, .add-panel-menu, .modal-card, .encounter-sidebar-content) {
-  background: #f7f9fc; color: #162b49; border: 1px solid #96a7bc;
-  box-shadow: 0 6px 18px #20375420;
+  background: #f7f9fc; color: #162b49; border: 1px solid #96a7bc; box-shadow: 0 6px 18px #20375420;
 }
 .campaign-themed[data-theme="schnee-atelier"] .theme-picker-popover { z-index: 100; }
 .campaign-themed[data-theme="schnee-atelier"] .theme-choice { text-align: left; }
 .campaign-themed[data-theme="schnee-atelier"] .theme-choice.selected { border: 2px solid #215c91; background: #dceafa; }
 .campaign-themed[data-theme="schnee-atelier"] .theme-choice strong { color: #193e69; }
 .campaign-themed[data-theme="schnee-atelier"] .theme-choice small { color: #4c607a; }
-.campaign-themed[data-theme="schnee-atelier"] .panel-notes .notes-area {
-  border: 0; border-radius: 0; resize: none;
-  background: linear-gradient(#f7f8fae8, #f7f8fae8), url('/assets/themes/schnee-atelier/glyph.svg') right -90px bottom -30px / 270px no-repeat, #f7f8fa;
-  padding: 16px 12px;
-  font-size: 18px; line-height: 1.65;
+.campaign-themed[data-theme="schnee-atelier"] .notes-area {
+  border: 1px solid #c3cedb; border-radius: 0; resize: none; flex: 1;
+  background: #fbfcfd; padding: 14px 12px; font: 400 16px/1.6 var(--font-display); color: var(--at-ink);
 }
 .campaign-themed[data-theme="schnee-atelier"] .notes-head { border-bottom: 1px solid #c6d1df; padding-bottom: 8px; }
-.campaign-themed[data-theme="schnee-atelier"] .atelier-dice-display {
-  display: grid; place-items: center; height: 170px; margin: -4px 0 8px;
-  background: url('/assets/themes/schnee-atelier/glyph.svg') center / 168px no-repeat;
-}
-.campaign-themed[data-theme="schnee-atelier"] .atelier-dice-display img { width: 154px; height: 154px; object-fit: contain; filter: drop-shadow(0 8px 7px #284d7040); }
-.campaign-themed[data-theme="schnee-atelier"] .quick-dice { gap: 6px; flex-wrap: wrap; }
-.campaign-themed[data-theme="schnee-atelier"] .quick-dice .die-btn {
-  min-width: 38px; min-height: 43px; flex: 1;
-  border: 0; border-radius: 0;
-  clip-path: polygon(50% 0, 100% 22%, 100% 78%, 50% 100%, 0 78%, 0 22%);
-  background: #dbe5f1; color: #183959;
-}
-.campaign-themed[data-theme="schnee-atelier"] .quick-dice .die-btn:hover { background: #a7c8e9; }
-.campaign-themed[data-theme="schnee-atelier"] .quick-dice .die-btn:focus-visible { outline-offset: -5px; }
 .campaign-themed[data-theme="schnee-atelier"] :is(.member-list li, .roll-item) {
-  background: transparent; border: 0; border-bottom: 1px solid #bbc8d7; border-radius: 0; box-shadow: none;
-  padding: 12px 2px;
+  background: transparent; border: 0; border-bottom: 1px solid #bbc8d7; border-radius: 0; box-shadow: none; padding: 12px 2px;
 }
 .campaign-themed[data-theme="schnee-atelier"] .roll-total { color: #15365c; background: #e3edf8; border: 1px solid #9bafc7; padding: 2px 10px; font-family: var(--font-display); }
-.campaign-themed[data-theme="schnee-atelier"] .roll-item.nat20 { background: #e3f1eb; }
-.campaign-themed[data-theme="schnee-atelier"] .roll-item.nat1 { background: #f9e9ed; }
 .campaign-themed[data-theme="schnee-atelier"] .sheet-view-head { border-color: #bcc9da; flex-wrap: wrap; }
-.campaign-themed[data-theme="schnee-atelier"] .sheet-view-name { font-size: 24px; letter-spacing: 0; }
-.campaign-themed[data-theme="schnee-atelier"] .sheet-view-head .avatar-btn { width: 82px; height: 94px; border-radius: 1px; border: 3px double #8297b2; }
 .campaign-themed[data-theme="schnee-atelier"] .sheet-view :is(.card, .remnant-combat-dashboard) { background: #f3f6fa; box-shadow: none; border-color: #a6b7cb; }
 .campaign-themed[data-theme="schnee-atelier"] :is(.sheet-section-summary, .sheet-toolbar, .combat-dashboard-heading) { color: #203e62; background: #e7eef7; }
 .campaign-themed[data-theme="schnee-atelier"] :is(.vital, .ability-box, .attribute-box, .combat-pool-card) { background: #eef3f9; border: 1px solid #a7b8cd; box-shadow: inset 0 0 0 3px #fff; }
@@ -201,27 +613,51 @@
 .campaign-themed[data-theme="schnee-atelier"] .pool-fill.hp-pool { background: #b1455b; }
 .campaign-themed[data-theme="schnee-atelier"] .pool-fill.aura-pool { background: #398ac3; box-shadow: none; }
 .campaign-themed[data-theme="schnee-atelier"] :is(.overview-vital.hp, .combat-quick-pool.hp) { color: #a02d45; }
-.campaign-themed[data-theme="schnee-atelier"] .topbar .campaign-nav-link { color: #294666; border: 1px solid #9aacbf; box-shadow: inset 0 0 0 2px #fff; }
 .campaign-themed[data-theme="schnee-atelier"] .hp-pill { color: #235e49; border-color: #85ad9e; background: #e6f1eb; }
 .campaign-themed[data-theme="schnee-atelier"] .hp-pill.hurt { color: #843e14; background: #fff0df; }
 .campaign-themed[data-theme="schnee-atelier"] .hp-pill.dead { color: #922a40; background: #f9e5eb; }
 .campaign-themed[data-theme="schnee-atelier"] .error { background: #fbe8ec; color: #922a40; border-color: #bc6175; }
-@container (max-width: 420px) {
-  .campaign-themed[data-theme="schnee-atelier"] .dice-panel > .row-between { flex-wrap: wrap; gap: 8px; }
-  .campaign-themed[data-theme="schnee-atelier"] .dice-panel .formula-input { width: 100%; min-width: 0; flex: 1 1 50%; }
-  .campaign-themed[data-theme="schnee-atelier"] .sheet-view .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .campaign-themed[data-theme="schnee-atelier"] .panel-title { font-size: 15px; }
+
+/* ---------- Narrow panels and screens ---------- */
+/* A wide character panel (e.g. an older layout) splits the card in two. */
+@container (min-width: 620px) {
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-character { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 34px; align-content: start; max-width: 860px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-character-top { grid-column: 1; grid-row: 1; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-gauge { grid-column: 1; grid-row: 2; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-shields { grid-column: 2; grid-row: 1; align-self: start; margin-top: 18px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-weapon { grid-column: 2; grid-row: 2; align-self: start; }
+}
+@container (max-width: 520px) {
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-dice { grid-template-columns: 1fr; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-dice-stage { height: 150px; margin: 0; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-mission-compass { opacity: .25; }
+}
+@container (max-width: 340px) {
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-character-top { grid-template-columns: 1fr; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-portrait.large { max-width: 190px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-gauge { margin-top: 4px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-gauge-star { display: none; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-shields { gap: 8px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-team-bars { grid-template-columns: 1fr; gap: 6px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-row { grid-template-columns: 90px 1fr; }
+}
+@media (max-width: 900px) {
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-topbar { padding: 8px 12px; row-gap: 8px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-wordmark { font-size: 17px; gap: 10px; margin-right: 0; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-wordmark img { width: 36px; height: 36px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-pills { order: 5; flex: 1 0 100%; margin: 0; height: 40px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-pills a { flex: 1; min-width: 0; padding: 0 18px; font-size: 14px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-edit { padding: 0 18px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-divider { display: none; }
 }
 @media (max-width: 720px) {
-  .campaign-themed[data-theme="schnee-atelier"] .topbar { padding: 10px 12px; gap: 8px; }
-  /* max-content keeps the 44px crest inside its block; the nav wraps below. */
-  .campaign-themed[data-theme="schnee-atelier"] .campaign-brand-block { flex: 1 0 auto; min-width: max-content; }
-  .campaign-themed[data-theme="schnee-atelier"] .campaign-theme-brand { font-size: 16px; }
-  .campaign-themed[data-theme="schnee-atelier"] .campaign-nav-link { font-size: 14px; }
-  .campaign-themed[data-theme="schnee-atelier"] .atelier-masthead { min-height: 120px; padding: 16px 18px 4px; }
-  .campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque { padding: 18px 25px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-edit { font-size: 0; gap: 0; padding: 0 16px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-masthead { padding: 24px 14px 0; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque { padding: 18px 44px 12px; min-width: 0; }
   .campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque h1 { font-size: 24px; }
-  .campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque p { font-size: 12px; letter-spacing: .04em; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-title-plaque p { font-size: 12px; letter-spacing: .12em; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-gear-menu { right: -50px; }
+  .campaign-themed[data-theme="schnee-atelier"] .atelier-example-note { right: 16px; bottom: 84px; max-width: none; }
   /* Keep the user's desktop coordinates intact; narrow screens can pan the
      same editable workspace instead of silently saving a different layout. */
   .campaign-themed[data-theme="schnee-atelier"].dashboard-shell { overflow-x: auto; }

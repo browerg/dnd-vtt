@@ -5,6 +5,9 @@ import Entrance from "./components/Entrance";
 // Engraved academy capitals for headers, warm humanist sans for everything else.
 import "@fontsource/cinzel/600.css";
 import "@fontsource/cinzel/700.css";
+import "@fontsource/crimson-pro/400.css";
+import "@fontsource/crimson-pro/500.css";
+import "@fontsource/crimson-pro/600.css";
 import "@fontsource/wittgenstein/400.css";
 import "@fontsource/wittgenstein/500.css";
 import "@fontsource/alegreya-sans/400.css";

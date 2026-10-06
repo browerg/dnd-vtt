@@ -1,21 +1,43 @@
 # Schnee Atelier dashboard theme
 
-Scope: optional Remnant campaign appearance in the existing Theme picker. Operate mode. The approved white dashboard concept is `exec-b15fe8f6-7788-4a9d-a543-9614b6f8643e.png` from this conversation.
+A "full makeover" Remnant theme (`fullMakeover: true` in `client/src/theme.ts`).
+Approved comp: `.impeccable/mocks/schnee/atelier-dashboard.png` (1586×992). The
+build is matched against it at that exact size; see the Example page.
 
-## Direction contract
+## Where things live
 
-THESIS: a playable ivory-and-silver Schnee workspace whose individual faceted frames travel with the player's panels.
+- `client/src/atelier/AtelierTopbar.tsx` — crest + wordmark, Dashboard/Map/Characters
+  pills, Edit panels, the ⚙ menu (Grimm archive, Handbook, Schedule, Previously on…,
+  Theme, the Example, All campaigns), avatar; and the title plaque.
+- `client/src/atelier/AtelierPanels.tsx` — presentational panels: panel header (tab,
+  sparkle, ⋮ menu), character card (portrait, Aura dial, attribute shields, weapon),
+  mission brief, team status, session log, simple dice roller.
+- `client/src/atelier/AtelierLive.tsx` — loads the player's character and notes.
+- `client/src/atelier/atelierModel.ts` — maps real data to the panels; the notes
+  parser; `ATELIER_GRID` (34px rows + 8px gutters = the classic 42px per row, so
+  saved layouts keep their size) and `ATELIER_ARRANGEMENT` (the comp's layout).
+- `client/src/atelier/atelierExample.ts` + `pages/AtelierExamplePage.tsx` — the
+  `/themes/schnee-atelier/example` page with the comp's sample data.
+- `client/src/schneeAtelier.css` — all styles, scoped to the theme.
+- `client/public/assets/themes/schnee-atelier/` — palace backdrop, frame nine-slice,
+  compass / circle / sparkle ornaments, crest; `example/` art is cut from the comp
+  (`example/PROVENANCE.json`).
 
-OWN-WORLD: pearl reading surfaces, navy ink, silver double borders, blue enamel controls, snowflake glyphs and an illustrated alpine palace backdrop. Wittgenstein headings and Alegreya Sans body copy. Crisp clipped corners replace rounded cards in this theme only.
+## Rules
 
-STORY: select Schnee Atelier under Theme → My view; continue using the same character, notes, dice, inventory and other panels. GMs may also set it as the campaign default.
-
-FIRST VIEWPORT: existing navigation above a centered campaign title plaque; the player's saved grid beneath. Framed panel headers remain drag targets. Art stays behind opaque readable surfaces. The sample composition and character data are illustrative; never overwrite a player's layout, sheet, dice or notes to imitate the sample.
-
-FORM: the user explicitly selected the third generated concept, Schnee Atelier; no random seed or new direction round applies. Additive theme, not a replacement dashboard. Resize-safe frame edges are vector nine-slices; glyph ornament is noninteractive. Preserve all eight resize handles.
-
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+- Never change a player's saved layout on theme switch. "✦ Atelier layout" (in Edit
+  panels) is the only thing that rearranges, and only when clicked.
+- Mission notes are the player's private notes, read as: first line = title,
+  `📍 Place` / `Region: Place` = location tag, `•`/`-`/`1.` lines = steps (a plain
+  line under a step is its detail), anything before the first step = description.
+- Remnant sheets show all six attributes as dice; no rules are invented or changed.
+- Each ⋮ menu can flip a panel back to its classic view (full sheet, full dice form,
+  notes editor). The choice is per campaign, per device.
 
 ## Verification
 
-Exercise personal selection, campaign default validation, drag, resize, add/remove, saved layout reload, switching back to the incumbent theme, readable narrow panels, desktop and mobile presentation. Existing theme defaults and panel state must be preserved.
+`scripts/check-atelier.mjs` (Example capture, live dashboard, arrangement, R to roll,
+notes round trip, ⚙ menu, phone width) and `scripts/check-schnee-theme.mjs` (theme
+switching, campaign default, drag/resize/add/remove, reload, incumbent restore,
+mobile picker). Both run against a synthetic API with Vite on 5182 and
+`PLAYWRIGHT_MODULE` pointing at a playwright install.

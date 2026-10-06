@@ -1,0 +1,11 @@
+{
+  "source": ".impeccable/mocks/schnee/atelier-dashboard.png (approved Schnee Atelier dashboard comp, 1586x992, OpenAI image generation via Codex)",
+  "method": "Cut straight from the comp with ffmpeg crop, WebP quality 92; emblem-* also colour-keyed (0xeef1f5) to transparency, lossless WebP. Used only by the Schnee Atelier Example view.",
+  "crops": {
+    "ruby-card": "190x198 @ 60,254", "ruby": "72x70 @ 1165,253", "weiss": "72x70 @ 1165,343",
+    "blake": "72x70 @ 1165,431", "yang": "72x70 @ 1165,521",
+    "emblem-ruby": "32x38 @ 1501,255", "emblem-weiss": "36x38 @ 1499,350", "emblem-blake": "32x38 @ 1501,439",
+    "emblem-yang": "32x38 @ 1501,529", "emblem-ruby-card": "38x42 @ 271,336",
+    "weapon": "128x91 @ 60,769", "dice-stage": "346x240 @ 434,660"
+  }
+}

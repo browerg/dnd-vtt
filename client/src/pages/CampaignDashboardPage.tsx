@@ -1,5 +1,4 @@
 import CampaignThemeBrand from "../components/CampaignThemeBrand";
-import { DiceThumbnail } from "../components/CollectionDicePreview";
 import CampaignThemePicker from "../components/CampaignThemePicker";
 import { useCampaignTheme, type ThemeId } from "../theme";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -21,6 +20,10 @@ import ScrollTextAlert from "../components/ScrollTextAlert";
 import PreviouslyOn from "../components/PreviouslyOn";
 import DMGuide from "../components/DMGuide";
 import { PANEL_BY_ID, availablePanels, type PanelCtx } from "../dashboard/panels";
+import { AtelierMasthead, AtelierTopbar } from "../atelier/AtelierTopbar";
+import { AtelierDice, AtelierPanelHead, AtelierSessionLog, AtelierTeamStatus, type AtelierMenuItem } from "../atelier/AtelierPanels";
+import { AtelierCharacterLive, AtelierMissionLive } from "../atelier/AtelierLive";
+import { ATELIER_GRID, arrangeLikeAtelier, logEntries, teamMembers } from "../atelier/atelierModel";
 import {
   GRID_COLS,
   clearLayout,
@@ -50,6 +53,14 @@ const REMNANT_PANEL_TITLES: Record<string, string> = {
   vcoins: "VCoin rewards",
 };
 
+const ATELIER_PANEL_TITLES: Record<string, string> = {
+  sheet: "Character",
+  notes: "Mission notes",
+  dice: "Combat dice",
+  party: "Team status",
+  rolls: "Session log",
+};
+
 const REMNANT_PANEL_ICONS: Record<string, string> = {
   sheet: "\u25C7",
   inventory: "\u25C6",
@@ -65,6 +76,8 @@ const REMNANT_PANEL_ICONS: Record<string, string> = {
   hub: "\u2726",
   vcoins: "\u25C6",
 };
+
+const ROLE_WORDS: Record<string, string> = { dm: "GM", "co-dm": "Co-GM", player: "Player", spectator: "Spectator" };
 
 interface CampaignDetail {
   campaign: {
@@ -103,6 +116,25 @@ export default function CampaignDashboardPage() {
   const [editing, setEditing] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const initialized = useRef(false);
+  // Schnee Atelier panels can flip to their classic view (full sheet, full
+  // dice form, notes editor); remembered per campaign on this device.
+  const [atelierViews, setAtelierViews] = useState<Record<string, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(`atelier-views:${campaignId}`) ?? "{}");
+    } catch {
+      return {};
+    }
+  });
+  const toggleAtelierView = (panel: string, view: string) =>
+    setAtelierViews((current) => {
+      const next = { ...current, [panel]: current[panel] === view ? "" : view };
+      try {
+        localStorage.setItem(`atelier-views:${campaignId}`, JSON.stringify(next));
+      } catch {
+        /* private mode: the toggle just won't stick */
+      }
+      return next;
+    });
 
   const loadCharacters = useCallback(
     () =>
@@ -287,6 +319,7 @@ export default function CampaignDashboardPage() {
     system,
     campaignTheme: detail?.campaign.theme,
   });
+  const atelier = themeView.themeId === "schnee-atelier";
   const updateCampaignTheme = (theme: ThemeId) =>
     setDetail((current) => current ? { ...current, campaign: { ...current.campaign, theme } } : current);
 
@@ -332,6 +365,68 @@ export default function CampaignDashboardPage() {
       <HandoutReveal campaignId={campaignId} />
       <ScrollTextAlert campaignId={campaignId} system={system} />
       {isDM && <DMGuide campaignId={campaignId} system={system} />}
+      {atelier ? (
+        <AtelierTopbar
+          nav={[
+            { label: "Dashboard", to: `/campaigns/${campaignId}`, active: true },
+            { label: "Map", to: `/campaigns/${campaignId}/map` },
+            { label: "Characters", to: `/campaigns/${campaignId}/hub` },
+          ]}
+          editing={editing}
+          onToggleEdit={() => {
+            setEditing((e) => !e);
+            setShowAdd(false);
+          }}
+          editTools={
+            <>
+              <div className="add-panel-wrap">
+                <button className="ghost" onClick={() => setShowAdd((s) => !s)} disabled={addable.length === 0}>
+                  ＋ Panel
+                </button>
+                {showAdd && (
+                  <div className="add-panel-menu">
+                    {addable.map((p) => (
+                      <button key={p.id} className="add-panel-item" onClick={() => addPanel(p.id)}>
+                        <span>{p.icon}</span> {p.title}
+                      </button>
+                    ))}
+                    {addable.length === 0 && <span className="muted small">All panels placed.</span>}
+                  </div>
+                )}
+              </div>
+              <button className="ghost" onClick={() => persistLayout(arrangeLikeAtelier(layout))} title="Arrange your panels like the Atelier example">
+                ✦ Atelier layout
+              </button>
+              <button className="ghost" onClick={resetLayout} title="Restore the default layout">
+                ↺ Reset
+              </button>
+            </>
+          }
+          avatarUrl={user?.avatarPath || undefined}
+          userName={user?.display_name}
+          menu={
+            <>
+              <span className="atelier-menu-role">
+                {detail.campaign.name} · {ROLE_WORDS[detail.yourRole] ?? detail.yourRole}
+              </span>
+              <Link to={`/campaigns/${campaignId}/bestiary`}>Grimm archive</Link>
+              <Link to={`/campaigns/${campaignId}/handbook`}>Handbook</Link>
+              <Link to={`/campaigns/${campaignId}/schedule`}>Schedule</Link>
+              <PreviouslyOn campaignId={campaignId} campaignName={detail.campaign.name} isDM={!!isDM} system={system} />
+              <CampaignThemePicker
+                campaignId={campaignId}
+                role={detail.yourRole}
+                system={system}
+                campaignTheme={detail.campaign.theme}
+                view={themeView}
+                onCampaignThemeChange={updateCampaignTheme}
+              />
+              <Link to="/themes/schnee-atelier/example">✦ View the Atelier example</Link>
+              <Link to="/">All campaigns</Link>
+            </>
+          }
+        />
+      ) : (
       <header className="topbar campaign-topbar">
         <Link to="/" className="ghost link campaign-back-link" title="Back to campaigns">{"\u2190"}</Link>
         <CampaignThemeBrand
@@ -409,23 +504,19 @@ export default function CampaignDashboardPage() {
             : detail.yourRole.toUpperCase()}
         </span>
       </header>
+      )}
 
-      {themeView.themeId === "schnee-atelier" && (
-        <section className="atelier-masthead" aria-label="Campaign">
-          <div className="atelier-title-plaque">
-            <h1>{detail.campaign.name}</h1>
-            <p>{detail.campaign.chapter ? `${detail.campaign.chapter} · ` : ""}Session {detail.campaign.session_number}</p>
-          </div>
-        </section>
+      {atelier && (
+        <AtelierMasthead name={detail.campaign.name} chapter={detail.campaign.chapter} sessionNumber={detail.campaign.session_number} />
       )}
 
       <Grid
         className={`dashboard-grid${editing ? " editing" : ""}`}
         layout={layout}
         cols={GRID_COLS}
-        rowHeight={28}
-        margin={[14, 14]}
-        containerPadding={[18, 18]}
+        rowHeight={atelier ? ATELIER_GRID.rowHeight : 28}
+        margin={atelier ? ATELIER_GRID.margin : [14, 14]}
+        containerPadding={atelier ? ATELIER_GRID.containerPadding : [18, 18]}
         isDraggable={editing}
         isResizable={editing}
         draggableHandle=".panel-drag"
@@ -439,11 +530,47 @@ export default function CampaignDashboardPage() {
         {layout.map((item) => {
           const def = PANEL_BY_ID[item.i];
           if (!def || (def.system && def.system !== system)) return <div key={item.i} style={{ display: "none" }} />;
+          if (atelier) {
+            const title = ATELIER_PANEL_TITLES[item.i] ?? (isRemnant ? REMNANT_PANEL_TITLES[item.i] ?? def.title : def.title);
+            const view = atelierViews[item.i] ?? "";
+            const menu: AtelierMenuItem[] = [];
+            let body = def.render(ctx);
+            if (item.i === "sheet" && myCharacterId) {
+              menu.push({ label: view === "full" ? "Show character card" : "Show full sheet here", onSelect: () => toggleAtelierView("sheet", "full") });
+              menu.push({ label: "Open sheet page", href: `/campaigns/${campaignId}/characters/${myCharacterId}` });
+              if (view !== "full") body = <AtelierCharacterLive campaignId={campaignId} characterId={myCharacterId} refreshKey={characters} />;
+            } else if (item.i === "notes") {
+              menu.push({ label: view === "edit" ? "Done editing" : "Edit notes", onSelect: () => toggleAtelierView("notes", "edit") });
+              body = <AtelierMissionLive campaignId={campaignId} editing={view === "edit"} onEdit={() => toggleAtelierView("notes", "edit")} />;
+            } else if (item.i === "dice" && canWrite) {
+              menu.push({ label: view === "full" ? "Simple roller" : "More roll options", onSelect: () => toggleAtelierView("dice", "full") });
+              if (view !== "full")
+                body = (
+                  <AtelierDice
+                    system={system}
+                    diceTheme={user?.diceTheme}
+                    hotkey={!editing}
+                    onRoll={(formula) => doRoll({ formula, label: "", mode: "normal", visibility: "public" })}
+                  />
+                );
+            } else if (item.i === "party") {
+              body = <AtelierTeamStatus members={teamMembers(characters, { campaignId, myId: user!.id, isDM: !!isDM, online })} />;
+            } else if (item.i === "rolls") {
+              body = <AtelierSessionLog entries={logEntries(rolls, characters)} />;
+            }
+            menu.push({ label: editing ? "Finish arranging" : "Arrange panels", onSelect: () => setEditing((e) => !e) });
+            return (
+              <div key={item.i} className={`panel panel-${item.i} atelier-panel`}>
+                <AtelierPanelHead title={title} editing={editing} menu={menu} onRemove={() => removePanel(item.i)} />
+                <div className="panel-body">{body}</div>
+              </div>
+            );
+          }
           return (
             <div key={item.i} className={`panel panel-${item.i}`}>
               <div className={`panel-head${editing ? " panel-drag" : ""}`}>
                 <span className="panel-title">
-                  <span className="panel-icon">{themeView.themeId === "schnee-atelier" ? <img src="/assets/themes/schnee-atelier/glyph.svg" alt="" /> : isRemnant ? REMNANT_PANEL_ICONS[item.i] ?? "\u25C7" : def.icon}</span>{" "}
+                  <span className="panel-icon">{isRemnant ? REMNANT_PANEL_ICONS[item.i] ?? "\u25C7" : def.icon}</span>{" "}
                   {isRemnant ? REMNANT_PANEL_TITLES[item.i] ?? def.title : def.title}
                 </span>
                 {editing && (
@@ -468,21 +595,14 @@ export default function CampaignDashboardPage() {
                   </button>
                 )}
               </div>
-              <div className="panel-body">
-                {themeView.themeId === "schnee-atelier" && item.i === "dice" && (
-                  <div className="atelier-dice-display" aria-label="Your equipped dice">
-                    <DiceThumbnail theme={user?.diceTheme || "white"} />
-                  </div>
-                )}
-                {def.render(ctx)}
-              </div>
+              <div className="panel-body">{def.render(ctx)}</div>
             </div>
           );
         })}
       </Grid>
 
       {/* Quick dice + roll notifications, reachable from every campaign screen. */}
-      {canWrite && <DiceDock onRoll={doRoll} system={system} />}
+      {canWrite && !(atelier && present.has("dice")) && <DiceDock onRoll={doRoll} system={system} />}
       {isRemnant ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <RollDock rolls={rolls} />}
     </div>
   );

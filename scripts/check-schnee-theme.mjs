@@ -11,6 +11,7 @@ Object.assign(data, { teamName: 'RWBY', weaponName: 'Crescent Rose', aura: 42, h
 const browser = await chromium.launch({ channel: 'msedge', headless: true, timeout: 20000 });
 try {
   const page = await browser.newPage({ viewport: { width: 1586, height: 992 } });
+  page.setDefaultTimeout(15000);
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   const members = ['Ruby Rose', 'Weiss Schnee', 'Blake Belladonna', 'Yang Xiao Long'].map((display_name, i) => ({ id: i + 1, display_name, role: 'player' }));
   const characters = members.map(m => ({ id: m.id, name: m.display_name, ownerId: m.id, ownerName: m.display_name, hp: 12, maxHp: 14, aura: 42, auraMax: 45, isNpc: false, portraitUrl: '', summary: 'Team RWBY', data }));
@@ -41,20 +42,29 @@ try {
       : { items: [], recaps: [], handouts: [], events: [], entries: [], sessions: [], rewards: [], balance: 100 };
     return r.fulfill({ json });
   });
+  // Schnee Atelier keeps Theme inside its gear menu; other themes show it in the top bar.
+  const openTheme = async () => {
+    if (await page.locator('.atelier-topbar').count()) await page.getByRole('button', { name: 'Campaign menu' }).click();
+    await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  };
+  const closeTheme = async () => {
+    const close = page.getByRole('button', { name: 'Close theme picker' });
+    if (await close.count()) await close.click();
+  };
   const url = (process.env.QA_URL || 'http://127.0.0.1:5182') + '/campaigns/99';
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
   await page.locator('.panel-sheet .sheet-view').waitFor();
   const original = structuredClone(layout);
-  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  await openTheme();
   await page.getByRole('button', { name: /Schnee Atelier Ivory palace/ }).click();
-  await page.getByRole('button', { name: 'Close theme picker' }).click();
+  await closeTheme();
   await page.locator('[data-theme="schnee-atelier"]').waitFor();
   await page.evaluate(() => document.fonts.ready);
-  await page.locator('.atelier-dice-display img').waitFor({ timeout: 15000 }).catch(() => {});
+  await page.locator('.atelier-dice img').waitFor({ timeout: 15000 }).catch(() => {});
   await page.evaluate(() => window.scrollTo(0, 0));
   assert.deepEqual(layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h })), original.map(({ i, x, y, w, h }) => ({ i, x, y, w, h })));
   await page.screenshot({ path: '.impeccable/review/schnee-desktop.png', fullPage: true });
-  await page.getByRole('button', { name: /Edit layout/ }).click();
+  await page.getByRole('button', { name: /Edit layout|Edit panels/ }).click();
   const before = structuredClone(layout.find(p => p.i === 'notes'));
   const handle = await page.locator('.panel-notes .panel-head').boundingBox();
   await page.mouse.move(handle.x + handle.width / 2, handle.y + 15);
@@ -74,26 +84,26 @@ try {
   const changed = JSON.stringify(layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h })));
   await page.reload(); await page.locator('[data-theme="schnee-atelier"] .panel-notes').waitFor();
   assert.equal(JSON.stringify(layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h }))), changed);
-  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  await openTheme();
   await page.getByRole('button', { name: /Huntsman Network Tactical academy/ }).click();
-  await page.getByRole('button', { name: 'Close theme picker' }).click();
+  await closeTheme();
   assert.equal(await page.locator('.atelier-masthead').count(), 0);
-  assert.equal(await page.locator('.atelier-dice-display').count(), 0);
+  assert.equal(await page.locator('.atelier-dice').count(), 0);
   assert.equal(JSON.stringify(layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h }))), changed);
   // Campaign default uses the same new identifier. Keep the review layout compact.
   role = 'dm'; layout = [...original, { i: 'vcoins', x: 0, y: 20, w: 4, h: 7 }];
   await page.reload();
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
-  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  await openTheme();
   await page.locator('.campaign-default-section').getByRole('button', { name: /Schnee Atelier/ }).click();
   await page.waitForFunction(() => document.querySelector('.campaign-default-section .campaign-selected')?.textContent.includes('Schnee Atelier'));
   assert.equal(campaignTheme, 'schnee-atelier');
   await page.getByRole('button', { name: /Campaign default Schnee Atelier/ }).click();
-  await page.getByRole('button', { name: 'Close theme picker' }).click();
+  await closeTheme();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: '.impeccable/review/schnee-mobile.png' });
-  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  await openTheme();
   const picker = await page.locator('.theme-picker-popover').boundingBox();
   assert.ok(picker.x >= 0 && picker.x + picker.width <= 390, 'theme picker fits mobile');
   await page.screenshot({ path: '.impeccable/review/schnee-mobile-picker.png' });

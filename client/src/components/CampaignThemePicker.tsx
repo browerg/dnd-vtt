@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import { THEME_BY_ID, type ThemeDefinition, type ThemeId, type ThemeOverride, type useCampaignTheme } from "../theme";
 
@@ -71,6 +72,15 @@ export default function CampaignThemePicker({
       <span className="muted small">
         These change more than colours: a new backdrop, framed panels and a campaign title banner.
       </span>
+      {makeovers.some((theme) => theme.exampleHref) && (
+        <span className="theme-makeover-examples">
+          {makeovers.filter((theme) => theme.exampleHref).map((theme) => (
+            <Link key={theme.id} to={theme.exampleHref!}>
+              See the {theme.name} example →
+            </Link>
+          ))}
+        </span>
+      )}
     </div>
   );
 
