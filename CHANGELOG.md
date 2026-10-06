@@ -16,6 +16,12 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 6 October 2026
+
+### Major changes
+
+- **Schnee Atelier theme** — A new Remnant look in the Theme menu: an ivory palace backdrop, silver-framed panels, snowflake crests and blue enamel buttons. Your panels, layout, notes and dice stay exactly where you left them, and GMs can make it the campaign default.
+
 ## 5 October 2026
 
 ### Major changes

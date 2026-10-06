@@ -1,0 +1,6 @@
+{
+  "prompt": "Create a standalone wide 16:10 environment wallpaper asset extracted in spirit from this approved Schnee Atelier dashboard reference. Keep exactly its elegant white alpine palace world: pale marble courtyards, gothic snow-white academy towers and delicate silver bridges in the right background, icy blue banners and arcades framing the left, distant snow-covered mountains, bright clouded blue sky, a polished marble terrace across the bottom. Quiet pearly blue-silver and ivory palette. Beautiful detailed hand-painted anime game environment, soft daylight. IMPORTANT: remove ALL interface, panels, borders, text, portraits, icons, cards and dice. The result is ONLY the continuous architectural landscape filling the canvas. Preserve broad calm sky across upper center and understated marble lower center so functional movable UI can be layered above later. No people, no logos, no lettering, no UI. Subtle red rose petals at bottom corners only.",
+  "source": "OpenAI built-in image generation",
+  "reference": "Approved Schnee Atelier dashboard concept, exec-b15fe8f6-7788-4a9d-a543-9614b6f8643e.png",
+  "conversion": "WebP quality 88, original dimensions; format-only conversion."
+}

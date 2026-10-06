@@ -1,4 +1,5 @@
 import CampaignThemeBrand from "../components/CampaignThemeBrand";
+import { DiceThumbnail } from "../components/CollectionDicePreview";
 import CampaignThemePicker from "../components/CampaignThemePicker";
 import { useCampaignTheme, type ThemeId } from "../theme";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -409,6 +410,15 @@ export default function CampaignDashboardPage() {
         </span>
       </header>
 
+      {themeView.themeId === "schnee-atelier" && (
+        <section className="atelier-masthead" aria-label="Campaign">
+          <div className="atelier-title-plaque">
+            <h1>{detail.campaign.name}</h1>
+            <p>{detail.campaign.chapter ? `${detail.campaign.chapter} · ` : ""}Session {detail.campaign.session_number}</p>
+          </div>
+        </section>
+      )}
+
       <Grid
         className={`dashboard-grid${editing ? " editing" : ""}`}
         layout={layout}
@@ -433,7 +443,7 @@ export default function CampaignDashboardPage() {
             <div key={item.i} className={`panel panel-${item.i}`}>
               <div className={`panel-head${editing ? " panel-drag" : ""}`}>
                 <span className="panel-title">
-                  <span className="panel-icon">{isRemnant ? REMNANT_PANEL_ICONS[item.i] ?? "\u25C7" : def.icon}</span>{" "}
+                  <span className="panel-icon">{themeView.themeId === "schnee-atelier" ? <img src="/assets/themes/schnee-atelier/glyph.svg" alt="" /> : isRemnant ? REMNANT_PANEL_ICONS[item.i] ?? "\u25C7" : def.icon}</span>{" "}
                   {isRemnant ? REMNANT_PANEL_TITLES[item.i] ?? def.title : def.title}
                 </span>
                 {editing && (
@@ -458,7 +468,14 @@ export default function CampaignDashboardPage() {
                   </button>
                 )}
               </div>
-              <div className="panel-body">{def.render(ctx)}</div>
+              <div className="panel-body">
+                {themeView.themeId === "schnee-atelier" && item.i === "dice" && (
+                  <div className="atelier-dice-display" aria-label="Your equipped dice">
+                    <DiceThumbnail theme={user?.diceTheme || "white"} />
+                  </div>
+                )}
+                {def.render(ctx)}
+              </div>
             </div>
           );
         })}

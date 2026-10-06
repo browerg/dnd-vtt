@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
+  <defs><linearGradient id="silver" x2="0" y2="1"><stop stop-color="#7c8b9f"/><stop offset=".3" stop-color="#eef2f7"/><stop offset=".6" stop-color="#8190a2"/><stop offset="1" stop-color="#b6c1cf"/></linearGradient></defs>
+  <path d="M23 1H97L119 23V97L97 119H23L1 97V23Z" stroke="#64748c" stroke-width="2"/>
+  <path d="M24 4H96L116 24V96L96 116H24L4 96V24Z" stroke="url(#silver)" stroke-width="3"/>
+  <path d="M25 7H95L113 25V95L95 113H25L7 95V25Z" stroke="#8293a9" stroke-width=".8"/>
+  <path d="M26 10H94L110 26V94L94 110H26L10 94V26Z" stroke="#fff" stroke-width="1.2"/>
+  <g stroke="#6c819d" stroke-width=".8"><path d="M12 19L19 12M101 12L108 19M12 101L19 108M101 108L108 101"/><path d="M9 20L12 19L13 16M100 9L101 12L104 13M9 100L12 101L13 104M100 111L101 108L104 107"/></g>
+  <g fill="#e9f2ff" stroke="#6c819d" stroke-width=".7"><path d="M16 11L19 14L16 17L13 14Z"/><path d="M104 11L107 14L104 17L101 14Z"/><path d="M16 103L19 106L16 109L13 106Z"/><path d="M104 103L107 106L104 109L101 106Z"/></g>
+</svg>

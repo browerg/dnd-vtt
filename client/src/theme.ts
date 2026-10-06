@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 
 export type ThemeId =
+  | "schnee-atelier"
   | "huntsman-network"
   | "beacon-academy"
   | "atlas-command"
@@ -37,6 +38,15 @@ export interface ThemeDefinition {
 }
 
 export const THEMES: ThemeDefinition[] = [
+  {
+    id: "schnee-atelier",
+    name: "Schnee Atelier",
+    system: "remnant",
+    description: "Ivory palace, engraved silver frames and crystalline blue glyphs.",
+    brand: "Schnee Atelier",
+    glyph: "",
+    preview: ["#f5f6f8", "#8394ab", "#215c91"],
+  },
   {
     id: "huntsman-network",
     name: "Huntsman Network",

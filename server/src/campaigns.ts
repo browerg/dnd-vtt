@@ -9,6 +9,7 @@ import { reconcileAccountAchievements } from "./achievementTracking.js";
 const user = (req: Request) => (req as any).user as SessionUser;
 
 const REMNANT_THEMES = new Set([
+  "schnee-atelier",
   "huntsman-network",
   "beacon-academy",
   "atlas-command",

@@ -5,12 +5,15 @@ import Entrance from "./components/Entrance";
 // Engraved academy capitals for headers, warm humanist sans for everything else.
 import "@fontsource/cinzel/600.css";
 import "@fontsource/cinzel/700.css";
+import "@fontsource/wittgenstein/400.css";
+import "@fontsource/wittgenstein/500.css";
 import "@fontsource/alegreya-sans/400.css";
 import "@fontsource/alegreya-sans/500.css";
 import "@fontsource/alegreya-sans/700.css";
 import "./styles.css";
 import "./themes.css";
 import "./daylightThemes.css";
+import "./schneeAtelier.css";
 
 // NOTE: no <React.StrictMode> — its dev-only double-mount detaches
 // react-draggable's event handlers, which silently breaks drag/resize on the

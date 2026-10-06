@@ -19,10 +19,10 @@ export default function CampaignThemeBrand({
   return (
     <div className="campaign-brand-block">
       <span className="campaign-theme-crest" aria-hidden>
-        {theme.glyph}
+        {themeId === "schnee-atelier" ? <img src="/assets/themes/schnee-atelier/glyph.svg" alt="" /> : theme.glyph}
       </span>
       <span className="campaign-brand-copy">
-        <span className="brand campaign-theme-brand">{theme.brand}</span>
+        <span className="brand campaign-theme-brand">{themeId === "schnee-atelier" ? "Vivid Realms" : theme.brand}</span>
         <span className="campaign-theme-subline">
           {campaignName}
           {chapter ? ` \u00B7 ${chapter}` : ""}
