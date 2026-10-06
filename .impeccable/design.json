@@ -814,7 +814,48 @@
         "name": "profile-compact",
         "value": "520px"
       }
-    ]
+    ],
+    "personalScroll": {
+      "scope": ".signature-shell",
+      "colors": {
+        "accent": "#e3a0ac",
+        "bubble": "#683442",
+        "ground": "#181216",
+        "ink": "#f3edef"
+      },
+      "typography": {
+        "body": {
+          "fontFamily": "Segoe UI, system-ui, sans-serif",
+          "fontSize": "13px",
+          "lineHeight": 1.5
+        },
+        "characterName": {
+          "fontFamily": "Cinzel, Georgia, serif",
+          "fontSize": "14px"
+        }
+      },
+      "layout": {
+        "width": "362px",
+        "maxHeight": "700px",
+        "mobileBreakpoint": "640px",
+        "aperture": {
+          "left": "6%",
+          "right": "6%",
+          "top": "5.8%",
+          "bottom": "8.5%"
+        }
+      },
+      "motion": {
+        "duration": "320ms",
+        "easing": "cubic-bezier(.16,1,.3,1)",
+        "reducedMotion": true
+      },
+      "assets": [
+        "/assets/scroll/casing.webp",
+        "/assets/scroll/rose.webp",
+        "/assets/scroll/moonrose.webp"
+      ]
+    }
   },
   "components": [
     {
@@ -838,7 +879,7 @@
       "kind": "input",
       "refersTo": "input",
       "description": "Find items in the current category.",
-      "html": "<input class=\"ds-input\" aria-label=\"Search dice sets\" placeholder=\"Search dice sets…\">",
+      "html": "<input class=\"ds-input\" aria-label=\"Search dice sets\" placeholder=\"Search dice sets\u2026\">",
       "css": ".ds-input{font:400 17px/1.45 'Alegreya Sans',sans-serif;min-height:42px;padding:9px 12px;border:1px solid #34424e;border-radius:5px;background:#141d25;color:#f0eeeb;caret-color:#efb18c}.ds-input::placeholder{color:#a1afbb;opacity:1}.ds-input:focus-visible{outline:2px solid #efb18c;outline-offset:4px}"
     },
     {
@@ -923,7 +964,7 @@
   ],
   "narrative": {
     "northStar": "The Vault and Workshop; Personal Gallery (profile scope)",
-    "overview": "The Vault and Workshop place owned cosmetics on quiet slate surfaces with restrained copper controls. The collection is dense and browseable; the workshop gives the live die room beside grouped editing controls. Existing material rendering and cosmetic art supply the richness.\n\nThis system applies only to Customize. It preserves Vivid Realms’ Cinzel and Alegreya Sans pairing while replacing this route’s surrounding purple-and-gold shell with slate and copper. Other routes retain their incumbent systems.\n\nThe Personal Gallery places personal art and earned objects against near-black gallery walls. Warm ivory serif text, fine accent rules, and quiet controls frame the collection. Artwork supplies the richer color and texture.\n\nThis profile system applies to owner, visitor, and labelled example profiles. Tokens prefixed `profile-` describe this world; unprefixed tokens and the preceding Customize guidance retain their existing scope. The gallery uses Wittgenstein rather than Customize's Cinzel and Alegreya Sans pairing.",
+    "overview": "The Vault and Workshop place owned cosmetics on quiet slate surfaces with restrained copper controls. The collection is dense and browseable; the workshop gives the live die room beside grouped editing controls. Existing material rendering and cosmetic art supply the richness.\n\nThis system applies only to Customize. It preserves Vivid Realms\u2019 Cinzel and Alegreya Sans pairing while replacing this route\u2019s surrounding purple-and-gold shell with slate and copper. Other routes retain their incumbent systems.\n\nThe Personal Gallery places personal art and earned objects against near-black gallery walls. Warm ivory serif text, fine accent rules, and quiet controls frame the collection. Artwork supplies the richer color and texture.\n\nThis profile system applies to owner, visitor, and labelled example profiles. Tokens prefixed `profile-` describe this world; unprefixed tokens and the preceding Customize guidance retain their existing scope. The gallery uses Wittgenstein rather than Customize's Cinzel and Alegreya Sans pairing.",
     "keyCharacteristics": [
       "Slate tonal layers and thin structural borders.",
       "Copper marks action, selection, and equipped status.",

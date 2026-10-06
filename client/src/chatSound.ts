@@ -96,8 +96,8 @@ export type ScrollSoundKind = "tap" | "send" | "buzz";
  * rising swoosh when a message goes out. Quieter than the message chimes,
  * and silenced by the same chat mute.
  */
-export function playScrollSound(kind: ScrollSoundKind): void {
-  if (!chatSoundEnabled()) return;
+export function playScrollSound(kind: ScrollSoundKind, interfaceEnabled = false): void {
+  if (!interfaceEnabled && !chatSoundEnabled()) return;
   const ctx = getContext();
   if (!ctx) return;
   try {

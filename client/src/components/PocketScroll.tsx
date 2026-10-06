@@ -2,10 +2,11 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { io, type Socket } from "socket.io-client";
 import { api, type ChatMessage, type Member, type RollPayload } from "../api";
 import { useAuth } from "../App";
-import { playScrollSound } from "../chatSound";
+import { playChatSound, playScrollSound } from "../chatSound";
 import type { CharacterSummary } from "../sheet";
 import ChatPanel from "./ChatPanel";
 import "./PocketScroll.css";
+import { readScrollPreferences, ScrollIcon } from "./ScrollShell";
 
 /** Anything can open the pocket Scroll by dispatching this on window. */
 export const OPEN_SCROLL_EVENT = "vivid:open-scroll";
@@ -21,15 +22,18 @@ const PEEK_MS = 5500;
 export default function PocketScroll({ campaignId, rolls }: { campaignId: number; rolls: RollPayload[] }) {
   const { user } = useAuth();
   const myId = user?.id ?? 0;
+  const storageKey = `scroll:${myId}:${campaignId}`;
   const [role, setRole] = useState("");
   const [members, setMembers] = useState<Member[]>([]);
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messagesReady, setMessagesReady] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(() => { try { return sessionStorage.getItem(`${storageKey}:open`) === "true"; } catch { return false; } });
+  useEffect(() => { try { sessionStorage.setItem(`${storageKey}:open`,String(open)); } catch {} }, [open,storageKey]);
   const [peek, setPeek] = useState<ChatMessage | null>(null);
   const [buzzing, setBuzzing] = useState(false);
-  const [seenId, setSeenId] = useState(0);
+  const [readingChannel, setReadingChannel] = useState<"ic" | "ooc" | "whisper" | null>(null);
+  const [seenIds, setSeenIds] = useState({ic:0,ooc:0,whisper:0});
   const lastIdRef = useRef<number | null>(null);
   const peekTimer = useRef<number>();
   const buzzTimer = useRef<number>();
@@ -85,13 +89,14 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
     const newest = messages.reduce((max, m) => Math.max(max, m.id), 0);
     if (lastIdRef.current === null) {
       lastIdRef.current = newest;
-      setSeenId(newest);
+      setSeenIds({ic:newest,ooc:newest,whisper:newest});
       return;
     }
     const fresh = messages.filter((m) => m.id > (lastIdRef.current ?? 0) && m.userId !== myId);
     lastIdRef.current = Math.max(lastIdRef.current, newest);
     if (open) {
-      setSeenId(newest);
+      if (fresh.length) playChatSound(fresh.some(m=>m.channel === "whisper") ? "whisper" : "message");
+
       return;
     }
     const latest = fresh[fresh.length - 1];
@@ -106,7 +111,7 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
     buzzTimer.current = window.setTimeout(() => setBuzzing(false), 700);
     playScrollSound("buzz");
     try {
-      navigator.vibrate?.([90, 70, 90]);
+      if(readScrollPreferences(storageKey).vibration) navigator.vibrate?.([90, 70, 90]);
     } catch {
       /* not every device can vibrate */
     }
@@ -123,7 +128,7 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
   const openScroll = useCallback(() => {
     setOpen(true);
     setPeek(null);
-    setSeenId(lastIdRef.current ?? 0);
+
   }, []);
   const tuck = useCallback(() => setOpen(false), []);
 
@@ -148,7 +153,8 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
     if (body.current) body.current.inert = !open;
   }, [open]);
 
-  const unread = messages.filter((m) => m.userId !== myId && m.id > seenId).length;
+  useEffect(()=>{if(open && readingChannel) { const newest=messages.filter(m=>m.channel===readingChannel).reduce((max,m)=>Math.max(max,m.id),0);setSeenIds(current=>current[readingChannel]===newest ? current : {...current,[readingChannel]:newest}); }},[open,readingChannel,messages]);
+  const unread = messages.filter((m) => m.userId !== myId && m.id > seenIds[m.channel]).length;
   const isDM = role === "dm" || role === "co-dm";
 
   const sendChat = useCallback(
@@ -174,7 +180,7 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
       {!open && peek && (
         <button type="button" className="pocket-peek" onClick={openScroll}>
           <span className="pocket-peek-app">
-            <span aria-hidden="true">📱</span> Scroll · now
+            <ScrollIcon name="messages"/> Scroll · now
           </span>
           <strong>{peek.speaker || peek.userName}</strong>
           <span className="pocket-peek-body">{peek.body}</span>
@@ -201,6 +207,9 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
           isDM={isDM}
           scroll
           pocket
+          scrollStorageKey={storageKey}
+          pocketOpen={open}
+          onReadChannel={setReadingChannel}
           rolls={rolls}
           onTuck={tuck}
           onSend={sendChat}
@@ -214,7 +223,7 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
 export function ScrollHint() {
   return (
     <div className="scroll-hint">
-      <span aria-hidden="true">📱</span>
+      <ScrollIcon name="messages"/>
       <p>Your chat lives on your Scroll, tucked into the bottom-right corner.</p>
       <button type="button" className="ghost" onClick={openPocketScroll}>
         Open your Scroll

@@ -2,6 +2,10 @@
 name: Vivid Realms Customize and Personal Gallery
 description: Scoped systems for the Vault and Workshop, and the Personal Gallery.
 colors:
+  scroll-accent: "#e3a0ac"
+  scroll-bubble: "#683442"
+  scroll-ground: "#181216"
+  scroll-ink: "#f3edef"
   copper: "#efb18c"
   copper-hover: "#f4c4a7"
   copper-ink: "#271b15"
@@ -230,6 +234,10 @@ This profile system applies to owner, visitor, and labelled example profiles. To
 
 Recorded from `client/src/components/ProfileGallery.css`, `ProfileGallery.tsx`, `client/src/pages/ProfilePage.tsx`, and `shared/profileGallery.ts`; direction: `docs/profile-redesign-brief.md`; product constraints: `PRODUCT.md`. Desktop example capture was sampled. Source values are normative.
 
+### Personal Scroll scope
+
+Remnant campaigns use Personal Signature hardware with Academy-style message readability. Scope its tokens to `.signature-shell`; preserve other campaign themes. Preferences are browser-local per account and campaign.
+
 ## Colors
 
 Cool slate establishes the interface; warm copper gives controls and state changes a clear point of emphasis.
@@ -265,6 +273,10 @@ Rarity and cosmetic colors remain contextual item data. Their wider hues are not
 
 **The Coordinated Accent Rule.** Within Personal Gallery, switch the full accent family together so frames, text, fills, ink, and focus remain coordinated.
 
+### Personal Scroll palette
+
+Warm burgundy-black screens and warm-white text. Rose is the default accent; ice, jade and gold are player options. Graphite, ivory and field finishes reuse the framed metal artwork.
+
 ## Typography
 
 **Display Font:** Cinzel with Georgia and serif fallbacks.
@@ -287,6 +299,10 @@ Workshop model headings use 25px, mobile 23px; the editor heading uses 24px. Lab
 Wittgenstein, with Georgia and serif fallbacks, is loaded locally in regular, medium, and regular italic. Headings use regular weight and zero tracking. Profile display is the player name; headline is the character or tab heading; section is the lower gallery heading. Body and label roles use the same serif face.
 
 Names reduce to 36px at 1280px and 30px at 860px. Character headings reduce to 22px at 520px. Biography uses 17.5px with 1.45 line height. Pronouns use 16px; memory captions use 16.5px italic with a 64ch measure. Controls use 15-17px. Compact labels do not establish a smaller body-text standard.
+
+### Personal Scroll typography
+
+Segoe UI/system sans for messages (13px, 1.5 line height), controls and settings. Cinzel is limited to the lock-screen character name; the clock is light sans-serif. Do not inherit campaign serif text or gold selection effects into the device.
 
 ## Layout
 
@@ -311,6 +327,10 @@ The owner toolbar is fixed below the main area, 102px high; gallery padding rese
 - At 1060px: feature and lower rows stack, the memory divider disappears, and toolbar labels hide while accessible names remain.
 - At 860px: the rail becomes a top identity region with a 120px portrait, tabs scroll horizontally, main padding becomes 16px, and the toolbar becomes 72px high. Panels use viewport width minus 24px.
 - At 520px: character art becomes 4:3, campaign rows wrap, and example disclosure becomes a normal-flow bar.
+
+### Personal Scroll layout
+
+A 362px pocket device, capped at 700px high and constrained by the viewport. Below 640px it fits between 8px side insets. Raster casing aperture uses 6% side insets, 5.8% top and 8.5% bottom. Messages, Contacts, Rolls and Settings remain in the bottom app bar. The lock screen uses live time, character identity, emblem, a recent-message action and Open Scroll.
 
 ## Elevation & Depth
 
@@ -375,6 +395,10 @@ Desktop tabs use a 3px leading accent rule plus a fading wash; mobile uses a 2px
 Banners have a one-pixel accent frame with 4px inner padding. Built-in choices appear as a two-column grid of named previews: Lakeside Citadel uses shipped illustrative artwork; Midnight, Ember, and Forest use pure CSS. A selected preview keeps its dark fill and adds an accent border plus a 2px offset outline, without glow. The shared preset allowlist maps saved identifiers to the same renderer in picker and profile; uploads remain a separate source. These backgrounds are decorative rather than earned rewards.
 
 Character cards carry semantic text over artwork. Real signature dice use DiceThumbnail; the labelled example uses illustrative dice art. Earned badge and cosmetic ownership remains authoritative; the example's badges and illustrations are explicitly disclosed. Empty regions explain their purpose and offer owner editing actions where applicable.
+
+### Personal Scroll components
+
+The transparent casing and dimensional chin badge are real artwork, not a gradient approximation. The central rose is separate transparent artwork; moon and crest are vector alternatives. Wallpaper stays clear on the lock screen and subdued behind messages. Settings offer named presets, explicit selection, wallpaper upload, separate notification/interface-sound toggles and optional vibration. Message channels and private recipients retain existing campaign semantics. Only a visible conversation clears its channel's unread state. The top casing strip supports downward drag to tuck; the button remains available. Use 320ms easing for the pocket slide and honor reduced motion.
 
 ## Do's and Don'ts
 
