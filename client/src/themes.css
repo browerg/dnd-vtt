@@ -390,6 +390,23 @@
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
 }
 .theme-picker-note { margin: 0.5rem 0 0; font-size: 0.74rem; }
+.theme-makeover-group {
+  margin-top: 0.7rem;
+  padding: 0.6rem;
+  border: 1px dashed var(--theme-accent-2);
+  border-radius: max(3px, var(--theme-radius));
+  background: color-mix(in srgb, var(--theme-accent-2), transparent 94%);
+}
+.theme-makeover-heading { display: flex; flex-direction: column; gap: 0.15rem; margin-bottom: 0.5rem; }
+.theme-makeover-title {
+  color: var(--theme-accent-2);
+  font-family: var(--theme-font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.theme-makeover-title::before { content: "\2726  "; }
 
 /* Remnant themes */
 .campaign-themed[data-theme="huntsman-network"] {

@@ -97,6 +97,9 @@ try {
   const picker = await page.locator('.theme-picker-popover').boundingBox();
   assert.ok(picker.x >= 0 && picker.x + picker.width <= 390, 'theme picker fits mobile');
   await page.screenshot({ path: '.impeccable/review/schnee-mobile-picker.png' });
+  assert.match(await page.locator('.theme-makeover-group').first().innerText(), /Schnee Atelier/, 'makeover group holds Schnee Atelier');
+  await page.locator('.theme-makeover-group').first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '.impeccable/review/schnee-mobile-makeovers.png' });
   assert.deepEqual(errors, []);
   console.log('PASS: theme selection/default, no layout reset, drag/resize, remove/add, reload, incumbent restoration and mobile picker. Synthetic API fixture.');
 } finally { await browser.close(); }

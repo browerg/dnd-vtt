@@ -35,6 +35,8 @@ export interface ThemeDefinition {
   brand: string;
   glyph: string;
   preview: [string, string, string];
+  /** Goes beyond recolouring: its own backdrop, panel frames and title plaque. */
+  fullMakeover?: boolean;
 }
 
 export const THEMES: ThemeDefinition[] = [
@@ -46,6 +48,7 @@ export const THEMES: ThemeDefinition[] = [
     brand: "Schnee Atelier",
     glyph: "",
     preview: ["#f5f6f8", "#8394ab", "#215c91"],
+    fullMakeover: true,
   },
   {
     id: "huntsman-network",
