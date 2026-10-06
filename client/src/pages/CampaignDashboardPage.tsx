@@ -23,7 +23,8 @@ import { PANEL_BY_ID, availablePanels, type PanelCtx } from "../dashboard/panels
 import { AtelierMasthead, AtelierTopbar } from "../atelier/AtelierTopbar";
 import { AtelierDice, AtelierPanelHead, AtelierSessionLog, AtelierTeamStatus, type AtelierMenuItem } from "../atelier/AtelierPanels";
 import { AtelierCharacterLive, AtelierMissionLive } from "../atelier/AtelierLive";
-import { ATELIER_GRID, arrangeLikeAtelier, logEntries, teamMembers } from "../atelier/atelierModel";
+import { ATELIER_ARRANGEMENT, ATELIER_GRID, arrangeLikeAtelier, logEntries, teamMembers } from "../atelier/atelierModel";
+import { useDragAutoScroll } from "../dashboard/autoScroll";
 import {
   GRID_COLS,
   clearLayout,
@@ -116,6 +117,7 @@ export default function CampaignDashboardPage() {
   const [editing, setEditing] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const initialized = useRef(false);
+  const autoScroll = useDragAutoScroll();
   // Schnee Atelier panels can flip to their classic view (full sheet, full
   // dice form, notes editor); remembered per campaign on this device.
   const [atelierViews, setAtelierViews] = useState<Record<string, string>>(() => {
@@ -302,6 +304,20 @@ export default function CampaignDashboardPage() {
     setShowAdd(false);
   };
 
+  // The comp's five panels are put on the page if missing, then everything is arranged.
+  const arrangeAtelier = () => {
+    if (!detail) return;
+    const allowed = new Set(availablePanels(detail.yourRole, detail.campaign.system).map((p) => p.id));
+    const missing = Object.keys(ATELIER_ARRANGEMENT)
+      .filter((id) => allowed.has(id) && !layout.some((it) => it.i === id))
+      .map((id) => {
+        const def = PANEL_BY_ID[id];
+        return { i: id, x: 0, y: 0, w: def.defaultW, h: def.defaultH, minW: def.minW, minH: def.minH };
+      });
+    persistLayout(arrangeLikeAtelier([...layout, ...missing]));
+    setShowAdd(false);
+  };
+
   const resetLayout = () => {
     if (!user || !detail) return;
     clearLayout(campaignId, user.id);
@@ -394,7 +410,7 @@ export default function CampaignDashboardPage() {
                   </div>
                 )}
               </div>
-              <button className="ghost" onClick={() => persistLayout(arrangeLikeAtelier(layout))} title="Arrange your panels like the Atelier example">
+              <button className="ghost" onClick={arrangeAtelier} title="Add the Atelier panels and arrange them like the example">
                 ✦ Atelier layout
               </button>
               <button className="ghost" onClick={resetLayout} title="Restore the default layout">
@@ -526,6 +542,10 @@ export default function CampaignDashboardPage() {
         preventCollision={false}
         allowOverlap
         onLayoutChange={onLayoutChange}
+        onDragStart={autoScroll.start}
+        onDragStop={autoScroll.stop}
+        onResizeStart={autoScroll.start}
+        onResizeStop={autoScroll.stop}
       >
         {layout.map((item) => {
           const def = PANEL_BY_ID[item.i];

@@ -75,11 +75,32 @@ try {
     await page.locator('.atelier-character').waitFor();
     await settle();
     await page.screenshot({ path: '.impeccable/review/atelier-live-own-layout.png' });
-    // Arranging like the comp is an explicit choice.
+    // Dragging a panel to the bottom edge scrolls the page and the panel follows.
+    await page.setViewportSize({ width: 1586, height: 700 });
     await page.getByRole('button', { name: 'Edit panels' }).click();
+    const startY = layout.find((p) => p.i === 'dice').y;
+    const grip = await page.locator('.panel-dice .panel-head').boundingBox();
+    await page.mouse.move(grip.x + 40, grip.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(grip.x + 60, 690, { steps: 12 });
+    await page.waitForTimeout(1200);
+    const scrolled = await page.evaluate(() => window.scrollY);
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+    assert.ok(scrolled > 100, `page auto-scrolls while dragging (scrollY ${scrolled})`);
+    assert.ok(layout.find((p) => p.i === 'dice').y > startY + 5, 'dragged panel travels with the scroll');
+    await page.setViewportSize({ width: 1586, height: 992 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    // Atelier layout puts the comp's panels on the page even if they were removed.
+    await page.getByRole('button', { name: 'Remove Mission notes panel' }).click();
+    await page.getByRole('button', { name: 'Remove Session log panel' }).click();
+    assert.equal(layout.some((p) => p.i === 'notes' || p.i === 'rolls'), false);
     await page.getByRole('button', { name: /Atelier layout/ }).click();
-    const { x, y, w, h } = layout.find((p) => p.i === 'sheet');
-    assert.deepEqual({ x, y, w, h }, { x: 0, y: 0, w: 3, h: 17 });
+    const pick = (id) => { const { x, y, w, h } = layout.find((p) => p.i === id); return { x, y, w, h }; };
+    assert.deepEqual(pick('sheet'), { x: 0, y: 0, w: 3, h: 17 });
+    assert.deepEqual(pick('notes'), { x: 3, y: 0, w: 6, h: 10 });
+    assert.deepEqual(pick('rolls'), { x: 9, y: 10, w: 3, h: 7 });
+    assert.deepEqual(pick('dice'), { x: 3, y: 10, w: 6, h: 7 });
     await page.getByRole('button', { name: 'Done' }).click();
     await settle();
     await page.screenshot({ path: '.impeccable/review/atelier-live.png' });
