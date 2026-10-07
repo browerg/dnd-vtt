@@ -38,11 +38,15 @@ try {
   ];
   let notes = 'Investigate the Emerald Forest\n📍 Mistral Region\nUnusual Grimm activity has been reported in the Emerald Forest. The Council wants eyes on the area and any signs of organized movement.\n• Locate the source of the Grimm activity\nTrack the increased Grimm presence and identify its origin.\n• Search for evidence of organized forces\nLook for signs of coordination, equipment, or human involvement.\n• Report back to the Council\nCompile your findings and return to Mistral with a full report.';
   const posted = [];
+  let showRecap = false;
   await page.route('**/api/**', async (r) => {
     const path = new URL(r.request().url()).pathname, method = r.request().method();
     if (path.endsWith('/dashboard-layout') && method === 'PUT') { layout = r.request().postDataJSON().layout; return r.fulfill({ json: {} }); }
     if (path.endsWith('/notes') && method === 'PUT') { notes = r.request().postDataJSON().body; return r.fulfill({ json: {} }); }
     if (path.endsWith('/rolls') && method === 'POST') { posted.push(r.request().postDataJSON()); return r.fulfill({ json: {} }); }
+    if (path.endsWith('/item-image') && method === 'POST') return r.fulfill({ json: { url: '/assets/themes/schnee-atelier/example/weapon.webp' } });
+    if (path.endsWith('/characters/1') && method === 'PUT') { sheet.data = r.request().postDataJSON().data; return r.fulfill({ json: {} }); }
+    if (path.endsWith('/recaps')) return r.fulfill({ json: { recaps: showRecap ? [{ id: 7, sessionNumber: 11, title: 'The Breach', body: 'Team RWBY held the line at the old gate.', highlights: [{ kind: 'roll', text: 'Blake rolled a natural 20' }], authorId: 4, authorName: 'GM', createdAt: at(10) }] : [] } });
     const json = path === '/api/auth/me' ? { user: { id: 1, display_name: 'Ruby Rose', diceTheme: 'white' } }
       : path === '/api/campaigns/99' ? { campaign: { id: 99, name: 'Shadows of Remnant', system: 'remnant', theme: 'schnee-atelier', description: '', session_number: 12, chapter: '' }, yourRole: 'player', members }
       : path.endsWith('/dashboard-layout') ? { layout }
@@ -128,6 +132,23 @@ try {
     await page.locator('.atelier-gear-menu').getByRole('link', { name: 'Handbook' }).waitFor();
     await page.screenshot({ path: '.impeccable/review/atelier-live-menu.png' });
     await page.keyboard.press('Escape');
+    // Players can give their weapon a picture straight from the card.
+    await page.locator('.atelier-weapon-art.is-editable input[type=file]').setInputFiles('client/public/assets/themes/schnee-atelier/example/weapon.webp');
+    await page.locator('.atelier-weapon-art img:not(.glyph)').waitFor();
+    assert.equal(sheet.data.weaponImageUrl, '/assets/themes/schnee-atelier/example/weapon.webp');
+    assert.equal(sheet.data.weaponName, 'Crescent Rose', 'saving the picture keeps the rest of the sheet');
+    await page.locator('.panel-sheet').screenshot({ path: '.impeccable/review/atelier-weapon-picture.png' });
+    // An unread recap opens in the theme's colours, not the dark default.
+    showRecap = true;
+    await page.reload();
+    const recap = page.locator('.recap-overlay[data-theme="schnee-atelier"]');
+    await recap.waitFor();
+    await settle();
+    await page.screenshot({ path: '.impeccable/review/atelier-recap.png' });
+    const cardBg = await recap.locator('.recap-card').evaluate((el) => getComputedStyle(el).backgroundImage);
+    assert.match(cardBg, /251, 252, 253/, 'recap card is ivory');
+    await page.getByRole('button', { name: 'Continue the story' }).click();
+    showRecap = false;
     // Phone width.
     await page.setViewportSize({ width: 390, height: 844 });
     await settle();

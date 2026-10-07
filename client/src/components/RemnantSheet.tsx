@@ -64,6 +64,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUplo
     error?: string;
   } | null>(null);
   const [restBusy, setRestBusy] = useState(false);
+  const [weaponUploading, setWeaponUploading] = useState(false);
 
   // Any change that can move the computed maxima re-mirrors them into the data
   // so map tokens (which read hp/maxHp/aura/auraMax) stay honest.
@@ -1000,6 +1001,39 @@ export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUplo
                 onChange={(e) => update({ weaponName: e.target.value })}
               />
             </div>
+            {onUpload && (d.weaponImageUrl ? (
+              <div className="inv-photo weapon-photo">
+                <img className="inv-photo-preview" src={d.weaponImageUrl} alt={d.weaponName || "Weapon"} />
+                {!ro && (
+                  <button type="button" className="ghost mini" onClick={() => update({ weaponImageUrl: "" })}>
+                    Remove picture
+                  </button>
+                )}
+              </div>
+            ) : !ro ? (
+              <label className="ghost mini photo-btn weapon-photo">
+                {weaponUploading ? "Uploading…" : "📷 Add weapon picture"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  hidden
+                  disabled={weaponUploading}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    setWeaponUploading(true);
+                    try {
+                      update({ weaponImageUrl: await onUpload(file) });
+                    } catch (err: any) {
+                      window.alert(err.message);
+                    } finally {
+                      setWeaponUploading(false);
+                    }
+                  }}
+                />
+              </label>
+            ) : null)}
                         <p className="muted small weapon-main-attribute-note">
               Damage adds your selected Main Attribute:{" "}
               <strong>

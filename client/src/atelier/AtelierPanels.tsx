@@ -173,7 +173,15 @@ function Shield({ label, value, highlight }: { label: string; value: string; hig
   );
 }
 
-export function AtelierCharacterCard({ card }: { card: AtelierCharacter }) {
+export function AtelierCharacterCard({
+  card,
+  onWeaponImage,
+}: {
+  card: AtelierCharacter;
+  /** When set, the weapon picture is clickable to upload a new one. */
+  onWeaponImage?: (file: File) => Promise<void>;
+}) {
+  const [weaponBusy, setWeaponBusy] = useState(false);
   return (
     <div className="atelier-character">
       <div className="atelier-character-top">
@@ -205,9 +213,40 @@ export function AtelierCharacterCard({ card }: { card: AtelierCharacter }) {
             <span>Weapon</span>
           </h3>
           <div className="atelier-weapon-row">
-            <span className="atelier-weapon-art">
-              {card.weapon.imageUrl ? <img src={card.weapon.imageUrl} alt="" /> : <img className="glyph" src={`${ASSET}/glyph.svg`} alt="" />}
-            </span>
+            {onWeaponImage ? (
+              <label
+                className={`atelier-weapon-art is-editable${weaponBusy ? " is-busy" : ""}`}
+                title={card.weapon.imageUrl ? "Change weapon picture" : "Add a weapon picture"}
+              >
+                {card.weapon.imageUrl ? <img src={card.weapon.imageUrl} alt="" /> : <img className="glyph" src={`${ASSET}/glyph.svg`} alt="" />}
+                <span className="atelier-weapon-hint">
+                  {weaponBusy ? "Uploading…" : card.weapon.imageUrl ? "📷 Change" : "📷 Add picture"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  hidden
+                  disabled={weaponBusy}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    setWeaponBusy(true);
+                    try {
+                      await onWeaponImage(file);
+                    } catch (err: any) {
+                      window.alert(err.message);
+                    } finally {
+                      setWeaponBusy(false);
+                    }
+                  }}
+                />
+              </label>
+            ) : (
+              <span className="atelier-weapon-art">
+                {card.weapon.imageUrl ? <img src={card.weapon.imageUrl} alt="" /> : <img className="glyph" src={`${ASSET}/glyph.svg`} alt="" />}
+              </span>
+            )}
             <div>
               <strong>{card.weapon.name}</strong>
               {card.weapon.subtitle && <p>{card.weapon.subtitle}</p>}

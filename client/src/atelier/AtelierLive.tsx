@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api } from "../api";
+import { api, uploadItemImage } from "../api";
 import { handleBulletKeyDown } from "../bulletList";
 import type { Character } from "../sheet";
 import { AtelierCharacterCard, AtelierMissionView } from "./AtelierPanels";
@@ -16,21 +16,38 @@ export function AtelierCharacterLive({
   refreshKey: unknown;
 }) {
   const [character, setCharacter] = useState<Character | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
-    api<{ character: Character }>(`/api/campaigns/${campaignId}/characters/${characterId}`)
-      .then((r) => active && setCharacter(r.character))
+    api<{ character: Character; canEdit: boolean }>(`/api/campaigns/${campaignId}/characters/${characterId}`)
+      .then((r) => {
+        if (!active) return;
+        setCharacter(r.character);
+        setCanEdit(r.canEdit);
+      })
       .catch((e) => active && setError(e.message));
     return () => {
       active = false;
     };
   }, [campaignId, characterId, refreshKey]);
 
+  // Upload through the sheet's image route, then store the URL on the sheet.
+  const setWeaponImage = async (file: File) => {
+    const url = await uploadItemImage(campaignId, characterId, file);
+    const fresh = await api<{ character: Character }>(`/api/campaigns/${campaignId}/characters/${characterId}`);
+    const data = { ...fresh.character.data, weaponImageUrl: url };
+    await api(`/api/campaigns/${campaignId}/characters/${characterId}`, {
+      method: "PUT",
+      body: JSON.stringify({ name: fresh.character.name, data }),
+    });
+    setCharacter({ ...fresh.character, data });
+  };
+
   if (error) return <p className="error small">{error}</p>;
   if (!character) return <p className="atelier-empty">Loading…</p>;
-  return <AtelierCharacterCard card={characterCard(character, campaignId)} />;
+  return <AtelierCharacterCard card={characterCard(character, campaignId)} onWeaponImage={canEdit ? setWeaponImage : undefined} />;
 }
 
 /**

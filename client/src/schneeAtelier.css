@@ -395,6 +395,15 @@
 }
 .campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art img { width: 100%; height: 100%; object-fit: cover; }
 .campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art img.glyph { width: 60%; height: auto; opacity: .6; object-fit: contain; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art.is-editable { position: relative; cursor: pointer; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art.is-editable > img { grid-area: 1 / 1; }
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-hint {
+  grid-area: 1 / 1; align-self: end; justify-self: stretch;
+  padding: 4px 0; text-align: center; color: #fff; font-size: 11px; letter-spacing: .03em;
+  background: #173f75cc; opacity: 0; transition: opacity .15s;
+}
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art.is-editable:is(:hover, :focus-within, .is-busy) .atelier-weapon-hint,
+.campaign-themed[data-theme="schnee-atelier"] .atelier-weapon-art.is-editable:has(img.glyph) .atelier-weapon-hint { opacity: 1; }
 .campaign-themed[data-theme="schnee-atelier"] .atelier-weapon strong { color: var(--at-ink); font: 600 20px/1.2 var(--font-display); }
 .campaign-themed[data-theme="schnee-atelier"] .atelier-weapon p { margin: 6px 0 0; padding-bottom: 6px; color: #4c5e78; font-size: 15px; border-bottom: 1px solid var(--at-line); }
 .campaign-themed[data-theme="schnee-atelier"] .atelier-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
@@ -666,3 +675,49 @@
 @media (prefers-reduced-motion: reduce) {
   .campaign-themed[data-theme="schnee-atelier"] .react-grid-item { transition: none; }
 }
+
+/* ---------- "Previously on..." recap (rendered in a portal; carries data-theme) ---------- */
+.recap-overlay[data-theme="schnee-atelier"] {
+  background: rgba(214, 226, 240, 0.72);
+  backdrop-filter: blur(2px);
+  color-scheme: light;
+}
+.recap-overlay[data-theme="schnee-atelier"] .recap-card {
+  position: relative; isolation: isolate;
+  border: 0; border-radius: 0;
+  color: #182a4a;
+  background: radial-gradient(120% 70% at 85% 0%, #ffffff 0, transparent 60%), linear-gradient(145deg, #fbfcfd, #eef1f5 60%, #f7f9fb);
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+  box-shadow: none;
+  filter: drop-shadow(0 10px 24px #23395840);
+  padding: 2rem 2rem 1.5rem;
+  font-family: "Alegreya Sans", system-ui, sans-serif;
+}
+.recap-overlay[data-theme="schnee-atelier"] .recap-card::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  border: 26px solid transparent;
+  border-image: url('/assets/themes/schnee-atelier/frame.svg') 30 / 26px / 0 stretch;
+}
+.recap-overlay[data-theme="schnee-atelier"] .recap-eyebrow { color: #286798; letter-spacing: .14em; }
+.recap-overlay[data-theme="schnee-atelier"] .recap-title { color: #182a4a; font: 600 2rem/1.15 "Crimson Pro", Georgia, serif; letter-spacing: 0; text-transform: none; }
+.recap-overlay[data-theme="schnee-atelier"] .recap-meta { color: #5d6c83; }
+.recap-overlay[data-theme="schnee-atelier"] .recap-body p { color: #3a4961; }
+.recap-overlay[data-theme="schnee-atelier"] .recap-highlights { border-top-color: #c3cedb; color: #2f3f59; }
+.recap-overlay[data-theme="schnee-atelier"] .recap-field > span { color: #4c607a; }
+.recap-overlay[data-theme="schnee-atelier"] :is(input, textarea) {
+  color: #182a4a; background: #fbfcfd; border: 1px solid #b5c2d2; border-radius: 2px;
+}
+.recap-overlay[data-theme="schnee-atelier"] button {
+  color: #203e62; border: 1px solid #99abc1; border-radius: 2px;
+  background: linear-gradient(160deg, #fff, #e7edf5); box-shadow: inset 0 0 0 2px #ffffffb3; text-shadow: none;
+  font-family: "Crimson Pro", Georgia, serif; font-weight: 600;
+}
+.recap-overlay[data-theme="schnee-atelier"] button:hover:not(:disabled) { border-color: #427cad; background: #e0ecf9; }
+.recap-overlay[data-theme="schnee-atelier"] button:disabled { opacity: .5; }
+.recap-overlay[data-theme="schnee-atelier"] button.primary {
+  color: #fff; border: 0; padding: .65rem 1.6rem;
+  background: linear-gradient(180deg, #3c75bd 0%, #1d4f93 48%, #143c76 52%, #1b4a8a 100%);
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+  box-shadow: inset 0 0 0 1.5px #a9c3e3; text-shadow: 0 1px 1px #0a2348;
+}
+.recap-overlay[data-theme="schnee-atelier"] button.primary:hover:not(:disabled) { background: linear-gradient(180deg, #4a85cc, #1f5aa3); }

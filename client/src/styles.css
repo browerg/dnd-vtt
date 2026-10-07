@@ -4903,3 +4903,4 @@ details[data-sheet-section="background"] > label:last-of-type textarea {
 @media (prefers-reduced-motion: reduce) {
   .turn-nudge { animation: none; }
 }
+.weapon-photo { margin: 0.4rem 0 0.6rem; }

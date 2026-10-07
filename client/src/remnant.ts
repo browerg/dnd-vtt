@@ -200,6 +200,8 @@ export interface RemnantData {
   hp: number;
   maxHp: number;
   weaponName: string;
+  /** Optional picture of the weapon (an /uploads URL), shown on the Schnee Atelier card. */
+  weaponImageUrl?: string;
   weaponForms: WeaponForm[];
   activeForm: number;
   semblance: {

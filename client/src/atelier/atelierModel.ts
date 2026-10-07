@@ -137,9 +137,15 @@ export function characterCard(character: Character, campaignId: number): Atelier
       value: `d${data.attributes?.[attr.key] ?? 4}`,
       highlight: data.mainAttribute === attr.key,
     })),
-    weapon: data.weaponName
-      ? { name: data.weaponName, subtitle: forms.map((form) => form.type).join(" / "), tags }
-      : undefined,
+    weapon:
+      data.weaponName || data.weaponImageUrl
+        ? {
+            name: data.weaponName || "Unnamed weapon",
+            subtitle: forms.map((form) => form.type).join(" / "),
+            tags,
+            imageUrl: data.weaponImageUrl || undefined,
+          }
+        : undefined,
     sheetHref: `/campaigns/${campaignId}/characters/${character.id}`,
   };
 }

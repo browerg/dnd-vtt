@@ -80,11 +80,16 @@ export default function PreviouslyOn({
   };
 
   const recap = reading != null ? recaps[reading] : undefined;
+  // The dialogs render in a portal outside the themed page; carry its theme
+  // along so a theme can restyle them (Schnee Atelier does).
+  const trigger = useRef<HTMLButtonElement>(null);
+  const theme = trigger.current?.closest(".campaign-themed")?.getAttribute("data-theme") ?? undefined;
   const eyebrow = system === "remnant" ? "Huntsman Network · Mission log" : `Previously, in ${campaignName}…`;
 
   return (
     <>
       <button
+        ref={trigger}
         type="button"
         className="ghost link campaign-nav-link previously-on-trigger"
         onClick={() => (recaps.length ? setReading(0) : isDM ? setComposing(true) : undefined)}
@@ -96,7 +101,7 @@ export default function PreviouslyOn({
 
       {recap &&
         createPortal(
-          <div className="recap-overlay" role="dialog" aria-modal="true" aria-label={recap.title}
+          <div className="recap-overlay" data-theme={theme} role="dialog" aria-modal="true" aria-label={recap.title}
             onClick={(e) => e.target === e.currentTarget && closeReader()}
             onKeyDown={(e) => e.key === "Escape" && closeReader()}>
             <article className="recap-card">
@@ -147,6 +152,7 @@ export default function PreviouslyOn({
         createPortal(
           <RecapComposer
             campaignId={campaignId}
+            theme={theme}
             onClose={() => setComposing(false)}
             onPublished={(r) => {
               setComposing(false);
@@ -162,10 +168,12 @@ export default function PreviouslyOn({
 
 function RecapComposer({
   campaignId,
+  theme,
   onClose,
   onPublished,
 }: {
   campaignId: number;
+  theme?: string;
   onClose: () => void;
   onPublished: (recap: Recap) => void;
 }) {
@@ -211,7 +219,7 @@ function RecapComposer({
   };
 
   return (
-    <div className="recap-overlay" role="dialog" aria-modal="true" aria-label="Write a session recap"
+    <div className="recap-overlay" data-theme={theme} role="dialog" aria-modal="true" aria-label="Write a session recap"
       onKeyDown={(e) => e.key === "Escape" && onClose()}>
       <form className="recap-card recap-composer" onSubmit={publish}>
         <p className="recap-eyebrow">Write a recap</p>
