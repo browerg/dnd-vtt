@@ -43,9 +43,9 @@ export const DEFAULT_PROFILE_GALLERY: ProfileGallery = {
 
 /** Starter artwork is displayed, not written over a player's saved gallery. */
 export const PROFILE_STARTER_ART = {
-  cover: "/assets/profile-gallery/defaults/academy.png",
-  character: "/assets/profile-gallery/defaults/silhouette.svg",
-  memory: "/assets/profile-gallery/defaults/initiation.png",
+  cover: "/assets/profile-gallery/defaults/academy.webp",
+  character: "/assets/profile-gallery/defaults/silhouette.webp",
+  memory: "/assets/profile-gallery/defaults/initiation.webp",
 } as const;
 export function profileGalleryArtwork(gallery: ProfileGallery) {
   return {

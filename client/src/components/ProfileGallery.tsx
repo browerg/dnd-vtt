@@ -176,7 +176,7 @@ function FramedPhoto({ slot, src, framing, controls, label, coverHeight }: {
         update({ ...framing, ...move });
       }}
     >
-      <img src={src} alt="" draggable={false} style={style} />
+      <img src={src} alt="" draggable={false} style={style} decoding="async" loading={slot === "memory" ? "lazy" : "eager"} fetchPriority={slot === "cover" ? "high" : "auto"} />
     </div>
     {controls && !adjusting && <button ref={adjustButton} type="button" className="pg-adjust" onClick={() => setAdjusting(true)}>
       <Icon name="move" /><span>Adjust<span className="sr-only"> {label}</span></span>
