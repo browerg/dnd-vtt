@@ -41,6 +41,20 @@ export const DEFAULT_PROFILE_GALLERY: ProfileGallery = {
   framing: defaultFraming(), coverHeight: "standard",
 };
 
+/** Starter artwork is displayed, not written over a player's saved gallery. */
+export const PROFILE_STARTER_ART = {
+  cover: "/assets/profile-gallery/defaults/academy.png",
+  character: "/assets/profile-gallery/defaults/silhouette.svg",
+  memory: "/assets/profile-gallery/defaults/initiation.png",
+} as const;
+export function profileGalleryArtwork(gallery: ProfileGallery) {
+  return {
+    banner: gallery.coverPath || PROFILE_STARTER_ART.cover,
+    character: gallery.characterImage || PROFILE_STARTER_ART.character,
+    memory: gallery.memoryImage || PROFILE_STARTER_ART.memory,
+  };
+}
+
 /** Only uploaded rasters are accepted for personal pictures. */
 function imagePath(value: unknown): string {
   if (typeof value !== "string") throw new Error("Choose a valid gallery image.");

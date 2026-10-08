@@ -1,6 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_PROFILE_GALLERY, PROFILE_BANNERS, defaultFraming, readProfileGallery, validateProfileGallery } from "../../shared/profileGallery.js";
+import { DEFAULT_PROFILE_GALLERY, PROFILE_BANNERS, PROFILE_STARTER_ART, profileGalleryArtwork, defaultFraming, readProfileGallery, validateProfileGallery } from "../../shared/profileGallery.js";
+
+test("starter artwork fills empty slots without changing saved settings", () => {
+  const gallery = readProfileGallery(undefined);
+  assert.deepEqual(profileGalleryArtwork(gallery), {
+    banner: PROFILE_STARTER_ART.cover, character: PROFILE_STARTER_ART.character, memory: PROFILE_STARTER_ART.memory,
+  });
+  assert.equal(gallery.coverPath, "");
+  const custom = { ...gallery, coverPath: "preset:forest", characterImage: "/uploads/my-character.png", memoryImage: "/uploads/my-memory.webp", sections: [] };
+  assert.deepEqual(profileGalleryArtwork(custom), {
+    banner: "preset:forest", character: "/uploads/my-character.png", memory: "/uploads/my-memory.webp",
+  });
+  assert.deepEqual(custom.sections, []);
+});
 
 test("only approved built-in banners are accepted and only for the cover", () => {
   for (const banner of PROFILE_BANNERS) {

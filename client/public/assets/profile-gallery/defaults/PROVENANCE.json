@@ -1,0 +1,5 @@
+{
+  "academy.png": {"source": "OpenAI image generation", "description": "Beacon Academy landscape for default profile cover", "original": "exec-5e2b62fd-2f21-4995-ba1a-b41d428bea40.png"},
+  "initiation.png": {"source": "OpenAI image generation", "description": "Emerald Forest initiation with students and chess relics for default campaign memory", "original": "exec-3d790be3-1be7-41f4-b02c-bbf263a1b99d.png"},
+  "silhouette.svg": {"source": "Original code-authored SVG", "description": "Neutral character silhouette"}
+}

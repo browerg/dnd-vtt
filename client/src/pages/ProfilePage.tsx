@@ -354,7 +354,7 @@ export default function ProfilePage() {
         {previewing && <div className="pg-banner-note"><span><strong>Preview.</strong> This is how your gallery looks to members of your campaigns.</span></div>}
         {editing && !previewing && dirty && <div className="pg-banner-note"><span><strong>Unsaved changes.</strong> Press Done editing to publish them.</span><button type="button" className="pg-text-button" onClick={discard}>Discard changes</button></div>}
         {!editing && status && <div className="pg-banner-note" role="status"><span>{status}</span><Link className="pg-text-link" to={`/profiles/${user.id}`}>See it as a visitor</Link></div>}
-        {!editing && !status && !gallery.coverPath && !gallery.characterImage && !gallery.memoryImage && <div className="pg-banner-note"><span><strong>Make this gallery yours.</strong> Add cover art, a character, and a campaign memory.</span><Link className="pg-text-link" to="/profiles/example">See an example</Link></div>}
+        {!editing && !status && !gallery.coverPath && !gallery.characterImage && !gallery.memoryImage && <div className="pg-banner-note"><span><strong>Make this gallery yours.</strong> Starter artwork is in place. Edit your profile to add your own pictures.</span><Link className="pg-text-link" to="/profiles/example">See an example</Link></div>}
       </>}
     />
   </>;

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../App";
 import type { ProfileGallery as GallerySettings } from "../../../shared/profileGallery";
-import { COVER_HEIGHTS, MAX_IMAGE_ZOOM, defaultFraming, profileBanner, type CoverHeight, type FramedImage, type ImageFraming } from "../../../shared/profileGallery";
+import { COVER_HEIGHTS, MAX_IMAGE_ZOOM, defaultFraming, profileBanner, profileGalleryArtwork, type CoverHeight, type FramedImage, type ImageFraming } from "../../../shared/profileGallery";
 import type { ProfileBadge } from "./BadgeShowcase";
 import { Avatar } from "./Avatar";
 import { DiceThumbnail } from "./CollectionDicePreview";
@@ -266,9 +266,10 @@ export default function ProfileGalleryView({
   const owner = mode === "owner";
   const tabs = NAV.filter((item) => owner || item.id === "gallery" || item.id === "characters" || item.id === "campaigns");
   const show = (section: GallerySettings["sections"][number]) => gallery.sections.includes(section);
-  const banner = art?.banner || gallery.coverPath;
-  const character = art?.character || gallery.characterImage;
-  const memory = art?.memory || gallery.memoryImage;
+  const starter = profileGalleryArtwork(gallery);
+  const banner = art?.banner || starter.banner;
+  const character = art?.character || starter.character;
+  const memory = art?.memory || starter.memory;
   const signature = gallery.signatureDice || profile.diceTheme || "white";
   const portrait = profile.avatarPath;
   const framing = { ...defaultFraming(), ...gallery.framing };
