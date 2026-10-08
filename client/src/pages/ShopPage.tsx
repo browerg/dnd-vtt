@@ -36,6 +36,8 @@ interface ShopItem {
 }
 
 interface ShopResponse {
+  welcome?: { needsIntroduction: boolean; gift: number };
+  cacheCost?: number;
   wallet: {
     balance: number;
     bypass: boolean;
@@ -93,6 +95,22 @@ const MERCHANT_GIFS: Record<MerchantAnimation, string> = {
 };
 
 export default function ShopPage() {
+  const [welcomeClosed, setWelcomeClosed] = useState(false);
+  const [welcomeSaving, setWelcomeSaving] = useState(false);
+  const [welcomeError, setWelcomeError] = useState("");
+  const closeWelcome = async () => {
+    if (welcomeSaving) return;
+    setWelcomeSaving(true);
+    setWelcomeError("");
+    try {
+      await api("/api/shop/welcome/seen", { method: "POST" });
+      setWelcomeClosed(true);
+    } catch {
+      setWelcomeError("Couldn't save your welcome preference. Please try again.");
+    } finally {
+      setWelcomeSaving(false);
+    }
+  };
   const [shop, setShop] = useState<ShopResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -558,6 +576,16 @@ export default function ShopPage() {
 
   return (
     <div className="shell emporium-shell">
+      <ShopDialog open={!!shop?.welcome?.needsIntroduction && !welcomeClosed} title="Welcome to the Emporium" subtitle="A little something to make your profile yours." onClose={() => { void closeWelcome(); }}>
+        <div className="emporium-welcome-copy">
+          <p className="emporium-welcome-gift"><strong>1,000 VCoins are yours.</strong> Your one-time welcome gift has been added to your wallet. Spend them however you like.</p>
+          <p><strong>Find your look.</strong> Buy cosmetics here, then equip your purchases in Customize. Make your dice, effects and profile feel like you.</p>
+          <p><strong>Try the Scroll gamble.</strong> The Vivid Cache gives you a random cosmetic reward. {shop?.cacheCost === 0 ? "It's currently free to open." : `Each opening costs ${shop?.cacheCost ?? 0} VCoins.`} Rewards aren't guaranteed to be new; you can get duplicates. Check the cache's odds and duplicate refunds before opening.</p>
+          <p><strong>Come back for new bundles.</strong> New themed collections will arrive from time to time. Browse the featured bundle and preview items before you buy.</p>
+          {welcomeError && <p role="alert">{welcomeError}</p>}
+          <button type="button" className="primary" disabled={welcomeSaving} onClick={() => { void closeWelcome(); }}>{welcomeSaving ? "Saving…" : "Let's browse"}</button>
+        </div>
+      </ShopDialog>
       {turnPreview && (
         <div className="turn-start-preview-stage" role="status" aria-live="polite">
           <div

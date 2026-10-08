@@ -1017,3 +1017,8 @@
     overflow: visible;
   }
 }
+
+.emporium-welcome-copy { max-width: 620px; margin: 0 auto; padding: 8px 0 20px; }
+.emporium-welcome-copy p { line-height: 1.6; margin: 0 0 22px; }
+.emporium-welcome-copy strong { color: var(--text); }
+.emporium-welcome-gift { font-size: 1.15rem; }

@@ -1,4 +1,5 @@
 import { appearance } from "./appearance.js";
+import { createEmporiumWelcome } from "./emporiumWelcome.js";
 import { ownsCosmetic } from "./relicOwnership.js";
 import { getIo } from "./realtime.js";
 import type { AppearanceSlot } from "./appearanceStore.js";
@@ -57,6 +58,7 @@ db.exec(`
 // bypassed loadout.
 /** What a wallet starts with, and what the economy reset below sets everyone to. */
 export const STARTING_BALANCE = 100;
+const emporiumWelcome = createEmporiumWelcome(db, STARTING_BALANCE);
 
 const AMNESTY_ID = "grandfather-equipped-cosmetics-v1";
 if (!db.prepare("SELECT 1 FROM shop_migrations WHERE id = ?").get(AMNESTY_ID)) {
@@ -284,6 +286,8 @@ shopRouter.get("/", (req, res) => {
   const bypass = bypassFor(user.id);
 
   res.json({
+    welcome: emporiumWelcome.visit(user.id),
+    cacheCost: CACHE_COST,
     wallet: {
       balance: walletBalance(user.id),
       bypass: bypass.active,
@@ -304,6 +308,13 @@ shopRouter.get("/", (req, res) => {
     specialDice: MYTHIC_DICE.filter(dice => dice.theme !== "first-flame").map(dice => ({ ...dice, owned: ownsMythicDice(db, user.id, dice.theme) })),
     ownedDiceThemes: MYTHIC_DICE.filter(dice => ownsMythicDice(db, user.id, dice.theme)).map(dice => dice.theme),
   });
+});
+
+shopRouter.post("/welcome/seen", (req, res) => {
+  const user = getSessionUser(req);
+  if (!user) return res.status(401).json({ error: "Not logged in" });
+  emporiumWelcome.acknowledge(user.id);
+  res.json({ ok: true });
 });
 
 shopRouter.post("/equip", (req, res) => {
