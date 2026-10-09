@@ -6,6 +6,7 @@ import { gatewayMusic, GATEWAY_MUSIC_KEY } from "../loginAudio";
 import { useBackgroundMusic } from "../useBackgroundMusic";
 import { useEntranceDone } from "../useEntranceDone";
 import "./LoginPage.css";
+import GatewayPreviewToggle, { useGatewayPreview } from "../components/GatewayPreview";
 
 interface DevUser {
   id: number;
@@ -14,6 +15,7 @@ interface DevUser {
 }
 
 export default function LoginPage() {
+  const preview = useGatewayPreview();
   const { signIn } = useAuth();
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
@@ -94,7 +96,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="gateway">
+    <main className={`gateway${preview ? " gateway-library" : ""}`}>
+      <GatewayPreviewToggle />
       <div className="gateway-atmosphere" aria-hidden>
         <span className="gateway-orbit orbit-one" />
         <span className="gateway-orbit orbit-two" />
@@ -111,7 +114,7 @@ export default function LoginPage() {
               <span />
             </span>
             <div>
-              <strong>VIVID REALMS</strong>
+              <strong>{preview ? <><span>Vivid</span><span>Realms</span></> : "VIVID REALMS"}</strong>
               <small>CAMPAIGN GATEWAY</small>
             </div>
           </div>

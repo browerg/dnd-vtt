@@ -1,0 +1,95 @@
+.gateway-preview-toggle { position:fixed; bottom:14px; left:18px; z-index:8500; display:flex; align-items:center; gap:9px; padding:9px 13px; border:1px solid #be9268; border-radius:4px; background:#f6efe3; color:#14243c; font:500 15px/1.2 "Alegreya Sans",sans-serif; box-shadow:0 3px 12px #0004; cursor:pointer; }
+.gateway-preview-toggle input { width:17px; height:17px; accent-color:#172d4a; }
+.gateway-preview-toggle small { color:#65584c; }
+.gateway.gateway-library { --gateway-text:#f7efe2; --gateway-muted:#e0cdb8; --gateway-gold:#c99965; --gateway-cyan:#c99965; grid-template-columns:minmax(0,1fr) minmax(380px, 32%); padding:70px 5vw 70px 6vw; gap:7vw; background:#20140f url('/assets/gateway-preview/library.webp') center/cover no-repeat; }
+.gateway.gateway-library::before,.gateway.gateway-library::after,.gateway-library .gateway-atmosphere,.gateway-library .gateway-system-grid,.gateway-library .gateway-map-card,.gateway-library .gateway-world-footer,.gateway-library .gateway-eyebrow,.gateway-library .gateway-mark { display:none; }
+.gateway-library .gateway-world { background:none; padding:0; border:0; }
+.gateway-library .gateway-world-inner { max-width:650px; justify-content:flex-start; gap:30px; margin:0; }
+.gateway-library .gateway-wordmark strong { font:500 clamp(42px,6vw,88px)/1 "Crimson Pro",Georgia,serif; letter-spacing:.02em; color:#f9efdf; text-shadow:0 3px 10px #0009; }
+.gateway-library .gateway-wordmark strong > span { display:block; }
+.gateway-library .gateway-wordmark strong > span:first-child { font-size:1.4em; }
+.gateway-library .gateway-wordmark strong > span:last-child { margin-left:.3em; color:#dfb383; letter-spacing:.12em; }
+.gateway-library .gateway-hero-copy h1 > span { color:#f8efe2; }
+.gateway-library .gateway-wordmark { position:relative; }
+.gateway-library .gateway-wordmark::before { content:''; position:absolute; left:-34px; top:-30px; width:90px; height:90px; background:url('/assets/gateway-preview/compass.svg') center/contain no-repeat; z-index:-1; }
+.gateway-library .gateway-access { font-family:"Alegreya Sans",sans-serif; }
+.gateway-library .gateway-access .gateway-field span,.gateway-library .gateway-access input { font-family:"Alegreya Sans",sans-serif; }
+.gateway-library .gateway-input-wrap { box-shadow:none !important; }
+.gateway-library .gateway-wordmark small { font:500 16px/1.5 "Alegreya Sans",sans-serif; color:#dfb383; letter-spacing:.18em; }
+.gateway-library .gateway-wordmark small::after { content:' · RWBY / Remnant · D&D 5e'; letter-spacing:.04em; }
+.gateway-library .gateway-hero-copy h1 { font:500 clamp(32px,3.4vw,54px)/1.12 "Crimson Pro",Georgia,serif; letter-spacing:0; color:#f8efe2; text-shadow:0 2px 8px #000; max-width:470px; }
+.gateway-library .gateway-hero-copy > p { max-width:410px; color:#f2e5d3; text-shadow:0 2px 6px #000; }
+.gateway.gateway-library .gateway-access { align-self:center; padding:32px 30px; min-height:0; background:#f6efe3; color:#14243c; border:1px solid #caa680; border-radius:10px; box-shadow:0 12px 45px #0005; --gateway-text:#14243c; --gateway-muted:#65584c; --gateway-border:#d2c3b1; --gateway-panel:#f9f4ec; --gateway-panel-strong:#f9f4ec; }
+.gateway-library .gateway-access-inner { width:100%; max-width:none; }
+.gateway-library .gateway-access-heading h2 { color:#14243c; font:600 42px/1.1 "Crimson Pro",Georgia,serif; letter-spacing:0; text-align:center; }
+.gateway-library .gateway-access-heading p { color:#65584c; text-align:center; }
+.gateway-library .gateway-mode-tabs { background:transparent; border-color:#d2c3b1; }
+.gateway-library .gateway-mode-tabs button { color:#65584c; }
+.gateway-library .gateway-mode-tabs button.active { background:#182d49; color:#fff; border-color:#182d49; }
+.gateway-library .gateway-field { color:#14243c; }
+.gateway-library .gateway-input-wrap { background:#fbf6ef; border:1px solid #d2c3b1; box-shadow:none; }
+.gateway-library .gateway-input-wrap input { color:#14243c; background:transparent; }
+.gateway-library .gateway-input-wrap input::placeholder { color:#71675d; }
+.gateway-library .gateway-submit { background:#162d4b; color:#fff; border-color:#162d4b; box-shadow:none; }
+.gateway-library .gateway-access :is(button,a):focus-visible,.campaign-library :is(button,a,input):focus-visible { outline:2px solid #a66a32; outline-offset:3px; }
+.gateway-library .gateway-access a,.gateway-library .gateway-access .gateway-forgot { color:#264e79; }
+.campaign-select-shell.campaign-library { --select-bg:#f6efe3; --select-text:#14243c; --select-muted:#65584c; --select-gold:#b78859; min-height:100vh; color:#14243c; padding:28px 5vw 65px; background:#20140f url('/assets/gateway-preview/library.webp') center/cover fixed no-repeat; }
+.campaign-library .campaign-select-atmosphere,.campaign-library::before,.campaign-library::after { display:none; }
+.campaign-library .campaign-select-header { max-width:1400px; margin:0 auto 22px; padding:16px 24px; background:linear-gradient(110deg,#24180feb,#3a261ceb); border:1px solid #946640; box-shadow:0 5px 18px #0005; }
+.campaign-library .campaign-select-header :is(a,button,strong) { color:#f6e9d6; }
+.campaign-library .select-wordmark strong { font:500 32px/1 "Crimson Pro",Georgia,serif; }
+.campaign-library .select-wordmark small,.campaign-library .select-nav-copy small,.campaign-library .select-profile-link small { display:none; }
+.campaign-library .campaign-select-main { max-width:1400px; margin:auto; padding:26px; background:#f6efe3; border:1px solid #c9a17d; border-radius:8px; box-shadow:0 8px 35px #0005; }
+.campaign-library .library-heading { position:relative; padding:25px 25px 30px; min-height:170px; margin-bottom:18px; background:linear-gradient(90deg,#f6efe3 25%,#f6efe3ee 40%,#f6efe300 75%),url('/assets/gateway-preview/lobby-banner.webp') center/cover; border-radius:4px; }
+.campaign-library .library-heading h1 { margin:0 0 8px; font:600 clamp(32px,3vw,48px)/1.1 "Crimson Pro",Georgia,serif; color:#101d30; letter-spacing:0; }
+.campaign-library .library-heading p { margin:0; font:400 22px/1.3 "Crimson Pro",Georgia,serif; color:#4f5663; }
+.campaign-library .library-heading button { position:absolute; right:24px; top:50%; transform:translateY(-50%); background:#142d4c; color:white; border:1px solid #d6b38b; padding:15px 25px; font:500 20px "Crimson Pro",Georgia,serif; }
+.campaign-library .campaign-select-hero,.campaign-library .campaign-directory-heading,.campaign-library .campaign-create-button { display:none; }
+.campaign-library .campaign-select-toolbar { padding:0; border:0; background:none; }
+.campaign-library .campaign-filter-tabs { background:transparent; border:0; gap:10px; }
+.campaign-library .campaign-filter-tabs button { color:#14243c; background:#eee6da; border:1px solid #d5c6b5; border-radius:4px; }
+.campaign-library .campaign-filter-tabs button.active { color:white; background:#173252; }
+.campaign-library .campaign-filter-tabs button span { color:inherit; }
+.campaign-library .library-search { display:flex; align-items:center; gap:12px; margin:15px 0; color:#65584c; }
+.campaign-library .library-search input { width:min(440px,100%); padding:11px 14px; background:#faf5ed; border:1px solid #d5c6b5; color:#14243c; }
+.campaign-library .campaign-card-grid { display:grid; grid-template-columns:1fr; gap:14px; }
+.campaign-library .campaign-directory-card { display:grid; grid-template-columns:38% minmax(0,1fr); min-height:160px; color:#14243c; background:#faf4e9; border:1px solid #caa882; border-radius:5px; box-shadow:none; overflow:hidden; animation:none; }
+.campaign-library .campaign-directory-card:hover { transform:none; border-color:#8d5e36; background:#fffaf1; box-shadow:0 4px 12px #50341c18; }
+.campaign-library .campaign-card-visual { height:100%; min-height:160px; background:#36261c; }
+.campaign-library .campaign-card-visual > :not(img),.campaign-library .campaign-directory-card::before,.campaign-library .campaign-directory-card::after { display:none; }
+.campaign-library .campaign-card-visual img { width:100%; height:100%; min-height:160px; object-fit:cover; display:block; }
+.campaign-library .campaign-card-body { display:grid; grid-template-columns:minmax(0,1fr) 170px; gap:6px 20px; padding:20px 24px; }
+.campaign-library .campaign-card-body { min-height:0; align-content:center; }
+.campaign-library .campaign-card-copy { padding:0; }
+.campaign-library .campaign-card-copy p { min-height:0; }
+.campaign-library .campaign-card-meta { justify-content:flex-start; }
+.campaign-library .campaign-card-footer { margin:0; }
+.campaign-library .campaign-enter-link { text-transform:none; letter-spacing:0; white-space:nowrap; }
+.campaign-library .campaign-card-visual { aspect-ratio:auto; }
+.campaign-library .campaign-directory { margin-top:12px; padding-top:0; }
+.campaign-library { font-family:"Alegreya Sans",sans-serif; }
+.campaign-library .campaign-select-main,.gateway-library .gateway-access { position:relative; }
+.campaign-library .campaign-select-main::after,.gateway-library .gateway-access::after { content:''; position:absolute; inset:4px; border:24px solid transparent; border-image:url('/assets/gateway-preview/frame.svg') 24 / 24px / 0 stretch; pointer-events:none; }
+.campaign-library .campaign-card-meta { grid-column:1; gap:10px; }
+.campaign-library :is(.campaign-system-badge,.campaign-role-badge) { color:#65584c; background:transparent; border:0; padding:0; font:500 14px "Alegreya Sans",sans-serif; letter-spacing:0; }
+.campaign-library .campaign-card-copy { grid-column:1; }
+.campaign-library .campaign-card-copy h3 { margin:0 0 7px; color:#14243c; font:600 27px/1.1 "Crimson Pro",Georgia,serif; letter-spacing:0; }
+.campaign-library .campaign-card-copy p { color:#65584c; font:400 17px/1.4 "Alegreya Sans",sans-serif; }
+.campaign-library .campaign-card-footer { grid-column:2; grid-row:1 / span 2; display:flex; align-items:center; justify-content:center; border:0; padding:0; }
+.campaign-library .campaign-member-count { display:none; }
+.campaign-library .campaign-enter-link { padding:14px; background:#172d4b; color:white; border:1px solid #d6b38b; border-radius:5px; font:500 18px "Crimson Pro",Georgia,serif; }
+.campaign-library .campaign-create-panel { background:#faf5ed; border-color:#c9a17d; color:#14243c; }
+.campaign-library .campaign-create-panel :is(h2,p,label,legend,strong,small) { color:#14243c; }
+.campaign-library .campaign-create-panel :is(input,textarea) { background:#fffaf3; color:#14243c; border-color:#c6b6a3; }
+.campaign-library .campaign-create-panel .select-eyebrow { display:none; }
+.campaign-library :is(.campaign-empty-state,.campaign-empty-filter) { background:#faf4e9; color:#65584c; border-color:#caa882; }
+.welcome-veil.welcome-library { background:#f6efe3; color:#14243c; }
+.welcome-library .welcome-rings { display:none; }
+.welcome-library .welcome-name { color:#14243c; font-family:"Crimson Pro",Georgia,serif; background:none; -webkit-background-clip:initial; background-clip:initial; text-transform:none; letter-spacing:0; animation:welcome-name-in 600ms ease-out both; }
+.welcome-library :is(.welcome-eyebrow,.welcome-sub) { color:#65584c; }
+.welcome-library .welcome-rule { background:#b78859; }
+.library-welcome-compass { position:absolute; top:calc(50% - 180px); left:calc(50% - 50px); width:100px; animation:library-compass-reveal 900ms ease-out both; }
+@keyframes library-compass-reveal { from { opacity:0; transform:rotate(-25deg) scale(.85); } to { opacity:1; transform:none; } }
+@media(max-width:900px) { .gateway.gateway-library { grid-template-columns:1fr; padding:45px 22px 75px; gap:30px; } .gateway-library .gateway-world-inner { gap:12px; } .gateway-library .gateway-hero-copy > p { display:none; } .gateway-library .gateway-access { width:100%; max-width:480px; justify-self:center; } .campaign-select-shell.campaign-library { padding:14px 12px 75px; } .campaign-library .campaign-select-main { padding:14px; } .campaign-library .campaign-select-header { flex-wrap:wrap; gap:14px; } .campaign-library .library-heading button { position:static; transform:none; margin-top:18px; } .campaign-library .campaign-card-body { grid-template-columns:1fr; padding:16px; } .campaign-library .campaign-card-footer { grid-column:1; grid-row:auto; justify-content:flex-start; } }
+@media(max-width:560px) { .campaign-library .campaign-directory-card { grid-template-columns:1fr; } .campaign-library .campaign-card-visual { height:140px; min-height:140px; } .campaign-library .campaign-card-visual img { min-height:140px; } .campaign-library .select-nav { flex-wrap:wrap; gap:12px; } .campaign-library .select-wordmark strong { font-size:26px; } .campaign-library .library-search { flex-direction:column; align-items:stretch; gap:5px; } .gateway-library .gateway-wordmark small { font-size:12px; } }
+@media(prefers-reduced-motion:reduce) { .library-welcome-compass { animation:none; } .welcome-library { transition:opacity 150ms; } }

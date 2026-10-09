@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gatewayMusic, playWelcomeChime } from "../loginAudio";
 import "./WelcomeOverlay.css";
+import { useGatewayPreview } from "./GatewayPreview";
 
 // Long enough to read a name, short enough that it never becomes the thing
 // standing between a player and their table.
@@ -23,6 +24,7 @@ export default function WelcomeOverlay({
   returning: boolean;
   onDone: () => void;
 }) {
+  const preview = useGatewayPreview();
   const [leaving, setLeaving] = useState(false);
   const finish = useRef(onDone);
   finish.current = onDone;
@@ -46,7 +48,8 @@ export default function WelcomeOverlay({
   }, []);
 
   return (
-    <div className={`welcome-veil${leaving ? " is-leaving" : ""}`} role="status" aria-live="polite">
+    <div className={`welcome-veil${leaving ? " is-leaving" : ""}${preview ? " welcome-library" : ""}`} role="status" aria-live="polite">
+      {preview && <img className="library-welcome-compass" src="/assets/gateway-preview/compass.svg" alt="" />}
       <div className="welcome-rings" aria-hidden="true">
         <span />
         <span />

@@ -4,6 +4,7 @@ import { api, type CampaignSummary } from "../api";
 import { useAuth } from "../App";
 import { Avatar } from "../components/Avatar";
 import "./DashboardPage.css";
+import GatewayPreviewToggle, { useGatewayPreview } from "../components/GatewayPreview";
 
 type CampaignFilter = "all" | "remnant" | "dnd5e";
 
@@ -18,6 +19,8 @@ const roleLabel = (role: string) => {
 };
 
 export default function DashboardPage() {
+  const preview = useGatewayPreview();
+  const [search, setSearch] = useState("");
   const { user, logout } = useAuth();
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -80,7 +83,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="campaign-select-shell">
+    <div className={`campaign-select-shell${preview ? " campaign-library" : ""}`}>
+      <GatewayPreviewToggle />
       <div className="campaign-select-atmosphere" aria-hidden>
         <span className="select-orbit select-orbit-one" />
         <span className="select-orbit select-orbit-two" />
@@ -132,6 +136,7 @@ export default function DashboardPage() {
       </header>
 
       <main className="campaign-select-main">
+        {preview && <div className="library-heading"><h1>Your campaigns</h1><p>Pick a story and return to the table.</p><button type="button" onClick={() => setShowForm(!showForm)}>{showForm ? "Close setup" : "+ Create campaign"}</button></div>}
         <section className="campaign-select-hero">
           <div className="campaign-select-intro">
             <p className="select-eyebrow">ACTIVE TABLE NETWORK</p>
@@ -343,8 +348,10 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {preview && <label className="library-search">Find a campaign<input type="search" placeholder="Search your campaigns…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>}
+          {preview && search.trim() && !visibleCampaigns.some(c => `${c.name} ${c.description}`.toLowerCase().includes(search.trim().toLowerCase())) && <p role="status">No campaigns match your search.</p>}
           <div className="campaign-card-grid">
-            {visibleCampaigns.map((campaign, index) => {
+            {visibleCampaigns.filter(c => !preview || `${c.name} ${c.description}`.toLowerCase().includes(search.trim().toLowerCase())).map((campaign, index) => {
               const isDnd = campaign.system === "dnd5e";
               return (
                 <Link
@@ -354,6 +361,7 @@ export default function DashboardPage() {
                   style={{ "--card-index": index } as React.CSSProperties}
                 >
                   <div className="campaign-card-visual" aria-hidden>
+                    {preview && <img src={`/assets/gateway-preview/${isDnd ? "fantasy" : "remnant"}-cover.webp`} alt="" loading="lazy" decoding="async" />}
                     <div className="campaign-card-gridlines" />
                     <span className="campaign-card-orbit" />
                     <span className="campaign-card-core">

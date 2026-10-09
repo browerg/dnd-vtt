@@ -1,0 +1,54 @@
+import { createRequire } from 'node:module';
+import { mkdir } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const require = createRequire(import.meta.url);
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const out = '.impeccable/review/gateway-preview';
+await mkdir(out, { recursive: true });
+try {
+  const page = await browser.newPage({ viewport: { width: 1586, height: 992 } });
+  page.setDefaultTimeout(15000);
+  let user = null;
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.addInitScript(() => sessionStorage.setItem('vivid-realms-entrance-v2', 'seen'));
+  const campaigns = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, name: ['Shadows of Remnant', 'The Dragon’s Wake', 'Dust & Dawn'][i % 3] + (i > 2 ? ` ${i}` : ''), description: 'A story shared with your party. Return to the table and continue the adventure.', system: i % 3 === 1 ? 'dnd5e' : 'remnant', role: i % 3 === 1 ? 'dm' : 'player', member_count: 4 }));
+  await page.route('**/api/**', async r => {
+    const path = new URL(r.request().url()).pathname;
+    if (path === '/api/auth/login') { user = { id: 1, display_name: 'Test player' }; return r.fulfill({ json: user }); }
+    return r.fulfill({ json: path === '/api/auth/me' ? { user } : path === '/api/auth/dev-users' ? { users: [] } : path === '/api/campaigns' ? { campaigns } : {} });
+  });
+  await page.goto('http://localhost:5182/login');
+  await page.locator('.gateway').waitFor();
+  assert.equal(await page.locator('.gateway-library').count(), 0);
+  await page.getByRole('checkbox', { name: /Updated theme/ }).check();
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: `${out}/login-desktop.png`, fullPage: true });
+  await page.reload();
+  await page.locator('.gateway-library').waitFor();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: `${out}/login-mobile.png`, fullPage: true });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.setViewportSize({ width: 1586, height: 992 });
+  await page.getByLabel('Email address').fill('test@example.test');
+  await page.locator('input[type="password"]').fill('password123');
+  await page.locator('.gateway-submit').click();
+  await page.locator('.welcome-library').waitFor();
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: `${out}/welcome.png` });
+  await page.locator('.welcome-library').waitFor({ state: 'detached' });
+  await page.locator('.campaign-library').waitFor();
+  await page.screenshot({ path: `${out}/lobby-desktop.png` });
+  assert.equal(await page.locator('.campaign-directory-card').count(), 12);
+  await page.getByRole('searchbox').fill('Dragon');
+  assert.equal(await page.locator('.campaign-directory-card').count(), 4);
+  await page.getByRole('searchbox').fill('');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: `${out}/lobby-mobile.png` });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.getByRole('checkbox', { name: /Updated theme/ }).uncheck();
+  assert.equal(await page.locator('.campaign-library').count(), 0);
+  assert.deepEqual(errors, []);
+  console.log('PASS: preview defaults off, persists, signs in, transitions, filters, scrolls, reverts and fits mobile.');
+} finally { await browser.close(); }
