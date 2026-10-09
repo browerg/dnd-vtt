@@ -32,13 +32,15 @@ try {
       const box = await page.locator(selector).boundingBox();
       const panel = await page.locator('.gateway-access').boundingBox();
       assert.ok(box && panel && box.y >= panel.y && box.y + box.height <= panel.y + panel.height, `${selector} must fit inside account panel`);
+      assert.ok(box.y + box.height <= page.viewportSize().height, `${selector} must remain visible in the viewport`);
     }
   };
-  for (const viewport of [{width:1920,height:1080},{width:1366,height:768},{width:1440,height:900},{width:390,height:844},{width:390,height:667},{width:844,height:390},{width:1586,height:992}]) {
+  for (const viewport of [{width:1920,height:1080},{width:1912,height:960},{width:1366,height:768},{width:1440,height:900},{width:390,height:844},{width:390,height:667},{width:844,height:390},{width:1586,height:992}]) {
     await page.setViewportSize(viewport);
     await page.waitForTimeout(100);
     await assertLoginFits();
     if (viewport.width === 1366) await page.screenshot({path:`${out}/login-laptop.png`});
+    if (viewport.width === 1912) await page.screenshot({path:`${out}/login-wide.png`});
   }
   await page.screenshot({ path: `${out}/login-desktop.png`, fullPage: true });
   assert.equal(await page.locator('.gateway-access-inner').evaluate(el => getComputedStyle(el).overflowY), 'visible');

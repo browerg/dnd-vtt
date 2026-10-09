@@ -252,3 +252,4 @@
 .gateway.gateway-library::before { display:none; }
 .gateway.gateway-library .gateway-access { left:calc(var(--login-art-width) * .6879); top:calc(var(--login-art-height) * .0998); width:calc(var(--login-art-width) * .2926); height:min(calc(var(--login-art-height) * .7782),calc(100dvh - var(--login-art-height) * .0998 - 24px)); }
 @media(max-width:900px) { .gateway.gateway-library { background-image:url('/assets/gateway-preview/library.webp'); background-size:cover; } .gateway.gateway-library .gateway-access { left:auto; top:auto; width:100%; height:auto; } }
+@media(min-width:901px) { .gateway.gateway-library .gateway-access { height:calc(var(--login-art-height) * .7782); } }

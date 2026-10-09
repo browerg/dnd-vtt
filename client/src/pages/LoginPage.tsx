@@ -31,16 +31,22 @@ export default function LoginPage() {
   const formRef = useRef<HTMLDivElement>(null);
   const [devOpen, setDevOpen] = useState(false);
   const [formScale, setFormScale] = useState(1);
+  const [formCenter, setFormCenter] = useState<number>();
 
   useEffect(() => {
     if (!preview || !accessRef.current) return;
     const panel = accessRef.current;
-    const update = () => setFormScale(Math.min(1, (panel.clientWidth - 52) / 390, (panel.clientHeight - 68) / Math.max(650, formRef.current?.scrollHeight ?? 650)));
+    const update = () => {
+      const visibleHeight = Math.min(panel.clientHeight, window.innerHeight - panel.getBoundingClientRect().top - 24);
+      setFormCenter(visibleHeight / 2);
+      setFormScale(Math.min(1, (panel.clientWidth - 52) / 390, (visibleHeight - 68) / Math.max(650, formRef.current?.scrollHeight ?? 650)));
+    };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(panel);
     if (formRef.current) observer.observe(formRef.current);
-    return () => observer.disconnect();
+    window.addEventListener("resize", update);
+    return () => { observer.disconnect(); window.removeEventListener("resize", update); };
   }, [preview]);
 
   // Held until the opening video is gone, so the two soundtracks never
@@ -189,7 +195,7 @@ export default function LoginPage() {
       </section>
 
       <section ref={accessRef} className={`gateway-access${preview ? ` library-mode-${mode}` : ""}`} aria-label="Account access">
-        <div ref={formRef} className={`gateway-access-inner${preview && devOpen ? " library-dev-open" : ""}`} style={preview ? { transform: `translate(-50%, -50%) scale(${formScale})` } : undefined}>
+        <div ref={formRef} className={`gateway-access-inner${preview && devOpen ? " library-dev-open" : ""}`} style={preview ? { top: formCenter, transform: `translate(-50%, -50%) scale(${formScale})` } : undefined}>
           <div className="gateway-access-heading">
             <p className="gateway-eyebrow">SECURE ACCESS TERMINAL</p>
             <h2>
