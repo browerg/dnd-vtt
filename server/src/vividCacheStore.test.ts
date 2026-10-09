@@ -128,11 +128,11 @@ test("new Legendary trails grant their own entitlement on a free opening without
 
 test("weighted selection covers every ticket exactly with configured rarity counts", () => {
   const counts: Record<string, number> = {};
-  for (let ticket = 0; ticket < 70000; ticket++) {
+  for (let ticket = 0; ticket < 998000; ticket++) {
     const reward = selectCacheReward(ticket); counts[reward.rarity] = (counts[reward.rarity] || 0) + 1;
   }
-  assert.deepEqual(counts, { common: 49000, rare: 15400, epic: 4200, legendary: 1260, mythic: 140 });
-  assert.throws(() => selectCacheReward(70000)); assert.throws(() => selectCacheReward(-1));
+  assert.deepEqual(counts, { common: 679000, rare: 213400, epic: 58200, legendary: 17460, mythic: 29940 });
+  assert.throws(() => selectCacheReward(998000)); assert.throws(() => selectCacheReward(-1));
 });
 // Small seeded generator so the theatre tests are deterministic.
 function seeded(seed: number) { return () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296); }
@@ -149,7 +149,7 @@ test("mythics pass the pointer on every spin, slowest last", () => {
   const reel = buildCacheReel(CACHE_REWARDS, CACHE_REWARDS[0], seeded(3));
   for (const slot of CACHE_SHOWCASE_SLOTS) assert.equal(reel[slot].rarity, "mythic");
 });
-test("a near miss sits beside the winner about half the time, and never beside a mythic win", () => {
+test("near misses are staged for ordinary wins but randomly filled beside Mythic wins", () => {
   const nearMiss = (winner: (typeof CACHE_REWARDS)[number], random: () => number) => {
     let hits = 0;
     for (let i = 0; i < 4000; i++) {
@@ -163,9 +163,9 @@ test("a near miss sits beside the winner about half the time, and never beside a
   assert.ok(common > 0.5 && common < 0.62, `common win near-miss rate ${common}`);
   // Only the ordinary random fill can put a big tile there when the win is already mythic.
   const mythic = nearMiss(CACHE_REWARDS.find(r => r.rarity === "mythic")!, seeded(11));
-  assert.ok(mythic < 0.06, `mythic win near-miss rate ${mythic}`);
+  assert.ok(mythic > 0.07 && mythic < 0.12, `mythic win near-miss rate ${mythic}`);
 });
-test("the three new dice sit in the mythic tier and the tier keeps its 0.2% share", () => {
+test("the three new dice sit in the mythic tier with its 3% share", () => {
   for (const theme of ["event-horizon", "chronos-engine", "prismatic-echo"]) {
     const reward = CACHE_REWARDS.find(r => r.id === theme);
     assert.ok(reward, theme);
@@ -175,8 +175,8 @@ test("the three new dice sit in the mythic tier and the tier keeps its 0.2% shar
   }
   const total = CACHE_REWARDS.reduce((n, r) => n + r.weight, 0);
   const mythic = CACHE_REWARDS.filter(r => r.rarity === "mythic").reduce((n, r) => n + r.weight, 0);
-  assert.equal(total, 70000);
-  assert.equal(mythic, 140);
+  assert.equal(total, 998000);
+  assert.equal(mythic, 29940);
 });
 test("a free opening grants the reward, moves no VCoins, and refunds nothing on a duplicate", () => {
   const dice = CACHE_REWARDS.find(r => r.id === "event-horizon")!;
@@ -214,11 +214,11 @@ test("the spin curve winds up, overshoots once, and lands exactly on the winner"
   assert.ok(settleAt > half && settleAt < CACHE_SPIN_DURATION_MS, "settles late, but before the end");
 });
 
-test("new critical rewards grant independently and preserve the 6% Epic tier", () => {
-  assert.equal(CACHE_REWARDS.filter(r => r.rarity === "epic").reduce((n,r) => n+r.weight,0),4200);
+test("new critical rewards grant independently with proportionally adjusted Epic odds", () => {
+  assert.equal(CACHE_REWARDS.filter(r => r.rarity === "epic").reduce((n,r) => n+r.weight,0),58200);
   for (const effect of ["void-collapse", "heavens-lance", "chronobreak"]) {
     const reward = CACHE_REWARDS.find(r => r.id === effect)!;
-    assert.equal(reward.weight,1050);
+    assert.equal(reward.weight,14550);
     const f = fixture(0, () => reward, 0);
     try {
       const result = f.store.open(1,key);
@@ -294,3 +294,4 @@ test("live spin price charges 250 once and rejects balances below 250", () => {
     assert.equal(f.db.prepare("SELECT sum(amount) n FROM vcoin_transactions").get()!.n, -250);
   } finally { f.db.close(); }
 });
+
