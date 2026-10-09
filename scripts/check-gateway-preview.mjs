@@ -18,7 +18,7 @@ try {
   await page.route('**/api/**', async r => {
     const path = new URL(r.request().url()).pathname;
     if (path === '/api/auth/login') { user = { id: 1, display_name: 'Test player' }; return r.fulfill({ json: user }); }
-    return r.fulfill({ json: path === '/api/auth/me' ? { user } : path === '/api/auth/dev-users' ? { users: [] } : path === '/api/campaigns' ? { campaigns: campaigns.slice(0, campaignLimit) } : {} });
+    return r.fulfill({ json: path === '/api/auth/me' ? { user } : path === '/api/auth/dev-users' ? { users: [{id:1,display_name:'Oni',is_dm:1},{id:2,display_name:'Character',is_dm:0},{id:3,display_name:'ONichan',is_dm:0}] } : path === '/api/campaigns' ? { campaigns: campaigns.slice(0, campaignLimit) } : {} });
   });
   await page.goto('http://localhost:5182/login');
   await page.locator('.gateway').waitFor();
@@ -41,6 +41,13 @@ try {
     if (viewport.width === 1366) await page.screenshot({path:`${out}/login-laptop.png`});
   }
   await page.screenshot({ path: `${out}/login-desktop.png`, fullPage: true });
+  assert.equal(await page.locator('.gateway-access-inner').evaluate(el => getComputedStyle(el).overflowY), 'visible');
+  await page.locator('.gateway-dev-access summary').click();
+  await page.getByRole('heading', {name:'Choose a local account'}).waitFor();
+  assert.equal(await page.locator('.gateway-form').isVisible(), false);
+  await page.screenshot({path:`${out}/local-account-picker.png`});
+  await page.locator('.gateway-dev-access summary').click();
+  await page.locator('.gateway-form').waitFor();
   await page.getByRole('button', { name: 'Create an account', exact: true }).click();
   await page.getByLabel('Display name').waitFor();
   await assertLoginFits();

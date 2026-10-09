@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="100" viewBox="0 0 1000 100">
+  <defs><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".007 .32" numOctaves="3" seed="18"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".035"/></feComponentTransfer><feBlend in="SourceGraphic" mode="soft-light"/></filter><linearGradient id="wood" x2="0" y2="1"><stop stop-color="#342015"/><stop offset=".5" stop-color="#23150f"/><stop offset="1" stop-color="#352217"/></linearGradient></defs>
+  <path fill="url(#wood)" filter="url(#grain)" d="M0 0h1000v100H0z"/>
+  <g fill="none" stroke="#b98a57" stroke-opacity=".12"><path d="M0 17Q220 9 460 19T1000 14M0 28Q220 39 490 29T1000 32M0 58Q230 45 480 57T1000 54M0 77Q250 90 520 76T1000 82M0 93Q230 86 480 91T1000 94"/></g>
+</svg>
+

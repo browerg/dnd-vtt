@@ -28,15 +28,18 @@ export default function LoginPage() {
   const [devBusyId, setDevBusyId] = useState<number | null>(null);
   const [devUsers, setDevUsers] = useState<DevUser[]>([]);
   const accessRef = useRef<HTMLElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const [devOpen, setDevOpen] = useState(false);
   const [formScale, setFormScale] = useState(1);
 
   useEffect(() => {
     if (!preview || !accessRef.current) return;
     const panel = accessRef.current;
-    const update = () => setFormScale(Math.min(1, (panel.clientWidth - 52) / 390, (panel.clientHeight - 68) / 650));
+    const update = () => setFormScale(Math.min(1, (panel.clientWidth - 52) / 390, (panel.clientHeight - 68) / Math.max(650, formRef.current?.scrollHeight ?? 650)));
     update();
     const observer = new ResizeObserver(update);
     observer.observe(panel);
+    if (formRef.current) observer.observe(formRef.current);
     return () => observer.disconnect();
   }, [preview]);
 
@@ -186,7 +189,7 @@ export default function LoginPage() {
       </section>
 
       <section ref={accessRef} className={`gateway-access${preview ? ` library-mode-${mode}` : ""}`} aria-label="Account access">
-        <div className="gateway-access-inner" style={preview ? { transform: `translate(-50%, -50%) scale(${formScale})` } : undefined}>
+        <div ref={formRef} className={`gateway-access-inner${preview && devOpen ? " library-dev-open" : ""}`} style={preview ? { transform: `translate(-50%, -50%) scale(${formScale})` } : undefined}>
           <div className="gateway-access-heading">
             <p className="gateway-eyebrow">SECURE ACCESS TERMINAL</p>
             <h2>
@@ -347,12 +350,13 @@ export default function LoginPage() {
           {preview && <p className="library-account-switch">{mode === "login" ? "New here?" : "Already have an account?"} <button type="button" onClick={() => changeMode(mode === "login" ? "register" : "login")}>{mode === "login" ? "Create an account" : "Sign in"}</button></p>}
 
           {devUsers.length > 0 && (
-            <details className="gateway-dev-access">
+            <details className="gateway-dev-access" onToggle={(event) => setDevOpen(event.currentTarget.open)}>
               <summary>
-                <span>Development access</span>
+                <span>{preview && devOpen ? "← Back to sign in" : "Development access"}</span>
                 <small>{devUsers.length} local accounts</small>
               </summary>
               <div className="gateway-dev-users">
+                {preview && <h3>Choose a local account</h3>}
                 {devUsers.map((devUser) => (
                   <button
                     key={devUser.id}

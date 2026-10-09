@@ -223,3 +223,21 @@
 .campaign-library .library-banner-art img { height:640%; }
 @media(max-width:900px) { .gateway.gateway-library { display:flex; flex-direction:column; gap:12px; padding:14px 18px 62px; } .gateway-library .gateway-world { flex:0 0 auto; width:100%; height:64px; margin:0; } .gateway-library .gateway-world-inner { height:64px; justify-content:center; } .gateway-library .gateway-wordmark strong { font-size:23px; } .gateway-library .gateway-wordmark strong > span { display:inline; } .gateway-library .gateway-wordmark strong > span:first-child { font-size:1.4em; } .gateway-library .gateway-wordmark::before { width:60px; height:60px; left:-8px; top:-12px; } .gateway.gateway-library .gateway-access { flex:1; min-height:0; height:auto; width:100%; padding:0; margin:0 auto; } .gateway-library .gateway-access-inner { position:absolute; width:390px; height:650px; top:50%; left:50%; padding:9px 0; } }
 @media(max-height:500px) and (min-width:901px) { .gateway.gateway-library .gateway-access { top:3%; height:94%; } }
+/* Local access is a separate view, so it never adds a scrollbar to sign-in. */
+.gateway-library .gateway-access-inner { height:auto; min-height:650px; overflow:visible; }
+.gateway-library .gateway-dev-access { border-top:1px solid #d4bea2; }
+.gateway-library .gateway-dev-access summary { color:#61472e; }
+.gateway-library .gateway-dev-access summary small { color:#75614d; }
+.gateway-library .library-dev-open > .gateway-access-heading,.gateway-library .library-dev-open > .gateway-form,.gateway-library .library-dev-open > .library-account-switch { display:none; }
+.gateway-library .library-dev-open .gateway-dev-access { margin-top:28px; border:0; }
+.gateway-library .gateway-dev-users h3 { margin:20px 0; color:#14243c; font:500 34px 'Crimson Pro',Georgia,serif; }
+.gateway-library .gateway-dev-users button { padding:14px; border:1px solid #d4bea2; border-radius:9px; background:#fff9ef; color:#172b43; }
+.gateway-library .gateway-dev-users button:hover { background:#efe1cb; border-color:#ac8156; }
+.gateway-library .gateway-dev-users strong { font:600 17px Arial,sans-serif; }
+.gateway-library .gateway-dev-users small { color:#6c5b49; font:13px Arial,sans-serif; margin-top:4px; }
+.gateway-library .dev-avatar { transform:none; border-radius:50%; background:#eee0c9; border-color:#c9aa81; color:#62472f; }
+.gateway-library .dev-enter { color:#284b72; font:600 12px Arial,sans-serif; }
+.campaign-library .campaign-select-header { background:#281a12 url('/assets/gateway-preview/wood.svg') center/auto 100%; }
+.campaign-library .library-brand { mix-blend-mode:screen; }
+@media(max-width:900px) { .gateway-library .gateway-access-inner { height:auto; min-height:650px; } }
+.campaign-library .library-brand { mix-blend-mode:lighten; }
