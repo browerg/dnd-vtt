@@ -16,11 +16,39 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 9 October 2026
+
+### Major changes
+
+- **A new look for signing in, in preview** — Flip the "Updated theme · Preview" switch on the sign-in screen or your campaign list to try a candlelit library: a warm ivory sign-in page, and a campaign lobby with a wooden header, illustrated covers, search and Remnant/D&D filters. It's saved on this device only, the current look stays the default, and you can switch back any time.
+
+## 7 October 2026
+
+### Major changes
+
+- **A welcome gift in the Emporium** — The first time you open the Emporium you're handed 1,000 VCoins to spend, once per account.
+
+### Minor changes
+
+- **Starter art on new profiles** — A fresh profile now starts with ready-made artwork in place of empty boxes, until you add your own.
+
 ## 6 October 2026
 
 ### Major changes
 
+- **Make your Scroll yours** — Your Scroll now opens on a lock screen with the time, your character's name and your emblem. Inside, a Contacts app lists your party and anyone who has messaged you, and Settings lets you pick the case finish (graphite, ivory or field), an accent colour, the wallpaper (or upload your own), your emblem, and whether it plays sounds or vibrates. Drag it down to put it away. Your choices are saved on this browser.
+
 - **Schnee Atelier theme** — A full makeover for Remnant dashboards, found under Theme → Full makeovers. Your character becomes a portrait card with an Aura dial and your six attributes, your notes read as a mission brief with numbered steps, Team status shows everyone's HP and Aura bars, and Combat dice is a pick-a-die-and-Roll panel (press R to roll). The other campaign pages and the theme menu live behind the ⚙ button. Your panels stay where you left them; "✦ Atelier layout" in Edit panels arranges them like the design, and "View the Atelier example" shows it filled in with Team RWBY. Each panel's ⋮ menu can switch back to the full sheet, the full dice options, or the notes editor. GMs can make it the campaign default.
+
+### Minor changes
+
+- **Weapon pictures** — Give your Remnant weapon a picture from the Weapon section of your sheet, or by clicking the weapon box on the Schnee Atelier character card.
+
+- **Drag panels past the edge of the screen** — While moving or resizing a dashboard panel, hold it near the top or bottom of the screen and the page scrolls with you.
+
+- **Full makeovers in the Theme menu** — Themes that restyle the whole dashboard, like Schnee Atelier, now sit in their own section so you know what you're picking.
+
+- **A lighter "Previously on…" in Schnee Atelier** — Session recaps now open on an ivory card instead of the dark default.
 
 ## 5 October 2026
 
@@ -57,6 +85,20 @@ is the one piece of markup the launcher renders.
 - **Smoother Emporium scrolling** — The Dice Trails, Nat 20, Nat 1 and Turn Start catalogues no longer stutter while you scroll through them.
 
 - **Intro video paused** — The opening video is switched off for now while a new one is made. The app opens straight to the sign-in screen.
+
+## 3 October 2026
+
+### Major changes
+
+- **New Emporium prices** — Every cosmetic is now priced by rarity: Uncommon 100, Rare 250, Epic 500 and Legendary 1,000 VCoins. Trails and critical effects that used to be Vivid Cache only can now be bought outright; only Mythics remain Cache-exclusive, and their look stays a secret until you win one.
+
+- **The Vivid Cache costs 250 VCoins a spin** — Duplicates you already own now give some VCoins back.
+
+### Minor changes
+
+- **Frame your profile pictures** — An Adjust button on each picture in your Personal Gallery lets you drag to reposition it and zoom in, and the cover banner can be set to a different height.
+
+- **Clearer home buttons** — Customize, Emporium and your profile now have labelled buttons at the top of your campaign list.
 
 ## 2 October 2026
 
