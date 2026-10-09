@@ -10,6 +10,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1586, height: 992 } });
   page.setDefaultTimeout(15000);
   let user = null;
+  let campaignLimit = 12;
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.addInitScript(() => sessionStorage.setItem('vivid-realms-entrance-v2', 'seen'));
@@ -17,7 +18,7 @@ try {
   await page.route('**/api/**', async r => {
     const path = new URL(r.request().url()).pathname;
     if (path === '/api/auth/login') { user = { id: 1, display_name: 'Test player' }; return r.fulfill({ json: user }); }
-    return r.fulfill({ json: path === '/api/auth/me' ? { user } : path === '/api/auth/dev-users' ? { users: [] } : path === '/api/campaigns' ? { campaigns } : {} });
+    return r.fulfill({ json: path === '/api/auth/me' ? { user } : path === '/api/auth/dev-users' ? { users: [] } : path === '/api/campaigns' ? { campaigns: campaigns.slice(0, campaignLimit) } : {} });
   });
   await page.goto('http://localhost:5182/login');
   await page.locator('.gateway').waitFor();
@@ -25,13 +26,19 @@ try {
   await page.getByRole('checkbox', { name: /Updated theme/ }).check();
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: `${out}/login-desktop.png`, fullPage: true });
+  await page.getByRole('button', { name: 'Create an account', exact: true }).click();
+  await page.getByLabel('Display name').waitFor();
+  await page.locator('.library-account-switch').getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Forgot password?', exact: true }).click();
+  await page.getByRole('button', { name: 'Send recovery link', exact: true }).waitFor();
+  await page.getByRole('button', { name: /Back to login/ }).click();
   await page.reload();
   await page.locator('.gateway-library').waitFor();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: `${out}/login-mobile.png`, fullPage: true });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await page.setViewportSize({ width: 1586, height: 992 });
-  await page.getByLabel('Email address').fill('test@example.test');
+  await page.getByLabel('Email', { exact: true }).fill('test@example.test');
   await page.locator('input[type="password"]').fill('password123');
   await page.locator('.gateway-submit').click();
   await page.locator('.welcome-library').waitFor();
@@ -47,6 +54,21 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: `${out}/lobby-mobile.png` });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  assert.ok(await page.locator('.select-nav').evaluate(el => el.getBoundingClientRect().right <= innerWidth));
+  await page.setViewportSize({ width: 1586, height: 992 });
+  campaignLimit = 1;
+  await page.reload();
+  await page.locator('.campaign-directory-card').waitFor();
+  assert.equal(await page.locator('.campaign-directory-card').count(), 1);
+  assert.ok((await page.locator('.campaign-select-main').boundingBox()).height >= 795);
+  await page.screenshot({ path: `${out}/lobby-single-campaign.png` });
+  await page.getByRole('button', { name: '+ Create campaign', exact: true }).click();
+  await page.getByRole('heading', { name: 'Open a campaign' }).waitFor();
+  await page.getByRole('button', { name: 'Close campaign setup' }).click();
+  campaignLimit = 0;
+  await page.reload();
+  await page.getByRole('heading', { name: 'Your first world is waiting.' }).waitFor();
+  assert.equal(await page.locator('.campaign-directory-card').count(), 0);
   await page.getByRole('checkbox', { name: /Updated theme/ }).uncheck();
   assert.equal(await page.locator('.campaign-library').count(), 0);
   assert.deepEqual(errors, []);

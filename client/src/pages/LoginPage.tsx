@@ -173,7 +173,7 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <section className="gateway-access" aria-label="Account access">
+      <section className={`gateway-access${preview ? ` library-mode-${mode}` : ""}`} aria-label="Account access">
         <div className="gateway-access-inner">
           <div className="gateway-access-heading">
             <p className="gateway-eyebrow">SECURE ACCESS TERMINAL</p>
@@ -186,7 +186,7 @@ export default function LoginPage() {
             </h2>
             <p>
               {mode === "login"
-                ? "Sign in to return to your campaigns."
+                ? preview ? <>Sign in to your <span className="library-account-name">VIVID REALMS</span> account<br />and return to the table.</> : "Sign in to return to your campaigns."
                 : mode === "register"
                   ? "Create an account and begin building your table."
                   : "Enter your account email and we'll send a secure recovery link."}
@@ -233,7 +233,7 @@ export default function LoginPage() {
             )}
 
             <label className="gateway-field" htmlFor={emailId}>
-              <span>Email address</span>
+              <span>{preview ? "Email" : "Email address"}</span>
               <span className="gateway-input-wrap">
                 <span className="field-icon mail-icon" aria-hidden />
                 <input
@@ -270,7 +270,7 @@ export default function LoginPage() {
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     onClick={() => setShowPassword((visible) => !visible)}
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {preview ? <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>{!showPassword && <path d="m4 21 16-18"/>}</svg> : showPassword ? "Hide" : "Show"}
                   </button>
                 </span>
               </label>
@@ -323,7 +323,7 @@ export default function LoginPage() {
                     ? "Sending recovery link..."
                     : "Authenticating..."
                   : mode === "login"
-                    ? "Enter tabletop"
+                    ? preview ? "Sign in" : "Enter tabletop"
                     : mode === "register"
                       ? "Create account"
                       : "Send recovery link"}
@@ -331,6 +331,8 @@ export default function LoginPage() {
               {!busy && <span className="submit-arrow" aria-hidden />}
             </button>
           </form>
+
+          {preview && <p className="library-account-switch">{mode === "login" ? "New here?" : "Already have an account?"} <button type="button" onClick={() => changeMode(mode === "login" ? "register" : "login")}>{mode === "login" ? "Create an account" : "Sign in"}</button></p>}
 
           {devUsers.length > 0 && (
             <details className="gateway-dev-access">

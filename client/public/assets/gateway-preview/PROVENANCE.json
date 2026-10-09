@@ -30,5 +30,23 @@
     "width": 900,
     "height": 300,
     "bytes": 72742
+  },
+  "login-reference.webp": {
+    "source": "User-approved original login concept",
+    "original": "codex-clipboard-4b0faa83-41a8-4563-a4be-1177f7abf82e.png",
+    "conversion": "WebP quality 95; original dimensions preserved",
+    "width": 1586,
+    "height": 992,
+    "bytes": 431322,
+    "usage": "Desktop illustration preserves original brand and frame; painted form interior is covered by functional HTML controls"
+  },
+  "campaign-reference.webp": {
+    "source": "User-approved campaign selection concept",
+    "original": "codex-clipboard-05f1b250-13a6-4dc2-ac92-27e6e95c4f5c.png",
+    "conversion": "WebP quality 95; original dimensions",
+    "width": 1586,
+    "height": 992,
+    "bytes": 434298,
+    "usage": "CSS illustration regions for brand, banner and system covers; all controls and campaign text are live HTML"
   }
 }

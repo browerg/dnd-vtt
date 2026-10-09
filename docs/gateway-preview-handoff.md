@@ -23,3 +23,11 @@ Assets are ready for Claude or Codex to implement. Work in `LoginPage.tsx`, `Das
 ## Implementation status
 
 Implemented locally by Codex after graphics completion. `components/GatewayPreview.tsx` owns the device-local toggle; `GatewayPreview.css` scopes the illustrated theme. Login, directory and welcome overlay opt in through the shared hook. Search uses real campaign names/descriptions. Default system covers are deliberately shared, not story-specific artwork. Initial cinematic entrance video is unchanged; only the post-sign-in greeting is themed. Browser checks in `scripts/check-gateway-preview.mjs` cover default-off, persistence, login, transition, twelve campaigns, search, mobile overflow and revert. Screenshots are under `.impeccable/review/gateway-preview/`. Built-in bundled Playwright can be supplied via `PLAYWRIGHT_MODULE`.
+
+## Reference fidelity correction
+
+Desktop login now uses login-reference.webp from the exact approved image, preserving the scene, logo, tagline and outer frame. The painted account interior is covered by live accessible HTML fields and links. At 1586 x 992 its panel uses the original placement and proportions. Smaller screens use the clean library illustration and a stacked live form. Desktop artwork scales with the viewport; the live type and controls adapt rather than stretching. Browser checks additionally exercise registration and recovery navigation.
+
+## Campaign directory fidelity correction
+
+Uses campaign-reference.webp illustration regions for the approved brand and campaign cover artwork. Campaign names, descriptions, roles and links remain actual API data. Search and filters share the toolbar; metadata has its own column. The desktop sheet reserves a 795px minimum height and the directory 484px (about three campaign rows), growing with real content. Mobile stacks artwork and content. No campaigns are seeded or created by the redesign. Browser verification covers twelve, one and zero campaigns, one-campaign minimum height, setup open/close, search, mobile navigation bounds and reverting the preview.
