@@ -25,9 +25,25 @@ try {
   assert.equal(await page.locator('.gateway-library').count(), 0);
   await page.getByRole('checkbox', { name: /Updated theme/ }).check();
   await page.evaluate(() => document.fonts.ready);
+  const assertLoginFits = async () => {
+    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1), 'Login must not scroll vertically');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Login must not scroll horizontally');
+    for (const selector of ['.gateway-submit', '.library-account-switch']) {
+      const box = await page.locator(selector).boundingBox();
+      const panel = await page.locator('.gateway-access').boundingBox();
+      assert.ok(box && panel && box.y >= panel.y && box.y + box.height <= panel.y + panel.height, `${selector} must fit inside account panel`);
+    }
+  };
+  for (const viewport of [{width:1920,height:1080},{width:1366,height:768},{width:1440,height:900},{width:390,height:844},{width:390,height:667},{width:844,height:390},{width:1586,height:992}]) {
+    await page.setViewportSize(viewport);
+    await page.waitForTimeout(100);
+    await assertLoginFits();
+    if (viewport.width === 1366) await page.screenshot({path:`${out}/login-laptop.png`});
+  }
   await page.screenshot({ path: `${out}/login-desktop.png`, fullPage: true });
   await page.getByRole('button', { name: 'Create an account', exact: true }).click();
   await page.getByLabel('Display name').waitFor();
+  await assertLoginFits();
   await page.locator('.library-account-switch').getByRole('button', { name: 'Sign in', exact: true }).click();
   await page.getByRole('button', { name: 'Forgot password?', exact: true }).click();
   await page.getByRole('button', { name: 'Send recovery link', exact: true }).waitFor();
@@ -72,5 +88,5 @@ try {
   await page.getByRole('checkbox', { name: /Updated theme/ }).uncheck();
   assert.equal(await page.locator('.campaign-library').count(), 0);
   assert.deepEqual(errors, []);
-  console.log('PASS: preview defaults off, persists, signs in, transitions, filters, scrolls, reverts and fits mobile.');
+  console.log('PASS: login fits seven viewport sizes without page scrolling; registration/recovery, campaign states, search, mobile navigation, persistence and reverting work.');
 } finally { await browser.close(); }

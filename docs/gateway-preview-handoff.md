@@ -31,3 +31,7 @@ Desktop login now uses login-reference.webp from the exact approved image, prese
 ## Campaign directory fidelity correction
 
 Uses campaign-reference.webp illustration regions for the approved brand and campaign cover artwork. Campaign names, descriptions, roles and links remain actual API data. Search and filters share the toolbar; metadata has its own column. The desktop sheet reserves a 795px minimum height and the directory 484px (about three campaign rows), growing with real content. Mobile stacks artwork and content. No campaigns are seeded or created by the redesign. Browser verification covers twelve, one and zero campaigns, one-campaign minimum height, setup open/close, search, mobile navigation bounds and reverting the preview.
+
+## Viewport correction
+
+Login is constrained to 100dvh and measures its account panel with ResizeObserver so the complete live form scales to fit. The entire panel is opaque; painted mockup controls cannot show through when switching account modes. Expanded development accounts or long server notices scroll within the panel, never the page. The campaign shell uses the clean library backdrop rather than a mockup containing painted navigation and campaign rows. Browser checks assert no horizontal or vertical login page scrolling and visible submit/account-switch controls at seven desktop, laptop, phone and landscape viewport sizes. Production build and account/campaign behavior checks passed.

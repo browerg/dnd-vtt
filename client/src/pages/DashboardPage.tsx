@@ -143,7 +143,7 @@ export default function DashboardPage() {
       </header>
 
       <main className="campaign-select-main">
-        {preview && <div className="library-heading"><CampaignArtwork x={530} y={172} width={630} height={170} className="library-banner-art" /><h1>Your campaigns</h1><p>Pick a story and return to the table.</p><button type="button" onClick={() => showForm ? closeCreate() : setShowForm(true)}>{showForm ? "Close setup" : "+ Create campaign"}</button></div>}
+        {preview && <div className="library-heading"><CampaignArtwork x={530} y={187} width={630} height={155} className="library-banner-art" /><h1>Your campaigns</h1><p>Pick a story and return to the table.</p><button type="button" onClick={() => showForm ? closeCreate() : setShowForm(true)}>{showForm ? "Close setup" : "+ Create campaign"}</button></div>}
         <section className="campaign-select-hero">
           <div className="campaign-select-intro">
             <p className="select-eyebrow">ACTIVE TABLE NETWORK</p>

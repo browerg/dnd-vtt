@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { api, type User } from "../api";
 import { useAuth } from "../App";
 import MusicToggle from "../components/MusicToggle";
@@ -27,6 +27,18 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [devBusyId, setDevBusyId] = useState<number | null>(null);
   const [devUsers, setDevUsers] = useState<DevUser[]>([]);
+  const accessRef = useRef<HTMLElement>(null);
+  const [formScale, setFormScale] = useState(1);
+
+  useEffect(() => {
+    if (!preview || !accessRef.current) return;
+    const panel = accessRef.current;
+    const update = () => setFormScale(Math.min(1, (panel.clientWidth - 52) / 390, (panel.clientHeight - 68) / 650));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, [preview]);
 
   // Held until the opening video is gone, so the two soundtracks never
   // overlap. On a repeat visit the entrance is skipped and this is true at once.
@@ -173,8 +185,8 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <section className={`gateway-access${preview ? ` library-mode-${mode}` : ""}`} aria-label="Account access">
-        <div className="gateway-access-inner">
+      <section ref={accessRef} className={`gateway-access${preview ? ` library-mode-${mode}` : ""}`} aria-label="Account access">
+        <div className="gateway-access-inner" style={preview ? { transform: `translate(-50%, -50%) scale(${formScale})` } : undefined}>
           <div className="gateway-access-heading">
             <p className="gateway-eyebrow">SECURE ACCESS TERMINAL</p>
             <h2>
