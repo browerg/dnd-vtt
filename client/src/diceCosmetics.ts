@@ -13,6 +13,8 @@ export interface DiceCosmetic {
   pulseSpeedIdle: number;
   pulseSpeedRolling: number;
   trailId: string;
+  /** The set's own trail always rides with it, over the player's chosen trail. */
+  signatureTrail?: boolean;
   nat20EffectId: string;
   createTexture: () => HTMLCanvasElement;
   emissionStrength: (r: number, g: number, b: number) => number;
@@ -194,6 +196,13 @@ export async function applyDiceCosmetic(box: CosmeticBox, config: DiceCosmetic):
   let disposed = false;
   const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const timeUniform = { value: 0 };
+  // Roll-aware inputs any surface may read: vividRoll eases 0→1 while the dice
+  // tumble, vividLand counts seconds since they came to rest (large before the
+  // first landing), and vividCrit is 1 on a natural 20.
+  const rollUniform = { value: 0 };
+  const landUniform = { value: 99 };
+  const critUniform = { value: 0 };
+  let lastFrame = 0;
   factory.__vividCosmeticActive = true;
   hook.active = (built) => {
     for (const material of built) {
@@ -209,7 +218,10 @@ export async function applyDiceCosmetic(box: CosmeticBox, config: DiceCosmetic):
         material.customProgramCacheKey = () => `vivid-special-${surface}-v2`;
         material.onBeforeCompile = (shader) => {
           shader.uniforms.vividTime = timeUniform;
-          shader.fragmentShader = `uniform float vividTime;\n${shader.fragmentShader}`.replace(
+          shader.uniforms.vividRoll = rollUniform;
+          shader.uniforms.vividLand = landUniform;
+          shader.uniforms.vividCrit = critUniform;
+          shader.fragmentShader = `uniform float vividTime;\nuniform float vividRoll;\nuniform float vividLand;\nuniform float vividCrit;\n${shader.fragmentShader}`.replace(
             "#include <emissivemap_fragment>",
             `#include <emissivemap_fragment>
              #ifdef USE_MAP
@@ -233,6 +245,12 @@ export async function applyDiceCosmetic(box: CosmeticBox, config: DiceCosmetic):
   const tick = (now: number) => {
     if (disposed) return;
     timeUniform.value = motion.matches ? 0 : now / 1000;
+    const dt = lastFrame ? Math.min(0.1, Math.max(0, (now - lastFrame) / 1000)) : 0;
+    lastFrame = now;
+    const target = state === "rolling" ? 1 : 0;
+    rollUniform.value = motion.matches ? 0 : rollUniform.value + (target - rollUniform.value) * (1 - Math.exp(-dt * (target ? 3 : 1.2)));
+    landUniform.value = motion.matches || state === "rolling" || state === "idle" ? 99 : Math.max(0, (now - landedAt) / 1000);
+    critUniform.value = state === "nat20" ? 1 : 0;
     const intensity = cosmeticIntensity(config, state, now / 1000, Math.max(0, (now - landedAt) / 1000), motion.matches);
     for (const material of materials) material.emissiveIntensity = intensity;
     // Physics already renders rolling frames; 0.0.12 stops rendering at rest.

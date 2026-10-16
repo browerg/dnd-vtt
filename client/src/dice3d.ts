@@ -4,6 +4,7 @@ import { applyDiceBoxCustomization, decodeDiceCustomization } from "./diceCustom
 import { shareDiceColorsets } from "./diceColorCache";
 import { applyDiceCosmetic, DICE_COSMETICS, type CosmeticAnimation } from "./diceCosmetics";
 import { createSpecialTrail, isSpecialTrail } from "./specialTrails";
+import { createGrimmTrail } from "./grimmDice";
 
 // 3D dice are pure theater: the server already decided the results, and the
 // notation's "@" suffix forces the dice to land on exactly those faces.
@@ -474,12 +475,15 @@ function drawTrailSprites(
   return visible;
 }
 let clearPreviousTrail: (() => void) | undefined;
-function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: DiceTrailStyle): () => void {
+/** A die's signature trail rides with it regardless of the player's choice. */
+type SignatureTrail = "grimm";
+function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: DiceTrailStyle, signature?: SignatureTrail): () => void {
   clearPreviousTrail?.();
   const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
   if (motion.matches) return () => {};
   const style = previewTrail ?? getDiceTrailStyle(defaultTrail);
-  const special = isSpecialTrail(style) ? createSpecialTrail(style) : null;
+  const signatureTrail = signature === "grimm" ? createGrimmTrail() : null;
+  const special = signatureTrail ?? (isSpecialTrail(style) ? createSpecialTrail(style) : null);
   const lifetime = style === "first-flame" ? 260 : TRAIL_LIFETIME_MS;
   const internals = diceBox as unknown as DiceBoxTrailInternals;
   const canvas = getTrailCanvas();
@@ -568,7 +572,16 @@ function startDiceTrail(diceBox: DiceBox, defaultTrail?: string, previewTrail?: 
   };
 
   frame = requestAnimationFrame(drawFrame);
-  return () => { active = false; };
+  return () => {
+    active = false;
+    // Hand the signature trail each die's resting point for its landing burst.
+    if (signatureTrail && canvas.isConnected) {
+      const overlayRect = canvas.getBoundingClientRect();
+      const viewport = rendererCanvas.getBoundingClientRect();
+      const points = (internals.diceList || []).map(die => projectTrailPoint(die, camera, viewport, overlayRect)).filter(point => !!point);
+      signatureTrail.land(points, performance.now());
+    }
+  };
 }
 function ensureBox(): Promise<void> {
   if (!ready) {
@@ -785,7 +798,9 @@ async function drain(): Promise<void> {
           if (entry.preview) engine.simulateThrow = () => {};
           rollPromise = box!.roll(entry.notation);
         } finally { engine.simulateThrow = simulate; }
-        const stopTrail = startDiceTrail(box!, definition?.trailId, entry.previewTrail);
+        const stopTrail = definition?.signatureTrail && definition.trailId === "grimm"
+          ? startDiceTrail(box!, undefined, undefined, "grimm")
+          : startDiceTrail(box!, definition?.trailId, entry.previewTrail);
         let timeout: ReturnType<typeof setTimeout> | undefined;
 
         try {

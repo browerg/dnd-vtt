@@ -8,5 +8,6 @@ export const MYTHIC_DICE = [
   { theme: "event-horizon", unlockId: "dice-event-horizon", name: "Event Horizon", rarity: "mythic" },
   { theme: "chronos-engine", unlockId: "dice-chronos-engine", name: "Chronos Engine", rarity: "mythic" },
   { theme: "prismatic-echo", unlockId: "dice-prismatic-echo", name: "Prismatic Echo", rarity: "mythic" },
+  { theme: "grimm-awakening", unlockId: "dice-grimm-awakening", name: "Grimm Awakening", rarity: "mythic" },
 ] as const;
 export const mythicDiceForTheme = (theme: string) => MYTHIC_DICE.find(dice => dice.theme === theme);

@@ -93,8 +93,17 @@ test("per-box glow preserves artwork, renders landing, cleans up, and leaves oth
       programKeys.add(material.customProgramCacheKey!());
       special.setState("rolling"); step(2000);
       assert.equal(shader.uniforms.vividTime.value, 2);
+      step(2100); step(2200);
+      assert.ok(shader.uniforms.vividRoll.value > 0, "roll energy rises while tumbling");
+      assert.equal(shader.uniforms.vividLand.value, 99, "no landing pulse mid-roll");
+      special.setState("nat20"); step(performance.now() + 50);
+      assert.equal(shader.uniforms.vividCrit.value, 1);
+      assert.ok(shader.uniforms.vividLand.value < 1, "landing pulse starts at rest");
+      special.setState("rolling");
       motion.matches = true; step(3000);
       assert.equal(shader.uniforms.vividTime.value, 0, "reduced motion freezes shader animation");
+      assert.equal(shader.uniforms.vividRoll.value, 0);
+      assert.equal(shader.uniforms.vividLand.value, 99);
       assert.equal(material.emissiveIntensity, dice.emissiveIntensityIdle);
       special.dispose();
       assert.equal(frames.size, 0);

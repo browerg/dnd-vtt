@@ -36,10 +36,10 @@ test("existing Cache exclusivity and unique catalogue IDs stay intact", () => {
   assert.equal(new Set(COSMETICS.map(item => item.id)).size, COSMETICS.length);
 });
 
-test("ten equal Mythics share exactly 3 percent and other rewards keep their relative odds", () => {
+test("eleven equal Mythics share exactly 3 percent and other rewards keep their relative odds", () => {
   const mythics = CACHE_REWARDS.filter(reward => reward.rarity === "mythic");
   const total = CACHE_REWARDS.reduce((sum, reward) => sum + reward.weight, 0);
-  assert.equal(mythics.length, 10);
+  assert.equal(mythics.length, 11);
   for (const reward of mythics) assert.equal(reward.weight, mythics[0].weight);
   assert.equal(mythics.reduce((sum, reward) => sum + reward.weight, 0) * 100, total * 3);
   const weightOf = (id: string) => CACHE_REWARDS.find(r => r.id === id)!.weight;

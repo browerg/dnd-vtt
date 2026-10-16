@@ -45,6 +45,7 @@ const BASE_REWARDS: CacheReward[] = [
     cosmeticType: "dice", diceTheme: dice.theme, unlockIds: [dice.unlockId], duplicateBehavior: "refund" as const,
     preview: { symbol: dice.rarity === "legendary" ? "◆" : "?", description: RWBY_DICE.find(item => item.theme === dice.theme)?.description ?? (dice.theme === "event-horizon" ? "A dark singularity wrapped in moving violet accretion rings."
       : dice.theme === "chronos-engine" ? "Brass clockwork, illuminated teeth and a sweeping mint dial."
+      : dice.theme === "grimm-awakening" ? "Black stone split by living red seams, and eyes that open when you throw. It brings its own trail."
       : "Crystal facets with shifting spectral light and iridescent edges.") },
   })),
   { id: RELIC_ID, name: "Relic of the First Flame", rarity: "mythic", weight: 2994, cosmeticType: "bundle", diceTheme: "first-flame", unlockIds: RELIC_UNLOCKS, duplicateBehavior: "refund", preview: { symbol: "◆", description: "Obsidian dice, molten trail, Nat 20 and Nat 1 effects, token border, gold chat name and Relic Owner title." } },
