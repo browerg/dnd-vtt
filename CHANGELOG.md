@@ -20,6 +20,8 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **Forgot your password? Ask your GM** — Your GM can now set a new password for you. In the party list they press the 🔑 next to your name, and the game suggests an easy one like "rose-ember-42". They send it to you on Discord, you sign in with it, and you can change it from your profile any time. It also signs you out on your other devices.
+
 - **A new Mythic: Grimm Awakening** — Something wakes up in these dice. Black stone, split by red seams that pulse like a heartbeat. Grimm eyes snap open the moment you throw and blaze while the dice tumble. They leave a trail of dissolving Grimm smoke and land with a crimson shockwave. Roll a natural 20 and silver light floods out. They bring their own trail wherever they go. Win them only in the Vivid Cache. The eleven Mythics still share 3%, about 1 in 367 each.
 
 - **Three new Legendary dice sets** — Silver-Eyed Eclipse (crimson lacquer and silver scythe engravings), Winter’s Reliquary (porcelain spears set in midnight crystal with turning glyph light) and Emberheart Reactor (gunmetal armour around a charging amber core). Find them in Emporium → Mystery dice: try a free preview roll, then buy one for 1,000 VCoins, or win it in the Vivid Cache. Equip them from Customize.

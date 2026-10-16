@@ -19,6 +19,7 @@ import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
 import { Avatar } from "../components/Avatar";
+import MemberPasswordReset, { canSetPassword } from "../components/MemberPasswordReset";
 
 interface CampaignDetail {
   campaign: {
@@ -486,7 +487,10 @@ export default function CampaignPage() {
                     <Avatar name={m.display_name} src={m.avatar_path || undefined} id={m.id} size={22} />
                     <Link to={`/profiles/${m.id}`}>{m.display_name}</Link>
                   </span>
-                  <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>
+                  <span>
+                    <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>
+                    {user && canSetPassword(detail.yourRole, user.id, m) && <MemberPasswordReset campaignId={campaignId} member={m} />}
+                  </span>
                 </li>
               ))}
             </ul>

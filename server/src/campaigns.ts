@@ -1,7 +1,8 @@
 import { Router, type Request } from "express";
 import { randomBytes } from "node:crypto";
 import { db } from "./db.js";
-import { requireAuth, type SessionUser } from "./auth.js";
+import { hashPassword, requireAuth, type SessionUser } from "./auth.js";
+import { setMemberPassword } from "./memberPassword.js";
 import { getIo } from "./realtime.js";
 import { seedGrimm } from "./grimm.js";
 import { reconcileAccountAchievements } from "./achievementTracking.js";
@@ -94,6 +95,14 @@ campaignsRouter.get("/:id", (req, res) => {
     )
     .all(id);
   res.json({ campaign, members, yourRole: role });
+});
+
+// GM sets a forgotten password for someone at the table (no email recovery here).
+campaignsRouter.put("/:id/members/:userId/password", (req, res) => {
+  const result = setMemberPassword(db, Number(req.params.id), user(req).id, Number(req.params.userId),
+    String(req.body?.password ?? ""), hashPassword);
+  if (!result.ok) return res.status(result.status).json({ error: result.error });
+  res.json({ ok: true, displayName: result.displayName });
 });
 
 // Manual DM broadcast — pops a transient toast for everyone in the campaign.

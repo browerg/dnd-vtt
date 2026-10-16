@@ -14,6 +14,7 @@ import { ScrollHint } from "../components/PocketScroll";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
 import VCoinRewardsPanel from "../components/VCoinRewardsPanel";
+import MemberPasswordReset, { canSetPassword } from "../components/MemberPasswordReset";
 
 // Shared data + callbacks handed to every panel. The dashboard owns the socket
 // and state; panels are thin views over this context.
@@ -149,7 +150,10 @@ export const PANELS: PanelDef[] = [
               <Avatar name={m.display_name} src={m.avatar_path || undefined} id={m.id} size={22} />
               {m.display_name}
             </span>
-            <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>
+            <span>
+              <span className={`badge role-${m.role}`}>{m.role.toUpperCase()}</span>
+              {canSetPassword(ctx.members.find(viewer => viewer.id === ctx.myId)?.role, ctx.myId, m) && <MemberPasswordReset campaignId={ctx.campaignId} member={m} />}
+            </span>
           </li>
         ))}
       </ul>
