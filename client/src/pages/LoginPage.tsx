@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { api, type User } from "../api";
 import { useAuth } from "../App";
 import MusicToggle from "../components/MusicToggle";
@@ -6,7 +6,6 @@ import { gatewayMusic, GATEWAY_MUSIC_KEY } from "../loginAudio";
 import { useBackgroundMusic } from "../useBackgroundMusic";
 import { useEntranceDone } from "../useEntranceDone";
 import "./LoginPage.css";
-import GatewayPreviewToggle, { useGatewayPreview } from "../components/GatewayPreview";
 
 interface DevUser {
   id: number;
@@ -15,7 +14,6 @@ interface DevUser {
 }
 
 export default function LoginPage() {
-  const preview = useGatewayPreview();
   const { signIn } = useAuth();
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
@@ -27,27 +25,6 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [devBusyId, setDevBusyId] = useState<number | null>(null);
   const [devUsers, setDevUsers] = useState<DevUser[]>([]);
-  const accessRef = useRef<HTMLElement>(null);
-  const formRef = useRef<HTMLDivElement>(null);
-  const [devOpen, setDevOpen] = useState(false);
-  const [formScale, setFormScale] = useState(1);
-  const [formCenter, setFormCenter] = useState<number>();
-
-  useEffect(() => {
-    if (!preview || !accessRef.current) return;
-    const panel = accessRef.current;
-    const update = () => {
-      const visibleHeight = Math.min(panel.clientHeight, window.innerHeight - panel.getBoundingClientRect().top - 24);
-      setFormCenter(visibleHeight / 2);
-      setFormScale(Math.min(1, (panel.clientWidth - 52) / 390, (visibleHeight - 68) / Math.max(650, formRef.current?.scrollHeight ?? 650)));
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(panel);
-    if (formRef.current) observer.observe(formRef.current);
-    window.addEventListener("resize", update);
-    return () => { observer.disconnect(); window.removeEventListener("resize", update); };
-  }, [preview]);
 
   // Held until the opening video is gone, so the two soundtracks never
   // overlap. On a repeat visit the entrance is skipped and this is true at once.
@@ -117,8 +94,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className={`gateway${preview ? " gateway-library" : ""}`}>
-      <GatewayPreviewToggle />
+    <main className="gateway">
       <div className="gateway-atmosphere" aria-hidden>
         <span className="gateway-orbit orbit-one" />
         <span className="gateway-orbit orbit-two" />
@@ -135,7 +111,7 @@ export default function LoginPage() {
               <span />
             </span>
             <div>
-              <strong>{preview ? <><span>Vivid</span><span>Realms</span></> : "VIVID REALMS"}</strong>
+              <strong>VIVID REALMS</strong>
               <small>CAMPAIGN GATEWAY</small>
             </div>
           </div>
@@ -194,8 +170,8 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <section ref={accessRef} className={`gateway-access${preview ? ` library-mode-${mode}` : ""}`} aria-label="Account access">
-        <div ref={formRef} className={`gateway-access-inner${preview && devOpen ? " library-dev-open" : ""}`} style={preview ? { top: formCenter, transform: `translate(-50%, -50%) scale(${formScale})` } : undefined}>
+      <section className="gateway-access" aria-label="Account access">
+        <div className="gateway-access-inner">
           <div className="gateway-access-heading">
             <p className="gateway-eyebrow">SECURE ACCESS TERMINAL</p>
             <h2>
@@ -207,7 +183,7 @@ export default function LoginPage() {
             </h2>
             <p>
               {mode === "login"
-                ? preview ? <>Sign in to your <span className="library-account-name">VIVID REALMS</span> account<br />and return to the table.</> : "Sign in to return to your campaigns."
+                ? "Sign in to return to your campaigns."
                 : mode === "register"
                   ? "Create an account and begin building your table."
                   : "Enter your account email and we'll send a secure recovery link."}
@@ -254,7 +230,7 @@ export default function LoginPage() {
             )}
 
             <label className="gateway-field" htmlFor={emailId}>
-              <span>{preview ? "Email" : "Email address"}</span>
+              <span>Email address</span>
               <span className="gateway-input-wrap">
                 <span className="field-icon mail-icon" aria-hidden />
                 <input
@@ -291,7 +267,7 @@ export default function LoginPage() {
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     onClick={() => setShowPassword((visible) => !visible)}
                   >
-                    {preview ? <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>{!showPassword && <path d="m4 21 16-18"/>}</svg> : showPassword ? "Hide" : "Show"}
+                    {showPassword ? "Hide" : "Show"}
                   </button>
                 </span>
               </label>
@@ -344,7 +320,7 @@ export default function LoginPage() {
                     ? "Sending recovery link..."
                     : "Authenticating..."
                   : mode === "login"
-                    ? preview ? "Sign in" : "Enter tabletop"
+                    ? "Enter tabletop"
                     : mode === "register"
                       ? "Create account"
                       : "Send recovery link"}
@@ -353,16 +329,13 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {preview && <p className="library-account-switch">{mode === "login" ? "New here?" : "Already have an account?"} <button type="button" onClick={() => changeMode(mode === "login" ? "register" : "login")}>{mode === "login" ? "Create an account" : "Sign in"}</button></p>}
-
           {devUsers.length > 0 && (
-            <details className="gateway-dev-access" onToggle={(event) => setDevOpen(event.currentTarget.open)}>
+            <details className="gateway-dev-access">
               <summary>
-                <span>{preview && devOpen ? "← Back to sign in" : "Development access"}</span>
+                <span>Development access</span>
                 <small>{devUsers.length} local accounts</small>
               </summary>
               <div className="gateway-dev-users">
-                {preview && <h3>Choose a local account</h3>}
                 {devUsers.map((devUser) => (
                   <button
                     key={devUser.id}

@@ -20,10 +20,6 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
-- **A new look for signing in, in preview** — Flip the "Updated theme · Preview" switch on the sign-in screen or your campaign list to try a candlelit library: a warm ivory sign-in page, and a campaign lobby with a wooden header, illustrated covers, search and Remnant/D&D filters. It's saved on this device only, the current look stays the default, and you can switch back any time.
-
-### Minor changes
-
 - **Better Mythic odds in the Vivid Cache** — Mythic rewards now land 3% of the time, up from 0.2%. The ten Mythics share it equally, so each one is 0.3% per opening (about 1 in 333). Every other reward keeps its place relative to the rest, just slightly less often to make room.
 
 ## 7 October 2026

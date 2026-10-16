@@ -4,7 +4,6 @@ import { api, type CampaignSummary } from "../api";
 import { useAuth } from "../App";
 import { Avatar } from "../components/Avatar";
 import "./DashboardPage.css";
-import GatewayPreviewToggle, { useGatewayPreview } from "../components/GatewayPreview";
 
 type CampaignFilter = "all" | "remnant" | "dnd5e";
 
@@ -18,14 +17,7 @@ const roleLabel = (role: string) => {
   return "Player";
 };
 
-// Display original illustration regions without generating or baking campaign data.
-function CampaignArtwork({ x, y, width, height, className = "" }: { x: number; y: number; width: number; height: number; className?: string }) {
-  return <span className={`library-artwork ${className}`} aria-hidden="true" style={{ aspectRatio: `${width}/${height}` }}><img src="/assets/gateway-preview/campaign-reference.webp" alt="" style={{ width: `${1586 / width * 100}%`, left: `${-x / width * 100}%`, top: `${-y / height * 100}%` }} /></span>;
-}
-
 export default function DashboardPage() {
-  const preview = useGatewayPreview();
-  const [search, setSearch] = useState("");
   const { user, logout } = useAuth();
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -88,8 +80,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className={`campaign-select-shell${preview ? " campaign-library" : ""}`}>
-      <GatewayPreviewToggle />
+    <div className="campaign-select-shell">
       <div className="campaign-select-atmosphere" aria-hidden>
         <span className="select-orbit select-orbit-one" />
         <span className="select-orbit select-orbit-two" />
@@ -98,7 +89,6 @@ export default function DashboardPage() {
 
       <header className="campaign-select-header">
         <Link to="/" className="select-wordmark" aria-label="Tabletop home">
-          {preview && <CampaignArtwork x={80} y={54} width={360} height={67} className="library-brand" />}
           <span className="select-mark" aria-hidden>
             <span />
             <span />
@@ -111,7 +101,6 @@ export default function DashboardPage() {
         </Link>
 
         <nav className="select-nav" aria-label="Account navigation">
-          {preview && <Link to="/" className="library-current-nav" aria-current="page">Campaigns</Link>}
           <Link to="/customize" className="select-nav-link select-nav-customize">
             <span className="select-nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7Z"/><path d="m3 7 9 5 9-5M12 12v10M12 2v10"/></svg>
@@ -143,7 +132,6 @@ export default function DashboardPage() {
       </header>
 
       <main className="campaign-select-main">
-        {preview && <div className="library-heading"><CampaignArtwork x={530} y={187} width={630} height={155} className="library-banner-art" /><h1>Your campaigns</h1><p>Pick a story and return to the table.</p><button type="button" onClick={() => showForm ? closeCreate() : setShowForm(true)}>{showForm ? "Close setup" : "+ Create campaign"}</button></div>}
         <section className="campaign-select-hero">
           <div className="campaign-select-intro">
             <p className="select-eyebrow">ACTIVE TABLE NETWORK</p>
@@ -174,7 +162,6 @@ export default function DashboardPage() {
         </section>
 
         <section className="campaign-select-toolbar" aria-label="Campaign controls">
-          {preview && <label className="library-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg><input aria-label="Find a campaign" type="search" placeholder="Find a campaign…" value={search} onChange={(event) => setSearch(event.target.value)} /></label>}
           <div className="campaign-filter-tabs" role="tablist" aria-label="Filter campaigns">
             <button
               type="button"
@@ -183,7 +170,7 @@ export default function DashboardPage() {
               className={filter === "all" ? "active" : ""}
               onClick={() => setFilter("all")}
             >
-              {preview ? "All" : "All campaigns"}
+              All campaigns
               <span>{campaigns.length}</span>
             </button>
             <button
@@ -356,9 +343,8 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {preview && search.trim() && !visibleCampaigns.some(c => `${c.name} ${c.description}`.toLowerCase().includes(search.trim().toLowerCase())) && <p role="status">No campaigns match your search.</p>}
           <div className="campaign-card-grid">
-            {visibleCampaigns.filter(c => !preview || `${c.name} ${c.description}`.toLowerCase().includes(search.trim().toLowerCase())).map((campaign, index) => {
+            {visibleCampaigns.map((campaign, index) => {
               const isDnd = campaign.system === "dnd5e";
               return (
                 <Link
@@ -368,7 +354,6 @@ export default function DashboardPage() {
                   style={{ "--card-index": index } as React.CSSProperties}
                 >
                   <div className="campaign-card-visual" aria-hidden>
-                    {preview && <CampaignArtwork x={112} y={isDnd ? 601 : 443} width={532} height={140} />}
                     <div className="campaign-card-gridlines" />
                     <span className="campaign-card-orbit" />
                     <span className="campaign-card-core">
@@ -385,12 +370,10 @@ export default function DashboardPage() {
                   <div className="campaign-card-body">
                     <div className="campaign-card-meta">
                       <span className="campaign-system-badge">
-                        {preview && <small>System</small>}
                         <span aria-hidden />
                         {systemLabel(campaign.system)}
                       </span>
                       <span className={`campaign-role-badge role-${campaign.role}`}>
-                        {preview && <small>Your role</small>}
                         {roleLabel(campaign.role)}
                       </span>
                     </div>
