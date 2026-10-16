@@ -36,15 +36,15 @@ test("existing Cache exclusivity and unique catalogue IDs stay intact", () => {
   assert.equal(new Set(COSMETICS.map(item => item.id)).size, COSMETICS.length);
 });
 
-test("ten equal Mythics share 3 percent and other rewards scale proportionally", () => {
+test("ten equal Mythics share exactly 3 percent and other rewards keep their relative odds", () => {
   const mythics = CACHE_REWARDS.filter(reward => reward.rarity === "mythic");
   const total = CACHE_REWARDS.reduce((sum, reward) => sum + reward.weight, 0);
   assert.equal(mythics.length, 10);
-  for (const reward of mythics) assert.equal(reward.weight / total, .003);
-  assert.equal(mythics.reduce((sum, reward) => sum + reward.weight, 0) / total, .03);
-  const tiers = { common: .70, rare: .22, epic: .06, legendary: .018 };
-  for (const [rarity, original] of Object.entries(tiers)) {
-    const weight = CACHE_REWARDS.filter(r => r.rarity === rarity).reduce((sum, r) => sum + r.weight, 0);
-    assert.ok(Math.abs(weight / total - original * .97 / .998) < 1e-12);
-  }
+  for (const reward of mythics) assert.equal(reward.weight, mythics[0].weight);
+  assert.equal(mythics.reduce((sum, reward) => sum + reward.weight, 0) * 100, total * 3);
+  const weightOf = (id: string) => CACHE_REWARDS.find(r => r.id === id)!.weight;
+  // Same ratios as the original 70/22/6/1.8 ticket table.
+  assert.equal(weightOf("ember") / weightOf("shadow"), 339500 / 106700);
+  assert.equal(weightOf("ember") / weightOf("storm"), 339500 / 14550);
+  assert.equal(weightOf("ember") / weightOf("rose"), 339500 / 4365);
 });

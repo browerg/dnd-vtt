@@ -1,6 +1,9 @@
 /** Shared reel/reveal art. Mystery dice retain their concealed appearance. */
+import { RWBY_DICE } from "../../../shared/rwbyDice";
+import { DiceThumbnail } from "./CollectionDicePreview";
 export default function CacheRewardArt({ id, concealed = false }: { id: string; concealed?: boolean }) {
   if (concealed) return <svg className="cache-reward-art cache-mythic-silhouette" viewBox="0 0 120 120" role="img" aria-label="Mythic appearance concealed"><path d="m60 8 45 26v52l-45 26L15 86V34Z" fill="#000" stroke="#6b6274" strokeWidth="2"/><path d="m60 8 23 39 22-13M83 47l-6 38 28 1M77 85l-17 27-17-27-28 1M43 85l-6-38-22-13M37 47 60 8M37 47h46L60 68Z" fill="none" stroke="#211d26"/></svg>;
+  if (RWBY_DICE.some(dice => dice.theme === id)) return <span className="cache-reward-art cache-dice-art"><DiceThumbnail theme={id} /></span>;
   if (id === "relic-first-flame") return <img className="cache-reward-art cache-relic-art" src="/assets/bundles/first-flame.webp" alt="" />;
   const mystery = ["event-horizon", "chronos-engine", "prismatic-echo"].includes(id);
   return <svg className={`cache-reward-art art-${id}`} viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">

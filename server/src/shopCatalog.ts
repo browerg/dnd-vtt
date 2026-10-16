@@ -2,6 +2,7 @@ import { SPECIAL_CRITICALS } from "../../shared/specialCriticals.js";
 import { MYTHIC_FAILURES, MYTHIC_CRITICALS, type MythicCriticalStyle } from "../../shared/mythicCriticals.js";
 import { CACHE_COST } from "./vividCacheStore.js";
 import { SPECIAL_TRAILS } from "../../shared/specialTrails.js";
+import { RWBY_DICE } from "../../shared/rwbyDice.js";
 
 export type CriticalSlot = "nat20" | "nat1";
 export type CosmeticSlot = CriticalSlot | "turnStart" | "tokenBorder" | "chatFlair";
@@ -150,6 +151,8 @@ const CATALOGUE = [
   ...MYTHIC_CRITICALS.map(effect => ({ ...effect, type: "nat20-effect" as const, slot: "nat20" as const })),
   ...SPECIAL_CRITICALS.map(effect => ({ ...effect, type: "nat20-effect" as const, slot: "nat20" as const, price: 1 })),
   ...SPECIAL_TRAILS.map(trail => ({ ...trail, type: "dice-trail" as const, price: 1 })),
+  // The catalogue ID is the dice entitlement ID, so a purchase grants exactly what the equip gate checks.
+  ...RWBY_DICE.map(dice => ({ id: dice.unlockId, type: "dice" as const, effect: dice.theme, name: dice.name, description: dice.description, price: 1, rarity: dice.rarity })),
   { id: "crit1-first-flame", type: "nat1-effect", slot: "nat1", effect: "first-flame", name: "First Flame · Ashfall", description: "The flame gutters into molten cracks and falling embers on a natural 1.", price: 1, rarity: "mythic" },
   { id: "border-first-flame", type: "token-border", slot: "tokenBorder", effect: "first-flame", name: "First Flame Border", description: "A thin molten-gold ring around your character tokens, leaving their artwork clear.", price: 1, rarity: "mythic" },
   { id: "chat-first-flame", type: "chat-flair", slot: "chatFlair", effect: "first-flame", name: "First Flame Name", description: "A quiet gold accent on your name in campaign chat.", price: 1, rarity: "mythic" },

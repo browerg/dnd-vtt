@@ -13,6 +13,7 @@ import { emporiumDoor, emporiumMusic, EMPORIUM_MUSIC_KEY, playCoinSound, primeCo
 import { useBackgroundMusic } from "../useBackgroundMusic";
 import { DICE_COSMETICS } from "../diceCosmetics";
 import { SPECIAL_DICE } from "../specialDice";
+import { canPreviewRwbyDice } from "../../../shared/rwbyDice";
 import { isSpecialTrail } from "../specialTrails";
 import CacheRewardArt from "../components/CacheRewardArt";
 import { MYTHIC_FAILURES, MYTHIC_CRITICALS } from "../../../shared/mythicCriticals";
@@ -20,7 +21,7 @@ import SpecialDiceCatalogue from "../components/SpecialDiceCatalogue";
 import "../components/RelicAppearance.css";
 
 type CosmeticSlot = "nat20" | "nat1" | "turnStart" | "tokenBorder" | "chatFlair";
-type ShopItemType = "dice-trail" | "nat20-effect" | "nat1-effect" | "turn-start-effect" | "token-border" | "chat-flair";
+type ShopItemType = "dice" | "dice-trail" |"nat20-effect" | "nat1-effect" | "turn-start-effect" | "token-border" | "chat-flair";
 
 interface ShopItem {
   id: string;
@@ -53,6 +54,8 @@ interface ShopResponse {
   } | null;
   items: ShopItem[];
   bundles: CosmeticBundle[];
+  /** Ownership of unlock-gated dice; GM bypass does not count until bought. */
+  specialDice?: { theme: string; owned: boolean }[];
 }
 
 const RARITY_LABEL: Record<ShopItem["rarity"], string> = {
@@ -206,6 +209,9 @@ export default function ShopPage() {
   const merchantGif = MERCHANT_GIFS[merchantAnimation];
 
   const items = useMemo(() => shop?.items ?? [], [shop]);
+  const diceOffers = useMemo(() => Object.fromEntries(items.filter(item => item.type === "dice").map(item => [item.effect, {
+    id: item.id, price: item.price, owned: !!shop?.specialDice?.some(dice => dice.theme === item.effect && dice.owned),
+  }])), [items, shop]);
 
   // The newest bundle leads the page; the server already sorts them.
   const featured = shop?.bundles?.[0] ?? null;
@@ -666,7 +672,7 @@ export default function ShopPage() {
         {!loading && featured && (
           <FeaturedBundle
             bundle={featured}
-            categories={[...categories, { id: "special-dice", label: "Mystery dice", caption: "Three extraordinary sets. Spin to unlock.", owned: 0, total: SPECIAL_DICE.length, countLabel: "Spin exclusive" }]}
+            categories={[...categories, { id: "special-dice", label: "Mystery dice", caption: `${SPECIAL_DICE.length} extraordinary sets. Buy the Legendaries, spin for the Mythics.`, owned: 0, total: SPECIAL_DICE.length, countLabel: "Buy or spin" }]}
             onOpenCategory={id => id === "special-dice" ? setSpecialDiceOpen(true) : setOpenCategory(id)}
             onOpenCache={() => setCacheOpen(true)}
             trailPreview={featuredTrail ? renderPreview(featuredTrail, true) : undefined}
@@ -706,10 +712,23 @@ export default function ShopPage() {
       <ShopDialog
         open={specialDiceOpen}
         title="Mystery dice"
-        subtitle="Names revealed. Appearances concealed. Win a set in Vivid Cache."
+        subtitle="Legendary sets to buy · Mythic sets to win in Vivid Cache"
         onClose={() => setSpecialDiceOpen(false)}
       >
-        <SpecialDiceCatalogue />
+        {(error || notice) && <p role="status" className="notice">{error || notice}</p>}
+        <SpecialDiceCatalogue
+          offers={diceOffers}
+          balance={shop?.wallet.balance ?? 0}
+          busyId={busyId}
+          onBuy={theme => { const item = items.find(entry => entry.type === "dice" && entry.effect === theme); if (item) void purchase(item); }}
+          onPreview={async id => {
+          const dice = SPECIAL_DICE.find(item => item.id === id);
+          if (!dice || !canPreviewRwbyDice(id) || specialDiceName) return;
+          setSpecialDiceOpen(false); setSpecialDiceName(dice.label); setError("");
+          try { await previewDice(id, dice.trailId as DiceTrailStyle, true); }
+          catch (cause) { setError((cause as Error).message); }
+          finally { if (mounted.current) { setSpecialDiceName(""); setSpecialDiceOpen(true); } }
+        }} />
       </ShopDialog>
 
       <ShopDialog

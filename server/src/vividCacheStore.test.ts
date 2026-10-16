@@ -128,11 +128,18 @@ test("new Legendary trails grant their own entitlement on a free opening without
 
 test("weighted selection covers every ticket exactly with configured rarity counts", () => {
   const counts: Record<string, number> = {};
-  for (let ticket = 0; ticket < 998000; ticket++) {
-    const reward = selectCacheReward(ticket); counts[reward.rarity] = (counts[reward.rarity] || 0) + 1;
+  let ticket = 0;
+  for (const reward of CACHE_REWARDS) {
+    assert.ok(Number.isSafeInteger(reward.weight) && reward.weight > 0);
+    assert.equal(selectCacheReward(ticket).id, reward.id);
+    assert.equal(selectCacheReward(ticket + reward.weight - 1).id, reward.id);
+    counts[reward.rarity] = (counts[reward.rarity] || 0) + reward.weight;
+    ticket += reward.weight;
   }
-  assert.deepEqual(counts, { common: 679000, rare: 213400, epic: 58200, legendary: 17460, mythic: 29940 });
-  assert.throws(() => selectCacheReward(998000)); assert.throws(() => selectCacheReward(-1));
+  assert.equal(counts.mythic * 100, ticket * 3);
+  assert.equal(counts.common / counts.rare, 679000 / 213400);
+  assert.equal(counts.common / counts.epic, 679000 / 58200);
+  assert.throws(() => selectCacheReward(ticket)); assert.throws(() => selectCacheReward(-1));
 });
 // Small seeded generator so the theatre tests are deterministic.
 function seeded(seed: number) { return () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296); }
@@ -161,9 +168,10 @@ test("near misses are staged for ordinary wins but randomly filled beside Mythic
   };
   const common = nearMiss(CACHE_REWARDS[0], seeded(11));
   assert.ok(common > 0.5 && common < 0.62, `common win near-miss rate ${common}`);
-  // Only the ordinary random fill can put a big tile there when the win is already mythic.
+  // Only the ordinary random fill can put a big tile there when the win is already mythic;
+  // it rises a little with each Legendary added to the pool (about 12% with the RWBY dice).
   const mythic = nearMiss(CACHE_REWARDS.find(r => r.rarity === "mythic")!, seeded(11));
-  assert.ok(mythic > 0.07 && mythic < 0.12, `mythic win near-miss rate ${mythic}`);
+  assert.ok(mythic > 0.07 && mythic < 0.14, `mythic win near-miss rate ${mythic}`);
 });
 test("the three new dice sit in the mythic tier with its 3% share", () => {
   for (const theme of ["event-horizon", "chronos-engine", "prismatic-echo"]) {
@@ -175,8 +183,7 @@ test("the three new dice sit in the mythic tier with its 3% share", () => {
   }
   const total = CACHE_REWARDS.reduce((n, r) => n + r.weight, 0);
   const mythic = CACHE_REWARDS.filter(r => r.rarity === "mythic").reduce((n, r) => n + r.weight, 0);
-  assert.equal(total, 998000);
-  assert.equal(mythic, 29940);
+  assert.equal(mythic * 100, total * 3);
 });
 test("a free opening grants the reward, moves no VCoins, and refunds nothing on a duplicate", () => {
   const dice = CACHE_REWARDS.find(r => r.id === "event-horizon")!;
@@ -215,10 +222,10 @@ test("the spin curve winds up, overshoots once, and lands exactly on the winner"
 });
 
 test("new critical rewards grant independently with proportionally adjusted Epic odds", () => {
-  assert.equal(CACHE_REWARDS.filter(r => r.rarity === "epic").reduce((n,r) => n+r.weight,0),58200);
+  assert.equal(CACHE_REWARDS.filter(r => r.rarity === "epic").reduce((n,r) => n+r.weight,0),CACHE_REWARDS.find(r => r.id === "storm")!.weight * 4);
   for (const effect of ["void-collapse", "heavens-lance", "chronobreak"]) {
     const reward = CACHE_REWARDS.find(r => r.id === effect)!;
-    assert.equal(reward.weight,14550);
+    assert.equal(reward.weight,CACHE_REWARDS.find(r => r.id === "storm")!.weight);
     const f = fixture(0, () => reward, 0);
     try {
       const result = f.store.open(1,key);

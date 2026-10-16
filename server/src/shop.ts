@@ -482,7 +482,9 @@ shopRouter.post("/purchase", (req, res) => {
   const bypass = bypassFor(user.id);
 
   if (item.price === 0 || bypass.active || hasUnlock(user.id, item.id)) {
-    if (!bypass.active && item.price > 0) {
+    // Dice are gated by their unlock row alone (see diceOwnership.ts), so the
+    // bypass records one; other cosmetics read the bypass directly.
+    if ((!bypass.active || item.type === "dice") && item.price > 0) {
       db.prepare(
         `INSERT OR IGNORE INTO cosmetic_unlocks (user_id, cosmetic_id)
          VALUES (?, ?)`

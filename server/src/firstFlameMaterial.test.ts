@@ -102,7 +102,7 @@ test("per-box glow preserves artwork, renders landing, cleans up, and leaves oth
       assert.equal(factory.createMaterials()[0].onBeforeCompile, undefined, "special shader cannot leak into subsequent ordinary dice");
       motion.matches = false;
     }
-    assert.equal(programKeys.size, 4, "each authored shader has its own program cache entry");
+    assert.equal(programKeys.size, 1 + SPECIAL_DICE.length, "each authored shader has its own program cache entry");
   } finally {
     for (const [key, descriptor] of saved) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor);

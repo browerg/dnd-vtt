@@ -14,6 +14,10 @@
   border-radius: 10px;
 }
 .special-die-mystery svg { width: 136px; height: 148px; }
+.special-die-revealed img { width: 200px; height: 200px; object-fit: contain; }
+.special-die-revealed { background: #11131c; }
+.special-die-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.special-die-owned { color: #e9c77b; font-size: 13px; }
 .special-die h3 { margin: 20px 0 6px; font-family: Cinzel, Georgia, serif; font-size: 18px; color: #fff0c4; }
 .special-die p, .special-dice-note { color: #c4b6a6; font-size: 14px; line-height: 1.5; }
 .special-die p { margin: 0 0 16px; }

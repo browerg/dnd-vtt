@@ -1,10 +1,12 @@
 import type { DiceCosmetic } from "./diceCosmetics.js";
+import { RWBY_DICE_MATERIALS, RWBY_SURFACE_GLSL, type RwbyDiceSurface } from "./rwbyDice.js";
 
-export type SpecialDiceSurface = "singularity" | "clockwork" | "prism" | "first-flame";
+export type SpecialDiceSurface = "singularity" | "clockwork" | "prism" | "first-flame" | RwbyDiceSurface;
 
 // These are authored materials, deliberately outside the customization encoder.
 // Catalogue visibility is not an entitlement or a new cache reward.
 export const SPECIAL_DICE: readonly DiceCosmetic[] = [
+  ...RWBY_DICE_MATERIALS,
   {
     id: "event-horizon", label: "Event Horizon", surface: "singularity",
     baseColor: "#080512", numberColor: "#f1eaff", edgeColor: "#352450",
@@ -88,6 +90,7 @@ function createSpecialTexture(kind: SpecialDiceSurface): HTMLCanvasElement {
 
 /** Bounded per-fragment effects; no textures allocated or repainted per frame. */
 export const SPECIAL_SURFACE_GLSL: Record<SpecialDiceSurface, string> = {
+  ...RWBY_SURFACE_GLSL,
   "first-flame": `
     // A fractured obsidian crust above a moving molten core. Fixed fault lines
     // keep the stone stable while convection and embers move beneath it.

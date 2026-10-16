@@ -14,6 +14,8 @@
 .cache-tile small, .cache-legend strong { color: var(--rarity); text-transform: uppercase; font-size: 11px; letter-spacing: .08em; }
 .cache-tile strong { font-size: 13px; line-height: 1.3; }
 .cache-reward-art { display: block; width: 58px; height: 58px; justify-self: center; color: var(--rarity); }
+.cache-dice-art img { width: 100%; height: 100%; object-fit: contain; }
+.cache-dice-art .dice-thumbnail-loading { display: grid; place-items: center; height: 100%; font-size: 11px; }
 .cache-relic-art { object-fit: contain; }
 .cache-tile.rarity-mythic { border: 2px solid #ffdc61; background: linear-gradient(132deg, #121013 38%, #b37823 39%, #ffb638 40%, #171114 42%, #171114 65%, #8f511d 66%, #171114 68%); box-shadow: inset 0 0 22px #ffb32933, 0 0 18px #ffc23433; }
 .cache-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; }

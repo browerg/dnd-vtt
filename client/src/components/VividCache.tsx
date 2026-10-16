@@ -242,7 +242,7 @@ export default function VividCache({ onChange, onPreviewDice }: { onChange: () =
         <button type="button" ref={continueButton} onClick={dismiss}>Continue</button>
       </div>
     </div>}
-    {ownedDice.length > 0 && <div className="cache-owned-dice"><strong>Your mythic dice</strong>
+    {ownedDice.length > 0 && <div className="cache-owned-dice"><strong>Your Cache dice</strong>
       {ownedDice.map(r => <span key={r.id} className="cache-owned-die">{r.name}
         <button type="button" disabled={busy || user?.diceTheme === r.diceTheme} onClick={() => void equipDice(r.diceTheme!, r.name)}>{user?.diceTheme === r.diceTheme ? "Equipped" : "Equip"}</button>
         {r.rarity !== "mythic" && onPreviewDice && <button type="button" disabled={busy} onClick={() => onPreviewDice(r.diceTheme!)}>Roll</button>}

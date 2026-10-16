@@ -16,6 +16,12 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 15 October 2026
+
+### Major changes
+
+- **Three new Legendary dice sets** — Silver-Eyed Eclipse (crimson lacquer and silver scythe engravings), Winter’s Reliquary (porcelain spears set in midnight crystal with turning glyph light) and Emberheart Reactor (gunmetal armour around a charging amber core). Find them in Emporium → Mystery dice: try a free preview roll, then buy one for 1,000 VCoins, or win it in the Vivid Cache. Equip them from Customize.
+
 ## 9 October 2026
 
 ### Major changes
