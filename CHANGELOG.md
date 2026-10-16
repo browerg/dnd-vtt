@@ -16,6 +16,18 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 16 October 2026
+
+### Major changes
+
+- **Private messages are proper conversations** — The Private tab on your Scroll is now an inbox, with one conversation per person. When your GM texts you as an NPC or a contact like "Ozpin", that gets its own conversation too, and every reply you send stays with Ozpin. Tap a conversation to open it and keep chatting, or tap Private again to go back to the list. Start one from Contacts or with New message. GMs see which persona they're writing as, and a dot marks conversations with new messages.
+- **Delete conversations** — Tap the bin beside a conversation to clear it from your Scroll. The other person keeps their copy, and a new message starts it fresh.
+
+### Minor changes
+
+- **Tap to put your Scroll away** — Tap the top of your Scroll (the clock bar) to tuck it back into your pocket.
+- **Contact pictures** — Contact pictures on your Scroll are round again instead of stretched.
+
 ## 15 October 2026
 
 ### Major changes

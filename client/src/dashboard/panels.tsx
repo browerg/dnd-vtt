@@ -55,7 +55,9 @@ export interface PanelCtx {
     targetUserId?: number,
     speakerCharacterId?: number,
     speakerAsGm?: boolean,
-    replyToId?: number
+    replyToId?: number,
+    speakerName?: string,
+    toSpeaker?: string
   ) => Promise<void>;
 }
 

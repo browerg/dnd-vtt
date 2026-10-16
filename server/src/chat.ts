@@ -5,6 +5,7 @@ import { requireAuth, type SessionUser } from "./auth.js";
 import { memberRole } from "./campaigns.js";
 import { getIo } from "./realtime.js";
 import { previewOf, resolveReply, type ChatReplyPreview } from "./chatReply.js";
+import { hiddenWhisperFilter, hideThread, resolveTargetSpeaker } from "./whisperThreads.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const MAX_BODY = 4000;
@@ -20,6 +21,8 @@ export interface ChatMessage {
   targetUserId: number | null;
   targetName: string | null;
   speaker: string;
+  /** Whisper only: the recipient persona addressed ("" for the person themselves). */
+  targetSpeaker: string;
   body: string;
   createdAt: string;
   replyTo: ChatReplyPreview | null;
@@ -38,7 +41,7 @@ chatRouter.get("/:id/messages", (req, res) => {
   const rows = db
     .prepare(
       `SELECT m.id, m.campaign_id, m.user_id, u.display_name AS user_name, m.channel,
-              m.target_user_id, t.display_name AS target_name, m.speaker, m.body, m.created_at,
+              m.target_user_id, t.display_name AS target_name, m.speaker, m.target_speaker, m.body, m.created_at,
               m.reply_to_id,
               p.speaker AS reply_speaker, p.body AS reply_body,
               pu.display_name AS reply_user_name
@@ -66,6 +69,7 @@ chatRouter.get("/:id/messages", (req, res) => {
         targetUserId: r.target_user_id,
         targetName: r.target_name,
         speaker: r.speaker,
+        targetSpeaker: r.target_speaker,
         body: r.body,
         createdAt: r.created_at,
         replyTo: r.reply_to_id
@@ -74,6 +78,7 @@ chatRouter.get("/:id/messages", (req, res) => {
       })
     )
     .filter((m) => visibleTo(m, user(req).id))
+    .filter(hiddenWhisperFilter(db, campaignId, user(req).id))
     .reverse();
   res.json({ messages });
 });
@@ -109,6 +114,15 @@ chatRouter.post("/:id/messages", (req, res) => {
   });
   if (!reply.ok) return res.status(reply.status).json({ error: reply.error });
   const { replyToId, replyTo } = reply;
+
+  let targetSpeaker = "";
+  if (channel === "whisper") {
+    const addressed = resolveTargetSpeaker(db, {
+      campaignId, senderId: user(req).id, targetUserId: targetUserId!, requested: req.body?.toSpeaker, replyToId,
+    });
+    if (!addressed.ok) return res.status(addressed.status).json({ error: addressed.error });
+    targetSpeaker = addressed.targetSpeaker;
+  }
 
   let speaker = "";
   if (channel === "ic") {
@@ -146,10 +160,10 @@ chatRouter.post("/:id/messages", (req, res) => {
 
   const info = db
     .prepare(
-      `INSERT INTO messages (campaign_id, user_id, channel, target_user_id, speaker, body, reply_to_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO messages (campaign_id, user_id, channel, target_user_id, speaker, target_speaker, body, reply_to_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run(campaignId, user(req).id, channel, targetUserId, speaker, body, replyToId);
+    .run(campaignId, user(req).id, channel, targetUserId, speaker, targetSpeaker, body, replyToId);
 
   const message: ChatMessage = {
     chatFlair: appearance.equipped(user(req).id).chatFlair,
@@ -161,6 +175,7 @@ chatRouter.post("/:id/messages", (req, res) => {
     targetUserId,
     targetName,
     speaker,
+    targetSpeaker,
     body,
     createdAt: new Date().toISOString(),
     replyTo,
@@ -174,6 +189,15 @@ chatRouter.post("/:id/messages", (req, res) => {
     if (socket && viewer && visibleTo(message, viewer.id)) socket.emit("chat", message);
   }
   res.json({ message });
+});
+
+// Delete a conversation from your own Scroll; the other person keeps theirs.
+chatRouter.post("/:id/whisper-threads/hide", (req, res) => {
+  const campaignId = Number(req.params.id);
+  if (!memberRole(campaignId, user(req).id)) return res.status(404).json({ error: "Campaign not found." });
+  const result = hideThread(db, campaignId, user(req).id, req.body?.key);
+  if (!result.ok) return res.status(result.status).json({ error: result.error });
+  res.json({ ok: true });
 });
 
 /**
@@ -196,6 +220,7 @@ export function postServerNotice(campaignId: number, userId: number, body: strin
     targetUserId: null,
     targetName: null,
     speaker: "",
+    targetSpeaker: "",
     body: body.slice(0, MAX_BODY),
     createdAt: new Date().toISOString(),
     replyTo: null,

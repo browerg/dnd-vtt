@@ -132,11 +132,12 @@ export default function CampaignPage() {
       speakerCharacterId?: number,
       speakerAsGm?: boolean,
       replyToId?: number,
-      speakerName?: string
+      speakerName?: string,
+      toSpeaker?: string
     ) => {
       await api(`/api/campaigns/${campaignId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm, replyToId, speakerName }),
+        body: JSON.stringify({ body, channel, targetUserId, speakerCharacterId, speakerAsGm, replyToId, speakerName, toSpeaker }),
       });
     },
     [campaignId]

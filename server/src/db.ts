@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { BOARD_SHOP_SCHEMA } from "./boardShopStore.js";
+import { WHISPER_THREADS_SCHEMA } from "./whisperThreads.js";
 
 export const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "data");
 export const uploadsDir = path.join(dataDir, "uploads");
@@ -428,6 +429,9 @@ for (const ddl of [
   "ALTER TABLE handouts ADD COLUMN revealed_at TEXT DEFAULT NULL",
   // The session the GM locked in from the availability scheduler (UTC ISO).
   "ALTER TABLE campaigns ADD COLUMN next_session_at TEXT NOT NULL DEFAULT ''",
+  // Which persona of the recipient a whisper is addressed to (a player
+  // replying to the GM's "Ozpin"), so each Scroll conversation stays whole.
+  "ALTER TABLE messages ADD COLUMN target_speaker TEXT NOT NULL DEFAULT ''",
 ]) {
   try {
     db.exec(ddl);
@@ -438,6 +442,12 @@ for (const ddl of [
 
 // Shop boards: shopkeepers, their wares and DM-approved purchase orders.
 db.exec(BOARD_SHOP_SCHEMA);
+// Conversations a player cleared from their Scroll.
+db.exec(WHISPER_THREADS_SCHEMA);
+// Older replies to a GM persona only pointed at it through reply_to; address them to it.
+db.exec(`UPDATE messages SET target_speaker = (SELECT p.speaker FROM messages p WHERE p.id = messages.reply_to_id AND p.user_id = messages.target_user_id)
+  WHERE channel = 'whisper' AND target_speaker = '' AND reply_to_id IS NOT NULL
+    AND EXISTS (SELECT 1 FROM messages p WHERE p.id = messages.reply_to_id AND p.user_id = messages.target_user_id AND p.speaker <> '')`);
 
 // "Previously on…" recaps and the next-session availability grid.
 db.exec(`

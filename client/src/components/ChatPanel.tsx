@@ -6,6 +6,11 @@ import "./RelicAppearance.css";
 import { chatSoundEnabled, playChatSound, playScrollSound, setChatSoundEnabled } from "../chatSound";
 import "./ScrollChat.css";
 import ScrollShell, { ScrollIcon, readScrollPreferences } from "./ScrollShell";
+import { messageThreadKey, parseThreadKey, threadKey, type ThreadRef } from "../../../shared/chatThreads";
+
+// Thread helpers need targetSpeaker as a string; older messages may lack it.
+const threadOfMessage = (message: ChatMessage, viewerId: number) =>
+  messageThreadKey({ ...message, targetSpeaker: message.targetSpeaker ?? "" }, viewerId);
 
 type Tab = "ic" | "ooc" | "whisper";
 
@@ -50,6 +55,8 @@ interface Props {
   pocketOpen?: boolean;
   onReadChannel?: (channel: Tab | null) => void;
   onTuck?: () => void;
+  /** Scroll only: clear a private conversation from this viewer's Scroll. */
+  onDeleteThread?: (key: string) => Promise<void>;
   onSend: (
     body: string,
     channel: Tab,
@@ -57,7 +64,8 @@ interface Props {
     speakerCharacterId?: number,
     speakerAsGm?: boolean,
     replyToId?: number,
-    speakerName?: string
+    speakerName?: string,
+    toSpeaker?: string
   ) => Promise<void>;
 }
 
@@ -76,6 +84,7 @@ export default function ChatPanel({
   pocketOpen = true,
   onReadChannel,
   onTuck,
+  onDeleteThread,
   onSend,
 }: Props) {
   const [tab, setTab] = useState<Tab>(() => { try { const saved = sessionStorage.getItem(`${scrollStorageKey}:tab`); return pocket && (saved === "ic" || saved === "whisper") ? saved : "ooc"; } catch { return "ooc"; } });
@@ -84,6 +93,15 @@ export default function ChatPanel({
   useEffect(() => { if(pocket) { try { sessionStorage.setItem(`${scrollStorageKey}:draft`,draft); } catch {} } }, [draft,pocket,scrollStorageKey]);
   const [target, setTarget] = useState(() => { try { return pocket ? Number(sessionStorage.getItem(`${scrollStorageKey}:target`)) || 0 : 0; } catch { return 0; } });
   useEffect(() => { if(pocket) { try { sessionStorage.setItem(`${scrollStorageKey}:target`,String(target)); } catch {} } }, [target,pocket,scrollStorageKey]);
+  // Scroll only: the open private conversation (a thread key), or the inbox when null.
+  const [openThread, setOpenThread] = useState<string | null>(() => { try { return pocket ? sessionStorage.getItem(`${scrollStorageKey}:thread`) : null; } catch { return null; } });
+  useEffect(() => { if (pocket) { try { if (openThread) sessionStorage.setItem(`${scrollStorageKey}:thread`, openThread); else sessionStorage.removeItem(`${scrollStorageKey}:thread`); } catch {} } }, [openThread, pocket, scrollStorageKey]);
+  // Conversations deleted this visit (key → last message id cleared); the server filters them after a reload.
+  const [deleted, setDeleted] = useState<Record<string, number>>({});
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [threadUnread, setThreadUnread] = useState<Record<string, number>>({});
+  const [composing, setComposing] = useState(false);
+  const [newTo, setNewTo] = useState(0);
   const [speakerChoice, setSpeakerChoice] = useState("gm");
   // GM only: who a private message comes from — "me", an NPC's id, or "contact"
   // for a typed-in name like "Unknown number".
@@ -163,8 +181,30 @@ export default function ChatPanel({
   const readingPosition = useRef(0);
   const [newBelow, setNewBelow] = useState(false);
   const previousTab = useRef(tab);
-  const shown = messages.filter((m) => m.channel === tab);
   const others = members.filter((m) => m.id !== myId);
+  const visibleMessages = messages.filter((m) => {
+    if (m.channel !== "whisper") return true;
+    const key = threadOfMessage(m, myId);
+    return !key || deleted[key] == null || m.id > deleted[key];
+  });
+  // On the Scroll, Private is an inbox of separate conversations.
+  const threadMode = scroll && tab === "whisper";
+  const openRef = threadMode && openThread ? parseThreadKey(openThread) : null;
+  const threadList = (() => {
+    const byKey = new Map<string, { key: string; ref: ThreadRef; last: ChatMessage }>();
+    for (const m of visibleMessages) {
+      const key = threadOfMessage(m, myId);
+      const ref = key ? parseThreadKey(key) : null;
+      if (key && ref) byKey.set(key, { key, ref, last: m });
+    }
+    return [...byKey.values()].sort((a, b) => b.last.id - a.last.id);
+  })();
+  const shown = threadMode
+    ? (openThread ? visibleMessages.filter((m) => threadOfMessage(m, myId) === openThread) : [])
+    : visibleMessages.filter((m) => m.channel === tab);
+  const nameFor = (ref: ThreadRef) => ref.otherPersona || members.find((m) => m.id === ref.otherId)?.display_name || "Unknown";
+  const portraitFor = (ref: ThreadRef) => (ref.otherPersona ? undefined : members.find((m) => m.id === ref.otherId)?.avatar_path || undefined);
+  const openConversation = (key: string | null) => { setOpenThread(key); setComposing(false); setConfirmDelete(null); if (key) setThreadUnread((current) => ({ ...current, [key]: 0 })); };
 
   useEffect(() => {
     const log = chatLogRef.current;
@@ -194,6 +234,19 @@ export default function ChatPanel({
     // the stored preference on every call, so no stale-closure worry here.
     if (!pocket) playChatSound(incoming.some((message) => message.channel === "whisper") ? "whisper" : "message");
 
+    const threadAdds: Record<string, number> = {};
+    for (const message of incoming) {
+      const key = message.channel === "whisper" ? threadOfMessage(message, myId) : null;
+      if (key && !(reading && tab === "whisper" && openThread === key)) threadAdds[key] = (threadAdds[key] ?? 0) + 1;
+    }
+    if (Object.keys(threadAdds).length) {
+      setThreadUnread((current) => {
+        const next = { ...current };
+        for (const [key, count] of Object.entries(threadAdds)) next[key] = (next[key] ?? 0) + count;
+        return next;
+      });
+    }
+
     const additions: Record<Tab, number> = { ic: 0, ooc: 0, whisper: 0 };
     for (const message of incoming) {
       if (message.channel !== tab || !reading) additions[message.channel] += 1;
@@ -219,7 +272,7 @@ export default function ChatPanel({
       window.clearTimeout(noticeTimerRef.current);
       noticeTimerRef.current = window.setTimeout(() => setNotice(""), 3500);
     }
-  }, [messages, messagesReady, myId, tab, reading]);
+  }, [messages, messagesReady, myId, tab, reading, openThread]);
 
   useEffect(
     () => () => {
@@ -231,6 +284,8 @@ export default function ChatPanel({
   useEffect(()=>{if(reading)setUnread(current=>({...current,[tab]:0}));},[reading,tab]);
   const selectTab = (next: Tab) => {
     if (scroll && (next !== tab || rollsOpen) && readScrollPreferences(scrollStorageKey).interfaceSound) playScrollSound("tap", true);
+    // Tapping Private again goes back to the conversation list.
+    if (next === "whisper" && tab === "whisper" && !rollsOpen) openConversation(null);
     setRollsOpen(false);
     setTab(next);
     setUnread((current) => ({ ...current, [next]: 0 }));
@@ -252,6 +307,16 @@ export default function ChatPanel({
     if (!draft.trim()) return;
     setError("");
     try {
+      if (threadMode) {
+        if (!openRef) return;
+        // The conversation decides who it goes to and who it comes from.
+        await onSend(draft, "whisper", openRef.otherId, undefined, false, replyTo?.id,
+          isDM && openRef.myPersona ? openRef.myPersona : undefined, openRef.otherPersona || undefined);
+        if (readScrollPreferences(scrollStorageKey).interfaceSound) playScrollSound("send", true);
+        setDraft("");
+        clearReply();
+        return;
+      }
       const whisperTarget = tab === "whisper" ? target || others[0]?.id : undefined;
       const speakerAsGm = tab === "ic" && isDM && speakerChoice === "gm";
       const speakerCharacterId =
@@ -311,7 +376,7 @@ export default function ChatPanel({
         </label>
       )}
 
-      {tab === "whisper" && isDM && (
+      {tab === "whisper" && isDM && !threadMode && (
         <label className="ic-speaker-control whisper-as-control">
           <span>Send as</span>
           <select value={whisperAs} onChange={(e) => setWhisperAs(e.target.value)}>
@@ -335,7 +400,7 @@ export default function ChatPanel({
         </label>
       )}
 
-      {tab === "whisper" && (
+      {tab === "whisper" && !threadMode && (
         <select value={target || others[0]?.id || 0} onChange={(e) => setTarget(Number(e.target.value))}>
           {others.map((m) => (
             <option key={m.id} value={m.id}>
@@ -364,7 +429,7 @@ export default function ChatPanel({
               : "Speak as your character…"
             : scroll
               ? tab === "whisper"
-                ? "Private message…"
+                ? openRef ? `Message ${nameFor(openRef)}…` : "Private message…"
                 : "Message the table…"
               : "Say something…"
         }
@@ -411,24 +476,118 @@ export default function ChatPanel({
     }
     const teamName =
       mine?.teamName?.trim() || [...teamCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
-    const contact = tab === "whisper" ? replyTo?.speaker || members.find(m=>m.id===(target || others[0]?.id))?.display_name : undefined;
-    const contactPortrait = members.find(m=>m.id===(target || others[0]?.id))?.avatar_path;
     const header = rollsOpen
       ? { title: "Rolls", sub: "Dice history", badge: "🎲" }
       : tab === "ic"
         ? { title: teamName ? `Team ${teamName}` : "Team", sub: "In character", badge: (teamName || "TM").slice(0, 4).toUpperCase() }
         : tab === "ooc"
           ? { title: "Table talk", sub: "Out of character", badge: "💬" }
-          : { title: contact || "Private", sub: "Private message", badge: "" };
+          : openRef
+            ? { title: nameFor(openRef), sub: isDM && openRef.myPersona ? `You're writing as ${openRef.myPersona}` : openRef.otherPersona ? "Contact" : "Private message", badge: "" }
+            : { title: "Private", sub: "Your conversations", badge: "" };
+
+    const startConversation = () => {
+      const otherId = newTo || others[0]?.id;
+      if (!otherId) return;
+      let persona = "";
+      if (isDM && whisperAs === "contact") {
+        persona = contactName.trim();
+        if (!persona) { setError("Name the contact this message comes from."); return; }
+      } else if (isDM && whisperAs !== "me") {
+        persona = characters.find((c) => String(c.id) === whisperAs)?.name ?? "";
+      }
+      setError("");
+      openConversation(threadKey({ otherId, otherPersona: "", myPersona: persona.slice(0, 40) }));
+    };
+    const removeThread = async (key: string) => {
+      setConfirmDelete(null);
+      if (!onDeleteThread) return;
+      try {
+        await onDeleteThread(key);
+        const last = Math.max(0, ...visibleMessages.filter((m) => threadOfMessage(m, myId) === key).map((m) => m.id));
+        setDeleted((current) => ({ ...current, [key]: last }));
+        if (openThread === key) openConversation(null);
+      } catch (err: any) { setError(err.message); }
+    };
+    const inbox = (
+      <div className="scroll-inbox">
+        {canChat && (composing ? (
+          <div className="scroll-inbox-compose">
+            <label>To
+              <select value={newTo || others[0]?.id || 0} onChange={(e) => setNewTo(Number(e.target.value))}>
+                {others.map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}
+              </select>
+            </label>
+            {isDM && (
+              <label>As
+                <select value={whisperAs} onChange={(e) => setWhisperAs(e.target.value)}>
+                  <option value="me">Yourself (GM)</option>
+                  {characters.filter((c) => c.isNpc).map((c) => <option key={c.id} value={c.id}>NPC: {c.name}</option>)}
+                  <option value="contact">Another contact…</option>
+                </select>
+              </label>
+            )}
+            {isDM && whisperAs === "contact" && (
+              <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Contact name, e.g. Unknown number" maxLength={40} aria-label="Contact name" />
+            )}
+            <div className="scroll-inbox-actions">
+              <button type="button" className="primary" onClick={startConversation} disabled={!others.length}>Start</button>
+              <button type="button" onClick={() => setComposing(false)}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="scroll-inbox-new" onClick={() => { setComposing(true); setNewTo(others[0]?.id || 0); }}>
+            <ScrollIcon name="messages"/> New message
+          </button>
+        ))}
+        {!threadList.length && !composing && <p className="scroll-empty">No conversations yet. Tap someone in Contacts, or start a new message.</p>}
+        {threadList.map((t) => {
+          const name = nameFor(t.ref);
+          const unreadCount = threadUnread[t.key] ?? 0;
+          return (
+            <div key={t.key} className={`scroll-inbox-row${unreadCount ? " is-unread" : ""}`}>
+              {confirmDelete === t.key ? (
+                <div className="scroll-inbox-confirm" role="group" aria-label={`Delete conversation with ${name}`}>
+                  <span>Delete this conversation from your Scroll? They keep their copy.</span>
+                  <button type="button" className="scroll-inbox-danger" onClick={() => void removeThread(t.key)}>Delete</button>
+                  <button type="button" onClick={() => setConfirmDelete(null)}>Keep</button>
+                </div>
+              ) : (
+                <>
+                  <button type="button" className="scroll-inbox-open" onClick={() => openConversation(t.key)}>
+                    <Avatar name={name} src={portraitFor(t.ref)} id={t.ref.otherId} size={38}/>
+                    <span className="scroll-inbox-text">
+                      <strong>{name}{unreadCount > 0 && <span className="scroll-inbox-dot" aria-label={`${unreadCount} unread`}/>}</strong>
+                      {isDM && t.ref.myPersona && <small className="scroll-inbox-as">as {t.ref.myPersona}</small>}
+                      <span className="scroll-inbox-last">{t.last.userId === myId ? "You: " : ""}{t.last.body}</span>
+                    </span>
+                  </button>
+                  {onDeleteThread && (
+                    <button type="button" className="scroll-inbox-delete" onClick={() => setConfirmDelete(t.key)} aria-label={`Delete conversation with ${name}`} title="Delete conversation">
+                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
 
     return (
       <div className={`chat-panel scroll-chat${pocket ? " is-pocket" : ""}`}>
         <ScrollShell storageKey={scrollStorageKey} characterName={mine?.name || members.find(m=>m.id===myId)?.display_name || "Your Scroll"} aura={auraPct} clock={clock} members={members} messages={messages} myId={myId} canChat={canChat} onTuck={onTuck} onRolls={setRollsOpen} onVisibilityChange={setThreadVisible}
-          onMessage={message=>{selectTab(message.channel);if(message.channel === "whisper")setTarget(message.userId);}}
-          onContact={(id,message)=>{selectTab("whisper");setTarget(id);setReplyTo(message || null);}}>
+          onMessage={message=>{selectTab(message.channel);if(message.channel === "whisper")openConversation(threadOfMessage(message, myId));}}
+          onContact={key=>{selectTab("whisper");openConversation(key);}}>
           <header className="scroll-header">
+            {threadMode && openRef && !rollsOpen && (
+              <button type="button" className="scroll-back" onClick={() => { openConversation(null); clearReply(); }} aria-label="Back to conversations">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+              </button>
+            )}
             <span className="scroll-header-badge" aria-hidden="true">
-              {tab === "whisper" && !rollsOpen ? <Avatar name={contact || "Private"} src={contactPortrait} id={target} size={30}/> : tab === "ic" && !rollsOpen ? header.badge : <ScrollIcon name={rollsOpen ? "rolls" : "messages"}/>}
+              {threadMode && openRef && !rollsOpen ? <Avatar name={nameFor(openRef)} src={portraitFor(openRef)} id={openRef.otherId} size={30}/> : tab === "ic" && !rollsOpen ? header.badge : <ScrollIcon name={rollsOpen ? "rolls" : "messages"}/>}
             </span>
             <span className="scroll-header-text">
               <strong>{header.title}</strong>
@@ -491,7 +650,7 @@ export default function ChatPanel({
           )}
 
           <div className="chat-log scroll-thread" ref={chatLogRef} hidden={rollsOpen} onScroll={e=>{const el=e.currentTarget;if(!el.clientHeight)return;readingPosition.current=el.scrollTop;nearBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<70;if(nearBottom.current)setNewBelow(false);}}>
-            {shown.length === 0 && <p className="scroll-empty">No messages yet.</p>}
+            {threadMode && !openRef ? inbox : shown.length === 0 && <p className="scroll-empty">{openRef ? `Say hello to ${nameFor(openRef)}.` : "No messages yet."}</p>}
             {shown.map((m) => {
               const own = m.userId === myId;
               const author = m.speaker && m.channel !== "ooc" ? m.speaker : m.userName;
@@ -517,8 +676,8 @@ export default function ChatPanel({
                         <span className="chat-quote-body">{m.replyTo.body}</span>
                       </button>
                     )}
-                    {own && fromContact && <span className="scroll-whisper-to">as {m.speaker}</span>}
-                    {m.channel === "whisper" && (
+                    {own && fromContact && !threadMode && <span className="scroll-whisper-to">as {m.speaker}</span>}
+                    {m.channel === "whisper" && !threadMode && (
                       <span className="scroll-whisper-to">
                         {!own && m.targetUserId === myId
                           ? "to you"
@@ -541,7 +700,7 @@ export default function ChatPanel({
           </div>
 
           {newBelow && !rollsOpen && <button type="button" className="signature-new-messages" onClick={()=>{const log=chatLogRef.current;if(log)log.scrollTop=log.scrollHeight;nearBottom.current=true;setNewBelow(false);}}>New messages ↓</button>}
-          {!rollsOpen && composeForm}
+          {!rollsOpen && (!threadMode || openRef) && composeForm}
           {error && <div className="error">{error}</div>}
 
           <nav className="scroll-tabs" aria-label="Message channels">

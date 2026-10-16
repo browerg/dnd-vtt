@@ -83,6 +83,8 @@ export interface ChatMessage {
   targetUserId: number | null;
   targetName: string | null;
   speaker: string;
+  /** Whisper only: the recipient persona addressed ("" for the person themselves). */
+  targetSpeaker?: string;
   body: string;
   createdAt: string;
   replyTo: ChatReplyPreview | null;

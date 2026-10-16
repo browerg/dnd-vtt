@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { uploadImage, type ChatMessage, type Member } from "../api";
 import { chatSoundEnabled, playChatSound, playScrollSound, setChatSoundEnabled } from "../chatSound";
 import { Avatar } from "./Avatar";
+import { messageThreadKey, threadKey } from "../../../shared/chatThreads";
 import "./ScrollShell.css";
 
 type App = "messages" | "contacts" | "rolls" | "settings";
@@ -27,7 +28,7 @@ export function ScrollIcon({ name }: { name: string }) {
 
 export default function ScrollShell({ storageKey, characterName, aura, clock, members, messages, myId, canChat, onContact, onMessage, onVisibilityChange, onRolls, onTuck, children }: {
   storageKey: string; characterName: string; aura: number | null; clock: Date; members: Member[]; messages: ChatMessage[]; myId: number; canChat: boolean;
-  onContact: (id: number, message?: ChatMessage) => void; onMessage: (message: ChatMessage) => void; onVisibilityChange: (visible: boolean) => void; onRolls: (open: boolean) => void; onTuck?: () => void; children: ReactNode;
+  onContact: (threadKey: string) => void; onMessage: (message: ChatMessage) => void; onVisibilityChange: (visible: boolean) => void; onRolls: (open: boolean) => void; onTuck?: () => void; children: ReactNode;
 }) {
   const [prefs, setPrefs] = useState(() => readScrollPreferences(storageKey));
   const [app, setApp] = useState<App>(() => { try {const saved=sessionStorage.getItem(`${storageKey}:app`);return saved === "contacts" || saved === "settings" || saved === "rolls" ? saved : "messages";}catch{return "messages";} });
@@ -50,9 +51,9 @@ export default function ScrollShell({ storageKey, characterName, aura, clock, me
   const latest = messages.filter(m => m.userId !== myId).at(-1);
   const contacts = [...new Map(messages.filter(m => m.channel === "whisper" && m.userId !== myId && m.speaker).map(m => [`${m.userId}:${m.speaker}`, m])).values()];
   return <div className={`signature-shell finish-${prefs.finish}${locked ? " is-locked" : ""}`} style={style}>
-    <img className="signature-casing" src="/assets/scroll/casing.webp" alt=""/><div className="signature-hardware" title="Drag down to put away" onPointerDown={e=>{dragY.current=e.clientY;e.currentTarget.setPointerCapture(e.pointerId);}} onPointerUp={e=>{if(dragY.current !== null && e.clientY-dragY.current>45)onTuck?.();dragY.current=null;}} onPointerCancel={()=>{dragY.current=null;}}><span/><i/><span/></div>
+    <img className="signature-casing" src="/assets/scroll/casing.webp" alt=""/><div className="signature-hardware" title="Tap or drag down to put away" onPointerDown={e=>{dragY.current=e.clientY;e.currentTarget.setPointerCapture(e.pointerId);}} onPointerUp={e=>{const moved=dragY.current === null ? null : e.clientY-dragY.current;dragY.current=null;if(moved !== null && (moved>45 || Math.abs(moved)<8))onTuck?.();}} onPointerCancel={()=>{dragY.current=null;}}><span/><i/><span/></div>
     <div className="signature-screen">
-      <div className="signature-status"><span>CCT <span className="signature-signal" aria-hidden="true"><i/><i/><i/><i/></span></span><span>{clock.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit",hour12:false})}</span><span>{aura == null ? "Scroll" : `Aura ${aura}%`}</span></div>
+      <div className={`signature-status${onTuck ? " can-tuck" : ""}`} onClick={onTuck} title={onTuck ? "Tap to put your Scroll away" : undefined}><span>CCT <span className="signature-signal" aria-hidden="true"><i/><i/><i/><i/></span></span><span>{clock.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit",hour12:false})}</span><span>{aura == null ? "Scroll" : `Aura ${aura}%`}</span></div>
       <div className="signature-tools">
         {!locked && <button type="button" aria-label="Lock Scroll" onClick={() => setLocked(true)}><ScrollIcon name={prefs.emblem}/></button>}
         {onTuck && <button type="button" className="signature-tuck" aria-label="Put your Scroll away" onClick={onTuck}><ScrollIcon name="up"/></button>}
@@ -65,8 +66,8 @@ export default function ScrollShell({ storageKey, characterName, aura, clock, me
       </section> : null}
       <div className="signature-chat" hidden={locked || app === "contacts" || app === "settings"}>{children}</div>
       {!locked && app === "contacts" && <section className="signature-panel" aria-label="Scroll contacts"><h2>Contacts</h2><p>Your party and the people who have contacted you.</p>
-        {contacts.map(m => <button type="button" className="signature-contact" key={`${m.userId}:${m.speaker}`} disabled={!canChat} onClick={() => {onContact(m.userId,m);go("messages");}}><Avatar name={m.speaker || m.userName} id={m.userId} size={38}/><span><strong>{m.speaker}</strong><small>Contact · Reply privately</small></span><ScrollIcon name="messages"/></button>)}
-        {members.filter(m=>m.id!==myId).map(m=><button type="button" className="signature-contact" key={m.id} disabled={!canChat} onClick={()=>{onContact(m.id);go("messages");}}><Avatar name={m.display_name} src={m.avatar_path} id={m.id} size={38}/><span><strong>{m.display_name}</strong><small>{m.role === "dm" ? "Game Master" : "Party member"}</small></span><ScrollIcon name="messages"/></button>)}
+        {contacts.map(m => <button type="button" className="signature-contact" key={`${m.userId}:${m.speaker}`} disabled={!canChat} onClick={() => {const key=messageThreadKey({...m,targetSpeaker:m.targetSpeaker ?? ""},myId);if(key)onContact(key);go("messages");}}><Avatar name={m.speaker || m.userName} id={m.userId} size={38}/><span><strong>{m.speaker}</strong><small>Contact · Reply privately</small></span><ScrollIcon name="messages"/></button>)}
+        {members.filter(m=>m.id!==myId).map(m=><button type="button" className="signature-contact" key={m.id} disabled={!canChat} onClick={()=>{onContact(threadKey({otherId:m.id,otherPersona:"",myPersona:""}));go("messages");}}><Avatar name={m.display_name} src={m.avatar_path} id={m.id} size={38}/><span><strong>{m.display_name}</strong><small>{m.role === "dm" ? "Game Master" : "Party member"}</small></span><ScrollIcon name="messages"/></button>)}
         {members.length < 2 && !contacts.length && <p>No contacts yet. Party members appear here when they join.</p>}
       </section>}
       {!locked && app === "settings" && <section className="signature-panel signature-settings" aria-label="Scroll settings"><h2>Make it yours</h2><p>Saved on this browser for this account and campaign.</p>

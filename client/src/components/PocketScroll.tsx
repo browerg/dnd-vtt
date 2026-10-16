@@ -165,11 +165,12 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
       speakerCharacterId?: number,
       speakerAsGm?: boolean,
       replyToId?: number,
-      speakerName?: string
+      speakerName?: string,
+      toSpeaker?: string
     ) => {
       await api(`/api/campaigns/${campaignId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ body: text, channel, targetUserId, speakerCharacterId, speakerAsGm, replyToId, speakerName }),
+        body: JSON.stringify({ body: text, channel, targetUserId, speakerCharacterId, speakerAsGm, replyToId, speakerName, toSpeaker }),
       });
     },
     [campaignId]
@@ -213,6 +214,7 @@ export default function PocketScroll({ campaignId, rolls }: { campaignId: number
           rolls={rolls}
           onTuck={tuck}
           onSend={sendChat}
+          onDeleteThread={async key => { await api(`/api/campaigns/${campaignId}/whisper-threads/hide`, { method: "POST", body: JSON.stringify({ key }) }); }}
         />
       </div>
     </div>

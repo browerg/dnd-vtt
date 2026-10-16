@@ -53,7 +53,10 @@
 .signature-panel h2 { font-family:inherit; font-size:21px; font-weight:500; padding-right:65px; margin:0 0 9px; }
 .signature-panel p { color:#c0b5bf; font-size:12px; line-height:1.5; }
 .signature-contact { display:flex; width:100%; align-items:center; gap:10px; background:transparent; border:0; border-bottom:1px solid #ffffff18; border-radius:0; padding:13px 0; text-align:left; color:#f0e8ed; }
-.signature-contact > span { display:grid; gap:5px; flex:1; min-width:0; }
+/* The avatar is a <span> too; keep it out of the stretchy text column. */
+.signature-contact > span:not(.avatar) { display:grid; gap:5px; flex:1; min-width:0; }
+.signature-contact > .avatar { flex:0 0 auto; }
+.signature-status.can-tuck { cursor:pointer; }
 .signature-contact strong { font-size:13px; overflow-wrap:anywhere; }
 .signature-contact small { font-size:11px; color:#bfb2bc; }
 .signature-settings fieldset { padding:16px 0; border:0; border-bottom:1px solid #ffffff20; margin:0; min-width:0; }
@@ -145,3 +148,28 @@
 .chat-panel.scroll-chat .signature-shell .is-own .scroll-bubble { background:var(--signature-bubble); }
 @media(max-height:580px) { .signature-emblem img { width:48px; height:48px; } }
 .chat-panel.scroll-chat .signature-shell .signature-screen { position:absolute; top:5.8%; bottom:8.5%; left:6%; right:6%; }
+
+/* Private: an inbox of conversations, one per contact and persona. */
+.chat-panel.scroll-chat .signature-shell .scroll-back { flex:0 0 auto; display:grid; place-items:center; width:30px; height:34px; margin-left:-6px; padding:0; border:0; background:transparent; color:var(--signature-accent); }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox { display:flex; flex-direction:column; gap:2px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-new { display:flex; align-items:center; justify-content:center; gap:7px; min-height:40px; margin-bottom:8px; border:1px solid #6e5563; border-radius:10px; background:#2a2129; color:var(--signature-accent); font-size:13px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-new svg { width:16px; height:16px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-row { display:flex; align-items:center; gap:4px; border-bottom:1px solid #ffffff14; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-open { display:flex; flex:1; min-width:0; align-items:center; gap:10px; padding:11px 2px; border:0; background:transparent; color:#efe7ec; text-align:left; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-open > .avatar { flex:0 0 auto; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-text { display:grid; gap:3px; flex:1; min-width:0; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-text strong { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; overflow-wrap:anywhere; }
+.chat-panel.scroll-chat .signature-shell .is-unread .scroll-inbox-text strong { font-weight:700; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-dot { width:8px; height:8px; border-radius:50%; background:var(--signature-accent); }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-as { color:var(--signature-accent); font-size:10px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-last { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:#b9adb7; font-size:12px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-delete { flex:0 0 auto; display:grid; place-items:center; width:36px; height:40px; padding:0; border:0; background:transparent; color:#a8949f; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-confirm { display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%; padding:10px 2px; font-size:12px; color:#e6dbe2; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-confirm span { flex-basis:100%; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-confirm button,.chat-panel.scroll-chat .signature-shell .scroll-inbox-actions button { min-height:36px; padding:6px 14px; border:1px solid #5d4a56; border-radius:8px; background:#2a2129; color:#eadde5; font-size:12px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-confirm .scroll-inbox-danger { border-color:#c4566b; background:#5a1f2c; color:#ffe1e7; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-compose { display:grid; gap:8px; margin-bottom:10px; padding:10px; border:1px solid #5d4a56; border-radius:10px; background:#211a22; font-size:12px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-compose label { display:grid; gap:4px; color:#cbbcc6; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-compose select,.chat-panel.scroll-chat .signature-shell .scroll-inbox-compose input { min-height:36px; padding:6px 8px; border:1px solid #685360; border-radius:7px; background:#28212d; color:#f2eaf0; font:inherit; font-size:13px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-actions { display:flex; gap:8px; }
+.chat-panel.scroll-chat .signature-shell .scroll-inbox-actions .primary { background:var(--signature-bubble); border-color:#997380; }
