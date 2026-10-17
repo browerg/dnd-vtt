@@ -25,6 +25,22 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [devBusyId, setDevBusyId] = useState<number | null>(null);
   const [devUsers, setDevUsers] = useState<DevUser[]>([]);
+  // Without an email provider, Forgot password explains how to ask the GM.
+  const [emailRecovery, setEmailRecovery] = useState(false);
+  useEffect(() => {
+    api<{ emailEnabled: boolean }>("/api/auth/password-recovery")
+      .then((response) => setEmailRecovery(response.emailEnabled))
+      .catch(() => {});
+  }, []);
+  const askGm = mode === "forgot" && !emailRecovery;
+  // A cat sticks its tongue out at anyone who forgot their password.
+  const [showCat, setShowCat] = useState(false);
+  useEffect(() => {
+    if (!showCat) return;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setShowCat(false); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [showCat]);
 
   // Held until the opening video is gone, so the two soundtracks never
   // overlap. On a repeat visit the entrance is skipped and this is true at once.
@@ -46,6 +62,7 @@ export default function LoginPage() {
     setMode(nextMode);
     setError("");
     setNotice("");
+    setShowCat(nextMode === "forgot");
   };
 
   const devLogin = async (userId: number) => {
@@ -95,6 +112,16 @@ export default function LoginPage() {
 
   return (
     <main className="gateway">
+      {showCat && (
+        <div className="gateway-cat" role="dialog" aria-modal="true" aria-labelledby="gateway-cat-title" onClick={() => setShowCat(false)}>
+          <div className="gateway-cat-card" onClick={(event) => event.stopPropagation()}>
+            <img src="/assets/login/forgot-cat.gif" alt="A cat sticking its tongue out" width={165} height={199} />
+            <strong id="gateway-cat-title">Forgot your password? Bleh.</strong>
+            <p>{askGm ? "No worries, your GM can fix it. Here's how." : "No worries, we can get you back in."}</p>
+            <button type="button" autoFocus onClick={() => setShowCat(false)}>OK</button>
+          </div>
+        </div>
+      )}
       <div className="gateway-atmosphere" aria-hidden>
         <span className="gateway-orbit orbit-one" />
         <span className="gateway-orbit orbit-two" />
@@ -186,7 +213,9 @@ export default function LoginPage() {
                 ? "Sign in to return to your campaigns."
                 : mode === "register"
                   ? "Create an account and begin building your table."
-                  : "Enter your account email and we'll send a secure recovery link."}
+                  : askGm
+                    ? "Your GM can set a new password for you. Here's how."
+                    : "Enter your account email and we'll send a secure recovery link."}
             </p>
           </div>
 
@@ -229,6 +258,13 @@ export default function LoginPage() {
               </label>
             )}
 
+            {askGm ? (
+              <ol className="gateway-recovery-steps">
+                <li><strong>Message your GM</strong> on Discord, or however your table talks, and tell them you're locked out.</li>
+                <li><strong>They set a new password for you.</strong> In the campaign's party list they press 🔑 next to your name and send you the password it shows.</li>
+                <li><strong>Sign in here</strong> with your usual email and that new password. You can change it from your profile afterwards.</li>
+              </ol>
+            ) : (
             <label className="gateway-field" htmlFor={emailId}>
               <span>Email address</span>
               <span className="gateway-input-wrap">
@@ -245,6 +281,10 @@ export default function LoginPage() {
                 />
               </span>
             </label>
+            )}
+            {mode === "forgot" && emailRecovery && (
+              <p className="gateway-recovery-note">No email? Your GM can also set a new password for you from the party list.</p>
+            )}
 
             {mode !== "forgot" && (
               <label className="gateway-field" htmlFor={passwordId}>
@@ -288,7 +328,7 @@ export default function LoginPage() {
                   Forgot password?
                 </button>
               )}
-              {mode === "forgot" && (
+              {mode === "forgot" && !askGm && (
                 <button
                   type="button"
                   className="gateway-meta-link"
@@ -313,6 +353,12 @@ export default function LoginPage() {
               </div>
             )}
 
+            {askGm ? (
+              <button type="button" className="gateway-submit" onClick={() => changeMode("login")}>
+                <span>Back to sign in</span>
+                <span className="submit-arrow" aria-hidden />
+              </button>
+            ) : (
             <button className="gateway-submit" disabled={busy}>
               <span>
                 {busy
@@ -327,6 +373,7 @@ export default function LoginPage() {
               </span>
               {!busy && <span className="submit-arrow" aria-hidden />}
             </button>
+            )}
           </form>
 
           {devUsers.length > 0 && (

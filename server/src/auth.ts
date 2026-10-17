@@ -282,6 +282,12 @@ authRouter.post("/login", (req, res) => {
   res.json({ id: user.id, email: user.email, display_name: user.display_name });
 });
 
+// Whether Forgot password can email a link. Without an email provider the
+// login page explains how to ask the GM instead (they set it from the party list).
+authRouter.get("/password-recovery", (_req, res) => {
+  res.json({ emailEnabled: !!String(process.env.RESEND_API_KEY ?? "").trim() });
+});
+
 authRouter.post("/forgot-password", async (req, res, next) => {
   const generic = {
     ok: true,

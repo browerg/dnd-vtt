@@ -25,6 +25,7 @@ is the one piece of markup the launcher renders.
 
 ### Minor changes
 
+- **Forgot password explains what to do** — Instead of promising an email that never arrived, Forgot password now walks you through getting a new password from your GM. A cat may stick its tongue out at you first.
 - **Tap to put your Scroll away** — Tap the top of your Scroll (the clock bar) to tuck it back into your pocket.
 - **Contact pictures** — Contact pictures on your Scroll are round again instead of stretched.
 
