@@ -29,6 +29,8 @@ import {
   type RemnantData,
 } from "../remnant";
 import InventoryEditor from "./InventoryEditor";
+import SemblanceEffects from "./SemblanceEffects";
+import type { SemblanceCompanion } from "../remnant";
 
 interface Props {
   name: string;
@@ -45,6 +47,10 @@ interface Props {
   ) => Promise<{ hpRecovered: number; auraRecovered: number; gritRoll?: number }>;
   onUpload?: (file: File) => Promise<string>;
   onDustEffect?: (effect: string) => void;
+  /** Tell the table which Semblance effect was used. */
+  announce?: (text: string) => void;
+  /** GM only: add a Semblance companion as an NPC. */
+  onAddCompanion?: (companion: SemblanceCompanion, aura: number) => Promise<void>;
 }
 
 const num = (v: string, fallback = 0) => {
@@ -54,7 +60,7 @@ const num = (v: string, fallback = 0) => {
 
 const formLabel = (index: number) => String.fromCharCode(65 + Math.max(0, index));
 
-export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUpload, onDustEffect }: Props) {
+export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUpload, onDustEffect, announce, onAddCompanion }: Props) {
   const tb = trainingBonus(d.rank);
   const auraMax = auraMaxFor(d);
   const hpMax = hpMaxFor(d);
@@ -1493,7 +1499,17 @@ export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUplo
               )}
             </div>
 
-            {d.semblance.duration === "Sustained" && d.semblance.active && d.aura > 0 && (
+            <SemblanceEffects
+              name={name}
+              d={d}
+              ro={ro}
+              update={update}
+              activationCost={cost.activation}
+              announce={announce}
+              onAddCompanion={onAddCompanion}
+            />
+
+            {d.semblance.duration === "Sustained" && d.semblance.active && !d.semblance.activeEffect && d.aura > 0 && (
               <div className="semblance-sustained-panel">
                 <div className="semblance-sustained-status">
                   <span className="semblance-active-pip" aria-hidden="true" />

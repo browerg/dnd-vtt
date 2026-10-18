@@ -168,6 +168,37 @@ export const SEMBLANCE_UPGRADES = [
   "Awakening",
 ];
 
+/** A companion an effect brings into play, kept as a stat block for the GM. */
+export interface SemblanceCompanion {
+  name: string;
+  description: string;
+  /** Die sizes, as on a character sheet. */
+  attributes: Partial<Record<RemnantAttrKey, number>>;
+  hp: number;
+  /** Aura before the summoner's bonus. */
+  auraBase: number;
+  /** Added: the summoner's Aura die maximum × this. */
+  auraPerSummonerDie: number;
+  weapon: { name: string; range: string; damage: number; special: string };
+}
+
+/**
+ * One effect a Semblance user can pick when activating. Costs are as written
+ * by the table: the effect's extra Aura is added to the Semblance's activation
+ * cost, and a sustained effect lists its own per-round upkeep.
+ */
+export interface SemblanceEffect {
+  name: string;
+  target: string;
+  extraCost: number;
+  /** 0 = not sustained; otherwise Aura per round to keep it going. */
+  upkeep: number;
+  finalFlareOnly?: boolean;
+  text: string;
+  flavor?: string;
+  companion?: SemblanceCompanion;
+}
+
 /** A mode inside a weapon form, e.g. Rifle form → "Sniper shot" / "Shotgun spread". */
 export interface WeaponSubForm {
   name: string;
@@ -246,6 +277,10 @@ export interface RemnantData {
     upgrades: string[];
     active?: boolean;
     maintainedRounds?: number;
+    /** Optional menu of effects chosen at activation (e.g. Terra's storybook tales). */
+    effects?: SemblanceEffect[];
+    /** Name of the sustained effect currently running, if any. */
+    activeEffect?: string;
   };
   dust: Record<string, number>; // charges by type key
   dustVials?: DustVial[];

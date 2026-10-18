@@ -17,7 +17,7 @@ import RemnantSheet from "./RemnantSheet";
 import PortraitFramer from "./PortraitFramer";
 import { portraitImageStyle, readPortraitFrame } from "../portraitFrame";
 import InventoryEditor from "./InventoryEditor";
-import type { RemnantData } from "../remnant";
+import type { RemnantData, SemblanceCompanion } from "../remnant";
 
 type RollMode = "normal" | "advantage" | "disadvantage" | "edge" | "setback";
 
@@ -41,6 +41,37 @@ export default function SheetView({ campaignId, characterId }: Props) {
 
   const [character, setCharacter] = useState<Character | null>(null);
   const [canEdit, setCanEdit] = useState(false);
+  // Only the GM can add NPCs (e.g. a Semblance companion).
+  const [isGm, setIsGm] = useState(false);
+  useEffect(() => {
+    api<{ yourRole: string }>(`/api/campaigns/${campaignId}`)
+      .then((response) => setIsGm(response.yourRole === "dm" || response.yourRole === "co-dm"))
+      .catch(() => setIsGm(false));
+  }, [campaignId]);
+  const announce = useCallback((body: string) => {
+    void api(`/api/campaigns/${campaignId}/messages`, { method: "POST", body: JSON.stringify({ body, channel: "ooc" }) }).catch(() => {});
+  }, [campaignId]);
+  const addCompanion = useCallback(async (companion: SemblanceCompanion, aura: number) => {
+    const created = await api<{ id: number }>(`/api/campaigns/${campaignId}/characters`, {
+      method: "POST", body: JSON.stringify({ name: companion.name, isNpc: true }),
+    });
+    const fresh = await api<{ character: Character }>(`/api/campaigns/${campaignId}/characters/${created.id}`);
+    const base = fresh.character.data as unknown as RemnantData;
+    const statLine = Object.entries(companion.attributes).map(([key, die]) => `${key} d${die}`).join(", ");
+    const data: RemnantData = {
+      ...base,
+      attributes: { ...base.attributes, ...companion.attributes },
+      hp: companion.hp, maxHp: companion.hp, aura, auraMax: aura,
+      weaponName: companion.weapon.name,
+      weaponForms: [{ type: companion.weapon.name, range: companion.weapon.range, damage: companion.weapon.damage, styleDie: 0, special: companion.weapon.special }],
+      activeForm: 0,
+      notes: `${companion.description}
+
+Stat block: ${statLine}. Aura ${aura}, HP ${companion.hp}.
+${companion.weapon.name}: ${companion.weapon.special}, ${companion.weapon.range} range.`,
+    };
+    await api(`/api/campaigns/${campaignId}/characters/${created.id}`, { method: "PUT", body: JSON.stringify({ name: companion.name, data }) });
+  }, [campaignId]);
   const [rollMode, setRollMode] = useState<RollMode>("normal");
   const [spellQuery, setSpellQuery] = useState("");
   const [spellHits, setSpellHits] = useState<
@@ -290,6 +321,8 @@ export default function SheetView({ campaignId, characterId }: Props) {
           onRest={performRest}
           onUpload={(file) => uploadItemImage(campaignId, characterId, file)}
           onDustEffect={triggerDustEffect}
+          announce={announce}
+          onAddCompanion={isGm ? addCompanion : undefined}
         />
       ) : (
         <main className="content sheet">

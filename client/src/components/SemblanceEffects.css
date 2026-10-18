@@ -1,0 +1,23 @@
+.semblance-effects { display: grid; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.semblance-effects-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; }
+.semblance-effects-head select { margin-left: auto; max-width: 100%; }
+.semblance-effect-list { display: grid; gap: 0.4rem; }
+.semblance-effect { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0.45rem 0.65rem; background: rgba(0, 0, 0, 0.15); }
+.semblance-effect.is-running { border-color: var(--border-gold, rgba(207, 166, 79, 0.6)); box-shadow: 0 0 10px rgba(207, 166, 79, 0.15); }
+.semblance-effect > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; cursor: pointer; list-style: none; }
+.semblance-effect > summary::-webkit-details-marker { display: none; }
+.semblance-effect-name { font-weight: 600; }
+.semblance-effect-badges { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-left: auto; }
+.semblance-effect-badges .badge { font-size: 0.7rem; }
+.semblance-flare { border-color: #e0884a; color: #f3b07c; }
+.semblance-effect p { margin: 0.4rem 0 0; line-height: 1.45; font-size: 0.88rem; }
+.semblance-effect-text { white-space: pre-line; }
+.semblance-effect-flavor { font-style: italic; color: var(--muted, #9aa6b2); }
+.semblance-companion { display: grid; gap: 0.2rem; margin-top: 0.5rem; padding: 0.5rem 0.6rem; border-left: 2px solid var(--border-gold, rgba(207, 166, 79, 0.5)); background: rgba(255, 255, 255, 0.03); }
+.semblance-companion button { justify-self: start; margin-top: 0.3rem; }
+.semblance-effect-actions { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+.semblance-effect.is-editing { display: grid; gap: 0.4rem; }
+.semblance-effect-numbers { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; font-size: 0.82rem; }
+.semblance-effect-numbers input[type="number"] { width: 4.5rem; margin-left: 0.3rem; }
+.semblance-effect-flag { display: flex; align-items: center; gap: 0.3rem; }
+.semblance-add-effect { justify-self: start; }
