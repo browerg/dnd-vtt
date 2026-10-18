@@ -9,8 +9,9 @@ import NPCPanel from "../components/NPCPanel";
 import NotesPanel from "../components/NotesPanel";
 import RollFeed from "../components/RollFeed";
 import DicePanel from "../components/DicePanel";
-import ChatPanel from "../components/ChatPanel";
+
 import { ScrollHint } from "../components/PocketScroll";
+import { SendingHint } from "../components/SendingDock";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
 import VCoinRewardsPanel from "../components/VCoinRewardsPanel";
@@ -272,16 +273,7 @@ export const PANELS: PanelDef[] = [
       ctx.system === "remnant" ? (
         <ScrollHint />
       ) : (
-        <ChatPanel
-          messages={ctx.messages}
-          messagesReady={ctx.messagesReady}
-          members={ctx.members}
-          characters={ctx.characters}
-          myId={ctx.myId}
-          canChat={ctx.canWrite}
-          isDM={ctx.isDM}
-          onSend={ctx.sendChat}
-        />
+        <SendingHint />
       ),
   },
   {

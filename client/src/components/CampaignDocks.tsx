@@ -4,7 +4,7 @@ import { io, type Socket } from "socket.io-client";
 import { api, type RollPayload } from "../api";
 import { animateRoll } from "../dice3d";
 import DiceDock from "./DiceDock";
-import RollDock from "./RollDock";
+import SendingDock from "./SendingDock";
 import PocketScroll from "./PocketScroll";
 
 // Self-contained floating docks (dice bottom-left + roll log / notifications
@@ -59,7 +59,7 @@ export default function CampaignDocks() {
   return (
     <>
       {canRoll && <DiceDock onRoll={doRoll} system={system} />}
-      {loaded && (system === "remnant" ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <RollDock rolls={rolls} />)}
+      {loaded && (system === "remnant" ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <SendingDock campaignId={campaignId} rolls={rolls} />)}
     </>
   );
 }

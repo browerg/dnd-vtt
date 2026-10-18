@@ -27,6 +27,8 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **Sendings for D&D** — Your D&D chat now travels with you as a little parchment scroll in the bottom-right corner. Open it for private conversations with players and NPCs, Party chat, Table talk and your Rolls. New private letters write themselves in glowing magic, with sparks and wisps following the ink. Reply in the same conversation, keep drafts, or roll it up and let the wax seal tell you when a new message arrives. Remnant keeps its phone Scroll.
+
 - **Semblance effects** — A Semblance can now have a menu of effects to choose from when you activate it. Each effect lists its target, any extra Aura, whether it's sustained, and what it does. Press Use and the sheet spends your activation cost plus the extra, and tells the table in Table talk what you used. Sustained effects get their own Maintain and End buttons. Add, edit or remove effects on your sheet.
 - **Semblance presets** — Pick "Load a preset…" under Effects to fill in a ready-made Semblance. The first one is Terra's Fairy Tale Semblance: all 15 tales, from The Indecisive King to The Story of the Seasons. If you're Terra's GM, you can add the Lady of the Woods to your campaign as an NPC with one click, stat block included.
 

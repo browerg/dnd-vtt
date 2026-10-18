@@ -12,7 +12,7 @@ import { animateRollAt, preloadDice } from "../dice3d";
 import type { CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
-import RollDock from "../components/RollDock";
+import SendingDock from "../components/SendingDock";
 import PocketScroll from "../components/PocketScroll";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
@@ -624,7 +624,7 @@ export default function CampaignDashboardPage() {
 
       {/* Quick dice + roll notifications, reachable from every campaign screen. */}
       {canWrite && !(atelier && present.has("dice")) && <DiceDock onRoll={doRoll} system={system} />}
-      {isRemnant ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <RollDock rolls={rolls} />}
+      {isRemnant ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <SendingDock campaignId={campaignId} rolls={rolls} />}
     </div>
   );
 }

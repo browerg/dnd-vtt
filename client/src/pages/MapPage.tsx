@@ -11,7 +11,7 @@ import { animateRollAt, preloadDice } from "../dice3d";
 import { CONDITIONS, controlsCharacter, type CharacterSummary } from "../sheet";
 import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
-import RollDock from "../components/RollDock";
+import SendingDock from "../components/SendingDock";
 import PocketScroll from "../components/PocketScroll";
 import MyInitiative from "../components/MyInitiative";
 import MapSheetDrawer from "../components/MapSheetDrawer";
@@ -3555,7 +3555,7 @@ Choose Cancel to permanently delete it instead.`
         </aside>
       </div>
       {canRoll && <DiceDock onRoll={doRoll} system={system} />}
-      {system === "remnant" ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <RollDock rolls={rolls} />}
+      {system === "remnant" ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <SendingDock campaignId={campaignId} rolls={rolls} />}
       {sheetCharacterId != null && (
         <MapSheetDrawer
           campaignId={campaignId}

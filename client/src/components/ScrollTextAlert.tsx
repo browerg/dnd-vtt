@@ -26,7 +26,7 @@ export default function ScrollTextAlert({ campaignId, system }: { campaignId: nu
     socket.on("chat", (m: ChatMessage) => {
       if (m.campaignId !== campaignId || m.channel !== "whisper" || m.targetUserId !== myId.current) return;
       // Remnant campaigns carry a pocket Scroll, which buzzes and peeks itself.
-      if (systemRef.current === "remnant") return;
+      if (systemRef.current === "remnant" || document.querySelector(".sending-dock")) return;
       const chatOnScreen = !!document.querySelector(".chat-panel");
       if (!m.speaker && chatOnScreen) return;
       // The chat panel plays its own sound when it's mounted.

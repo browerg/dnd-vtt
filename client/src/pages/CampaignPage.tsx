@@ -9,13 +9,12 @@ import { animateRoll } from "../dice3d";
 import { controlsCharacter, type CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
-import RollDock from "../components/RollDock";
+import SendingDock, { SendingHint } from "../components/SendingDock";
 import PocketScroll, { ScrollHint } from "../components/PocketScroll";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
 import ScrollTextAlert from "../components/ScrollTextAlert";
 import PreviouslyOn from "../components/PreviouslyOn";
-import ChatPanel from "../components/ChatPanel";
 import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
 import { Avatar } from "../components/Avatar";
@@ -426,16 +425,7 @@ export default function CampaignPage() {
             {detail.campaign.system === "remnant" ? (
               <ScrollHint />
             ) : (
-              <ChatPanel
-                messages={messages}
-                messagesReady={messagesReady}
-                members={detail.members}
-                characters={characters}
-                myId={user?.id ?? 0}
-                canChat={canRoll}
-                isDM={isDM}
-                onSend={sendChat}
-              />
+              <SendingHint />
             )}
           </section>
         </div>
@@ -515,7 +505,7 @@ export default function CampaignPage() {
       {detail.campaign.system === "remnant" ? (
         <PocketScroll campaignId={campaignId} rolls={rolls} />
       ) : (
-        <RollDock rolls={rolls} defaultOpen />
+        <SendingDock campaignId={campaignId} rolls={rolls} />
       )}
     </div>
   );

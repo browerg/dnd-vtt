@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
 import { useAuth } from "../App";
 import { api } from "../api";
+import CampaignDocks from "../components/CampaignDocks";
 import CampaignThemeBrand from "../components/CampaignThemeBrand";
 import { useCampaignTheme } from "../theme";
 import "./SchedulePage.css";
@@ -307,6 +308,7 @@ export default function SchedulePage() {
           </div>
         </section>
       </main>
+      {system === "dnd5e" && !!role && <CampaignDocks />}
     </div>
   );
 }
