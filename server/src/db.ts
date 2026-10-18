@@ -474,7 +474,10 @@ db.exec(`
   );
 `);
 
-// Convert the previous all-players NPC toggle into explicit assignments once.
+// Convert the previous all-players NPC toggle into explicit assignments.
+// This runs on every start, so it only touches legacy NPCs with no
+// assignments yet; otherwise a restart would hand an NPC the GM gave to one
+// player back to every player.
 db.exec(`
   INSERT OR IGNORE INTO npc_character_controllers (character_id, user_id)
   SELECT c.id, m.user_id
@@ -483,8 +486,8 @@ db.exec(`
   WHERE c.is_npc = 1
     AND c.player_controllable = 1
     AND m.role = 'player'
+    AND NOT EXISTS (SELECT 1 FROM npc_character_controllers x WHERE x.character_id = c.id)
 `);
-console.log("migrated shared NPC control assignments");
 // Seed the SRD spell list on first boot (319 spells, CC-BY-4.0 via Open5e).
 const spellCount = (db.prepare("SELECT COUNT(*) AS n FROM spells").get() as any).n;
 if (spellCount === 0) {

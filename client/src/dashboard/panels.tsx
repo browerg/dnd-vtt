@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { ChatMessage, Member, RollPayload } from "../api";
-import type { CharacterSummary } from "../sheet";
+import { controlsCharacter, type CharacterSummary } from "../sheet";
 import { Avatar } from "../components/Avatar";
 import SheetView from "../components/SheetView";
 import InventoryPanel from "../components/InventoryPanel";
@@ -170,14 +170,16 @@ export const PANELS: PanelDef[] = [
     defaultW: 4,
     defaultH: 8,
     render: (ctx) => {
-      const pcs = ctx.characters.filter((c) => !c.isNpc);
+      // Player characters, plus any NPCs the GM assigned to this player.
+      const pcs = ctx.characters.filter((c) => !c.isNpc || (!ctx.isDM && controlsCharacter(c, ctx.myId)));
       return (
         <ul className="member-list">
           {pcs.map((c) => {
-            const canView = ctx.isDM || c.ownerId === ctx.myId;
+            const canView = ctx.isDM || controlsCharacter(c, ctx.myId);
             const label = (
               <>
                 <strong>{c.name}</strong>
+                {c.isNpc && <span className="badge npc-badge">NPC</span>}
                 {c.summary && <span className="muted"> · {c.summary}</span>}
                 <span className="muted"> ({c.ownerName})</span>
               </>

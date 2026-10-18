@@ -8,7 +8,7 @@ import { io, type Socket } from "socket.io-client";
 import { api, type RollPayload } from "../api";
 import { useAuth } from "../App";
 import { animateRollAt, preloadDice } from "../dice3d";
-import { CONDITIONS, type CharacterSummary } from "../sheet";
+import { CONDITIONS, controlsCharacter, type CharacterSummary } from "../sheet";
 import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
@@ -806,10 +806,13 @@ export default function MapPage() {
 
   // Stat block for the selected monster token.
   const selectedToken = tokens.find((t) => t.id === selectedTokenId) ?? null;
+  // NPCs the GM assigned to this player: they can move those tokens and open those sheets.
+  const controlledNpcIds = new Set(characters.filter((c) => c.isNpc && controlsCharacter(c, user?.id)).map((c) => c.id));
   // Sheet drawer: players open their own character; the GM opens the selected token's.
   const [sheetCharacterId, setSheetCharacterId] = useState<number | null>(null);
   const mySheetId = characters.find((c) => c.ownerId === user?.id && !c.isNpc)?.id ?? null;
-  const sheetTargetId = isDM ? selectedToken?.characterId ?? null : mySheetId;
+  const selectedNpcSheet = selectedToken?.characterId != null && controlledNpcIds.has(selectedToken.characterId) ? selectedToken.characterId : null;
+  const sheetTargetId = isDM ? selectedToken?.characterId ?? null : selectedNpcSheet ?? mySheetId;
   const closeSheet = useCallback(() => setSheetCharacterId(null), []);
   useEffect(() => {
     if (!selectedToken?.monsterId) {
@@ -956,7 +959,8 @@ export default function MapPage() {
   };
 
   const canMove = (t: Token) =>
-    isDM || (t.ownerId !== null && t.ownerId === user?.id) || (!!map?.openTokens && role !== "" && role !== "spectator" && !t.isShopkeeper);
+    isDM || (t.ownerId !== null && t.ownerId === user?.id) ||
+    (t.characterId != null && controlledNpcIds.has(t.characterId)) || (!!map?.openTokens && role !== "" && role !== "spectator" && !t.isShopkeeper);
 
   // ---- fog helpers ----
   const pushFog = useCallback(
@@ -2088,16 +2092,16 @@ Choose Cancel to permanently delete it instead.`
 </div>
       </header>
       <div className="map-tool-row" aria-label="Map tools">
-        {(isDM || mySheetId != null) && (
+        {(isDM || mySheetId != null || controlledNpcIds.size > 0) && (
           <button
             type="button"
             className={sheetCharacterId != null ? "ghost mini active-tool" : "ghost mini"}
             aria-pressed={sheetCharacterId != null}
             disabled={sheetCharacterId == null && sheetTargetId == null}
-            title={isDM ? (sheetTargetId ? "Open the selected character's sheet" : "Select a character's token to open their sheet") : "Open your character sheet"}
+            title={isDM ? (sheetTargetId ? "Open the selected character's sheet" : "Select a character's token to open their sheet") : selectedNpcSheet ? "Open the sheet for the NPC you control" : sheetTargetId ? "Open your character sheet" : "Select an NPC you control to open their sheet"}
             onClick={() => setSheetCharacterId(sheetCharacterId != null ? null : sheetTargetId)}
           >
-            {isDM ? "Sheet" : "My sheet"}
+            {isDM ? "Sheet" : selectedNpcSheet ? "NPC sheet" : "My sheet"}
           </button>
         )}
         {map && <button className={tool === 'move' ? 'ghost mini active-tool' : 'ghost mini'} aria-pressed={tool === 'move'} title="Move (M) — pan the map or move tokens" onClick={() => setTool('move')}>Move</button>}
@@ -3394,7 +3398,7 @@ Choose Cancel to permanently delete it instead.`
                 onClick={() => setSidebarRosterTab("characters")}
               >
                 Characters
-                <span>{characters.filter((c) => !c.isNpc || isDM || c.playerControllable).length}</span>
+                <span>{characters.filter((c) => !c.isNpc || isDM || controlledNpcIds.has(c.id)).length}</span>
               </button>
               <button
                 type="button"
@@ -3411,9 +3415,9 @@ Choose Cancel to permanently delete it instead.`
             {sidebarRosterTab === "characters" ? (
               <div className="encounter-roster-list">
                 {characters
-                  // Don't leak secret NPC names to players — only the DM (or a
-                  // shared, player-controllable NPC) shows in the list.
-                  .filter((c) => !c.isNpc || isDM || c.playerControllable)
+                  // Don't leak secret NPC names to players: only the DM, or the
+                  // players the GM assigned to an NPC, see it in the list.
+                  .filter((c) => !c.isNpc || isDM || controlledNpcIds.has(c.id))
                   .map((c) => {
                     const token = tokens.find((t) => t.characterId === c.id);
                     const onMap = Boolean(token);

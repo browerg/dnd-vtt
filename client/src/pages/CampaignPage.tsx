@@ -6,7 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
 import { api, type ChatMessage, type Member, type RollPayload } from "../api";
 import { animateRoll } from "../dice3d";
-import type { CharacterSummary } from "../sheet";
+import { controlsCharacter, type CharacterSummary } from "../sheet";
 import { useAuth } from "../App";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
@@ -444,7 +444,7 @@ export default function CampaignPage() {
             <h3>Characters</h3>
             <ul className="member-list">
               {characters.map((c) => {
-                const canView = isDM || c.ownerId === user?.id || (c.isNpc && c.playerControllable);
+                const canView = isDM || controlsCharacter(c, user?.id);
                 const label = (
                   <>
                     <strong>{c.name}</strong>

@@ -828,6 +828,15 @@ function broadcastMapChange(campaignId: number) {
   getIo().to(`campaign:${campaignId}`).emit("map:update", { campaignId });
 }
 
+/** A player the GM assigned to an NPC may move that NPC's token. */
+function controlsNpc(characterId: number | null, userId: number): boolean {
+  if (characterId == null) return false;
+  return !!db.prepare(
+    `SELECT 1 FROM npc_character_controllers n JOIN characters c ON c.id = n.character_id
+     WHERE n.character_id = ? AND n.user_id = ? AND c.is_npc = 1`
+  ).get(characterId, userId);
+}
+
 /** The GM can open a map so anyone at the table may move any token on it. */
 function mapAllowsAnyMover(mapId: number): boolean {
   return !!(db.prepare("SELECT open_tokens FROM maps WHERE id = ?").get(mapId) as { open_tokens: number } | undefined)?.open_tokens;
@@ -846,7 +855,12 @@ export function moveToken(
   const token = getToken(tokenId);
   if (!token || token.campaignId !== campaignId) return null;
   // Shopkeepers stay put for players so they can still be clicked to talk.
-  if (!isDMRole(role) && token.ownerId !== mover.id && (token.isShopkeeper || !mapAllowsAnyMover(token.mapId))) return null;
+  if (
+    !isDMRole(role) &&
+    token.ownerId !== mover.id &&
+    !controlsNpc(token.characterId, mover.id) &&
+    (token.isShopkeeper || !mapAllowsAnyMover(token.mapId))
+  ) return null;
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
   db.prepare("UPDATE tokens SET x = ?, y = ? WHERE id = ?").run(x, y, tokenId);
   return { ...token, x, y };

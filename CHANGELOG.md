@@ -16,6 +16,13 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 19 October 2026
+
+### Major changes
+
+- **NPCs your GM gives you actually work** — If your GM puts you in control of an NPC, you can now drag its token on the map. Select it and press NPC sheet to open its sheet right there. It shows in the map's Characters list, and on the hub and the Characters panel with a working link.
+- **NPC control stays with the right people** — Players who weren't given an NPC no longer see it in their lists or get a sheet link that wouldn't open. Restarting the game no longer hands an NPC you gave to one player to every player.
+
 ## 18 October 2026
 
 ### Major changes

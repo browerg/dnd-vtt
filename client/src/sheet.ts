@@ -143,3 +143,9 @@ export const saveMod = (data: CharacterData, ability: AbilityKey): number =>
 
 // d20 + modifier as a roll formula the server understands.
 export const d20Formula = (mod: number) => (mod === 0 ? "1d20" : mod > 0 ? `1d20+${mod}` : `1d20${mod}`);
+
+/** Whether this player runs the character: they own it, or the GM assigned them this NPC. */
+export const controlsCharacter = (
+  character: { ownerId: number; isNpc?: boolean; assignedPlayerIds?: number[] },
+  userId: number | undefined
+) => userId != null && (character.ownerId === userId || (!!character.isNpc && !!character.assignedPlayerIds?.includes(userId)));
