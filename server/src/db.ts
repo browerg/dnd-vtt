@@ -432,6 +432,8 @@ for (const ddl of [
   // Which persona of the recipient a whisper is addressed to (a player
   // replying to the GM's "Ozpin"), so each Scroll conversation stays whole.
   "ALTER TABLE messages ADD COLUMN target_speaker TEXT NOT NULL DEFAULT ''",
+  // Per map: let anyone at the table (not spectators) move any token.
+  "ALTER TABLE maps ADD COLUMN open_tokens INTEGER NOT NULL DEFAULT 0",
 ]) {
   try {
     db.exec(ddl);

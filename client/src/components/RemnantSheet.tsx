@@ -16,8 +16,10 @@ import {
   SEMBLANCE_SCOPES,
   SEMBLANCE_TYPES,
   SEMBLANCE_UPGRADES,
+  MAX_SUB_FORMS,
   auraMaxFor,
   defenseRating,
+  effectiveWeaponForm,
   hpMaxFor,
   remnantCheckFormula,
   semblanceCost,
@@ -630,22 +632,42 @@ export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUplo
           const attackAttrKey: RemnantAttrKey =
             d.archetype === "Brawler" ? "brawn" : "finesse";
           const attackFormula = remnantCheckFormula(attrDie(attackAttrKey), tb);
-          const damageFormula = form
+          const active = form ? effectiveWeaponForm(form) : null;
+          const damageFormula = active
             ? [
-                `1d${form.damage}`,
-                form.styleDie ? `1d${form.styleDie}` : "",
+                `1d${active.damage}`,
+                active.styleDie ? `1d${active.styleDie}` : "",
                 `1d${attrDie(d.mainAttribute || "brawn")}`,
               ].filter(Boolean).join("+")
             : "";
+          const subForms = form?.subForms ?? [];
 
           return (
             <div className="combat-active-weapon">
               <div className="combat-active-weapon-title">
                 <span>Active Weapon Form</span>
                 <strong>
-                  {form?.type || `Form ${formLabel(formIndex)}`}
+                  {active?.label || `Form ${formLabel(formIndex)}`}
                 </strong>
-                <small>{form?.range || "Close"} range</small>
+                <small>{active?.range || "Close"} range</small>
+                {subForms.length > 0 && (
+                  <select
+                    className="combat-sub-form-select"
+                    aria-label="Sub-form in use"
+                    value={form?.activeSubForm ?? -1}
+                    disabled={ro}
+                    onChange={(e) =>
+                      update({
+                        weaponForms: d.weaponForms.map((f, j) =>
+                          j === formIndex ? { ...f, activeSubForm: Number(e.target.value) } : f
+                        ),
+                      })
+                    }
+                  >
+                    <option value={-1}>{form?.type || "Base form"}</option>
+                    {subForms.map((sub, k) => <option key={k} value={k}>{sub.name || `Sub-form ${k + 1}`}</option>)}
+                  </select>
+                )}
               </div>
               <div className="combat-active-weapon-actions">
                 <button
@@ -655,7 +677,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUplo
                   onClick={() =>
                     roll(
                       attackFormula,
-                      `${name}: ${form?.type || "Weapon"} Attack`
+                      `${name}: ${active?.label || "Weapon"} Attack`
                     )
                   }
                 >
@@ -668,7 +690,7 @@ export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUplo
                   onClick={() =>
                     roll(
                       damageFormula,
-                      `${name}: ${form?.type || "Weapon"} Damage`
+                      `${name}: ${active?.label || "Weapon"} Damage`
                     )
                   }
                 >
@@ -1147,6 +1169,88 @@ export default function RemnantSheet({ name, d, ro, update, roll, onRest, onUplo
                     })
                   }
                 />
+                {(() => {
+                  // Sub-forms: modes inside this form, each with its own stats.
+                  const subs = form.subForms ?? [];
+                  const patchSubs = (nextSubs: typeof subs, activeSubForm = form.activeSubForm) =>
+                    update({
+                      weaponForms: d.weaponForms.map((f, j) => (j === i ? { ...f, subForms: nextSubs, activeSubForm } : f)),
+                    });
+                  const patchSub = (k: number, change: Partial<(typeof subs)[number]>) =>
+                    patchSubs(subs.map((sub, n) => (n === k ? { ...sub, ...change } : sub)));
+                  if (!subs.length && ro) return null;
+                  return (
+                    <div className="weapon-sub-forms">
+                      {subs.length > 0 && (
+                        <div className="weapon-sub-forms-head">
+                          <strong className="small">Sub-forms</strong>
+                          <span className="muted small">
+                            In use: {(form.activeSubForm ?? -1) >= 0 && subs[form.activeSubForm!] ? subs[form.activeSubForm!].name || `Sub-form ${form.activeSubForm! + 1}` : "base form"}
+                          </span>
+                        </div>
+                      )}
+                      {subs.map((sub, k) => {
+                        const inUse = form.activeSubForm === k;
+                        return (
+                          <div key={k} className={`weapon-sub-form${inUse ? " in-use" : ""}`}>
+                            <div className="row-between">
+                              <input
+                                placeholder="Sub-form name — sniper shot, spread…"
+                                value={sub.name}
+                                disabled={ro}
+                                aria-label={`Sub-form ${k + 1} name`}
+                                onChange={(e) => patchSub(k, { name: e.target.value })}
+                              />
+                              <select value={sub.range} disabled={ro} aria-label="Range" onChange={(e) => patchSub(k, { range: e.target.value })}>
+                                {RANGE_BANDS.map((r) => <option key={r}>{r}</option>)}
+                              </select>
+                              <select value={sub.damage} disabled={ro} title="Damage die" aria-label="Damage die" onChange={(e) => patchSub(k, { damage: num(e.target.value, 8) })}>
+                                {DIE_SIZES.map((size) => <option key={size} value={size}>d{size}</option>)}
+                              </select>
+                              <select value={sub.styleDie ?? 0} disabled={ro} title="Style die — added to damage" aria-label="Style die" onChange={(e) => patchSub(k, { styleDie: num(e.target.value, 0) })}>
+                                <option value={0}>+ —</option>
+                                {DIE_SIZES.map((size) => <option key={size} value={size}>+d{size}</option>)}
+                              </select>
+                            </div>
+                            <input
+                              placeholder="Special / effect"
+                              value={sub.special}
+                              disabled={ro}
+                              aria-label={`Sub-form ${k + 1} special`}
+                              onChange={(e) => patchSub(k, { special: e.target.value })}
+                            />
+                            {!ro && (
+                              <div className="weapon-sub-form-actions">
+                                <button type="button" className="ghost mini" aria-pressed={inUse}
+                                  onClick={() => patchSubs(subs, inUse ? -1 : k)}>
+                                  {inUse ? "In use · switch to base" : "Use this"}
+                                </button>
+                                <button type="button" className="ghost mini danger"
+                                  onClick={() => {
+                                    if (!window.confirm(`Remove ${sub.name || "this sub-form"}?`)) return;
+                                    const active = form.activeSubForm ?? -1;
+                                    patchSubs(subs.filter((_, n) => n !== k), active === k ? -1 : active > k ? active - 1 : active);
+                                  }}>
+                                  Remove
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {!ro && (
+                        <button
+                          type="button"
+                          className="ghost mini weapon-add-sub-form"
+                          disabled={subs.length >= MAX_SUB_FORMS}
+                          onClick={() => patchSubs([...subs, { name: "", range: form.range, damage: form.damage, styleDie: form.styleDie ?? 0, special: "" }])}
+                        >
+                          + Add sub-form {subs.length > 0 && `(${subs.length}/${MAX_SUB_FORMS})`}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className="weapon-roll-panel">
                   {(() => {
                     // vivid-weapon-roll-controls

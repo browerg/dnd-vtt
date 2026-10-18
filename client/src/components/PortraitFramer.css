@@ -1,0 +1,26 @@
+.portrait-framer {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 30;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  width: 220px;
+  padding: 0.8rem;
+  border: 1px solid var(--border-gold, #8a6d3b);
+  border-radius: 10px;
+  background: var(--bg-panel, #141a24);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+.portrait-framer-preview { width: 160px; height: 160px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-gold, #8a6d3b); cursor: grab; touch-action: none; background: var(--bg-well, #0b0f16); }
+.portrait-framer-preview:active { cursor: grabbing; }
+.portrait-framer-preview:focus-visible { outline: 2px solid var(--accent, #e3b766); outline-offset: 3px; }
+.portrait-framer-preview img { display: block; width: 100%; height: 100%; user-select: none; pointer-events: none; }
+.portrait-framer-zoom { display: flex; align-items: center; gap: 0.5rem; width: 100%; font-size: 0.82rem; }
+.portrait-framer-zoom input { flex: 1; min-width: 0; }
+.portrait-framer p { margin: 0; text-align: center; }
+.portrait-framer-actions { display: flex; gap: 0.5rem; }
+
+/* The sheet header portrait anchors the framing pop-over. */
+.sheet-portrait-wrap { position: relative; display: inline-flex; }

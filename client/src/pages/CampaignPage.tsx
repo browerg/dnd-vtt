@@ -20,6 +20,7 @@ import CodexPanel from "../components/CodexPanel";
 import RemnantReference from "../components/RemnantReference";
 import { Avatar } from "../components/Avatar";
 import MemberPasswordReset, { canSetPassword } from "../components/MemberPasswordReset";
+import DeleteCampaign from "../components/DeleteCampaign";
 
 interface CampaignDetail {
   campaign: {
@@ -406,6 +407,7 @@ export default function CampaignPage() {
                       : <>Invite code: <code>{inviteCode}</code>. If the link stops working after you restart hosting, they can type this code into <strong>Join with a code</strong> on their campaign list.</>}
                   </p>
                 )}
+                {detail.yourRole === "dm" && <DeleteCampaign campaignId={campaignId} name={detail.campaign.name} />}
               </div>
             )}
           </section>

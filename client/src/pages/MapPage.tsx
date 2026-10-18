@@ -13,6 +13,8 @@ import { REMNANT_CONDITIONS } from "../remnant";
 import DiceDock from "../components/DiceDock";
 import RollDock from "../components/RollDock";
 import PocketScroll from "../components/PocketScroll";
+import MyInitiative from "../components/MyInitiative";
+import MapSheetDrawer from "../components/MapSheetDrawer";
 import AnnouncementCenter from "../components/AnnouncementCenter";
 import HandoutReveal from "../components/HandoutReveal";
 import ScrollTextAlert from "../components/ScrollTextAlert";
@@ -48,6 +50,8 @@ interface MapInfo {
   rulerCalibration: RulerCalibration | null;
   gridOn: boolean;
   boardType: "battle" | "shop";
+  /** GM switch: anyone at the table (not spectators) may move any token on this map. */
+  openTokens?: boolean;
   active: boolean;
   fogOn: boolean;
   fogCells: string[];
@@ -802,6 +806,11 @@ export default function MapPage() {
 
   // Stat block for the selected monster token.
   const selectedToken = tokens.find((t) => t.id === selectedTokenId) ?? null;
+  // Sheet drawer: players open their own character; the GM opens the selected token's.
+  const [sheetCharacterId, setSheetCharacterId] = useState<number | null>(null);
+  const mySheetId = characters.find((c) => c.ownerId === user?.id && !c.isNpc)?.id ?? null;
+  const sheetTargetId = isDM ? selectedToken?.characterId ?? null : mySheetId;
+  const closeSheet = useCallback(() => setSheetCharacterId(null), []);
   useEffect(() => {
     if (!selectedToken?.monsterId) {
       setStatblock(null);
@@ -946,7 +955,8 @@ export default function MapPage() {
     return { x: (clientX - rect.left - v.x) / v.scale, y: (clientY - rect.top - v.y) / v.scale };
   };
 
-  const canMove = (t: Token) => isDM || (t.ownerId !== null && t.ownerId === user?.id);
+  const canMove = (t: Token) =>
+    isDM || (t.ownerId !== null && t.ownerId === user?.id) || (!!map?.openTokens && role !== "" && role !== "spectator" && !t.isShopkeeper);
 
   // ---- fog helpers ----
   const pushFog = useCallback(
@@ -2078,6 +2088,18 @@ Choose Cancel to permanently delete it instead.`
 </div>
       </header>
       <div className="map-tool-row" aria-label="Map tools">
+        {(isDM || mySheetId != null) && (
+          <button
+            type="button"
+            className={sheetCharacterId != null ? "ghost mini active-tool" : "ghost mini"}
+            aria-pressed={sheetCharacterId != null}
+            disabled={sheetCharacterId == null && sheetTargetId == null}
+            title={isDM ? (sheetTargetId ? "Open the selected character's sheet" : "Select a character's token to open their sheet") : "Open your character sheet"}
+            onClick={() => setSheetCharacterId(sheetCharacterId != null ? null : sheetTargetId)}
+          >
+            {isDM ? "Sheet" : "My sheet"}
+          </button>
+        )}
         {map && <button className={tool === 'move' ? 'ghost mini active-tool' : 'ghost mini'} aria-pressed={tool === 'move'} title="Move (M) — pan the map or move tokens" onClick={() => setTool('move')}>Move</button>}
         {map && (
           <button
@@ -2303,6 +2325,10 @@ Choose Cancel to permanently delete it instead.`
             <label className="grid-toggle">
               <input type="checkbox" checked={map.gridOn} onChange={(e) => patchMap({ gridOn: e.target.checked })} />
               Grid
+            </label>
+            <label className="grid-toggle" title="Players can drag any token on this map, not just their own. Spectators still can't.">
+              <input type="checkbox" checked={!!map.openTokens} onChange={(e) => patchMap({ openTokens: e.target.checked })} />
+              Anyone can move any token
             </label>
             <label className="gm-setting-field">Grid cell size (pixels)<input
               className="grid-size"
@@ -3289,6 +3315,13 @@ Choose Cancel to permanently delete it instead.`
               );
             })}
             {combat.combatants.length === 0 && <p className="muted small">No combatants yet.</p>}
+            {!isDM && canRoll && (
+              <MyInitiative
+                campaignId={campaignId}
+                myTokens={tokens.filter((t) => t.characterId != null && t.ownerId === user?.id).map((t) => ({ id: t.id, name: t.name }))}
+                combatants={combat.combatants}
+              />
+            )}
             {isDM && (
               <div className="stack combat-controls">
                 {!combat.active ? (
@@ -3519,6 +3552,14 @@ Choose Cancel to permanently delete it instead.`
       </div>
       {canRoll && <DiceDock onRoll={doRoll} system={system} />}
       {system === "remnant" ? <PocketScroll campaignId={campaignId} rolls={rolls} /> : <RollDock rolls={rolls} />}
+      {sheetCharacterId != null && (
+        <MapSheetDrawer
+          campaignId={campaignId}
+          characterId={sheetCharacterId}
+          title={characters.find((c) => c.id === sheetCharacterId)?.name ?? "Character"}
+          onClose={closeSheet}
+        />
+      )}
     </div>
   );
 }

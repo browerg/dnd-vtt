@@ -302,6 +302,15 @@ button.ghost:hover, .ghost.link:hover { color: var(--text); border-color: var(--
 .invite-box { margin-top: 1rem; }
 .invite-warning { margin: 0; padding: 0.6rem 0.75rem; border: 1px solid #c9a227; border-radius: 6px; background: rgba(201, 162, 39, 0.1); font-size: 0.85rem; line-height: 1.45; }
 .invite-box code { word-break: break-all; }
+/* Delete campaign: tucked away, red, and confirmed by typing the name. */
+.delete-campaign-open { margin-top: 0.75rem; justify-self: start; color: #e07a7a !important; border-color: rgba(224, 122, 122, 0.4) !important; }
+.delete-campaign { display: grid; gap: 0.5rem; margin-top: 0.75rem; padding: 0.8rem 0.9rem; border: 1px solid rgba(224, 92, 92, 0.55); border-radius: 8px; background: rgba(160, 40, 40, 0.1); font-size: 0.9rem; }
+.delete-campaign p { margin: 0; line-height: 1.45; }
+.delete-campaign label { font-size: 0.82rem; font-weight: 600; }
+.delete-campaign-actions { display: flex; gap: 0.5rem; }
+.delete-campaign button.danger { background: #a3262f; border-color: #d0545c; color: #fff; }
+.delete-campaign button.danger:disabled { opacity: 0.45; cursor: not-allowed; }
+.delete-campaign-error { color: #ff9a9a; }
 .invite-url code {
   font-size: 0.85rem;
   word-break: break-all;
@@ -1472,6 +1481,9 @@ select:focus { outline: none; border-color: var(--accent); }
   padding: 0.85rem 0.95rem;
 }
 .panel-empty { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.5rem; }
+/* Session log: the feed fills the tile and is its only scroller, so it can follow new rolls. */
+.panel-rolls .panel-body { display: flex; flex-direction: column; overflow: hidden; }
+.panel-rolls .roll-feed { flex: 1; min-height: 0; max-height: none; }
 
 /* The sheet panel: neutralize the full-page centering so it fills the tile */
 .panel-body .sheet-view .content { max-width: 100%; margin: 0; padding: 0.25rem 0; }
@@ -4906,3 +4918,14 @@ details[data-sheet-section="background"] > label:last-of-type textarea {
   .turn-nudge { animation: none; }
 }
 .weapon-photo { margin: 0.4rem 0 0.6rem; }
+
+/* Weapon sub-forms: modes inside a form, each with its own stats. */
+.weapon-sub-forms { display: grid; gap: 0.5rem; margin-top: 0.5rem; padding: 0.55rem 0 0 0.75rem; border-left: 2px solid var(--border-gold, rgba(207, 166, 79, 0.4)); }
+.weapon-sub-forms-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.weapon-sub-form { display: grid; gap: 0.35rem; padding: 0.45rem 0.55rem; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; }
+.weapon-sub-form.in-use { border-color: var(--border-gold, rgba(207, 166, 79, 0.6)); box-shadow: 0 0 8px rgba(207, 166, 79, 0.12); }
+.weapon-sub-form .row-between { flex-wrap: wrap; gap: 0.35rem; }
+.weapon-sub-form .row-between input { flex: 1 1 10rem; min-width: 0; }
+.weapon-sub-form-actions { display: flex; gap: 0.4rem; }
+.weapon-add-sub-form { justify-self: start; }
+.combat-sub-form-select { margin-top: 0.25rem; max-width: 100%; font-size: 0.8rem; }

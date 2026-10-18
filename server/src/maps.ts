@@ -192,6 +192,7 @@ const mapRow = (r: any) => ({
   rulerCalibration: readRulerCalibration(r.ruler_calibration),
   gridOn: !!r.grid_on,
   boardType: r.board_type === "shop" ? "shop" : "battle",
+  openTokens: !!r.open_tokens,
   active: !!r.active,
   fogOn: !!r.fog_on,
   fogCells: JSON.parse(r.fog_data ?? "[]") as string[],
@@ -276,9 +277,10 @@ mapsRouter.put("/:id/maps/:mapId", (req, res) => {
     typeof b.youtubeAudio === "boolean" ? (b.youtubeAudio ? 1 : 0) : map.youtube_audio;
   const name = typeof b.name === "string" && b.name.trim() ? b.name.trim() : map.name;
   const boardType = b.boardType === "shop" || b.boardType === "battle" ? b.boardType : map.board_type;
+  const openTokens = typeof b.openTokens === "boolean" ? (b.openTokens ? 1 : 0) : map.open_tokens;
   db.prepare(
-    "UPDATE maps SET name = ?, grid_size = ?, grid_on = ?, youtube_audio = ?, ruler_calibration = ?, board_type = ? WHERE id = ?"
-  ).run(name, gridSize, gridOn, youtubeAudio, calibration, boardType, map.id);
+    "UPDATE maps SET name = ?, grid_size = ?, grid_on = ?, youtube_audio = ?, ruler_calibration = ?, board_type = ?, open_tokens = ? WHERE id = ?"
+  ).run(name, gridSize, gridOn, youtubeAudio, calibration, boardType, openTokens, map.id);
   if (b.active === true) {
     db.prepare("UPDATE maps SET active = 0 WHERE campaign_id = ?").run(campaignId);
     db.prepare("UPDATE maps SET active = 1 WHERE id = ?").run(map.id);
@@ -826,6 +828,11 @@ function broadcastMapChange(campaignId: number) {
   getIo().to(`campaign:${campaignId}`).emit("map:update", { campaignId });
 }
 
+/** The GM can open a map so anyone at the table may move any token on it. */
+function mapAllowsAnyMover(mapId: number): boolean {
+  return !!(db.prepare("SELECT open_tokens FROM maps WHERE id = ?").get(mapId) as { open_tokens: number } | undefined)?.open_tokens;
+}
+
 // Called from the socket layer: live token drags.
 export function moveToken(
   mover: SessionUser,
@@ -838,7 +845,8 @@ export function moveToken(
   if (!role || role === "spectator") return null;
   const token = getToken(tokenId);
   if (!token || token.campaignId !== campaignId) return null;
-  if (!isDMRole(role) && token.ownerId !== mover.id) return null;
+  // Shopkeepers stay put for players so they can still be clicked to talk.
+  if (!isDMRole(role) && token.ownerId !== mover.id && (token.isShopkeeper || !mapAllowsAnyMover(token.mapId))) return null;
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
   db.prepare("UPDATE tokens SET x = ?, y = ? WHERE id = ?").run(x, y, tokenId);
   return { ...token, x, y };

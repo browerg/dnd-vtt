@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import type { RollPayload } from "../api";
 
 const VISIBILITY_TAGS: Record<string, string> = {
@@ -39,14 +39,27 @@ function breakdown(roll: RollPayload): string {
 }
 
 export default function RollFeed({ rolls }: { rolls: RollPayload[] }) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const feedRef = useRef<HTMLDivElement>(null);
+  // Follow new rolls unless the reader has scrolled up to look at older ones.
+  const following = useRef(true);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  // Layout effect: runs right after the new roll is in the DOM, even in a
+  // background tab where animation frames pause. Scrolls the feed itself;
+  // scrollIntoView used to move the whole page as well.
+  useLayoutEffect(() => {
+    const feed = feedRef.current;
+    if (feed && following.current) feed.scrollTop = feed.scrollHeight;
   }, [rolls.length]);
 
   return (
-    <div className="roll-feed">
+    <div
+      className="roll-feed"
+      ref={feedRef}
+      onScroll={(event) => {
+        const feed = event.currentTarget;
+        following.current = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 60;
+      }}
+    >
       {rolls.length === 0 && <p className="muted">No rolls yet. Make history.</p>}
       {rolls.map((roll) => {
         const nat = natD20(roll);
@@ -87,7 +100,6 @@ export default function RollFeed({ rolls }: { rolls: RollPayload[] }) {
           </div>
         );
       })}
-      <div ref={bottomRef} />
     </div>
   );
 }

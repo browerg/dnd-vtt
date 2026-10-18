@@ -67,6 +67,8 @@ export interface SpellEntry {
 }
 
 export interface CharacterData {
+  /** How the portrait sits in its round frame (see portraitFrame.ts). */
+  portraitFrame?: import("./portraitFrame").PortraitFrame;
   race: string;
   class: string;
   level: number;

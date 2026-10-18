@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { db } from "./db.js";
 import { hashPassword, requireAuth, type SessionUser } from "./auth.js";
 import { setMemberPassword } from "./memberPassword.js";
+import { deleteCampaign } from "./campaignDelete.js";
 import { getIo } from "./realtime.js";
 import { seedGrimm } from "./grimm.js";
 import { reconcileAccountAchievements } from "./achievementTracking.js";
@@ -95,6 +96,15 @@ campaignsRouter.get("/:id", (req, res) => {
     )
     .all(id);
   res.json({ campaign, members, yourRole: role });
+});
+
+// Permanently delete a campaign (DM only, confirmed by typing its name).
+campaignsRouter.delete("/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const result = deleteCampaign(db, id, user(req).id, req.body?.confirmName);
+  if (!result.ok) return res.status(result.status).json({ error: result.error });
+  getIo().to(`campaign:${id}`).emit("campaign:deleted", { campaignId: id });
+  res.json({ ok: true });
 });
 
 // GM sets a forgotten password for someone at the table (no email recovery here).

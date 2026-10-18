@@ -14,6 +14,8 @@ import {
   type Character,
 } from "../sheet";
 import RemnantSheet from "./RemnantSheet";
+import PortraitFramer from "./PortraitFramer";
+import { portraitImageStyle, readPortraitFrame } from "../portraitFrame";
 import InventoryEditor from "./InventoryEditor";
 import type { RemnantData } from "../remnant";
 
@@ -49,6 +51,7 @@ export default function SheetView({ campaignId, characterId }: Props) {
   const saveTimer = useRef<number>();
   const dirtyRef = useRef(false);
   const portraitInput = useRef<HTMLInputElement>(null);
+  const [framing, setFraming] = useState(false);
 
   const uploadPortrait = async (file: File) => {
     const fd = new FormData();
@@ -210,6 +213,7 @@ export default function SheetView({ campaignId, characterId }: Props) {
   return (
     <div className="sheet-view">
       <div className="sheet-view-head">
+        <span className="sheet-portrait-wrap">
         <button
           type="button"
           className="avatar-btn"
@@ -217,11 +221,25 @@ export default function SheetView({ campaignId, characterId }: Props) {
           onClick={() => !ro && portraitInput.current?.click()}
         >
           {character.portraitUrl ? (
-            <img src={character.portraitUrl} alt={character.name} />
+            <img src={character.portraitUrl} alt={character.name} style={portraitImageStyle(readPortraitFrame(d.portraitFrame))} />
           ) : (
             <span>{character.name[0]?.toUpperCase() ?? "?"}</span>
           )}
         </button>
+        {framing && character.portraitUrl && (
+          <PortraitFramer
+            src={character.portraitUrl}
+            frame={readPortraitFrame(d.portraitFrame)}
+            onChange={(portraitFrame) => update({ portraitFrame })}
+            onClose={() => setFraming(false)}
+          />
+        )}
+        </span>
+        {!ro && character.portraitUrl && (
+          <button className="ghost mini" title="Adjust how the portrait sits in its circle" aria-pressed={framing} onClick={() => setFraming((open) => !open)}>
+            Adjust
+          </button>
+        )}
         {!ro && character.portraitUrl && (
           <button className="ghost mini" title="Remove portrait" onClick={removePortrait}>
             ✕

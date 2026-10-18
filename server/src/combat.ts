@@ -5,6 +5,7 @@ import { memberRole } from "./campaigns.js";
 import { performRoll } from "./rolls.js";
 import { DiceError } from "./dice.js";
 import { getIo } from "./realtime.js";
+import { setOwnInitiative, tokenInitiative } from "./playerInitiative.js";
 
 const user = (req: Request) => (req as any).user as SessionUser;
 const isDMRole = (role: string | null) => role === "dm" || role === "co-dm";
@@ -111,32 +112,11 @@ combatRouter.post("/:id/combat/combatants", (req, res) => {
   let tieBreaker = 0;
 
   if (tokenId) {
-    const t = db
-      .prepare(
-        `SELECT t.name,
-                json_extract(c.data, '$.abilities.dex') AS dex,
-                json_extract(c.data, '$.attributes.finesse') AS finesse,
-                json_extract(mo.data, '$.ferocity') AS ferocity
-         FROM tokens t
-         JOIN maps m ON m.id = t.map_id AND m.campaign_id = ?
-         LEFT JOIN characters c ON c.id = t.character_id
-         LEFT JOIN monsters mo ON mo.id = t.monster_id
-         WHERE t.id = ?`
-      )
-      .get(campaignId, tokenId) as any;
-    if (!t) return res.status(404).json({ error: "Token not found." });
-    name = name || t.name;
-    if (system === "remnant") {
-      const die = Number(t.finesse ?? t.ferocity ?? 0);
-      if (die) {
-        formula = `2d10+1d${die}`;
-        tieBreaker = die;
-      }
-    } else if (t.dex != null) {
-      tieBreaker = Number(t.dex) || 0;
-      const dexMod = Math.floor((t.dex - 10) / 2);
-      formula = dexMod === 0 ? "1d20" : dexMod > 0 ? `1d20+${dexMod}` : `1d20${dexMod}`;
-    }
+    const info = tokenInitiative(db, campaignId, tokenId, system);
+    if (!info) return res.status(404).json({ error: "Token not found." });
+    name = name || info.name;
+    formula = info.formula;
+    tieBreaker = info.tieBreaker;
   }
   if (!name) return res.status(400).json({ error: "The combatant needs a name." });
 
@@ -158,6 +138,15 @@ combatRouter.post("/:id/combat/combatants", (req, res) => {
   ).run(campaignId, tokenId, name, initiative, tieBreaker);
   broadcast(campaignId);
   res.json({ state: combatState(campaignId) });
+});
+
+// A player enters the initiative they rolled for their own character.
+combatRouter.post("/:id/combat/my-initiative", (req, res) => {
+  const campaignId = Number(req.params.id);
+  const result = setOwnInitiative(db, campaignId, user(req).id, Number(req.body?.tokenId), req.body?.initiative);
+  if (!result.ok) return res.status(result.status).json({ error: result.error });
+  broadcast(campaignId);
+  res.json({ ok: true, added: result.added, state: combatState(campaignId) });
 });
 
 combatRouter.put("/:id/combat/combatants/:cid", (req, res) => {

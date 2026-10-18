@@ -501,3 +501,12 @@
     animation: none;
   }
 }
+
+/* Players enter the initiative they rolled for their own character. */
+.my-initiative { display: grid; gap: 0.35rem; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.my-initiative label { font-size: 0.8rem; font-weight: 600; }
+.my-initiative-row { display: flex; gap: 0.4rem; }
+.my-initiative-row select { flex: 1; min-width: 0; }
+.my-initiative-row input { width: 5.5rem; min-width: 0; }
+.my-initiative-row button { white-space: nowrap; }
+.my-initiative p { margin: 0; }

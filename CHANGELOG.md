@@ -20,6 +20,14 @@ is the one piece of markup the launcher renders.
 
 ### Major changes
 
+- **Your sheet on the map** — Press My sheet on the map to slide your character sheet in from the side without leaving the board. GMs can select a character's token and press Sheet to open theirs.
+- **Enter your own initiative** — Under the initiative order on the map, type the number you rolled and press Add me. Made a mistake? Change it and press Update.
+- **Weapon sub-forms** — Each weapon form can now have sub-forms with their own range, damage die, style die and special, like a rifle form with a sniper shot and a spread shot. Pick the one you're using on the sheet or in the combat panel, and Attack and Damage roll with it.
+- **Frame your portrait** — Press Adjust next to your character's picture on the sheet. Drag it to choose what shows in the circle, and zoom in.
+- **GMs can let anyone move any token** — In a map's Board settings, turn on "Anyone can move any token" and every player can drag every token on that map. Shopkeepers stay put so you can still talk to them, and spectators still can't move anything.
+- **Delete a campaign** — The DM can now delete a campaign from its hub. You'll need to type its name to confirm, and you can download a backup first.
+- **The session log keeps up** — The session log now scrolls to each new roll, unless you've scrolled up to read older ones.
+
 - **Invite links work for new players** — Opening an invite before signing in used to drop you on your own campaign list once you were in. Now you go straight to the invite after signing in or creating your account.
 - **Join with a code** — At the bottom of your campaign list you can paste an invite link or just its code. This works even if the link is from an earlier session.
 

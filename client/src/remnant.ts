@@ -168,16 +168,45 @@ export const SEMBLANCE_UPGRADES = [
   "Awakening",
 ];
 
+/** A mode inside a weapon form, e.g. Rifle form → "Sniper shot" / "Shotgun spread". */
+export interface WeaponSubForm {
+  name: string;
+  range: string;
+  damage: number; // die size
+  styleDie?: number;
+  special: string;
+}
+
 export interface WeaponForm {
   type: string;
   range: string;
   damage: number; // die size
   styleDie?: number; // optional extra die added to damage (0/undefined = none)
   special: string;
+  /** Optional modes within this form, each with its own stats. */
+  subForms?: WeaponSubForm[];
+  /** Which sub-form is in use; undefined/-1 means the form's own base stats. */
+  activeSubForm?: number;
+}
+
+export const MAX_SUB_FORMS = 4;
+
+/** The stats a form is using right now: its active sub-form's, or its own. */
+export function effectiveWeaponForm(form: WeaponForm): { label: string; range: string; damage: number; styleDie: number; special: string } {
+  const sub = form.subForms?.[form.activeSubForm ?? -1];
+  if (sub) {
+    return {
+      label: [form.type, sub.name].filter((part) => part.trim()).join(" · ") || "Weapon",
+      range: sub.range, damage: sub.damage, styleDie: sub.styleDie ?? 0, special: sub.special,
+    };
+  }
+  return { label: form.type || "Weapon", range: form.range, damage: form.damage, styleDie: form.styleDie ?? 0, special: form.special };
 }
 
 export interface RemnantData {
   system: "remnant";
+  /** How the portrait sits in its round frame (see portraitFrame.ts). */
+  portraitFrame?: import("./portraitFrame").PortraitFrame;
   age: string;
   gender: string;
   species: string;
