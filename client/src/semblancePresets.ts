@@ -7,7 +7,7 @@ import type { RemnantData, SemblanceEffect } from "./remnant";
 export interface SemblancePreset {
   id: string;
   label: string;
-  semblance: Pick<RemnantData["semblance"], "type" | "scope" | "intensity" | "duration" | "limitation" | "description" | "upgrades"> & {
+  semblance: Pick<RemnantData["semblance"], "name" | "type" | "scope" | "intensity" | "duration" | "limitation" | "description" | "upgrades"> & {
     effects: SemblanceEffect[];
   };
 }
@@ -102,8 +102,9 @@ const TERRA_EFFECTS: SemblanceEffect[] = [
 export const SEMBLANCE_PRESETS: SemblancePreset[] = [
   {
     id: "terra",
-    label: "Terra — storybook tales (15 effects)",
+    label: "Terra — Fairy Tale (15 effects)",
     semblance: {
+      name: "Fairy Tale",
       type: "",
       scope: "Area",
       intensity: "Major",

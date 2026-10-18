@@ -21,7 +21,7 @@ is the one piece of markup the launcher renders.
 ### Major changes
 
 - **Semblance effects** — A Semblance can now have a menu of effects to choose from when you activate it. Each effect lists its target, any extra Aura, whether it's sustained, and what it does. Press Use and the sheet spends your activation cost plus the extra, and tells the table in Table talk what you used. Sustained effects get their own Maintain and End buttons. Add, edit or remove effects on your sheet.
-- **Semblance presets** — Pick "Load a preset…" under Effects to fill in a ready-made Semblance. The first one is Terra's storybook tales: all 15 effects, from The Indecisive King to The Story of the Seasons. If you're Terra's GM, you can add the Lady of the Woods to your campaign as an NPC with one click, stat block included.
+- **Semblance presets** — Pick "Load a preset…" under Effects to fill in a ready-made Semblance. The first one is Terra's Fairy Tale Semblance: all 15 tales, from The Indecisive King to The Story of the Seasons. If you're Terra's GM, you can add the Lady of the Woods to your campaign as an NPC with one click, stat block included.
 
 - **Your sheet on the map** — Press My sheet on the map to slide your character sheet in from the side without leaving the board. GMs can select a character's token and press Sheet to open theirs.
 - **Enter your own initiative** — Under the initiative order on the map, type the number you rolled and press Add me. Made a mistake? Change it and press Update.

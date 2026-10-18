@@ -60,7 +60,7 @@ export default function SemblanceEffects({ name, d, ro, update, activationCost, 
   const loadPreset = (id: string) => {
     const preset = SEMBLANCE_PRESETS.find((entry) => entry.id === id);
     if (!preset) return;
-    if ((effects.length || d.semblance.description.trim()) && !window.confirm(`Replace this Semblance's setup with ${preset.label}? Its name stays.`)) return;
+    if ((effects.length || d.semblance.description.trim()) && !window.confirm(`Replace this Semblance with ${preset.label}?`)) return;
     // Keep anything the preset leaves blank (type, limitation…).
     const filled = Object.fromEntries(Object.entries(preset.semblance).filter(([, value]) => value !== ""));
     setSemblance({ ...filled, effects: preset.semblance.effects.map((effect) => ({ ...effect })), activeEffect: undefined, active: false });
