@@ -6,6 +6,7 @@ import { gatewayMusic, GATEWAY_MUSIC_KEY } from "../loginAudio";
 import { useBackgroundMusic } from "../useBackgroundMusic";
 import { useEntranceDone } from "../useEntranceDone";
 import "./LoginPage.css";
+import { peekPendingInvite } from "../pendingInvite";
 
 interface DevUser {
   id: number;
@@ -33,6 +34,7 @@ export default function LoginPage() {
       .catch(() => {});
   }, []);
   const askGm = mode === "forgot" && !emailRecovery;
+  const [invited] = useState(() => !!peekPendingInvite());
   // A cat sticks its tongue out at anyone who forgot their password.
   const [showCat, setShowCat] = useState(false);
   useEffect(() => {
@@ -218,6 +220,12 @@ export default function LoginPage() {
                     : "Enter your account email and we'll send a secure recovery link."}
             </p>
           </div>
+
+          {invited && mode !== "forgot" && (
+            <p className="gateway-invite-note" role="status">
+              <strong>You have been invited to a campaign.</strong> Sign in, or create an account if you are new, and it will open straight after.
+            </p>
+          )}
 
           <div className="gateway-mode-tabs" role="tablist" aria-label="Account mode">
             <button

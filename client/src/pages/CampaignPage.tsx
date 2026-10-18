@@ -54,6 +54,9 @@ export default function CampaignPage() {
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [newCharName, setNewCharName] = useState("");
   const [inviteUrl, setInviteUrl] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  // A link made on the hosting PC itself points at this computer; friends can't open it.
+  const localAddress = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
 
@@ -199,6 +202,7 @@ export default function CampaignPage() {
       body: JSON.stringify({ role: "player" }),
     });
     setInviteUrl(`${window.location.origin}/join/${r.code}`);
+    setInviteCode(r.code);
     setCopied(false);
   };
 
@@ -394,6 +398,13 @@ export default function CampaignPage() {
                       {copied ? "Copied!" : "Copy"}
                     </button>
                   </div>
+                )}
+                {inviteUrl && (
+                  <p className={localAddress ? "invite-warning" : "muted small"}>
+                    {localAddress
+                      ? <>This link uses this computer's own address, so friends can't open it. Open the game through tonight's invite link from the launcher and make the invite there, or send them the code <code>{inviteCode}</code> to type into <strong>Join with a code</strong> on their campaign list.</>
+                      : <>Invite code: <code>{inviteCode}</code>. If the link stops working after you restart hosting, they can type this code into <strong>Join with a code</strong> on their campaign list.</>}
+                  </p>
                 )}
               </div>
             )}

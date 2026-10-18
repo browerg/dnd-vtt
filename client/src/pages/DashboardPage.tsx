@@ -4,6 +4,7 @@ import { api, type CampaignSummary } from "../api";
 import { useAuth } from "../App";
 import { Avatar } from "../components/Avatar";
 import "./DashboardPage.css";
+import JoinByCode from "../components/JoinByCode";
 
 type CampaignFilter = "all" | "remnant" | "dnd5e";
 
@@ -325,7 +326,7 @@ export default function DashboardPage() {
               <p className="select-eyebrow">NO ACTIVE TABLES</p>
               <h3>Your first world is waiting.</h3>
               <p>
-                Create a campaign here, or follow an invite link from another game master.
+                Create a campaign here, or join one with the invite link or code your game master sent you.
               </p>
               <button
                 type="button"
@@ -403,6 +404,7 @@ export default function DashboardPage() {
               );
             })}
           </div>
+          <JoinByCode />
         </section>
       </main>
     </div>

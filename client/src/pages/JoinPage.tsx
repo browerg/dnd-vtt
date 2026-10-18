@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../App";
+import { savePendingInvite } from "../pendingInvite";
 
 interface InviteInfo {
   invite: { code: string; role: string; campaign_id: number; name: string; description: string };
@@ -16,6 +17,8 @@ export default function JoinPage() {
 
   useEffect(() => {
     if (!user) {
+      // Remember it so signing in (or creating an account) comes straight back here.
+      if (code) savePendingInvite(code);
       navigate("/login");
       return;
     }

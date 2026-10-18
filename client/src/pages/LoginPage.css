@@ -1031,3 +1031,7 @@
 @keyframes gateway-cat-fade { from { opacity: 0; } }
 @keyframes gateway-cat-pop { from { opacity: 0; transform: scale(0.6) rotate(-6deg); } }
 @media (prefers-reduced-motion: reduce) { .gateway-cat, .gateway-cat-card { animation: none; } }
+
+/* Shown when a player opened an invite link before signing in. */
+.gateway-invite-note { margin: 0 0 0.9rem; padding: 0.7rem 0.85rem; border: 1px solid var(--gateway-gold); background: rgba(210, 170, 88, 0.08); color: var(--gateway-muted); font-size: 0.86rem; line-height: 1.45; }
+.gateway-invite-note strong { color: var(--gateway-text); }

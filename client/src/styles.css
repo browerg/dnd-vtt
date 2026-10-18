@@ -300,6 +300,8 @@ button.ghost:hover, .ghost.link:hover { color: var(--text); border-color: var(--
 .dot.online { background: var(--online); box-shadow: 0 0 7px var(--online); }
 
 .invite-box { margin-top: 1rem; }
+.invite-warning { margin: 0; padding: 0.6rem 0.75rem; border: 1px solid #c9a227; border-radius: 6px; background: rgba(201, 162, 39, 0.1); font-size: 0.85rem; line-height: 1.45; }
+.invite-box code { word-break: break-all; }
 .invite-url code {
   font-size: 0.85rem;
   word-break: break-all;

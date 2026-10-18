@@ -16,6 +16,17 @@ is the one piece of markup the launcher renders.
 
 ---
 
+## 18 October 2026
+
+### Major changes
+
+- **Invite links work for new players** — Opening an invite before signing in used to drop you on your own campaign list once you were in. Now you go straight to the invite after signing in or creating your account.
+- **Join with a code** — At the bottom of your campaign list you can paste an invite link or just its code. This works even if the link is from an earlier session.
+
+### Minor changes
+
+- **Safer invite links for GMs** — When you make an invite, you also get its short code. If you made it on the hosting PC's own address, you'll see a warning that friends can't open that link, and what to send them instead.
+
 ## 16 October 2026
 
 ### Major changes

@@ -13,6 +13,7 @@ import BestiaryPage from "./pages/BestiaryPage";
 import HandbookPage from "./pages/HandbookPage";
 import SchedulePage from "./pages/SchedulePage";
 import JoinPage from "./pages/JoinPage";
+import { takePendingInvite } from "./pendingInvite";
 import CustomizePage from "./pages/CustomizePage";
 import ShopPage from "./pages/ShopPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -56,6 +57,9 @@ export default function App() {
   const signIn = (signedIn: User, returning: boolean) => {
     setUser(signedIn);
     setGreeting({ name: signedIn.display_name, returning });
+    // Carry on to the invite they opened before signing in.
+    const invite = takePendingInvite();
+    if (invite) navigate(`/join/${invite}`);
   };
 
   const endGreeting = useCallback(() => setGreeting(null), []);

@@ -1337,3 +1337,13 @@
     transition: none;
   }
 }
+
+/* Join a campaign from a pasted invite link or code. */
+.join-by-code { display: grid; gap: 0.45rem; max-width: 520px; margin-top: 1.6rem; padding: 0.9rem 1rem; border: 1px solid var(--select-border); background: var(--select-panel); }
+.join-by-code label { color: var(--select-text); font-size: 0.82rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.join-by-code-row { display: flex; gap: 0.5rem; }
+.join-by-code input { flex: 1; min-width: 0; min-height: 2.5rem; padding: 0 0.75rem; border: 1px solid var(--select-border); background: var(--select-bg); color: var(--select-text); font: inherit; }
+.join-by-code input:focus-visible { outline: 2px solid var(--select-cyan); outline-offset: 1px; }
+.join-by-code button { min-height: 2.5rem; padding: 0 1.1rem; border: 1px solid var(--select-gold); background: transparent; color: var(--select-gold); font-weight: 700; letter-spacing: 0.06em; cursor: pointer; }
+.join-by-code button:disabled { opacity: 0.5; cursor: default; }
+.join-by-code p { margin: 0; color: var(--select-red); font-size: 0.85rem; }
